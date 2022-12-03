@@ -454,7 +454,7 @@ pub struct AlertPolicy {
     ///
     ///     projects/\[PROJECT_ID_OR_NUMBER]/alertPolicies/[ALERT_POLICY_ID\]
     ///
-    /// `\[ALERT_POLICY_ID\]` is assigned by Stackdriver Monitoring when the policy
+    /// `\[ALERT_POLICY_ID\]` is assigned by Cloud Monitoring when the policy
     /// is created. When calling the
     /// \[alertPolicies.create][google.monitoring.v3.AlertPolicyService.CreateAlertPolicy\]
     /// method, do not include the `name` field in the alerting policy passed as
@@ -542,7 +542,8 @@ pub mod alert_policy {
         /// The text of the documentation, interpreted according to `mime_type`.
         /// The content may not exceed 8,192 Unicode characters and may not exceed
         /// more than 10,240 bytes when encoded in UTF-8 format, whichever is
-        /// smaller.
+        /// smaller. This text can be [templatized by using
+        /// variables](<https://cloud.google.com/monitoring/alerts/doc-variables>).
         #[prost(string, tag = "1")]
         pub content: ::prost::alloc::string::String,
         /// The format of the `content` field. Presently, only the value
@@ -561,13 +562,13 @@ pub mod alert_policy {
         ///
         ///     projects/\[PROJECT_ID_OR_NUMBER]/alertPolicies/[POLICY_ID]/conditions/[CONDITION_ID\]
         ///
-        /// `\[CONDITION_ID\]` is assigned by Stackdriver Monitoring when the
+        /// `\[CONDITION_ID\]` is assigned by Cloud Monitoring when the
         /// condition is created as part of a new or updated alerting policy.
         ///
         /// When calling the
         /// \[alertPolicies.create][google.monitoring.v3.AlertPolicyService.CreateAlertPolicy\]
         /// method, do not include the `name` field in the conditions of the
-        /// requested alerting policy. Stackdriver Monitoring creates the
+        /// requested alerting policy. Cloud Monitoring creates the
         /// condition identifiers and includes them in the new policy.
         ///
         /// When calling the
@@ -700,6 +701,10 @@ pub mod alert_policy {
             /// are specified.
             #[prost(message, optional, tag = "7")]
             pub trigger: ::core::option::Option<Trigger>,
+            /// A condition control that determines how metric-threshold conditions
+            /// are evaluated when data stops arriving.
+            #[prost(enumeration = "EvaluationMissingData", tag = "11")]
+            pub evaluation_missing_data: i32,
         }
         /// A condition type that checks that monitored resources
         /// are reporting data. The configuration defines a metric and
@@ -805,6 +810,30 @@ pub mod alert_policy {
             /// are specified.
             #[prost(message, optional, tag = "3")]
             pub trigger: ::core::option::Option<Trigger>,
+            /// A condition control that determines how metric-threshold conditions
+            /// are evaluated when data stops arriving.
+            #[prost(enumeration = "EvaluationMissingData", tag = "4")]
+            pub evaluation_missing_data: i32,
+        }
+        /// A condition control that determines how metric-threshold conditions
+        /// are evaluated when data stops arriving.
+        /// This control doesn't affect metric-absence policies.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum EvaluationMissingData {
+            /// An unspecified evaluation missing data option.  Equivalent to
+            /// EVALUATION_MISSING_DATA_NO_OP.
+            Unspecified = 0,
+            /// If there is no data to evaluate the condition, then evaluate the
+            /// condition as false.
+            Inactive = 1,
+            /// If there is no data to evaluate the condition, then evaluate the
+            /// condition as true.
+            Active = 2,
+            /// Do not evaluate the condition to any value if there is no data.
+            NoOp = 3,
         }
         /// Only one of the following condition types will be specified.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
@@ -881,7 +910,7 @@ pub struct CreateAlertPolicyRequest {
     ///
     /// Note that this field names the parent container in which the alerting
     /// policy will be written, not the name of the created policy. |name| must be
-    /// a host project of a workspace, otherwise INVALID_ARGUMENT error will
+    /// a host project of a Metrics Scope, otherwise INVALID_ARGUMENT error will
     /// return. The alerting policy that is returned will have a name that contains
     /// a normalized representation of this name as a prefix but adds a suffix of
     /// the form `/alertPolicies/\[ALERT_POLICY_ID\]`, identifying the policy in the
@@ -1007,14 +1036,14 @@ pub mod alert_policy_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     #[doc = " The AlertPolicyService API is used to manage (list, create, delete,"]
-    #[doc = " edit) alert policies in Stackdriver Monitoring. An alerting policy is"]
+    #[doc = " edit) alert policies in Cloud Monitoring. An alerting policy is"]
     #[doc = " a description of the conditions under which some aspect of your"]
     #[doc = " system is considered to be \"unhealthy\" and the ways to notify"]
     #[doc = " people or services about this state. In addition to using this API, alert"]
     #[doc = " policies can also be managed through"]
-    #[doc = " [Stackdriver Monitoring](https://cloud.google.com/monitoring/docs/),"]
+    #[doc = " [Cloud Monitoring](https://cloud.google.com/monitoring/docs/),"]
     #[doc = " which can be reached by clicking the \"Monitoring\" tab in"]
-    #[doc = " [Cloud Console](https://console.cloud.google.com/)."]
+    #[doc = " [Cloud console](https://console.cloud.google.com/)."]
     #[derive(Debug, Clone)]
     pub struct AlertPolicyServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -1613,7 +1642,10 @@ pub struct TimeSeries {
     /// metric's descriptor must be auto-created, then this field specifies the
     /// metric kind of the new descriptor and must be either `GAUGE` (the default)
     /// or `CUMULATIVE`.
-    #[prost(enumeration = "super::super::api::metric_descriptor::MetricKind", tag = "3")]
+    #[prost(
+        enumeration = "super::super::api::metric_descriptor::MetricKind",
+        tag = "3"
+    )]
     pub metric_kind: i32,
     /// The value type of the time series. When listing time series, this value
     /// type might be different from the value type of the associated metric if
@@ -1621,7 +1653,10 @@ pub struct TimeSeries {
     ///
     /// When creating a time series, this field is optional. If present, it must be
     /// the same as the type of the data in the `points` field.
-    #[prost(enumeration = "super::super::api::metric_descriptor::ValueType", tag = "4")]
+    #[prost(
+        enumeration = "super::super::api::metric_descriptor::ValueType",
+        tag = "4"
+    )]
     pub value_type: i32,
     /// The data points of this time series. When listing time series, points are
     /// returned in reverse time order.
@@ -1658,7 +1693,10 @@ pub mod time_series_descriptor {
         #[prost(string, tag = "1")]
         pub key: ::prost::alloc::string::String,
         /// The value type.
-        #[prost(enumeration = "super::super::super::api::metric_descriptor::ValueType", tag = "2")]
+        #[prost(
+            enumeration = "super::super::super::api::metric_descriptor::ValueType",
+            tag = "2"
+        )]
         pub value_type: i32,
         /// The value stream kind.
         #[prost(
@@ -4383,8 +4421,9 @@ pub enum GroupResourceType {
 /// The protocol for the `ListUptimeCheckConfigs` request.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListUptimeCheckConfigsRequest {
-    /// Required. The \[project\](<https://cloud.google.com/monitoring/api/v3#project_name>)
-    /// whose Uptime check configurations are listed. The format is:
+    /// Required. The
+    /// \[project\](<https://cloud.google.com/monitoring/api/v3#project_name>) whose
+    /// Uptime check configurations are listed. The format is:
     ///
     ///     projects/\[PROJECT_ID_OR_NUMBER\]
     #[prost(string, tag = "1")]
@@ -4431,8 +4470,9 @@ pub struct GetUptimeCheckConfigRequest {
 /// The protocol for the `CreateUptimeCheckConfig` request.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateUptimeCheckConfigRequest {
-    /// Required. The \[project\](<https://cloud.google.com/monitoring/api/v3#project_name>) in
-    /// which to create the Uptime check. The format is:
+    /// Required. The
+    /// \[project\](<https://cloud.google.com/monitoring/api/v3#project_name>) in which
+    /// to create the Uptime check. The format is:
     ///
     ///     projects/\[PROJECT_ID_OR_NUMBER\]
     #[prost(string, tag = "1")]

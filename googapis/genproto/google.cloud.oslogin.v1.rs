@@ -13,6 +13,16 @@ pub struct LoginProfile {
     pub ssh_public_keys:
         ::std::collections::HashMap<::prost::alloc::string::String, super::common::SshPublicKey>,
 }
+/// A request message for creating an SSH public key.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSshPublicKeyRequest {
+    /// Required. The unique ID for the user in format `users/{user}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The SSH public key and expiration time.
+    #[prost(message, optional, tag = "2")]
+    pub ssh_public_key: ::core::option::Option<super::common::SshPublicKey>,
+}
 /// A request message for deleting a POSIX account entry.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeletePosixAccountRequest {
@@ -72,6 +82,9 @@ pub struct ImportSshPublicKeyResponse {
     /// The login profile information for the user.
     #[prost(message, optional, tag = "1")]
     pub login_profile: ::core::option::Option<LoginProfile>,
+    /// Detailed information about import results.
+    #[prost(string, tag = "2")]
+    pub details: ::prost::alloc::string::String,
 }
 /// A request message for updating an SSH public key.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -140,6 +153,23 @@ pub mod os_login_service_client {
         pub fn accept_gzip(mut self) -> Self {
             self.inner = self.inner.accept_gzip();
             self
+        }
+        #[doc = " Create an SSH public key"]
+        pub async fn create_ssh_public_key(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSshPublicKeyRequest>,
+        ) -> Result<tonic::Response<super::super::common::SshPublicKey>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.oslogin.v1.OsLoginService/CreateSshPublicKey",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Deletes a POSIX account."]
         pub async fn delete_posix_account(

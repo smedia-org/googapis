@@ -1677,7 +1677,8 @@ pub struct Feature {
     pub max_results: i32,
     /// Model to use for the feature.
     /// Supported values: "builtin/stable" (the default if unset) and
-    /// "builtin/latest".
+    /// "builtin/latest". `DOCUMENT_TEXT_DETECTION` and `TEXT_DETECTION` also
+    /// support "builtin/weekly" for the bleeding edge release updated weekly.
     #[prost(string, tag = "3")]
     pub model: ::prost::alloc::string::String,
 }
@@ -2140,6 +2141,9 @@ pub struct TextDetectionParams {
     /// score for TEXT_DETECTION as well.
     #[prost(bool, tag = "9")]
     pub enable_text_detection_confidence_score: bool,
+    /// A list of advanced OCR options to fine-tune OCR behavior.
+    #[prost(string, repeated, tag = "11")]
+    pub advanced_ocr_options: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Image context and/or feature-specific parameters.
 #[derive(Clone, PartialEq, ::prost::Message)]

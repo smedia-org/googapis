@@ -12,6 +12,19 @@ pub struct LoginProfile {
     #[prost(map = "string, message", tag = "3")]
     pub ssh_public_keys:
         ::std::collections::HashMap<::prost::alloc::string::String, super::common::SshPublicKey>,
+    /// The registered security key credentials for a user.
+    #[prost(message, repeated, tag = "5")]
+    pub security_keys: ::prost::alloc::vec::Vec<SecurityKey>,
+}
+/// A request message for creating an SSH public key.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSshPublicKeyRequest {
+    /// Required. The unique ID for the user in format `users/{user}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The SSH public key and expiration time.
+    #[prost(message, optional, tag = "2")]
+    pub ssh_public_key: ::core::option::Option<super::common::SshPublicKey>,
 }
 /// A request message for deleting a POSIX account entry.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -43,6 +56,9 @@ pub struct GetLoginProfileRequest {
     /// A system ID for filtering the results of the request.
     #[prost(string, tag = "3")]
     pub system_id: ::prost::alloc::string::String,
+    /// The view configures whether to retrieve security keys information.
+    #[prost(enumeration = "LoginProfileView", tag = "4")]
+    pub view: i32,
 }
 /// A request message for retrieving an SSH public key.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -65,6 +81,9 @@ pub struct ImportSshPublicKeyRequest {
     /// The project ID of the Google Cloud Platform project.
     #[prost(string, tag = "3")]
     pub project_id: ::prost::alloc::string::String,
+    /// The view configures whether to retrieve security keys information.
+    #[prost(enumeration = "LoginProfileView", tag = "4")]
+    pub view: i32,
 }
 /// A response message for importing an SSH public key.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -72,6 +91,9 @@ pub struct ImportSshPublicKeyResponse {
     /// The login profile information for the user.
     #[prost(message, optional, tag = "1")]
     pub login_profile: ::core::option::Option<LoginProfile>,
+    /// Detailed information about import results.
+    #[prost(string, tag = "2")]
+    pub details: ::prost::alloc::string::String,
 }
 /// A request message for updating an SSH public key.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -87,6 +109,58 @@ pub struct UpdateSshPublicKeyRequest {
     /// Mask to control which fields get updated. Updates all if not present.
     #[prost(message, optional, tag = "3")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// The credential information for a Google registered security key.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SecurityKey {
+    /// Public key text in SSH format, defined by
+    /// \[RFC4253\]("<https://www.ietf.org/rfc/rfc4253.txt">) section 6.6.
+    #[prost(string, tag = "1")]
+    pub public_key: ::prost::alloc::string::String,
+    /// Hardware-backed private key text in SSH format.
+    #[prost(string, tag = "2")]
+    pub private_key: ::prost::alloc::string::String,
+    /// The FIDO protocol type used to register this credential.
+    #[prost(oneof = "security_key::ProtocolType", tags = "3, 4")]
+    pub protocol_type: ::core::option::Option<security_key::ProtocolType>,
+}
+/// Nested message and enum types in `SecurityKey`.
+pub mod security_key {
+    /// The FIDO protocol type used to register this credential.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ProtocolType {
+        /// The U2F protocol type.
+        #[prost(message, tag = "3")]
+        UniversalTwoFactor(super::UniversalTwoFactor),
+        /// The Web Authentication protocol type.
+        #[prost(message, tag = "4")]
+        WebAuthn(super::WebAuthn),
+    }
+}
+/// Security key information specific to the U2F protocol.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UniversalTwoFactor {
+    /// Application ID for the U2F protocol.
+    #[prost(string, tag = "1")]
+    pub app_id: ::prost::alloc::string::String,
+}
+/// Security key information specific to the Web Authentication protocol.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WebAuthn {
+    /// Relying party ID for Web Authentication.
+    #[prost(string, tag = "1")]
+    pub rp_id: ::prost::alloc::string::String,
+}
+/// The login profile view limits the user content retrieved.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum LoginProfileView {
+    /// The default login profile view. The API defaults to the BASIC view.
+    Unspecified = 0,
+    /// Includes POSIX and SSH key information.
+    Basic = 1,
+    /// Include security key information for the user.
+    SecurityKey = 2,
 }
 #[doc = r" Generated client implementations."]
 pub mod os_login_service_client {
@@ -140,6 +214,23 @@ pub mod os_login_service_client {
         pub fn accept_gzip(mut self) -> Self {
             self.inner = self.inner.accept_gzip();
             self
+        }
+        #[doc = " Create an SSH public key"]
+        pub async fn create_ssh_public_key(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSshPublicKeyRequest>,
+        ) -> Result<tonic::Response<super::super::common::SshPublicKey>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.oslogin.v1beta.OsLoginService/CreateSshPublicKey",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Deletes a POSIX account."]
         pub async fn delete_posix_account(

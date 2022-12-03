@@ -132,76 +132,6 @@ pub struct TimeZone {
     #[prost(string, tag = "2")]
     pub version: ::prost::alloc::string::String,
 }
-/// Represents a textual expression in the Common Expression Language (CEL)
-/// syntax. CEL is a C-like expression language. The syntax and semantics of CEL
-/// are documented at <https://github.com/google/cel-spec.>
-///
-/// Example (Comparison):
-///
-///     title: "Summary size limit"
-///     description: "Determines if a summary is less than 100 chars"
-///     expression: "document.summary.size() < 100"
-///
-/// Example (Equality):
-///
-///     title: "Requestor is owner"
-///     description: "Determines if requestor is the document owner"
-///     expression: "document.owner == request.auth.claims.email"
-///
-/// Example (Logic):
-///
-///     title: "Public documents"
-///     description: "Determine whether the document should be publicly visible"
-///     expression: "document.type != 'private' && document.type != 'internal'"
-///
-/// Example (Data Manipulation):
-///
-///     title: "Notification string"
-///     description: "Create a notification string with a timestamp."
-///     expression: "'New message received at ' + string(document.create_time)"
-///
-/// The exact variables and functions that may be referenced within an expression
-/// are determined by the service that evaluates it. See the service
-/// documentation for additional information.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Expr {
-    /// Textual representation of an expression in Common Expression Language
-    /// syntax.
-    #[prost(string, tag = "1")]
-    pub expression: ::prost::alloc::string::String,
-    /// Optional. Title for the expression, i.e. a short string describing
-    /// its purpose. This can be used e.g. in UIs which allow to enter the
-    /// expression.
-    #[prost(string, tag = "2")]
-    pub title: ::prost::alloc::string::String,
-    /// Optional. Description of the expression. This is a longer text which
-    /// describes the expression, e.g. when hovered over it in a UI.
-    #[prost(string, tag = "3")]
-    pub description: ::prost::alloc::string::String,
-    /// Optional. String indicating the location of the expression for error
-    /// reporting, e.g. a file name and a position in the file.
-    #[prost(string, tag = "4")]
-    pub location: ::prost::alloc::string::String,
-}
-/// Represents an amount of money with its currency type.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Money {
-    /// The three-letter currency code defined in ISO 4217.
-    #[prost(string, tag = "1")]
-    pub currency_code: ::prost::alloc::string::String,
-    /// The whole units of the amount.
-    /// For example if `currencyCode` is `"USD"`, then 1 unit is one US dollar.
-    #[prost(int64, tag = "2")]
-    pub units: i64,
-    /// Number of nano (10^-9) units of the amount.
-    /// The value must be between -999,999,999 and +999,999,999 inclusive.
-    /// If `units` is positive, `nanos` must be positive or zero.
-    /// If `units` is zero, `nanos` can be positive, zero, or negative.
-    /// If `units` is negative, `nanos` must be negative or zero.
-    /// For example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.
-    #[prost(int32, tag = "3")]
-    pub nanos: i32,
-}
 /// Represents a color in the RGBA color space. This representation is designed
 /// for simplicity of conversion to/from color representations in various
 /// languages over compactness. For example, the fields of this representation
@@ -351,6 +281,97 @@ pub struct Color {
     #[prost(message, optional, tag = "4")]
     pub alpha: ::core::option::Option<f32>,
 }
+/// Represents a textual expression in the Common Expression Language (CEL)
+/// syntax. CEL is a C-like expression language. The syntax and semantics of CEL
+/// are documented at <https://github.com/google/cel-spec.>
+///
+/// Example (Comparison):
+///
+///     title: "Summary size limit"
+///     description: "Determines if a summary is less than 100 chars"
+///     expression: "document.summary.size() < 100"
+///
+/// Example (Equality):
+///
+///     title: "Requestor is owner"
+///     description: "Determines if requestor is the document owner"
+///     expression: "document.owner == request.auth.claims.email"
+///
+/// Example (Logic):
+///
+///     title: "Public documents"
+///     description: "Determine whether the document should be publicly visible"
+///     expression: "document.type != 'private' && document.type != 'internal'"
+///
+/// Example (Data Manipulation):
+///
+///     title: "Notification string"
+///     description: "Create a notification string with a timestamp."
+///     expression: "'New message received at ' + string(document.create_time)"
+///
+/// The exact variables and functions that may be referenced within an expression
+/// are determined by the service that evaluates it. See the service
+/// documentation for additional information.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Expr {
+    /// Textual representation of an expression in Common Expression Language
+    /// syntax.
+    #[prost(string, tag = "1")]
+    pub expression: ::prost::alloc::string::String,
+    /// Optional. Title for the expression, i.e. a short string describing
+    /// its purpose. This can be used e.g. in UIs which allow to enter the
+    /// expression.
+    #[prost(string, tag = "2")]
+    pub title: ::prost::alloc::string::String,
+    /// Optional. Description of the expression. This is a longer text which
+    /// describes the expression, e.g. when hovered over it in a UI.
+    #[prost(string, tag = "3")]
+    pub description: ::prost::alloc::string::String,
+    /// Optional. String indicating the location of the expression for error
+    /// reporting, e.g. a file name and a position in the file.
+    #[prost(string, tag = "4")]
+    pub location: ::prost::alloc::string::String,
+}
+/// Represents an amount of money with its currency type.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Money {
+    /// The three-letter currency code defined in ISO 4217.
+    #[prost(string, tag = "1")]
+    pub currency_code: ::prost::alloc::string::String,
+    /// The whole units of the amount.
+    /// For example if `currencyCode` is `"USD"`, then 1 unit is one US dollar.
+    #[prost(int64, tag = "2")]
+    pub units: i64,
+    /// Number of nano (10^-9) units of the amount.
+    /// The value must be between -999,999,999 and +999,999,999 inclusive.
+    /// If `units` is positive, `nanos` must be positive or zero.
+    /// If `units` is zero, `nanos` can be positive, zero, or negative.
+    /// If `units` is negative, `nanos` must be negative or zero.
+    /// For example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.
+    #[prost(int32, tag = "3")]
+    pub nanos: i32,
+}
+/// Represents a time interval, encoded as a Timestamp start (inclusive) and a
+/// Timestamp end (exclusive).
+///
+/// The start must be less than or equal to the end.
+/// When the start equals the end, the interval is empty (matches no time).
+/// When both start and end are unspecified, the interval matches any time.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Interval {
+    /// Optional. Inclusive start of the interval.
+    ///
+    /// If specified, a Timestamp matching this interval will have to be the same
+    /// or after the start.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Optional. Exclusive end of the interval.
+    ///
+    /// If specified, a Timestamp matching this interval will have to be before the
+    /// end.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+}
 /// Represents a postal address, e.g. for postal delivery or payments addresses.
 /// Given a postal address, a postal service can deliver items to a premise, P.O.
 /// Box or similar.
@@ -462,75 +483,6 @@ pub struct PostalAddress {
     #[prost(string, tag = "11")]
     pub organization: ::prost::alloc::string::String,
 }
-/// Represents a day of the week.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum DayOfWeek {
-    /// The day of the week is unspecified.
-    Unspecified = 0,
-    /// Monday
-    Monday = 1,
-    /// Tuesday
-    Tuesday = 2,
-    /// Wednesday
-    Wednesday = 3,
-    /// Thursday
-    Thursday = 4,
-    /// Friday
-    Friday = 5,
-    /// Saturday
-    Saturday = 6,
-    /// Sunday
-    Sunday = 7,
-}
-/// Represents a time of day. The date and time zone are either not significant
-/// or are specified elsewhere. An API may choose to allow leap seconds. Related
-/// types are \[google.type.Date][google.type.Date\] and
-/// `google.protobuf.Timestamp`.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct TimeOfDay {
-    /// Hours of day in 24 hour format. Should be from 0 to 23. An API may choose
-    /// to allow the value "24:00:00" for scenarios like business closing time.
-    #[prost(int32, tag = "1")]
-    pub hours: i32,
-    /// Minutes of hour of day. Must be from 0 to 59.
-    #[prost(int32, tag = "2")]
-    pub minutes: i32,
-    /// Seconds of minutes of the time. Must normally be from 0 to 59. An API may
-    /// allow the value 60 if it allows leap-seconds.
-    #[prost(int32, tag = "3")]
-    pub seconds: i32,
-    /// Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.
-    #[prost(int32, tag = "4")]
-    pub nanos: i32,
-}
-/// A `CalendarPeriod` represents the abstract concept of a time period that has
-/// a canonical start. Grammatically, "the start of the current
-/// `CalendarPeriod`." All calendar times begin at midnight UTC.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum CalendarPeriod {
-    /// Undefined period, raises an error.
-    Unspecified = 0,
-    /// A day.
-    Day = 1,
-    /// A week. Weeks begin on Monday, following
-    /// [ISO 8601](<https://en.wikipedia.org/wiki/ISO_week_date>).
-    Week = 2,
-    /// A fortnight. The first calendar fortnight of the year begins at the start
-    /// of week 1 according to
-    /// [ISO 8601](<https://en.wikipedia.org/wiki/ISO_week_date>).
-    Fortnight = 3,
-    /// A month.
-    Month = 4,
-    /// A quarter. Quarters start on dates 1-Jan, 1-Apr, 1-Jul, and 1-Oct of each
-    /// year.
-    Quarter = 5,
-    /// A half-year. Half-years start on dates 1-Jan and 1-Jul.
-    Half = 6,
-    /// A year.
-    Year = 7,
-}
 /// A representation of a decimal value, such as 2.5. Clients may convert values
 /// into language-native decimal formats, such as Java's \[BigDecimal][\] or
 /// Python's \[decimal.Decimal][\].
@@ -603,6 +555,75 @@ pub struct Decimal {
     #[prost(string, tag = "1")]
     pub value: ::prost::alloc::string::String,
 }
+/// Represents a day of the week.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum DayOfWeek {
+    /// The day of the week is unspecified.
+    Unspecified = 0,
+    /// Monday
+    Monday = 1,
+    /// Tuesday
+    Tuesday = 2,
+    /// Wednesday
+    Wednesday = 3,
+    /// Thursday
+    Thursday = 4,
+    /// Friday
+    Friday = 5,
+    /// Saturday
+    Saturday = 6,
+    /// Sunday
+    Sunday = 7,
+}
+/// Represents a time of day. The date and time zone are either not significant
+/// or are specified elsewhere. An API may choose to allow leap seconds. Related
+/// types are \[google.type.Date][google.type.Date\] and
+/// `google.protobuf.Timestamp`.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TimeOfDay {
+    /// Hours of day in 24 hour format. Should be from 0 to 23. An API may choose
+    /// to allow the value "24:00:00" for scenarios like business closing time.
+    #[prost(int32, tag = "1")]
+    pub hours: i32,
+    /// Minutes of hour of day. Must be from 0 to 59.
+    #[prost(int32, tag = "2")]
+    pub minutes: i32,
+    /// Seconds of minutes of the time. Must normally be from 0 to 59. An API may
+    /// allow the value 60 if it allows leap-seconds.
+    #[prost(int32, tag = "3")]
+    pub seconds: i32,
+    /// Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.
+    #[prost(int32, tag = "4")]
+    pub nanos: i32,
+}
+/// A `CalendarPeriod` represents the abstract concept of a time period that has
+/// a canonical start. Grammatically, "the start of the current
+/// `CalendarPeriod`." All calendar times begin at midnight UTC.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum CalendarPeriod {
+    /// Undefined period, raises an error.
+    Unspecified = 0,
+    /// A day.
+    Day = 1,
+    /// A week. Weeks begin on Monday, following
+    /// [ISO 8601](<https://en.wikipedia.org/wiki/ISO_week_date>).
+    Week = 2,
+    /// A fortnight. The first calendar fortnight of the year begins at the start
+    /// of week 1 according to
+    /// [ISO 8601](<https://en.wikipedia.org/wiki/ISO_week_date>).
+    Fortnight = 3,
+    /// A month.
+    Month = 4,
+    /// A quarter. Quarters start on dates 1-Jan, 1-Apr, 1-Jul, and 1-Oct of each
+    /// year.
+    Quarter = 5,
+    /// A half-year. Half-years start on dates 1-Jan and 1-Jul.
+    Half = 6,
+    /// A year.
+    Year = 7,
+}
 /// Represents a fraction in terms of a numerator divided by a denominator.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fraction {
@@ -613,27 +634,6 @@ pub struct Fraction {
     /// positive.
     #[prost(int64, tag = "2")]
     pub denominator: i64,
-}
-/// Represents a time interval, encoded as a Timestamp start (inclusive) and a
-/// Timestamp end (exclusive).
-///
-/// The start must be less than or equal to the end.
-/// When the start equals the end, the interval is empty (matches no time).
-/// When both start and end are unspecified, the interval matches any time.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Interval {
-    /// Optional. Inclusive start of the interval.
-    ///
-    /// If specified, a Timestamp matching this interval will have to be the same
-    /// or after the start.
-    #[prost(message, optional, tag = "1")]
-    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Optional. Exclusive end of the interval.
-    ///
-    /// If specified, a Timestamp matching this interval will have to be before the
-    /// end.
-    #[prost(message, optional, tag = "2")]
-    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Localized variant of a text in a particular language.
 #[derive(Clone, PartialEq, ::prost::Message)]

@@ -90,7 +90,7 @@ pub struct Connection {
     #[prost(bool, tag = "7")]
     pub has_credential: bool,
     /// Properties specific to the underlying data source.
-    #[prost(oneof = "connection::Properties", tags = "4, 8, 21")]
+    #[prost(oneof = "connection::Properties", tags = "4, 8, 11, 21, 22")]
     pub properties: ::core::option::Option<connection::Properties>,
 }
 /// Nested message and enum types in `Connection`.
@@ -104,9 +104,15 @@ pub mod connection {
         /// Amazon Web Services (AWS) properties.
         #[prost(message, tag = "8")]
         Aws(super::AwsProperties),
+        /// Azure properties.
+        #[prost(message, tag = "11")]
+        Azure(super::AzureProperties),
         /// Cloud Spanner properties.
         #[prost(message, tag = "21")]
         CloudSpanner(super::CloudSpannerProperties),
+        /// Cloud Resource properties.
+        #[prost(message, tag = "22")]
+        CloudResource(super::CloudResourceProperties),
     }
 }
 /// Connection properties specific to the Cloud SQL.
@@ -124,6 +130,13 @@ pub struct CloudSqlProperties {
     /// Input only. Cloud SQL credential.
     #[prost(message, optional, tag = "4")]
     pub credential: ::core::option::Option<CloudSqlCredential>,
+    /// Output only. The account ID of the service used for the purpose of this connection.
+    ///
+    /// When the connection is used in the context of an operation in
+    /// BigQuery, this service account will serve as identity being used for
+    /// connecting to the CloudSQL instance specified in this connection.
+    #[prost(string, tag = "5")]
+    pub service_account_id: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `CloudSqlProperties`.
 pub mod cloud_sql_properties {
@@ -173,6 +186,7 @@ pub mod aws_properties {
     pub enum AuthenticationMethod {
         /// Authentication using Google owned AWS IAM user's access key to assume
         /// into customer's AWS IAM Role.
+        /// Deprecated, do not use.
         #[prost(message, tag = "2")]
         CrossAccountRole(super::AwsCrossAccountRole),
         /// Authentication using Google owned service account to assume into
@@ -210,6 +224,52 @@ pub struct AwsAccessRole {
     /// This identity will be used to access the user's AWS IAM Role.
     #[prost(string, tag = "2")]
     pub identity: ::prost::alloc::string::String,
+}
+/// Container for connection properties specific to Azure.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AzureProperties {
+    /// Output only. The name of the Azure Active Directory Application.
+    #[prost(string, tag = "1")]
+    pub application: ::prost::alloc::string::String,
+    /// Output only. The client id of the Azure Active Directory Application.
+    #[prost(string, tag = "2")]
+    pub client_id: ::prost::alloc::string::String,
+    /// Output only. The object id of the Azure Active Directory Application.
+    #[prost(string, tag = "3")]
+    pub object_id: ::prost::alloc::string::String,
+    /// The id of customer's directory that host the data.
+    #[prost(string, tag = "4")]
+    pub customer_tenant_id: ::prost::alloc::string::String,
+    /// The URL user will be redirected to after granting consent during connection
+    /// setup.
+    #[prost(string, tag = "5")]
+    pub redirect_uri: ::prost::alloc::string::String,
+    /// The client id of the user's Azure Active Directory Application used for a
+    /// federated connection.
+    #[prost(string, tag = "6")]
+    pub federated_application_client_id: ::prost::alloc::string::String,
+    /// Output only. A unique Google-owned and Google-generated identity for the Connection.
+    /// This identity will be used to access the user's Azure Active Directory
+    /// Application.
+    #[prost(string, tag = "7")]
+    pub identity: ::prost::alloc::string::String,
+}
+/// Container for connection properties for delegation of access to GCP
+/// resources.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudResourceProperties {
+    /// Output only. The account ID of the service created for the purpose of this connection.
+    ///
+    /// The service account does not have any permissions associated with it
+    /// when it is created. After creation, customers delegate permissions
+    /// to the service account. When the connection is used in the context of an
+    /// operation in BigQuery, the service account will be used to connect to the
+    /// desired resources in GCP.
+    ///
+    /// The account ID is in the form of:
+    ///   <service-1234>@gcp-sa-bigquery-cloudresource.iam.gserviceaccount.com
+    #[prost(string, tag = "1")]
+    pub service_account_id: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod connection_service_client {

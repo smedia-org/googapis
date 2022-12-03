@@ -206,8 +206,31 @@ pub struct CloudSqlConnectionProfile {
     #[prost(string, tag = "1")]
     pub cloud_sql_id: ::prost::alloc::string::String,
 }
+/// An Oracle connection profile.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OracleConnectionProfile {
+    /// Required. Type of connectivity to source database.
+    #[prost(enumeration = "oracle_connection_profile::ConnectivityType", tag = "1")]
+    pub connectivity_type: i32,
+}
+/// Nested message and enum types in `OracleConnectionProfile`.
+pub mod oracle_connection_profile {
+    /// Connectivity options used to establish a connection to the profile.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ConnectivityType {
+        /// No data defined.
+        Unspecified = 0,
+        /// Static Service IP connectivity.
+        StaticServiceIp = 1,
+        /// Forward SSH tunnel connectivity.
+        ForwardSshTunnel = 2,
+        /// Private connectivity.
+        PrivateConnectivity = 3,
+    }
+}
 /// An producer connection profile definition.
-/// NEXT_TAG = 18.
+/// NEXT_TAG = 8.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LoggedConnectionProfile {
     /// The unique identifier for a connection profile.
@@ -230,7 +253,10 @@ pub struct LoggedConnectionProfile {
     #[prost(enumeration = "DatabaseProvider", tag = "6")]
     pub provider: i32,
     /// The connection profile definition
-    #[prost(oneof = "logged_connection_profile::ConnectionProfile", tags = "100, 101, 102")]
+    #[prost(
+        oneof = "logged_connection_profile::ConnectionProfile",
+        tags = "100, 101, 102, 103"
+    )]
     pub connection_profile: ::core::option::Option<logged_connection_profile::ConnectionProfile>,
 }
 /// Nested message and enum types in `LoggedConnectionProfile`.
@@ -268,6 +294,9 @@ pub mod logged_connection_profile {
         /// A CloudSQL database connection profile.
         #[prost(message, tag = "102")]
         Cloudsql(super::CloudSqlConnectionProfile),
+        /// An Oracle database connection profile.
+        #[prost(message, tag = "103")]
+        Oracle(super::OracleConnectionProfile),
     }
 }
 /// Log definition for Migration Job event
@@ -318,7 +347,10 @@ pub struct ConnectionProfileEventLog {
     #[prost(string, tag = "4")]
     pub text_message: ::prost::alloc::string::String,
     /// Original event data
-    #[prost(oneof = "connection_profile_event_log::OriginalCause", tags = "200, 201")]
+    #[prost(
+        oneof = "connection_profile_event_log::OriginalCause",
+        tags = "200, 201"
+    )]
     pub original_cause: ::core::option::Option<connection_profile_event_log::OriginalCause>,
 }
 /// Nested message and enum types in `ConnectionProfileEventLog`.
@@ -330,6 +362,98 @@ pub mod connection_profile_event_log {
         #[prost(int32, tag = "200")]
         OriginalCode(i32),
         /// Original event message
+        #[prost(string, tag = "201")]
+        OriginalMessage(::prost::alloc::string::String),
+    }
+}
+/// The PrivateConnection resource is used to establish private connectivity
+/// with the customer's network.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LoggedPrivateConnection {
+    /// The resource's name.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Labels.
+    #[prost(map = "string, string", tag = "2")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Display name.
+    #[prost(string, tag = "3")]
+    pub display_name: ::prost::alloc::string::String,
+    /// The state of the Private Connection.
+    #[prost(enumeration = "logged_private_connection::State", tag = "4")]
+    pub state: i32,
+    /// The error details in case of state FAILED.
+    #[prost(message, optional, tag = "5")]
+    pub error: ::core::option::Option<super::super::super::super::rpc::Status>,
+    /// VPC Peering Config.
+    #[prost(message, optional, tag = "100")]
+    pub vpc_peering_config: ::core::option::Option<VpcPeeringConfig>,
+}
+/// Nested message and enum types in `LoggedPrivateConnection`.
+pub mod logged_private_connection {
+    /// Private Connection state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unspecified state.
+        Unspecified = 0,
+        /// The private connection is in creation state - creating resources.
+        Creating = 1,
+        /// The private connection has been created with all of its resources.
+        Created = 2,
+        /// The private connection creation has failed.
+        Failed = 3,
+        /// The private connection is being deleted.
+        Deleting = 4,
+        /// Delete request has failed, resource is in invalid state.
+        FailedToDelete = 5,
+        /// The private connection has been deleted.
+        Deleted = 6,
+    }
+}
+/// The VPC Peering configuration is used to create VPC peering between
+/// the data plane and the consumer's VPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VpcPeeringConfig {
+    /// Fully qualified name of the VPC DMS will peer to.
+    #[prost(string, tag = "1")]
+    pub vpc_name: ::prost::alloc::string::String,
+    /// The subnet that will be peered to. (CIDR of /29).
+    #[prost(string, tag = "2")]
+    pub subnet: ::prost::alloc::string::String,
+}
+/// Log definition for a Private Connection event.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PrivateConnectionEventLog {
+    /// The private connection resource.
+    #[prost(message, optional, tag = "1")]
+    pub private_connection: ::core::option::Option<LoggedPrivateConnection>,
+    /// Timestamp of the event.
+    #[prost(message, optional, tag = "2")]
+    pub occurrence_timestamp: ::core::option::Option<::prost_types::Timestamp>,
+    /// Event code.
+    #[prost(int32, tag = "3")]
+    pub code: i32,
+    /// Event message.
+    #[prost(string, tag = "4")]
+    pub text_message: ::prost::alloc::string::String,
+    /// Original event data.
+    #[prost(
+        oneof = "private_connection_event_log::OriginalCause",
+        tags = "200, 201"
+    )]
+    pub original_cause: ::core::option::Option<private_connection_event_log::OriginalCause>,
+}
+/// Nested message and enum types in `PrivateConnectionEventLog`.
+pub mod private_connection_event_log {
+    /// Original event data.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum OriginalCause {
+        /// Original event code.
+        #[prost(int32, tag = "200")]
+        OriginalCode(i32),
+        /// Original event message.
         #[prost(string, tag = "201")]
         OriginalMessage(::prost::alloc::string::String),
     }
@@ -346,6 +470,10 @@ pub enum DatabaseEngine {
     Postgresql = 2,
     /// The source engine is SQL Server.
     Sqlserver = 3,
+    /// The source engine is Oracle (for heterogeneous migrations).
+    Oracle = 4,
+    /// The engine is Spanner (for heterogeneous migrations).
+    Spanner = 5,
 }
 /// The database providers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -357,4 +485,8 @@ pub enum DatabaseProvider {
     Cloudsql = 1,
     /// RDS runs the database.
     Rds = 2,
+    /// Amazon Aurora.
+    Aurora = 3,
+    /// AlloyDB.
+    Alloydb = 4,
 }

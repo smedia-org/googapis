@@ -19,7 +19,7 @@ pub struct CreateWorkloadRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateWorkloadRequest {
     /// Required. The workload to update.
-    /// The workload’s `name` field is used to identify the workload to be updated.
+    /// The workload's `name` field is used to identify the workload to be updated.
     /// Format:
     /// organizations/{org_id}/locations/{location_id}/workloads/{workload_id}
     #[prost(message, optional, tag = "1")]
@@ -44,7 +44,7 @@ pub struct DeleteWorkloadRequest {
 /// Request for fetching a workload.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetWorkloadRequest {
-    /// Required. The resource name of the Workload to fetch. This is the workloads's
+    /// Required. The resource name of the Workload to fetch. This is the workload's
     /// relative path in the API, formatted as
     /// "organizations/{organization_id}/locations/{location_id}/workloads/{workload_id}".
     /// For example,
@@ -82,7 +82,7 @@ pub struct ListWorkloadsResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
-/// An Workload object for managing highly regulated workloads of cloud
+/// A Workload object for managing highly regulated workloads of cloud
 /// customers.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Workload {
@@ -113,7 +113,7 @@ pub struct Workload {
     /// Output only. Immutable. The Workload creation timestamp.
     #[prost(message, optional, tag = "5")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Required. Input only. The billing account used for the resources which are
+    /// Optional. The billing account used for the resources which are
     /// direct children of workload. This billing account is initially associated
     /// with the resources created as part of Workload creation.
     /// After the initial creation of these resources, the customer can change
@@ -139,9 +139,12 @@ pub struct Workload {
     /// folders/{folder_id}
     #[prost(string, tag = "13")]
     pub provisioned_resources_parent: ::prost::alloc::string::String,
-    /// Input only. Settings used to create a CMEK crypto key. When set a project with a KMS
-    /// CMEK key is provisioned. This field is mandatory for a subset of Compliance
-    /// Regimes.
+    /// Input only. Settings used to create a CMEK crypto key. When set, a project with a KMS
+    /// CMEK key is provisioned.
+    /// This field is deprecated as of Feb 28, 2022.
+    /// In order to create a Keyring, callers should specify,
+    /// ENCRYPTION_KEYS_PROJECT or KEYRING in ResourceSettings.resource_type field.
+    #[deprecated]
     #[prost(message, optional, tag = "14")]
     pub kms_settings: ::core::option::Option<workload::KmsSettings>,
     /// Input only. Resource properties that are used to customize workload resources.
@@ -149,6 +152,27 @@ pub struct Workload {
     /// workload resources if possible. This field is optional.
     #[prost(message, repeated, tag = "15")]
     pub resource_settings: ::prost::alloc::vec::Vec<workload::ResourceSettings>,
+    /// Output only. Represents the KAJ enrollment state of the given workload.
+    #[prost(enumeration = "workload::KajEnrollmentState", tag = "17")]
+    pub kaj_enrollment_state: i32,
+    /// Optional. Indicates the sovereignty status of the given workload.
+    /// Currently meant to be used by Europe/Canada customers.
+    #[prost(bool, tag = "18")]
+    pub enable_sovereign_controls: bool,
+    /// Output only. Represents the SAA enrollment response of the given workload.
+    /// SAA enrollment response is queried during GetWorkload call.
+    /// In failure cases, user friendly error message is shown in SAA details page.
+    #[prost(message, optional, tag = "20")]
+    pub saa_enrollment_response: ::core::option::Option<workload::SaaEnrollmentResponse>,
+    /// Output only. Urls for services which are compliant for this Assured Workload, but which
+    /// are currently disallowed by the ResourceUsageRestriction org policy.
+    /// Invoke RestrictAllowedResources endpoint to allow your project developers
+    /// to use these services in their environment."
+    #[prost(string, repeated, tag = "24")]
+    pub compliant_but_disallowed_services: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Compliance Regime associated with this workload.
+    #[prost(enumeration = "workload::Partner", tag = "25")]
+    pub partner: i32,
 }
 /// Nested message and enum types in `Workload`.
 pub mod workload {
@@ -174,7 +198,13 @@ pub mod workload {
             /// Unknown resource type.
             Unspecified = 0,
             /// Consumer project.
+            /// AssuredWorkloads Projects are no longer supported. This field will be
+            /// ignored only in CreateWorkload requests. ListWorkloads and GetWorkload
+            /// will continue to provide projects information.
+            /// Use CONSUMER_FOLDER instead.
             ConsumerProject = 1,
+            /// Consumer Folder.
+            ConsumerFolder = 4,
             /// Consumer project containing encryption keys.
             EncryptionKeysProject = 2,
             /// Keyring resource that hosts encryption keys.
@@ -182,6 +212,9 @@ pub mod workload {
         }
     }
     /// Settings specific to the Key Management Service.
+    /// This message is deprecated.
+    /// In order to create a Keyring, callers should specify,
+    /// ENCRYPTION_KEYS_PROJECT or KEYRING in ResourceSettings.resource_type field.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct KmsSettings {
         /// Required. Input only. Immutable. The time at which the Key Management Service will automatically create a
@@ -200,10 +233,12 @@ pub mod workload {
         /// Resource identifier.
         /// For a project this represents project_id. If the project is already
         /// taken, the workload creation will fail.
+        /// For KeyRing, this represents the keyring_id.
+        /// For a folder, don't set this value as folder_id is assigned by Google.
         #[prost(string, tag = "1")]
         pub resource_id: ::prost::alloc::string::String,
         /// Indicates the type of resource. This field should be specified to
-        /// correspond the id to the right project type (CONSUMER_PROJECT or
+        /// correspond the id to the right resource type (CONSUMER_FOLDER or
         /// ENCRYPTION_KEYS_PROJECT)
         #[prost(enumeration = "resource_info::ResourceType", tag = "2")]
         pub resource_type: i32,
@@ -212,6 +247,60 @@ pub mod workload {
         /// name.
         #[prost(string, tag = "3")]
         pub display_name: ::prost::alloc::string::String,
+    }
+    /// Signed Access Approvals (SAA) enrollment response.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SaaEnrollmentResponse {
+        /// Indicates SAA enrollment status of a given workload.
+        #[prost(
+            enumeration = "saa_enrollment_response::SetupState",
+            optional,
+            tag = "1"
+        )]
+        pub setup_status: ::core::option::Option<i32>,
+        /// Indicates SAA enrollment setup error if any.
+        #[prost(
+            enumeration = "saa_enrollment_response::SetupError",
+            repeated,
+            tag = "2"
+        )]
+        pub setup_errors: ::prost::alloc::vec::Vec<i32>,
+    }
+    /// Nested message and enum types in `SaaEnrollmentResponse`.
+    pub mod saa_enrollment_response {
+        /// Setup state of SAA enrollment.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum SetupState {
+            /// Unspecified.
+            Unspecified = 0,
+            /// SAA enrollment pending.
+            StatusPending = 1,
+            /// SAA enrollment comopleted.
+            StatusComplete = 2,
+        }
+        /// Setup error of SAA enrollment.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum SetupError {
+            /// Unspecified.
+            Unspecified = 0,
+            /// Invalid states for all customers, to be redirected to AA UI for
+            /// additional details.
+            ErrorInvalidBaseSetup = 1,
+            /// Returned when there is not an EKM key configured.
+            ErrorMissingExternalSigningKey = 2,
+            /// Returned when there are no enrolled services or the customer is
+            /// enrolled in CAA only for a subset of services.
+            ErrorNotAllServicesEnrolled = 3,
+            /// Returned when exception was encountered during evaluation of other
+            /// criteria.
+            ErrorSetupCheckFailed = 4,
+        }
     }
     /// Supported Compliance Regimes.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -237,6 +326,34 @@ pub mod workload {
         EuRegionsAndSupport = 8,
         /// Assured Workloads For Canada Regions and Support controls
         CaRegionsAndSupport = 9,
+        /// International Traffic in Arms Regulations
+        Itar = 10,
+        /// Assured Workloads for Australia Regions and Support controls
+        /// Available for public preview consumption.
+        /// Don't create production workloads.
+        AuRegionsAndUsSupport = 11,
+        /// Assured Workloads for Partners
+        AssuredWorkloadsForPartners = 12,
+    }
+    /// Key Access Justifications(KAJ) Enrollment State.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum KajEnrollmentState {
+        /// Default State for KAJ Enrollment.
+        Unspecified = 0,
+        /// Pending State for KAJ Enrollment.
+        Pending = 1,
+        /// Complete State for KAJ Enrollment.
+        Complete = 2,
+    }
+    /// Supported Assured Workloads Partners.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Partner {
+        /// Unknown partner regime/controls.
+        Unspecified = 0,
+        /// S3NS regime/controls.
+        LocalControlsByS3ns = 1,
     }
 }
 /// Operation metadata to give request details of CreateWorkload.
@@ -255,6 +372,279 @@ pub struct CreateWorkloadOperationMetadata {
     /// the workload.
     #[prost(enumeration = "workload::ComplianceRegime", tag = "4")]
     pub compliance_regime: i32,
+}
+/// Request for restricting list of available resources in Workload environment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RestrictAllowedResourcesRequest {
+    /// Required. The resource name of the Workload. This is the workloads's
+    /// relative path in the API, formatted as
+    /// "organizations/{organization_id}/locations/{location_id}/workloads/{workload_id}".
+    /// For example,
+    /// "organizations/123/locations/us-east1/workloads/assured-workload-1".
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The type of restriction for using gcp products in the Workload environment.
+    #[prost(
+        enumeration = "restrict_allowed_resources_request::RestrictionType",
+        tag = "2"
+    )]
+    pub restriction_type: i32,
+}
+/// Nested message and enum types in `RestrictAllowedResourcesRequest`.
+pub mod restrict_allowed_resources_request {
+    /// The type of restriction.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RestrictionType {
+        /// Unknown restriction type.
+        Unspecified = 0,
+        /// Allow the use all of all gcp products, irrespective of the compliance
+        /// posture. This effectively removes gcp.restrictServiceUsage OrgPolicy
+        /// on the AssuredWorkloads Folder.
+        AllowAllGcpResources = 1,
+        /// Based on Workload's compliance regime, allowed list changes.
+        /// See - <https://cloud.google.com/assured-workloads/docs/supported-products>
+        /// for the list of supported resources.
+        AllowCompliantResources = 2,
+    }
+}
+/// Response for restricting the list of allowed resources.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RestrictAllowedResourcesResponse {}
+/// Request for acknowledging the violation
+/// Next Id: 4
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AcknowledgeViolationRequest {
+    /// Required. The resource name of the Violation to acknowledge.
+    /// Format:
+    /// organizations/{organization}/locations/{location}/workloads/{workload}/violations/{violation}
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Business justification explaining the need for violation acknowledgement
+    #[prost(string, tag = "2")]
+    pub comment: ::prost::alloc::string::String,
+    /// Optional. This field is deprecated and will be removed in future version of the API.
+    /// Name of the OrgPolicy which was modified with non-compliant change and
+    /// resulted in this violation.
+    /// Format:
+    /// projects/{project_number}/policies/{constraint_name}
+    /// folders/{folder_id}/policies/{constraint_name}
+    /// organizations/{organization_id}/policies/{constraint_name}
+    #[deprecated]
+    #[prost(string, tag = "3")]
+    pub non_compliant_org_policy: ::prost::alloc::string::String,
+}
+/// Response for violation acknowledgement
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AcknowledgeViolationResponse {}
+/// Interval defining a time window.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TimeWindow {
+    /// The start of the time window.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The end of the time window.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request for fetching violations in an organization.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListViolationsRequest {
+    /// Required. The Workload name.
+    /// Format `organizations/{org_id}/locations/{location}/workloads/{workload}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Specifies the time window for retrieving active Violations.
+    /// When specified, retrieves Violations that were active between start_time
+    /// and end_time.
+    #[prost(message, optional, tag = "2")]
+    pub interval: ::core::option::Option<TimeWindow>,
+    /// Optional. Page size.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+    /// Optional. Page token returned from previous request.
+    #[prost(string, tag = "4")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. A custom filter for filtering by the Violations properties.
+    #[prost(string, tag = "5")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Response of ListViolations endpoint.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListViolationsResponse {
+    /// List of Violations under a Workload.
+    #[prost(message, repeated, tag = "1")]
+    pub violations: ::prost::alloc::vec::Vec<Violation>,
+    /// The next page token. Returns empty if reached the last page.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request for fetching a Workload Violation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetViolationRequest {
+    /// Required. The resource name of the Violation to fetch (ie. Violation.name).
+    /// Format:
+    /// organizations/{organization}/locations/{location}/workloads/{workload}/violations/{violation}
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Workload monitoring Violation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Violation {
+    /// Output only. Immutable. Name of the Violation.
+    /// Format:
+    /// organizations/{organization}/locations/{location}/workloads/{workload_id}/violations/{violations_id}
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Description for the Violation.
+    /// e.g. OrgPolicy gcp.resourceLocations has non compliant value.
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. Time of the event which triggered the Violation.
+    #[prost(message, optional, tag = "3")]
+    pub begin_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The last time when the Violation record was updated.
+    #[prost(message, optional, tag = "4")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Time of the event which fixed the Violation.
+    /// If the violation is ACTIVE this will be empty.
+    #[prost(message, optional, tag = "5")]
+    pub resolve_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Category under which this violation is mapped.
+    /// e.g. Location, Service Usage, Access, Encryption, etc.
+    #[prost(string, tag = "6")]
+    pub category: ::prost::alloc::string::String,
+    /// Output only. State of the violation
+    #[prost(enumeration = "violation::State", tag = "7")]
+    pub state: i32,
+    /// Output only. Immutable. The org-policy-constraint that was incorrectly changed, which resulted in
+    /// this violation.
+    #[prost(string, tag = "8")]
+    pub org_policy_constraint: ::prost::alloc::string::String,
+    /// Output only. Immutable. Audit Log Link for violated resource
+    /// Format:
+    /// <https://console.cloud.google.com/logs/query;query={logName}{protoPayload.resourceName}{timeRange}{folder}>
+    #[prost(string, tag = "11")]
+    pub audit_log_link: ::prost::alloc::string::String,
+    /// Output only. Immutable. Name of the OrgPolicy which was modified with non-compliant change and
+    /// resulted this violation.
+    ///  Format:
+    ///  projects/{project_number}/policies/{constraint_name}
+    ///  folders/{folder_id}/policies/{constraint_name}
+    ///  organizations/{organization_id}/policies/{constraint_name}
+    #[prost(string, tag = "12")]
+    pub non_compliant_org_policy: ::prost::alloc::string::String,
+    /// Output only. Compliance violation remediation
+    #[prost(message, optional, tag = "13")]
+    pub remediation: ::core::option::Option<violation::Remediation>,
+    /// Output only. A boolean that indicates if the violation is acknowledged
+    #[prost(bool, tag = "14")]
+    pub acknowledged: bool,
+    /// Optional. Timestamp when this violation was acknowledged last.
+    /// This will be absent when acknowledged field is marked as false.
+    #[prost(message, optional, tag = "15")]
+    pub acknowledgement_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Immutable. Audit Log link to find business justification provided for violation
+    /// exception. Format:
+    /// <https://console.cloud.google.com/logs/query;query={logName}{protoPayload.resourceName}{protoPayload.methodName}{timeRange}{organization}>
+    #[prost(string, tag = "16")]
+    pub exception_audit_log_link: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `Violation`.
+pub mod violation {
+    /// Represents remediation guidance to resolve compliance violation for
+    /// AssuredWorkload
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Remediation {
+        /// Required. Remediation instructions to resolve violations
+        #[prost(message, optional, tag = "1")]
+        pub instructions: ::core::option::Option<remediation::Instructions>,
+        /// Values that can resolve the violation
+        /// For example: for list org policy violations, this will either be the list
+        /// of allowed or denied values
+        #[prost(string, repeated, tag = "2")]
+        pub compliant_values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Output only. Reemediation type based on the type of org policy values violated
+        #[prost(enumeration = "remediation::RemediationType", tag = "3")]
+        pub remediation_type: i32,
+    }
+    /// Nested message and enum types in `Remediation`.
+    pub mod remediation {
+        /// Instructions to remediate violation
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Instructions {
+            /// Remediation instructions to resolve violation via gcloud cli
+            #[prost(message, optional, tag = "1")]
+            pub gcloud_instructions: ::core::option::Option<instructions::Gcloud>,
+            /// Remediation instructions to resolve violation via cloud console
+            #[prost(message, optional, tag = "2")]
+            pub console_instructions: ::core::option::Option<instructions::Console>,
+        }
+        /// Nested message and enum types in `Instructions`.
+        pub mod instructions {
+            /// Remediation instructions to resolve violation via gcloud cli
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct Gcloud {
+                /// Gcloud command to resolve violation
+                #[prost(string, repeated, tag = "1")]
+                pub gcloud_commands: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+                /// Steps to resolve violation via gcloud cli
+                #[prost(string, repeated, tag = "2")]
+                pub steps: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+                /// Additional urls for more information about steps
+                #[prost(string, repeated, tag = "3")]
+                pub additional_links: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            }
+            /// Remediation instructions to resolve violation via cloud console
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct Console {
+                /// Link to console page where violations can be resolved
+                #[prost(string, repeated, tag = "1")]
+                pub console_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+                /// Steps to resolve violation via cloud console
+                #[prost(string, repeated, tag = "2")]
+                pub steps: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+                /// Additional urls for more information about steps
+                #[prost(string, repeated, tag = "3")]
+                pub additional_links: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            }
+        }
+        /// Classifying remediation into various types based on the kind of
+        /// violation. For example, violations caused due to changes in boolean org
+        /// policy requires different remediation instructions compared to violation
+        /// caused due to changes in allowed values of list org policy.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum RemediationType {
+            /// Unspecified remediation type
+            Unspecified = 0,
+            /// Remediation type for boolean org policy
+            RemediationBooleanOrgPolicyViolation = 1,
+            /// Remediation type for list org policy which have allowed values in the
+            /// monitoring rule
+            RemediationListAllowedValuesOrgPolicyViolation = 2,
+            /// Remediation type for list org policy which have denied values in the
+            /// monitoring rule
+            RemediationListDeniedValuesOrgPolicyViolation = 3,
+            /// Remediation type for gcp.restrictCmekCryptoKeyProjects
+            RemediationRestrictCmekCryptoKeyProjectsOrgPolicyViolation = 4,
+        }
+    }
+    /// Violation State Values
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unspecified state.
+        Unspecified = 0,
+        /// Violation is resolved.
+        Resolved = 2,
+        /// Violation is Unresolved
+        Unresolved = 3,
+        /// Violation is Exception
+        Exception = 4,
+    }
 }
 #[doc = r" Generated client implementations."]
 pub mod assured_workloads_service_client {
@@ -346,6 +736,27 @@ pub mod assured_workloads_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Restrict the list of resources allowed in the Workload environment."]
+        #[doc = " The current list of allowed products can be found at"]
+        #[doc = " https://cloud.google.com/assured-workloads/docs/supported-products"]
+        #[doc = " In addition to assuredworkloads.workload.update permission, the user should"]
+        #[doc = " also have orgpolicy.policy.set permission on the folder resource"]
+        #[doc = " to use this functionality."]
+        pub async fn restrict_allowed_resources(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RestrictAllowedResourcesRequest>,
+        ) -> Result<tonic::Response<super::RestrictAllowedResourcesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.assuredworkloads.v1.AssuredWorkloadsService/RestrictAllowedResources") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Deletes the workload. Make sure that workload's direct children are already"]
         #[doc = " in a deleted state, otherwise the request will fail with a"]
         #[doc = " FAILED_PRECONDITION error."]
@@ -396,6 +807,64 @@ pub mod assured_workloads_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.assuredworkloads.v1.AssuredWorkloadsService/ListWorkloads",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists the Violations in the AssuredWorkload Environment."]
+        #[doc = " Callers may also choose to read across multiple Workloads as per"]
+        #[doc = " [AIP-159](https://google.aip.dev/159) by using '-' (the hyphen or dash"]
+        #[doc = " character) as a wildcard character instead of workload-id in the parent."]
+        #[doc = " Format `organizations/{org_id}/locations/{location}/workloads/-`"]
+        pub async fn list_violations(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListViolationsRequest>,
+        ) -> Result<tonic::Response<super::ListViolationsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.assuredworkloads.v1.AssuredWorkloadsService/ListViolations",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Retrieves Assured Workload Violation based on ID."]
+        pub async fn get_violation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetViolationRequest>,
+        ) -> Result<tonic::Response<super::Violation>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.assuredworkloads.v1.AssuredWorkloadsService/GetViolation",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Acknowledges an existing violation. By acknowledging a violation, users"]
+        #[doc = " acknowledge the existence of a compliance violation in their workload and"]
+        #[doc = " decide to ignore it due to a valid business justification. Acknowledgement"]
+        #[doc = " is a permanent operation and it cannot be reverted."]
+        pub async fn acknowledge_violation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::AcknowledgeViolationRequest>,
+        ) -> Result<tonic::Response<super::AcknowledgeViolationResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.assuredworkloads.v1.AssuredWorkloadsService/AcknowledgeViolation",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

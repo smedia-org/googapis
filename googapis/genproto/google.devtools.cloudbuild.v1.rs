@@ -161,6 +161,32 @@ pub struct BuiltImage {
     #[prost(message, optional, tag = "4")]
     pub push_timing: ::core::option::Option<TimeSpan>,
 }
+/// Artifact uploaded using the PythonPackage directive.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UploadedPythonPackage {
+    /// URI of the uploaded artifact.
+    #[prost(string, tag = "1")]
+    pub uri: ::prost::alloc::string::String,
+    /// Hash types and values of the Python Artifact.
+    #[prost(message, optional, tag = "2")]
+    pub file_hashes: ::core::option::Option<FileHashes>,
+    /// Output only. Stores timing information for pushing the specified artifact.
+    #[prost(message, optional, tag = "3")]
+    pub push_timing: ::core::option::Option<TimeSpan>,
+}
+/// A Maven artifact uploaded using the MavenArtifact directive.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UploadedMavenArtifact {
+    /// URI of the uploaded artifact.
+    #[prost(string, tag = "1")]
+    pub uri: ::prost::alloc::string::String,
+    /// Hash types and values of the Maven Artifact.
+    #[prost(message, optional, tag = "2")]
+    pub file_hashes: ::core::option::Option<FileHashes>,
+    /// Output only. Stores timing information for pushing the specified artifact.
+    #[prost(message, optional, tag = "3")]
+    pub push_timing: ::core::option::Option<TimeSpan>,
+}
 /// A step in the build pipeline.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BuildStep {
@@ -256,6 +282,21 @@ pub struct BuildStep {
     /// as the build progresses.
     #[prost(enumeration = "build::Status", tag = "12")]
     pub status: i32,
+    /// Allow this build step to fail without failing the entire build.
+    ///
+    /// If false, the entire build will fail if this step fails. Otherwise, the
+    /// build will succeed, but this step will still have a failure status.
+    /// Error information will be reported in the failure_detail field.
+    #[prost(bool, tag = "14")]
+    pub allow_failure: bool,
+    /// Output only. Return code from running the step.
+    #[prost(int32, tag = "16")]
+    pub exit_code: i32,
+    /// Allow this build step to fail without failing the entire build if and
+    /// only if the exit code is one of the specified codes. If allow_failure
+    /// is also specified, this field will take precedence.
+    #[prost(int32, repeated, tag = "18")]
+    pub allow_exit_codes: ::prost::alloc::vec::Vec<i32>,
     /// A shell script to be executed in the step.
     ///
     /// When script is provided, the user cannot specify the entrypoint or args.
@@ -306,6 +347,12 @@ pub struct Results {
     /// Time to push all non-container artifacts.
     #[prost(message, optional, tag = "7")]
     pub artifact_timing: ::core::option::Option<TimeSpan>,
+    /// Python artifacts uploaded to Artifact Registry at the end of the build.
+    #[prost(message, repeated, tag = "8")]
+    pub python_packages: ::prost::alloc::vec::Vec<UploadedPythonPackage>,
+    /// Maven artifacts uploaded to Artifact Registry at the end of the build.
+    #[prost(message, repeated, tag = "9")]
+    pub maven_artifacts: ::prost::alloc::vec::Vec<UploadedMavenArtifact>,
 }
 /// An artifact that was uploaded during a build. This
 /// is a single record in the artifact manifest JSON file.
@@ -596,6 +643,24 @@ pub struct Artifacts {
     /// If any objects fail to be pushed, the build is marked FAILURE.
     #[prost(message, optional, tag = "2")]
     pub objects: ::core::option::Option<artifacts::ArtifactObjects>,
+    /// A list of Maven artifacts to be uploaded to Artifact Registry upon
+    /// successful completion of all build steps.
+    ///
+    /// Artifacts in the workspace matching specified paths globs will be uploaded
+    /// to the specified Artifact Registry repository using the builder service
+    /// account's credentials.
+    ///
+    /// If any artifacts fail to be pushed, the build is marked FAILURE.
+    #[prost(message, repeated, tag = "3")]
+    pub maven_artifacts: ::prost::alloc::vec::Vec<artifacts::MavenArtifact>,
+    /// A list of Python packages to be uploaded to Artifact Registry upon
+    /// successful completion of all build steps.
+    ///
+    /// The build service account credentials will be used to perform the upload.
+    ///
+    /// If any objects fail to be pushed, the build is marked FAILURE.
+    #[prost(message, repeated, tag = "5")]
+    pub python_packages: ::prost::alloc::vec::Vec<artifacts::PythonPackage>,
 }
 /// Nested message and enum types in `Artifacts`.
 pub mod artifacts {
@@ -617,6 +682,56 @@ pub mod artifacts {
         /// Output only. Stores timing information for pushing all artifact objects.
         #[prost(message, optional, tag = "3")]
         pub timing: ::core::option::Option<super::TimeSpan>,
+    }
+    /// A Maven artifact to upload to Artifact Registry upon successful completion
+    /// of all build steps.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct MavenArtifact {
+        /// Artifact Registry repository, in the form
+        /// "<https://$REGION-maven.pkg.dev/$PROJECT/$REPOSITORY">
+        ///
+        /// Artifact in the workspace specified by path will be uploaded to
+        /// Artifact Registry with this location as a prefix.
+        #[prost(string, tag = "1")]
+        pub repository: ::prost::alloc::string::String,
+        /// Path to an artifact in the build's workspace to be uploaded to
+        /// Artifact Registry.
+        /// This can be either an absolute path,
+        /// e.g. /workspace/my-app/target/my-app-1.0.SNAPSHOT.jar
+        /// or a relative path from /workspace,
+        /// e.g. my-app/target/my-app-1.0.SNAPSHOT.jar.
+        #[prost(string, tag = "2")]
+        pub path: ::prost::alloc::string::String,
+        /// Maven `artifactId` value used when uploading the artifact to Artifact
+        /// Registry.
+        #[prost(string, tag = "3")]
+        pub artifact_id: ::prost::alloc::string::String,
+        /// Maven `groupId` value used when uploading the artifact to Artifact
+        /// Registry.
+        #[prost(string, tag = "4")]
+        pub group_id: ::prost::alloc::string::String,
+        /// Maven `version` value used when uploading the artifact to Artifact
+        /// Registry.
+        #[prost(string, tag = "5")]
+        pub version: ::prost::alloc::string::String,
+    }
+    /// Python package to upload to Artifact Registry upon successful completion
+    /// of all build steps. A package can encapsulate multiple objects to be
+    /// uploaded to a single repository.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PythonPackage {
+        /// Artifact Registry repository, in the form
+        /// "<https://$REGION-python.pkg.dev/$PROJECT/$REPOSITORY">
+        ///
+        /// Files in the workspace matching any path pattern will be uploaded to
+        /// Artifact Registry with this location as a prefix.
+        #[prost(string, tag = "1")]
+        pub repository: ::prost::alloc::string::String,
+        /// Path globs used to match files in the build's workspace. For Python/
+        /// Twine, this is usually `dist/*`, and sometimes additionally an `.asc`
+        /// file.
+        #[prost(string, repeated, tag = "2")]
+        pub paths: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     }
 }
 /// Start and end times for a build execution phase.

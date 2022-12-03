@@ -231,7 +231,7 @@ pub mod value_range {
 /// RowFilter.Chain and RowFilter.Interleave documentation.
 ///
 /// The total serialized size of a RowFilter message must not
-/// exceed 4096 bytes, and RowFilters may not be nested within each other
+/// exceed 20480 bytes, and RowFilters may not be nested within each other
 /// (in Chains or Interleaves) to a depth of more than 20.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RowFilter {
@@ -589,6 +589,106 @@ pub mod read_modify_write_rule {
         IncrementAmount(i64),
     }
 }
+//
+// Messages related to RequestStats, part of the Query Stats feature, that can
+// help understand the performance of requests.
+//
+// The layout of requests below is as follows:
+//   * RequestStats serves as the top-level container for statistics and
+//     measures related to Bigtable requests. This common object is returned as
+//     part of methods in the Data API.
+//   * RequestStats contains multiple *views* of related data, chosen by an
+//     option in the source Data API method. The view that is returned is
+//     designed to have all submessages (and their submessages, and so on)
+//     filled-in, to provide a comprehensive selection of statistics and
+//     measures related to the requested view.
+
+/// ReadIterationStats captures information about the iteration of rows or cells
+/// over the course of a read, e.g. how many results were scanned in a read
+/// operation versus the results returned.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReadIterationStats {
+    /// The rows seen (scanned) as part of the request. This includes the count of
+    /// rows returned, as captured below.
+    #[prost(int64, tag = "1")]
+    pub rows_seen_count: i64,
+    /// The rows returned as part of the request.
+    #[prost(int64, tag = "2")]
+    pub rows_returned_count: i64,
+    /// The cells seen (scanned) as part of the request. This includes the count of
+    /// cells returned, as captured below.
+    #[prost(int64, tag = "3")]
+    pub cells_seen_count: i64,
+    /// The cells returned as part of the request.
+    #[prost(int64, tag = "4")]
+    pub cells_returned_count: i64,
+}
+/// RequestLatencyStats provides a measurement of the latency of the request as
+/// it interacts with different systems over its lifetime, e.g. how long the
+/// request took to execute within a frontend server.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RequestLatencyStats {
+    /// The latency measured by the frontend server handling this request, from
+    /// when the request was received, to when this value is sent back in the
+    /// response. For more context on the component that is measuring this latency,
+    /// see: <https://cloud.google.com/bigtable/docs/overview>
+    ///
+    /// Note: This value may be slightly shorter than the value reported into
+    /// aggregate latency metrics in Monitoring for this request
+    /// (<https://cloud.google.com/bigtable/docs/monitoring-instance>) as this value
+    /// needs to be sent in the response before the latency measurement including
+    /// that transmission is finalized.
+    ///
+    /// Note: This value includes the end-to-end latency of contacting nodes in
+    /// the targeted cluster, e.g. measuring from when the first byte arrives at
+    /// the frontend server, to when this value is sent back as the last value in
+    /// the response, including any latency incurred by contacting nodes, waiting
+    /// for results from nodes, and finally sending results from nodes back to the
+    /// caller.
+    #[prost(message, optional, tag = "1")]
+    pub frontend_server_latency: ::core::option::Option<::prost_types::Duration>,
+}
+/// FullReadStatsView captures all known information about a read.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FullReadStatsView {
+    /// Iteration stats describe how efficient the read is, e.g. comparing
+    /// rows seen vs. rows returned or cells seen vs cells returned can provide an
+    /// indication of read efficiency (the higher the ratio of seen to retuned the
+    /// better).
+    #[prost(message, optional, tag = "1")]
+    pub read_iteration_stats: ::core::option::Option<ReadIterationStats>,
+    /// Request latency stats describe the time taken to complete a request, from
+    /// the server side.
+    #[prost(message, optional, tag = "2")]
+    pub request_latency_stats: ::core::option::Option<RequestLatencyStats>,
+}
+/// RequestStats is the container for additional information pertaining to a
+/// single request, helpful for evaluating the performance of the sent request.
+/// Currently, there are the following supported methods:
+///   * google.bigtable.v2.ReadRows
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RequestStats {
+    /// Information pertaining to each request type received. The type is chosen
+    /// based on the requested view.
+    ///
+    /// See the messages above for additional context.
+    #[prost(oneof = "request_stats::StatsView", tags = "1")]
+    pub stats_view: ::core::option::Option<request_stats::StatsView>,
+}
+/// Nested message and enum types in `RequestStats`.
+pub mod request_stats {
+    /// Information pertaining to each request type received. The type is chosen
+    /// based on the requested view.
+    ///
+    /// See the messages above for additional context.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum StatsView {
+        /// Available with the ReadRowsRequest.RequestStatsView.REQUEST_STATS_FULL
+        /// view, see package google.bigtable.v2.
+        #[prost(message, tag = "1")]
+        FullReadStatsView(super::FullReadStatsView),
+    }
+}
 /// Request message for Bigtable.ReadRows.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReadRowsRequest {
@@ -597,21 +697,44 @@ pub struct ReadRowsRequest {
     /// `projects/<project>/instances/<instance>/tables/<table>`.
     #[prost(string, tag = "1")]
     pub table_name: ::prost::alloc::string::String,
-    /// This value specifies routing for replication. If not specified, the
-    /// "default" application profile will be used.
+    /// This value specifies routing for replication. This API only accepts the
+    /// empty value of app_profile_id.
     #[prost(string, tag = "5")]
     pub app_profile_id: ::prost::alloc::string::String,
-    /// The row keys and/or ranges to read. If not specified, reads from all rows.
+    /// The row keys and/or ranges to read sequentially. If not specified, reads
+    /// from all rows.
     #[prost(message, optional, tag = "2")]
     pub rows: ::core::option::Option<RowSet>,
     /// The filter to apply to the contents of the specified row(s). If unset,
     /// reads the entirety of each row.
     #[prost(message, optional, tag = "3")]
     pub filter: ::core::option::Option<RowFilter>,
-    /// The read will terminate after committing to N rows' worth of results. The
+    /// The read will stop after committing to N rows' worth of results. The
     /// default (zero) is to return all results.
     #[prost(int64, tag = "4")]
     pub rows_limit: i64,
+    /// The view into RequestStats, as described above.
+    #[prost(enumeration = "read_rows_request::RequestStatsView", tag = "6")]
+    pub request_stats_view: i32,
+}
+/// Nested message and enum types in `ReadRowsRequest`.
+pub mod read_rows_request {
+    ///
+    /// The desired view into RequestStats that should be returned in the response.
+    ///
+    /// See also: RequestStats message.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RequestStatsView {
+        /// The default / unset value. The API will default to the NONE option below.
+        Unspecified = 0,
+        /// Do not include any RequestStats in the response. This will leave the
+        /// RequestStats embedded message unset in the response.
+        RequestStatsNone = 1,
+        /// Include the full set of available RequestStats in the response,
+        /// applicable to this read.
+        RequestStatsFull = 2,
+    }
 }
 /// Response message for Bigtable.ReadRows.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -628,6 +751,28 @@ pub struct ReadRowsResponse {
     /// key, allowing the client to skip that work on a retry.
     #[prost(bytes = "vec", tag = "2")]
     pub last_scanned_row_key: ::prost::alloc::vec::Vec<u8>,
+    ///
+    /// If requested, provide enhanced query performance statistics. The semantics
+    /// dictate:
+    ///   * request_stats is empty on every (streamed) response, except
+    ///   * request_stats has non-empty information after all chunks have been
+    ///     streamed, where the ReadRowsResponse message only contains
+    ///     request_stats.
+    ///       * For example, if a read request would have returned an empty
+    ///         response instead a single ReadRowsResponse is streamed with empty
+    ///         chunks and request_stats filled.
+    ///
+    /// Visually, response messages will stream as follows:
+    ///    ... -> {chunks: \[...\]} -> {chunks: [], request_stats: {...}}
+    ///   \______________________/  \________________________________/
+    ///       Primary response         Trailer of RequestStats info
+    ///
+    /// Or if the read did not return any values:
+    ///   {chunks: [], request_stats: {...}}
+    ///   \________________________________/
+    ///      Trailer of RequestStats info
+    #[prost(message, optional, tag = "3")]
+    pub request_stats: ::core::option::Option<RequestStats>,
 }
 /// Nested message and enum types in `ReadRowsResponse`.
 pub mod read_rows_response {
@@ -863,6 +1008,21 @@ pub struct CheckAndMutateRowResponse {
     #[prost(bool, tag = "1")]
     pub predicate_matched: bool,
 }
+/// Request message for client connection keep-alive and warming.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PingAndWarmRequest {
+    /// Required. The unique name of the instance to check permissions for as well as
+    /// respond. Values are of the form `projects/<project>/instances/<instance>`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// This value specifies routing for replication. If not specified, the
+    /// "default" application profile will be used.
+    #[prost(string, tag = "2")]
+    pub app_profile_id: ::prost::alloc::string::String,
+}
+/// Response message for Bigtable.PingAndWarm connection keepalive and warming.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PingAndWarmResponse {}
 /// Request message for Bigtable.ReadModifyWriteRow.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReadModifyWriteRowRequest {
@@ -961,7 +1121,9 @@ pub mod bigtable_client {
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.bigtable.v2.Bigtable/ReadRows");
-            self.inner.server_streaming(request.into_request(), path, codec).await
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
         }
         #[doc = " Returns a sample of row keys in the table. The returned row keys will"]
         #[doc = " delimit contiguous sections of the table of approximately equal size,"]
@@ -983,7 +1145,9 @@ pub mod bigtable_client {
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.bigtable.v2.Bigtable/SampleRowKeys");
-            self.inner.server_streaming(request.into_request(), path, codec).await
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
         }
         #[doc = " Mutates a row atomically. Cells already present in the row are left"]
         #[doc = " unchanged unless explicitly changed by `mutation`."]
@@ -1021,7 +1185,9 @@ pub mod bigtable_client {
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.bigtable.v2.Bigtable/MutateRows");
-            self.inner.server_streaming(request.into_request(), path, codec).await
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
         }
         #[doc = " Mutates a row atomically based on the output of a predicate Reader filter."]
         pub async fn check_and_mutate_row(
@@ -1038,6 +1204,23 @@ pub mod bigtable_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.bigtable.v2.Bigtable/CheckAndMutateRow",
             );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Warm up associated instance metadata for this connection."]
+        #[doc = " This call is not required but may be useful for connection keep-alive."]
+        pub async fn ping_and_warm(
+            &mut self,
+            request: impl tonic::IntoRequest<super::PingAndWarmRequest>,
+        ) -> Result<tonic::Response<super::PingAndWarmResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.bigtable.v2.Bigtable/PingAndWarm");
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Modifies a row atomically on the server. The method reads the latest"]
@@ -1062,4 +1245,18 @@ pub mod bigtable_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
+}
+/// Response metadata proto
+/// This is an experimental feature that will be used to get zone_id and
+/// cluster_id from response trailers to tag the metrics. This should not be
+/// used by customers directly
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResponseParams {
+    /// The cloud bigtable zone associated with the cluster.
+    #[prost(string, optional, tag = "1")]
+    pub zone_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// Identifier for a cluster that represents set of
+    /// bigtable resources.
+    #[prost(string, optional, tag = "2")]
+    pub cluster_id: ::core::option::Option<::prost::alloc::string::String>,
 }

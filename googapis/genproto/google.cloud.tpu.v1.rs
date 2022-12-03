@@ -114,7 +114,7 @@ pub mod node {
         Unspecified = 0,
         /// TPU node is being created.
         Creating = 1,
-        /// TPU node has been created and is fully usable.
+        /// TPU node has been created.
         Ready = 2,
         /// TPU node is restarting.
         Restarting = 3,
@@ -351,11 +351,6 @@ pub struct ListAcceleratorTypesResponse {
     #[prost(string, repeated, tag = "3")]
     pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
-// Note: the following OperationMetadata message was added manually.
-// This is caused by a conflict with some other message and will
-// be resolved separately. Please make sure to add this message back
-// if it's removed during public proto regeneration.
-
 /// Metadata describing an \[Operation][google.longrunning.Operation\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct OperationMetadata {
@@ -555,7 +550,7 @@ pub mod tpu_client {
             let path = http::uri::PathAndQuery::from_static("/google.cloud.tpu.v1.Tpu/ReimageNode");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Stops a node."]
+        #[doc = " Stops a node, this operation is only available with single TPU nodes."]
         pub async fn stop_node(
             &mut self,
             request: impl tonic::IntoRequest<super::StopNodeRequest>,

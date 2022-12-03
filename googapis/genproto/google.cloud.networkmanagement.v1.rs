@@ -365,6 +365,10 @@ pub mod route_info {
         NextHopBlackhole = 9,
         /// Next hop is the forwarding rule of an Internal Load Balancer.
         NextHopIlb = 10,
+        /// Next hop is a
+        /// [router appliance
+        /// instance](<https://cloud.google.com/network-connectivity/docs/network-connectivity-center/concepts/ra-overview>).
+        NextHopRouterAppliance = 11,
     }
 }
 /// For display only. Metadata associated with a Compute Engine forwarding rule.
@@ -452,7 +456,10 @@ pub struct LoadBalancerBackend {
     #[prost(string, tag = "2")]
     pub uri: ::prost::alloc::string::String,
     /// State of the health check firewall configuration.
-    #[prost(enumeration = "load_balancer_backend::HealthCheckFirewallState", tag = "3")]
+    #[prost(
+        enumeration = "load_balancer_backend::HealthCheckFirewallState",
+        tag = "3"
+    )]
     pub health_check_firewall_state: i32,
     /// A list of firewall rule URIs allowing probes from health check IP ranges.
     #[prost(string, repeated, tag = "4")]
@@ -652,6 +659,11 @@ pub struct AbortInfo {
     /// URI of the resource that caused the abort.
     #[prost(string, tag = "2")]
     pub resource_uri: ::prost::alloc::string::String,
+    /// List of project IDs that the user has specified in the request but does
+    /// not have permission to access network configs. Analysis is aborted in this
+    /// case with the PERMISSION_DENIED cause.
+    #[prost(string, repeated, tag = "3")]
+    pub projects_missing_permission: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Nested message and enum types in `AbortInfo`.
 pub mod abort_info {
@@ -704,6 +716,8 @@ pub mod abort_info {
         /// Aborted because the destination network does not match the destination
         /// endpoint.
         MismatchedDestinationNetwork = 14,
+        /// Aborted because the test scenario is not supported.
+        Unsupported = 15,
     }
 }
 /// Details of the final state "drop" and associated resource.
@@ -749,9 +763,7 @@ pub mod drop_info {
         PrivateGoogleAccessDisallowed = 8,
         /// Instance with only an internal IP address tries to access external hosts,
         /// but Cloud NAT is not enabled in the subnet, unless special configurations
-        /// on a VM allow this connection. For more details, see [Special
-        /// configurations for VM
-        /// instances](<https://cloud.google.com/vpc/docs/special-configurations>).
+        /// on a VM allow this connection.
         NoExternalAddress = 9,
         /// Destination internal address cannot be resolved to a known target. If
         /// this is a shared VPC scenario, verify if the service project ID is

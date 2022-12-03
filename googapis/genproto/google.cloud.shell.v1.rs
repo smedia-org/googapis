@@ -233,7 +233,10 @@ pub struct RemovePublicKeyMetadata {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CloudShellErrorDetails {
     /// Code indicating the specific error the occurred.
-    #[prost(enumeration = "cloud_shell_error_details::CloudShellErrorCode", tag = "1")]
+    #[prost(
+        enumeration = "cloud_shell_error_details::CloudShellErrorCode",
+        tag = "1"
+    )]
     pub code: i32,
 }
 /// Nested message and enum types in `CloudShellErrorDetails`.
@@ -256,6 +259,9 @@ pub mod cloud_shell_error_details {
         /// The user has exhausted their weekly Cloud Shell quota, and Cloud Shell
         /// will be disabled until the quota resets.
         QuotaExceeded = 5,
+        /// The Cloud Shell environment is unavailable and cannot be connected to at
+        /// the moment.
+        EnvironmentUnavailable = 6,
     }
 }
 #[doc = r" Generated client implementations."]

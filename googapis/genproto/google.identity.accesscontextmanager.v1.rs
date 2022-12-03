@@ -136,14 +136,22 @@ pub struct DevicePolicy {
     #[prost(bool, tag = "1")]
     pub require_screenlock: bool,
     /// Allowed encryptions statuses, an empty list allows all statuses.
-    #[prost(enumeration = "super::r#type::DeviceEncryptionStatus", repeated, tag = "2")]
+    #[prost(
+        enumeration = "super::r#type::DeviceEncryptionStatus",
+        repeated,
+        tag = "2"
+    )]
     pub allowed_encryption_statuses: ::prost::alloc::vec::Vec<i32>,
     /// Allowed OS versions, an empty list allows all types and all versions.
     #[prost(message, repeated, tag = "3")]
     pub os_constraints: ::prost::alloc::vec::Vec<OsConstraint>,
     /// Allowed device management levels, an empty list allows all management
     /// levels.
-    #[prost(enumeration = "super::r#type::DeviceManagementLevel", repeated, tag = "6")]
+    #[prost(
+        enumeration = "super::r#type::DeviceManagementLevel",
+        repeated,
+        tag = "6"
+    )]
     pub allowed_device_management_levels: ::prost::alloc::vec::Vec<i32>,
     /// Whether the device needs to be approved by the customer admin.
     #[prost(bool, tag = "7")]
@@ -189,6 +197,22 @@ pub struct AccessPolicy {
     /// Required. Human readable title. Does not affect behavior.
     #[prost(string, tag = "3")]
     pub title: ::prost::alloc::string::String,
+    /// The scopes of a policy define which resources an ACM policy can restrict,
+    /// and where ACM resources can be referenced.
+    /// For example, a policy with scopes=\["folders/123"\] has the following
+    /// behavior:
+    /// - vpcsc perimeters can only restrict projects within folders/123
+    /// - access levels can only be referenced by resources within folders/123.
+    /// If empty, there are no limitations on which resources can be restricted by
+    /// an ACM policy, and there are no limitations on where ACM resources can be
+    /// referenced.
+    /// Only one policy can include a given scope (attempting to create a second
+    /// policy which includes "folders/123" will result in an error).
+    /// Currently, scopes cannot be modified after a policy is created.
+    /// Currently, policies can only have a single scope.
+    /// Format: list of `folders/{folder_number}` or `projects/{project_number}`
+    #[prost(string, repeated, tag = "7")]
+    pub scopes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Output only. Time the `AccessPolicy` was created in UTC.
     #[prost(message, optional, tag = "4")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
@@ -454,42 +478,6 @@ pub mod service_perimeter_config {
             Resource(::prost::alloc::string::String),
         }
     }
-    /// Defines the conditions under which an \[EgressPolicy\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressPolicy\]
-    /// matches a request. Conditions are based on information about the
-    /// \[ApiOperation\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.ApiOperation\]
-    /// intended to be performed on the `resources` specified. Note that if the
-    /// destination of the request is also protected by a \[ServicePerimeter\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeter\], then that
-    /// \[ServicePerimeter\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeter\] must have
-    /// an \[IngressPolicy\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.IngressPolicy\]
-    /// which allows access in order for this request to succeed. The request must
-    /// match `operations` AND `resources` fields in order to be allowed egress out
-    /// of the perimeter.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct EgressTo {
-        /// A list of resources, currently only projects in the form
-        /// `projects/<projectnumber>`, that are allowed to be accessed by sources
-        /// defined in the corresponding \[EgressFrom\]
-        /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressFrom\].
-        /// A request matches if it contains a resource in this list.  If `*` is
-        /// specified for `resources`, then this \[EgressTo\]
-        /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressTo\]
-        /// rule will authorize access to all resources outside the perimeter.
-        #[prost(string, repeated, tag = "1")]
-        pub resources: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-        /// A list of \[ApiOperations\]
-        /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.ApiOperation\]
-        /// allowed to be performed by the sources specified in the corresponding
-        /// \[EgressFrom\]
-        /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressFrom\].
-        /// A request matches if it uses an operation/service in this list.
-        #[prost(message, repeated, tag = "2")]
-        pub operations: ::prost::alloc::vec::Vec<ApiOperation>,
-    }
     /// Defines the conditions under which an \[IngressPolicy\]
     /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.IngressPolicy\]
     /// matches a request. Conditions are based on information about the source of
@@ -579,6 +567,74 @@ pub mod service_perimeter_config {
         #[prost(message, optional, tag = "2")]
         pub ingress_to: ::core::option::Option<IngressTo>,
     }
+    /// Defines the conditions under which an \[EgressPolicy\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressPolicy\]
+    /// matches a request. Conditions based on information about the source of the
+    /// request. Note that if the destination of the request is also protected by a
+    /// \[ServicePerimeter\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeter\], then that
+    /// \[ServicePerimeter\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeter\] must have
+    /// an \[IngressPolicy\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.IngressPolicy\]
+    /// which allows access in order for this request to succeed.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct EgressFrom {
+        /// A list of identities that are allowed access through this \[EgressPolicy\].
+        /// Should be in the format of email address. The email address should
+        /// represent individual user or service account only.
+        #[prost(string, repeated, tag = "1")]
+        pub identities: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Specifies the type of identities that are allowed access to outside the
+        /// perimeter. If left unspecified, then members of `identities` field will
+        /// be allowed access.
+        #[prost(enumeration = "IdentityType", tag = "2")]
+        pub identity_type: i32,
+    }
+    /// Defines the conditions under which an \[EgressPolicy\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressPolicy\]
+    /// matches a request. Conditions are based on information about the
+    /// \[ApiOperation\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.ApiOperation\]
+    /// intended to be performed on the `resources` specified. Note that if the
+    /// destination of the request is also protected by a \[ServicePerimeter\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeter\], then that
+    /// \[ServicePerimeter\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeter\] must have
+    /// an \[IngressPolicy\]
+    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.IngressPolicy\]
+    /// which allows access in order for this request to succeed. The request must
+    /// match `operations` AND `resources` fields in order to be allowed egress out
+    /// of the perimeter.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct EgressTo {
+        /// A list of resources, currently only projects in the form
+        /// `projects/<projectnumber>`, that are allowed to be accessed by sources
+        /// defined in the corresponding \[EgressFrom\]
+        /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressFrom\].
+        /// A request matches if it contains a resource in this list.  If `*` is
+        /// specified for `resources`, then this \[EgressTo\]
+        /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressTo\]
+        /// rule will authorize access to all resources outside the perimeter.
+        #[prost(string, repeated, tag = "1")]
+        pub resources: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// A list of \[ApiOperations\]
+        /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.ApiOperation\]
+        /// allowed to be performed by the sources specified in the corresponding
+        /// \[EgressFrom\]
+        /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressFrom\].
+        /// A request matches if it uses an operation/service in this list.
+        #[prost(message, repeated, tag = "2")]
+        pub operations: ::prost::alloc::vec::Vec<ApiOperation>,
+        /// A list of external resources that are allowed to be accessed. Only AWS
+        /// and Azure resources are supported. For Amazon S3, the supported format is
+        /// s3://BUCKET_NAME. For Azure Storage, the supported format is
+        /// azure://myaccount.blob.core.windows.net/CONTAINER_NAME. A request matches
+        /// if it contains an external resource in this list (Example:
+        /// s3://bucket/path). Currently '*' is not allowed.
+        #[prost(string, repeated, tag = "3")]
+        pub external_resources: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
     /// Policy for egress from perimeter.
     ///
     /// \[EgressPolicies\]
@@ -621,30 +677,6 @@ pub mod service_perimeter_config {
         /// to apply.
         #[prost(message, optional, tag = "2")]
         pub egress_to: ::core::option::Option<EgressTo>,
-    }
-    /// Defines the conditions under which an \[EgressPolicy\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.EgressPolicy\]
-    /// matches a request. Conditions based on information about the source of the
-    /// request. Note that if the destination of the request is also protected by a
-    /// \[ServicePerimeter\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeter\], then that
-    /// \[ServicePerimeter\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeter\] must have
-    /// an \[IngressPolicy\]
-    /// \[google.identity.accesscontextmanager.v1.ServicePerimeterConfig.IngressPolicy\]
-    /// which allows access in order for this request to succeed.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct EgressFrom {
-        /// A list of identities that are allowed access through this \[EgressPolicy\].
-        /// Should be in the format of email address. The email address should
-        /// represent individual user or service account only.
-        #[prost(string, repeated, tag = "1")]
-        pub identities: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-        /// Specifies the type of identities that are allowed access to outside the
-        /// perimeter. If left unspecified, then members of `identities` field will
-        /// be allowed access.
-        #[prost(enumeration = "IdentityType", tag = "2")]
-        pub identity_type: i32,
     }
     /// Specifies the types of identities that are allowed access in either
     /// \[IngressFrom\]
@@ -1024,7 +1056,7 @@ pub struct CommitServicePerimetersRequest {
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Optional. The etag for the version of the [Access Policy]
-    /// \[google.identity.accesscontextmanager.v1alpha.AccessPolicy\] that this
+    /// \[google.identity.accesscontextmanager.v1.AccessPolicy\] that this
     /// commit operation is to be performed on. If, at the time of commit, the
     /// etag for the Access Policy stored in Access Context Manager is different
     /// from the specified etag, then the commit operation will not be performed
@@ -1144,15 +1176,15 @@ pub enum LevelFormat {
 pub mod access_context_manager_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    #[doc = " API for setting [Access Levels]"]
-    #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] and [Service"]
-    #[doc = " Perimeters] [google.identity.accesscontextmanager.v1.ServicePerimeter]"]
-    #[doc = " for Google Cloud Projects. Each organization has one [AccessPolicy]"]
-    #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] containing the"]
-    #[doc = " [Access Levels] [google.identity.accesscontextmanager.v1.AccessLevel]"]
-    #[doc = " and [Service Perimeters]"]
+    #[doc = " API for setting [access levels]"]
+    #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] and [service"]
+    #[doc = " perimeters] [google.identity.accesscontextmanager.v1.ServicePerimeter]"]
+    #[doc = " for Google Cloud projects. Each organization has one [access policy]"]
+    #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] that contains the"]
+    #[doc = " [access levels] [google.identity.accesscontextmanager.v1.AccessLevel]"]
+    #[doc = " and [service perimeters]"]
     #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter]. This"]
-    #[doc = " [AccessPolicy] [google.identity.accesscontextmanager.v1.AccessPolicy] is"]
+    #[doc = " [access policy] [google.identity.accesscontextmanager.v1.AccessPolicy] is"]
     #[doc = " applicable to all resources in the organization."]
     #[doc = " AccessPolicies"]
     #[derive(Debug, Clone)]
@@ -1200,9 +1232,9 @@ pub mod access_context_manager_client {
             self.inner = self.inner.accept_gzip();
             self
         }
-        #[doc = " List all [AccessPolicies]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] under a"]
-        #[doc = " container."]
+        #[doc = " Lists all [access policies]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] in an"]
+        #[doc = " organization."]
         pub async fn list_access_policies(
             &mut self,
             request: impl tonic::IntoRequest<super::ListAccessPoliciesRequest>,
@@ -1219,8 +1251,8 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Get an [AccessPolicy]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] by name."]
+        #[doc = " Returns an [access policy]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] based on the name."]
         pub async fn get_access_policy(
             &mut self,
             request: impl tonic::IntoRequest<super::GetAccessPolicyRequest>,
@@ -1237,10 +1269,10 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Create an `AccessPolicy`. Fails if this organization already has a"]
-        #[doc = " `AccessPolicy`. The longrunning Operation will have a successful status"]
-        #[doc = " once the `AccessPolicy` has propagated to long-lasting storage."]
-        #[doc = " Syntactic and basic semantic errors will be returned in `metadata` as a"]
+        #[doc = " Creates an access policy. This method fails if the organization already has"]
+        #[doc = " an access policy. The long-running operation has a successful status"]
+        #[doc = " after the access policy propagates to long-lasting storage."]
+        #[doc = " Syntactic and basic semantic errors are returned in `metadata` as a"]
         #[doc = " BadRequest proto."]
         pub async fn create_access_policy(
             &mut self,
@@ -1261,13 +1293,12 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Update an [AccessPolicy]"]
+        #[doc = " Updates an [access policy]"]
         #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy]. The"]
-        #[doc = " longrunning Operation from this RPC will have a successful status once the"]
-        #[doc = " changes to the [AccessPolicy]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] have propagated"]
-        #[doc = " to long-lasting storage. Syntactic and basic semantic errors will be"]
-        #[doc = " returned in `metadata` as a BadRequest proto."]
+        #[doc = " long-running operation from this RPC has a successful status after the"]
+        #[doc = " changes to the [access policy]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] propagate"]
+        #[doc = " to long-lasting storage."]
         pub async fn update_access_policy(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateAccessPolicyRequest>,
@@ -1287,11 +1318,11 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Delete an [AccessPolicy]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] by resource"]
-        #[doc = " name. The longrunning Operation will have a successful status once the"]
-        #[doc = " [AccessPolicy] [google.identity.accesscontextmanager.v1.AccessPolicy]"]
-        #[doc = " has been removed from long-lasting storage."]
+        #[doc = " Deletes an [access policy]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessPolicy] based on the"]
+        #[doc = " resource name. The long-running operation has a successful status after the"]
+        #[doc = " [access policy] [google.identity.accesscontextmanager.v1.AccessPolicy]"]
+        #[doc = " is removed from long-lasting storage."]
         pub async fn delete_access_policy(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteAccessPolicyRequest>,
@@ -1311,7 +1342,7 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " List all [Access Levels]"]
+        #[doc = " Lists all [access levels]"]
         #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] for an access"]
         #[doc = " policy."]
         pub async fn list_access_levels(
@@ -1330,8 +1361,8 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Get an [Access Level]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] by resource"]
+        #[doc = " Gets an [access level]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] based on the resource"]
         #[doc = " name."]
         pub async fn get_access_level(
             &mut self,
@@ -1349,13 +1380,13 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Create an [Access Level]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel]. The longrunning"]
-        #[doc = " operation from this RPC will have a successful status once the [Access"]
-        #[doc = " Level] [google.identity.accesscontextmanager.v1.AccessLevel] has"]
-        #[doc = " propagated to long-lasting storage. [Access Levels]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] containing"]
-        #[doc = " errors will result in an error response for the first error encountered."]
+        #[doc = " Creates an [access level]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel]. The long-running"]
+        #[doc = " operation from this RPC has a successful status after the [access"]
+        #[doc = " level] [google.identity.accesscontextmanager.v1.AccessLevel]"]
+        #[doc = " propagates to long-lasting storage. If [access levels]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] contain"]
+        #[doc = " errors, an error response is returned for the first error encountered."]
         pub async fn create_access_level(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateAccessLevelRequest>,
@@ -1375,14 +1406,14 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Update an [Access Level]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel]. The longrunning"]
-        #[doc = " operation from this RPC will have a successful status once the changes to"]
-        #[doc = " the [Access Level]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] have propagated"]
-        #[doc = " to long-lasting storage. [Access Levels]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] containing"]
-        #[doc = " errors will result in an error response for the first error encountered."]
+        #[doc = " Updates an [access level]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel]. The long-running"]
+        #[doc = " operation from this RPC has a successful status after the changes to"]
+        #[doc = " the [access level]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] propagate"]
+        #[doc = " to long-lasting storage. If [access levels]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] contain"]
+        #[doc = " errors, an error response is returned for the first error encountered."]
         pub async fn update_access_level(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateAccessLevelRequest>,
@@ -1402,10 +1433,10 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Delete an [Access Level]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] by resource"]
-        #[doc = " name. The longrunning operation from this RPC will have a successful status"]
-        #[doc = " once the [Access Level]"]
+        #[doc = " Deletes an [access level]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] based on the resource"]
+        #[doc = " name. The long-running operation from this RPC has a successful status"]
+        #[doc = " after the [access level]"]
         #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] has been removed"]
         #[doc = " from long-lasting storage."]
         pub async fn delete_access_level(
@@ -1427,22 +1458,22 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Replace all existing [Access Levels]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] in an [Access"]
-        #[doc = " Policy] [google.identity.accesscontextmanager.v1.AccessPolicy] with"]
-        #[doc = " the [Access Levels]"]
+        #[doc = " Replaces all existing [access levels]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] in an [access"]
+        #[doc = " policy] [google.identity.accesscontextmanager.v1.AccessPolicy] with"]
+        #[doc = " the [access levels]"]
         #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] provided. This"]
-        #[doc = " is done atomically. The longrunning operation from this RPC will have a"]
-        #[doc = " successful status once all replacements have propagated to long-lasting"]
-        #[doc = " storage. Replacements containing errors will result in an error response"]
-        #[doc = " for the first error encountered.  Replacement will be cancelled on error,"]
-        #[doc = " existing [Access Levels]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] will not be"]
-        #[doc = " affected. Operation.response field will contain"]
-        #[doc = " ReplaceAccessLevelsResponse. Removing [Access Levels]"]
+        #[doc = " is done atomically. The long-running operation from this RPC has a"]
+        #[doc = " successful status after all replacements propagate to long-lasting"]
+        #[doc = " storage. If the replacement contains errors, an error response is returned"]
+        #[doc = " for the first error encountered.  Upon error, the replacement is cancelled,"]
+        #[doc = " and existing [access levels]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] are not"]
+        #[doc = " affected. The Operation.response field contains"]
+        #[doc = " ReplaceAccessLevelsResponse. Removing [access levels]"]
         #[doc = " [google.identity.accesscontextmanager.v1.AccessLevel] contained in existing"]
-        #[doc = " [Service Perimeters]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] will result in"]
+        #[doc = " [service perimeters]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] result in an"]
         #[doc = " error."]
         pub async fn replace_access_levels(
             &mut self,
@@ -1463,7 +1494,7 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " List all [Service Perimeters]"]
+        #[doc = " Lists all [service perimeters]"]
         #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] for an"]
         #[doc = " access policy."]
         pub async fn list_service_perimeters(
@@ -1480,9 +1511,9 @@ pub mod access_context_manager_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.identity.accesscontextmanager.v1.AccessContextManager/ListServicePerimeters") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Get a [Service Perimeter]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] by resource"]
-        #[doc = " name."]
+        #[doc = " Gets a [service perimeter]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] based on the"]
+        #[doc = " resource name."]
         pub async fn get_service_perimeter(
             &mut self,
             request: impl tonic::IntoRequest<super::GetServicePerimeterRequest>,
@@ -1499,14 +1530,14 @@ pub mod access_context_manager_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Create a [Service Perimeter]"]
+        #[doc = " Creates a [service perimeter]"]
         #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter]. The"]
-        #[doc = " longrunning operation from this RPC will have a successful status once the"]
-        #[doc = " [Service Perimeter]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] has"]
-        #[doc = " propagated to long-lasting storage. [Service Perimeters]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] containing"]
-        #[doc = " errors will result in an error response for the first error encountered."]
+        #[doc = " long-running operation from this RPC has a successful status after the"]
+        #[doc = " [service perimeter]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter]"]
+        #[doc = " propagates to long-lasting storage. If a [service perimeter]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] contains"]
+        #[doc = " errors, an error response is returned for the first error encountered."]
         pub async fn create_service_perimeter(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateServicePerimeterRequest>,
@@ -1524,14 +1555,14 @@ pub mod access_context_manager_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.identity.accesscontextmanager.v1.AccessContextManager/CreateServicePerimeter") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Update a [Service Perimeter]"]
+        #[doc = " Updates a [service perimeter]"]
         #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter]. The"]
-        #[doc = " longrunning operation from this RPC will have a successful status once the"]
-        #[doc = " changes to the [Service Perimeter]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] have"]
-        #[doc = " propagated to long-lasting storage. [Service Perimeter]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] containing"]
-        #[doc = " errors will result in an error response for the first error encountered."]
+        #[doc = " long-running operation from this RPC has a successful status after the"]
+        #[doc = " [service perimeter]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter]"]
+        #[doc = " propagates to long-lasting storage. If a [service perimeter]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] contains"]
+        #[doc = " errors, an error response is returned for the first error encountered."]
         pub async fn update_service_perimeter(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateServicePerimeterRequest>,
@@ -1549,12 +1580,12 @@ pub mod access_context_manager_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.identity.accesscontextmanager.v1.AccessContextManager/UpdateServicePerimeter") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Delete a [Service Perimeter]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] by resource"]
-        #[doc = " name. The longrunning operation from this RPC will have a successful status"]
-        #[doc = " once the [Service Perimeter]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] has been"]
-        #[doc = " removed from long-lasting storage."]
+        #[doc = " Deletes a [service perimeter]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] based on the"]
+        #[doc = " resource name. The long-running operation from this RPC has a successful"]
+        #[doc = " status after the [service perimeter]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] is removed from"]
+        #[doc = " long-lasting storage."]
         pub async fn delete_service_perimeter(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteServicePerimeterRequest>,
@@ -1572,18 +1603,18 @@ pub mod access_context_manager_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.identity.accesscontextmanager.v1.AccessContextManager/DeleteServicePerimeter") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Replace all existing [Service Perimeters]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] in an"]
-        #[doc = " [Access Policy] [google.identity.accesscontextmanager.v1.AccessPolicy]"]
-        #[doc = " with the [Service Perimeters]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] provided."]
-        #[doc = " This is done atomically. The longrunning operation from this"]
-        #[doc = " RPC will have a successful status once all replacements have propagated to"]
-        #[doc = " long-lasting storage. Replacements containing errors will result in an"]
-        #[doc = " error response for the first error encountered. Replacement will be"]
-        #[doc = " cancelled on error, existing [Service Perimeters]"]
-        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] will not be"]
-        #[doc = " affected. Operation.response field will contain"]
+        #[doc = " Replace all existing [service perimeters]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] in an [access"]
+        #[doc = " policy] [google.identity.accesscontextmanager.v1.AccessPolicy] with the"]
+        #[doc = " [service perimeters]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] provided. This"]
+        #[doc = " is done atomically. The long-running operation from this RPC has a"]
+        #[doc = " successful status after all replacements propagate to long-lasting storage."]
+        #[doc = " Replacements containing errors result in an error response for the first"]
+        #[doc = " error encountered. Upon an error, replacement are cancelled and existing"]
+        #[doc = " [service perimeters]"]
+        #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] are not"]
+        #[doc = " affected. The Operation.response field contains"]
         #[doc = " ReplaceServicePerimetersResponse."]
         pub async fn replace_service_perimeters(
             &mut self,
@@ -1602,21 +1633,21 @@ pub mod access_context_manager_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.identity.accesscontextmanager.v1.AccessContextManager/ReplaceServicePerimeters") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Commit the dry-run spec for all the [Service Perimeters]"]
+        #[doc = " Commits the dry-run specification for all the [service perimeters]"]
         #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] in an"]
-        #[doc = " [Access Policy][google.identity.accesscontextmanager.v1.AccessPolicy]."]
-        #[doc = " A commit operation on a Service Perimeter involves copying its `spec` field"]
-        #[doc = " to that Service Perimeter's `status` field. Only [Service Perimeters]"]
+        #[doc = " [access policy][google.identity.accesscontextmanager.v1.AccessPolicy]."]
+        #[doc = " A commit operation on a service perimeter involves copying its `spec` field"]
+        #[doc = " to the `status` field of the service perimeter. Only [service perimeters]"]
         #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] with"]
         #[doc = " `use_explicit_dry_run_spec` field set to true are affected by a commit"]
-        #[doc = " operation. The longrunning operation from this RPC will have a successful"]
-        #[doc = " status once the dry-run specs for all the [Service Perimeters]"]
+        #[doc = " operation. The long-running operation from this RPC has a successful"]
+        #[doc = " status after the dry-run specifications for all the [service perimeters]"]
         #[doc = " [google.identity.accesscontextmanager.v1.ServicePerimeter] have been"]
-        #[doc = " committed. If a commit fails, it will cause the longrunning operation to"]
-        #[doc = " return an error response and the entire commit operation will be cancelled."]
-        #[doc = " When successful, Operation.response field will contain"]
-        #[doc = " CommitServicePerimetersResponse. The `dry_run` and the `spec` fields will"]
-        #[doc = " be cleared after a successful commit operation."]
+        #[doc = " committed. If a commit fails, it causes the long-running operation to"]
+        #[doc = " return an error response and the entire commit operation is cancelled."]
+        #[doc = " When successful, the Operation.response field contains"]
+        #[doc = " CommitServicePerimetersResponse. The `dry_run` and the `spec` fields are"]
+        #[doc = " cleared after a successful commit operation."]
         pub async fn commit_service_perimeters(
             &mut self,
             request: impl tonic::IntoRequest<super::CommitServicePerimetersRequest>,
@@ -1673,7 +1704,7 @@ pub mod access_context_manager_client {
         #[doc = " [google.identity.accesscontextmanager.v1.GcpUserAccessBinding]. If the"]
         #[doc = " client specifies a [name]"]
         #[doc = " [google.identity.accesscontextmanager.v1.GcpUserAccessBinding.name],"]
-        #[doc = " the server will ignore it. Fails if a resource already exists with the same"]
+        #[doc = " the server ignores it. Fails if a resource already exists with the same"]
         #[doc = " [group_key]"]
         #[doc = " [google.identity.accesscontextmanager.v1.GcpUserAccessBinding.group_key]."]
         #[doc = " Completion of this long-running operation does not necessarily signify that"]
@@ -1738,6 +1769,75 @@ pub mod access_context_manager_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http :: uri :: PathAndQuery :: from_static ("/google.identity.accesscontextmanager.v1.AccessContextManager/DeleteGcpUserAccessBinding") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Sets the IAM policy for the specified Access Context Manager"]
+        #[doc = " [access policy][google.identity.accesscontextmanager.v1.AccessPolicy]."]
+        #[doc = " This method replaces the existing IAM policy on the access policy. The IAM"]
+        #[doc = " policy controls the set of users who can perform specific operations on the"]
+        #[doc = " Access Context Manager [access"]
+        #[doc = " policy][google.identity.accesscontextmanager.v1.AccessPolicy]."]
+        pub async fn set_iam_policy(
+            &mut self,
+            request: impl tonic::IntoRequest<super::super::super::super::iam::v1::SetIamPolicyRequest>,
+        ) -> Result<tonic::Response<super::super::super::super::iam::v1::Policy>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.identity.accesscontextmanager.v1.AccessContextManager/SetIamPolicy",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets the IAM policy for the specified Access Context Manager"]
+        #[doc = " [access policy][google.identity.accesscontextmanager.v1.AccessPolicy]."]
+        pub async fn get_iam_policy(
+            &mut self,
+            request: impl tonic::IntoRequest<super::super::super::super::iam::v1::GetIamPolicyRequest>,
+        ) -> Result<tonic::Response<super::super::super::super::iam::v1::Policy>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.identity.accesscontextmanager.v1.AccessContextManager/GetIamPolicy",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the IAM permissions that the caller has on the specified Access"]
+        #[doc = " Context Manager resource. The resource can be an"]
+        #[doc = " [AccessPolicy][google.identity.accesscontextmanager.v1.AccessPolicy],"]
+        #[doc = " [AccessLevel][google.identity.accesscontextmanager.v1.AccessLevel], or"]
+        #[doc = " [ServicePerimeter][google.identity.accesscontextmanager.v1.ServicePerimeter"]
+        #[doc = " ]. This method does not support other resources."]
+        pub async fn test_iam_permissions(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::super::super::super::iam::v1::TestIamPermissionsRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::super::super::super::iam::v1::TestIamPermissionsResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.identity.accesscontextmanager.v1.AccessContextManager/TestIamPermissions",
+            );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }

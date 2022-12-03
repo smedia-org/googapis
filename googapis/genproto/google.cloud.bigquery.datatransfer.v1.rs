@@ -29,6 +29,13 @@ pub struct ScheduleOptions {
     #[prost(message, optional, tag = "2")]
     pub end_time: ::core::option::Option<::prost_types::Timestamp>,
 }
+/// Information about a user.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserInfo {
+    /// E-mail address of the user.
+    #[prost(string, optional, tag = "1")]
+    pub email: ::core::option::Option<::prost::alloc::string::String>,
+}
 /// Represents a data transfer configuration. A transfer configuration
 /// contains all metadata needed to perform a data transfer. For example,
 /// `destination_dataset_id` specifies where data should be stored.
@@ -48,7 +55,9 @@ pub struct TransferConfig {
     /// User specified display name for the data transfer.
     #[prost(string, tag = "3")]
     pub display_name: ::prost::alloc::string::String,
-    /// Data source id. Cannot be changed once data transfer is created.
+    /// Data source ID. This cannot be changed once data transfer is created. The
+    /// full list of available data source IDs can be returned through an API call:
+    /// <https://cloud.google.com/bigquery-transfer/docs/reference/datatransfer/rest/v1/projects.locations.dataSources/list>
     #[prost(string, tag = "5")]
     pub data_source_id: ::prost::alloc::string::String,
     /// Parameters specific to each data source. For more information see the
@@ -68,7 +77,9 @@ pub struct TransferConfig {
     /// `first sunday of quarter 00:00`.
     /// See more explanation about the format here:
     /// <https://cloud.google.com/appengine/docs/flexible/python/scheduling-jobs-with-cron-yaml#the_schedule_format>
-    /// NOTE: the granularity should be at least 8 hours, or less frequent.
+    ///
+    /// NOTE: The minimum interval time between recurring transfers depends on the
+    /// data source; refer to the documentation for your data source.
     #[prost(string, tag = "7")]
     pub schedule: ::prost::alloc::string::String,
     /// Options customizing the data transfer schedule.
@@ -112,6 +123,11 @@ pub struct TransferConfig {
     /// to the email address of the user who owns this transfer config.
     #[prost(message, optional, tag = "18")]
     pub email_preferences: ::core::option::Option<EmailPreferences>,
+    /// Output only. Information about the user whose credentials are used to transfer data.
+    /// Populated only for `transferConfigs.get` requests. In case the user
+    /// information is not available, this field will not be populated.
+    #[prost(message, optional, tag = "27")]
+    pub owner_info: ::core::option::Option<UserInfo>,
     /// The desination of the transfer config.
     #[prost(oneof = "transfer_config::Destination", tags = "2")]
     pub destination: ::core::option::Option<transfer_config::Destination>,
@@ -263,12 +279,7 @@ pub enum TransferState {
     /// Data transfer is cancelled (6).
     Cancelled = 6,
 }
-/// Represents a data source parameter with validation rules, so that
-/// parameters can be rendered in the UI. These parameters are given to us by
-/// supported data sources, and include all needed information for rendering
-/// and validation.
-/// Thus, whoever uses this api can decide to generate either generic ui,
-/// or custom data source specific forms.
+/// A parameter used to define custom fields in a data source definition.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DataSourceParameter {
     /// Parameter identifier.
@@ -298,7 +309,7 @@ pub struct DataSourceParameter {
     /// For integer and double values specifies minimum allowed value.
     #[prost(message, optional, tag = "9")]
     pub min_value: ::core::option::Option<f64>,
-    /// For integer and double values specifies maxminum allowed value.
+    /// For integer and double values specifies maximum allowed value.
     #[prost(message, optional, tag = "10")]
     pub max_value: ::core::option::Option<f64>,
     /// Deprecated. This field has no effect.
@@ -345,8 +356,7 @@ pub mod data_source_parameter {
         PlusPage = 6,
     }
 }
-/// Represents data source metadata. Metadata is sufficient to
-/// render UI and request proper OAuth tokens.
+/// Defines the properties and custom parameters for a data source.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DataSource {
     /// Output only. Data source resource name.
@@ -467,7 +477,7 @@ pub struct GetDataSourceRequest {
 pub struct ListDataSourcesRequest {
     /// Required. The BigQuery project id for which data sources should be returned.
     /// Must be in the form: `projects/{project_id}` or
-    /// `projects/{project_id}/locations/{location_id}
+    /// `projects/{project_id}/locations/{location_id}`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Pagination token, which can be used to request a specific page
@@ -495,11 +505,11 @@ pub struct ListDataSourcesResponse {
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// A request to create a data transfer configuration. If new credentials are
-/// needed for this transfer configuration, an authorization code must be
-/// provided. If an authorization code is provided, the transfer configuration
-/// will be associated with the user id corresponding to the
-/// authorization code. Otherwise, the transfer configuration will be associated
-/// with the calling user.
+/// needed for this transfer configuration, authorization info must be provided.
+/// If authorization info is provided, the transfer configuration will be
+/// associated with the user id corresponding to the authorization info.
+/// Otherwise, the transfer configuration will be associated with the calling
+/// user.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateTransferConfigRequest {
     /// Required. The BigQuery project id where the transfer configuration should be created.
@@ -512,79 +522,100 @@ pub struct CreateTransferConfigRequest {
     #[prost(message, optional, tag = "2")]
     pub transfer_config: ::core::option::Option<TransferConfig>,
     /// Optional OAuth2 authorization code to use with this transfer configuration.
-    /// This is required if new credentials are needed, as indicated by
-    /// `CheckValidCreds`.
-    /// In order to obtain authorization_code, please make a
-    /// request to
-    /// <https://www.gstatic.com/bigquerydatatransfer/oauthz/auth?client_id=<datatransferapiclientid>&scope=<data_source_scopes>&redirect_uri=<redirect_uri>>
+    /// This is required only if `transferConfig.dataSourceId` is 'youtube_channel'
+    /// and new credentials are needed, as indicated by `CheckValidCreds`. In order
+    /// to obtain authorization_code, make a request to the following URL:
+    /// <pre class="prettyprint" suppresswarning="true">
+    /// <https://www.gstatic.com/bigquerydatatransfer/oauthz/auth?redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=authorization_code&client_id=<var>client_id</var>&scope=<var>data_source_scopes</var>>
+    /// </pre>
+    /// * The <var>client_id</var> is the OAuth client_id of the a data source as
+    /// returned by ListDataSources method.
+    /// * <var>data_source_scopes</var> are the scopes returned by ListDataSources
+    /// method.
     ///
-    /// * client_id should be OAuth client_id of BigQuery DTS API for the given
-    ///   data source returned by ListDataSources method.
-    /// * data_source_scopes are the scopes returned by ListDataSources method.
-    /// * redirect_uri is an optional parameter. If not specified, then
-    ///   authorization code is posted to the opener of authorization flow window.
-    ///   Otherwise it will be sent to the redirect uri. A special value of
-    ///   urn:ietf:wg:oauth:2.0:oob means that authorization code should be
-    ///   returned in the title bar of the browser, with the page text prompting
-    ///   the user to copy the code and paste it in the application.
+    /// Note that this should not be set when `service_account_name` is used to
+    /// create the transfer config.
     #[prost(string, tag = "3")]
     pub authorization_code: ::prost::alloc::string::String,
-    /// Optional version info. If users want to find a very recent access token,
-    /// that is, immediately after approving access, users have to set the
-    /// version_info claim in the token request. To obtain the version_info, users
-    /// must use the "none+gsession" response type. which be return a
-    /// version_info back in the authorization response which be be put in a JWT
-    /// claim in the token request.
+    /// Optional version info. This is required only if
+    /// `transferConfig.dataSourceId` is not 'youtube_channel' and new credentials
+    /// are needed, as indicated by `CheckValidCreds`. In order to obtain version
+    /// info, make a request to the following URL:
+    /// <pre class="prettyprint" suppresswarning="true">
+    /// <https://www.gstatic.com/bigquerydatatransfer/oauthz/auth?redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=version_info&client_id=<var>client_id</var>&scope=<var>data_source_scopes</var>>
+    /// </pre>
+    /// * The <var>client_id</var> is the OAuth client_id of the a data source as
+    /// returned by ListDataSources method.
+    /// * <var>data_source_scopes</var> are the scopes returned by ListDataSources
+    /// method.
+    ///
+    /// Note that this should not be set when `service_account_name` is used to
+    /// create the transfer config.
     #[prost(string, tag = "5")]
     pub version_info: ::prost::alloc::string::String,
-    /// Optional service account name. If this field is set, transfer config will
-    /// be created with this service account credentials. It requires that
-    /// requesting user calling this API has permissions to act as this service
+    /// Optional service account name. If this field is set, the transfer config
+    /// will be created with this service account's credentials. It requires that
+    /// the requesting user calling this API has permissions to act as this service
     /// account.
+    ///
+    /// Note that not all data sources support service account credentials when
+    /// creating a transfer config. For the latest list of data sources, read about
+    /// [using service
+    /// accounts](<https://cloud.google.com/bigquery-transfer/docs/use-service-accounts>).
     #[prost(string, tag = "6")]
     pub service_account_name: ::prost::alloc::string::String,
 }
 /// A request to update a transfer configuration. To update the user id of the
-/// transfer configuration, an authorization code needs to be provided.
+/// transfer configuration, authorization info needs to be provided.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateTransferConfigRequest {
     /// Required. Data transfer configuration to create.
     #[prost(message, optional, tag = "1")]
     pub transfer_config: ::core::option::Option<TransferConfig>,
     /// Optional OAuth2 authorization code to use with this transfer configuration.
-    /// If it is provided, the transfer configuration will be associated with the
-    /// authorizing user.
-    /// In order to obtain authorization_code, please make a
-    /// request to
-    /// <https://www.gstatic.com/bigquerydatatransfer/oauthz/auth?client_id=<datatransferapiclientid>&scope=<data_source_scopes>&redirect_uri=<redirect_uri>>
+    /// This is required only if `transferConfig.dataSourceId` is 'youtube_channel'
+    /// and new credentials are needed, as indicated by `CheckValidCreds`. In order
+    /// to obtain authorization_code, make a request to the following URL:
+    /// <pre class="prettyprint" suppresswarning="true">
+    /// <https://www.gstatic.com/bigquerydatatransfer/oauthz/auth?redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=authorization_code&client_id=<var>client_id</var>&scope=<var>data_source_scopes</var>>
+    /// </pre>
+    /// * The <var>client_id</var> is the OAuth client_id of the a data source as
+    /// returned by ListDataSources method.
+    /// * <var>data_source_scopes</var> are the scopes returned by ListDataSources
+    /// method.
     ///
-    /// * client_id should be OAuth client_id of BigQuery DTS API for the given
-    ///   data source returned by ListDataSources method.
-    /// * data_source_scopes are the scopes returned by ListDataSources method.
-    /// * redirect_uri is an optional parameter. If not specified, then
-    ///   authorization code is posted to the opener of authorization flow window.
-    ///   Otherwise it will be sent to the redirect uri. A special value of
-    ///   urn:ietf:wg:oauth:2.0:oob means that authorization code should be
-    ///   returned in the title bar of the browser, with the page text prompting
-    ///   the user to copy the code and paste it in the application.
+    /// Note that this should not be set when `service_account_name` is used to
+    /// update the transfer config.
     #[prost(string, tag = "3")]
     pub authorization_code: ::prost::alloc::string::String,
     /// Required. Required list of fields to be updated in this request.
     #[prost(message, optional, tag = "4")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
-    /// Optional version info. If users want to find a very recent access token,
-    /// that is, immediately after approving access, users have to set the
-    /// version_info claim in the token request. To obtain the version_info, users
-    /// must use the "none+gsession" response type. which be return a
-    /// version_info back in the authorization response which be be put in a JWT
-    /// claim in the token request.
+    /// Optional version info. This is required only if
+    /// `transferConfig.dataSourceId` is not 'youtube_channel' and new credentials
+    /// are needed, as indicated by `CheckValidCreds`. In order to obtain version
+    /// info, make a request to the following URL:
+    /// <pre class="prettyprint" suppresswarning="true">
+    /// <https://www.gstatic.com/bigquerydatatransfer/oauthz/auth?redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=version_info&client_id=<var>client_id</var>&scope=<var>data_source_scopes</var>>
+    /// </pre>
+    /// * The <var>client_id</var> is the OAuth client_id of the a data source as
+    /// returned by ListDataSources method.
+    /// * <var>data_source_scopes</var> are the scopes returned by ListDataSources
+    /// method.
+    ///
+    /// Note that this should not be set when `service_account_name` is used to
+    /// update the transfer config.
     #[prost(string, tag = "5")]
     pub version_info: ::prost::alloc::string::String,
-    /// Optional service account name. If this field is set and
-    /// "service_account_name" is set in update_mask, transfer config will be
-    /// updated to use this service account credentials. It requires that
-    /// requesting user calling this API has permissions to act as this service
+    /// Optional service account name. If this field is set, the transfer config
+    /// will be created with this service account's credentials. It requires that
+    /// the requesting user calling this API has permissions to act as this service
     /// account.
+    ///
+    /// Note that not all data sources support service account credentials when
+    /// creating a transfer config. For the latest list of data sources, read about
+    /// [using service
+    /// accounts](<https://cloud.google.com/bigquery-transfer/docs/use-service-accounts>).
     #[prost(string, tag = "6")]
     pub service_account_name: ::prost::alloc::string::String,
 }
@@ -628,7 +659,7 @@ pub struct DeleteTransferRunRequest {
 /// A request to list data transfers configured for a BigQuery project.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTransferConfigsRequest {
-    /// Required. The BigQuery project id for which data sources
+    /// Required. The BigQuery project id for which transfer configs
     /// should be returned: `projects/{project_id}` or
     /// `projects/{project_id}/locations/{location_id}`
     #[prost(string, tag = "1")]
@@ -660,9 +691,7 @@ pub struct ListTransferConfigsResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
-/// A request to list data transfer runs. UI can use this method to show/filter
-/// specific data transfer runs. The data source can use this method to request
-/// all scheduled transfer runs.
+/// A request to list data transfer runs.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTransferRunsRequest {
     /// Required. Name of transfer configuration for which transfer runs should be retrieved.
@@ -846,14 +875,23 @@ pub struct StartManualTransferRunsResponse {
     #[prost(message, repeated, tag = "1")]
     pub runs: ::prost::alloc::vec::Vec<TransferRun>,
 }
+/// A request to enroll a set of data sources so they are visible in the
+/// BigQuery UI's `Transfer` tab.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EnrollDataSourcesRequest {
+    /// The name of the project resource in the form: `projects/{project_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Data sources that are enrolled. It is required to provide at least one
+    /// data source id.
+    #[prost(string, repeated, tag = "2")]
+    pub data_source_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
 #[doc = r" Generated client implementations."]
 pub mod data_transfer_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    #[doc = " The Google BigQuery Data Transfer Service API enables BigQuery users to"]
-    #[doc = " configure the transfer of their data from other Google Products into"]
-    #[doc = " BigQuery. This service contains methods that are end user exposed. It backs"]
-    #[doc = " up the frontend."]
+    #[doc = " This API allows users to manage their data transfers into BigQuery."]
     #[derive(Debug, Clone)]
     pub struct DataTransferServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -899,8 +937,7 @@ pub mod data_transfer_service_client {
             self.inner = self.inner.accept_gzip();
             self
         }
-        #[doc = " Retrieves a supported data source and returns its settings,"]
-        #[doc = " which can be used for UI rendering."]
+        #[doc = " Retrieves a supported data source and returns its settings."]
         pub async fn get_data_source(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDataSourceRequest>,
@@ -917,8 +954,7 @@ pub mod data_transfer_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists supported data sources and returns their settings,"]
-        #[doc = " which can be used for UI rendering."]
+        #[doc = " Lists supported data sources and returns their settings."]
         pub async fn list_data_sources(
             &mut self,
             request: impl tonic::IntoRequest<super::ListDataSourcesRequest>,
@@ -970,8 +1006,8 @@ pub mod data_transfer_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Deletes a data transfer configuration,"]
-        #[doc = " including any associated transfer runs and logs."]
+        #[doc = " Deletes a data transfer configuration, including any associated transfer"]
+        #[doc = " runs and logs."]
         pub async fn delete_transfer_config(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteTransferConfigRequest>,
@@ -1097,7 +1133,7 @@ pub mod data_transfer_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Returns information about running and completed jobs."]
+        #[doc = " Returns information about running and completed transfer runs."]
         pub async fn list_transfer_runs(
             &mut self,
             request: impl tonic::IntoRequest<super::ListTransferRunsRequest>,
@@ -1114,7 +1150,7 @@ pub mod data_transfer_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Returns user facing log messages for the data transfer run."]
+        #[doc = " Returns log messages for the transfer run."]
         pub async fn list_transfer_logs(
             &mut self,
             request: impl tonic::IntoRequest<super::ListTransferLogsRequest>,
@@ -1133,10 +1169,6 @@ pub mod data_transfer_service_client {
         }
         #[doc = " Returns true if valid credentials exist for the given data source and"]
         #[doc = " requesting user."]
-        #[doc = " Some data sources doesn't support service account, so we need to talk to"]
-        #[doc = " them on behalf of the end user. This API just checks whether we have OAuth"]
-        #[doc = " token for the particular user, which is a pre-requisite before user can"]
-        #[doc = " create a transfer config."]
         pub async fn check_valid_creds(
             &mut self,
             request: impl tonic::IntoRequest<super::CheckValidCredsRequest>,
@@ -1150,6 +1182,30 @@ pub mod data_transfer_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.bigquery.datatransfer.v1.DataTransferService/CheckValidCreds",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Enroll data sources in a user project. This allows users to create transfer"]
+        #[doc = " configurations for these data sources. They will also appear in the"]
+        #[doc = " ListDataSources RPC and as such, will appear in the"]
+        #[doc = " [BigQuery UI](https://console.cloud.google.com/bigquery), and the documents"]
+        #[doc = " can be found in the public guide for"]
+        #[doc = " [BigQuery Web UI](https://cloud.google.com/bigquery/bigquery-web-ui) and"]
+        #[doc = " [Data Transfer"]
+        #[doc = " Service](https://cloud.google.com/bigquery/docs/working-with-transfers)."]
+        pub async fn enroll_data_sources(
+            &mut self,
+            request: impl tonic::IntoRequest<super::EnrollDataSourcesRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.bigquery.datatransfer.v1.DataTransferService/EnrollDataSources",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

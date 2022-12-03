@@ -174,6 +174,10 @@ pub struct Subscription {
     /// The settings for this subscription's message delivery.
     #[prost(message, optional, tag = "3")]
     pub delivery_config: ::core::option::Option<subscription::DeliveryConfig>,
+    /// If present, messages are automatically written from the Pub/Sub Lite topic
+    /// associated with this subscription to a destination.
+    #[prost(message, optional, tag = "4")]
+    pub export_config: ::core::option::Option<ExportConfig>,
 }
 /// Nested message and enum types in `Subscription`.
 pub mod subscription {
@@ -204,6 +208,68 @@ pub mod subscription {
             /// in higher end-to-end latency, but consistent delivery.
             DeliverAfterStored = 2,
         }
+    }
+}
+/// Configuration for a Pub/Sub Lite subscription that writes messages to a
+/// destination. User subscriber clients must not connect to this subscription.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportConfig {
+    /// The desired state of this export. Setting this to values other than
+    /// `ACTIVE` and `PAUSED` will result in an error.
+    #[prost(enumeration = "export_config::State", tag = "1")]
+    pub desired_state: i32,
+    /// Output only. The current state of the export, which may be different to the desired
+    /// state due to errors.
+    #[prost(enumeration = "export_config::State", tag = "6")]
+    pub current_state: i32,
+    /// Optional. The name of an optional Pub/Sub Lite topic to publish messages that can not
+    /// be exported to the destination. For example, the message can not be
+    /// published to the Pub/Sub service because it does not satisfy the
+    /// constraints documented at <https://cloud.google.com/pubsub/docs/publisher.>
+    ///
+    /// Structured like:
+    /// projects/{project_number}/locations/{location}/topics/{topic_id}.
+    /// Must be within the same project and location as the subscription. The topic
+    /// may be changed or removed.
+    #[prost(string, tag = "5")]
+    pub dead_letter_topic: ::prost::alloc::string::String,
+    /// The destination to export to. Required.
+    #[prost(oneof = "export_config::Destination", tags = "3")]
+    pub destination: ::core::option::Option<export_config::Destination>,
+}
+/// Nested message and enum types in `ExportConfig`.
+pub mod export_config {
+    /// Configuration for exporting to a Pub/Sub topic.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PubSubConfig {
+        /// The name of the Pub/Sub topic.
+        /// Structured like: projects/{project_number}/topics/{topic_id}.
+        /// The topic may be changed.
+        #[prost(string, tag = "1")]
+        pub topic: ::prost::alloc::string::String,
+    }
+    /// The desired export state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Default value. This value is unused.
+        Unspecified = 0,
+        /// Messages are being exported.
+        Active = 1,
+        /// Exporting messages is suspended.
+        Paused = 2,
+        /// Messages cannot be exported due to permission denied errors. Output only.
+        PermissionDenied = 3,
+        /// Messages cannot be exported due to missing resources. Output only.
+        NotFound = 4,
+    }
+    /// The destination to export to. Required.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Destination {
+        /// Messages are automatically written from the Pub/Sub Lite topic associated
+        /// with this subscription to a Pub/Sub topic.
+        #[prost(message, tag = "3")]
+        PubsubConfig(PubSubConfig),
     }
 }
 /// A target publish or event time. Can be used for seeking to or retrieving the
@@ -1200,7 +1266,9 @@ pub mod cursor_service_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.pubsublite.v1.CursorService/StreamingCommitCursor",
             );
-            self.inner.streaming(request.into_streaming_request(), path, codec).await
+            self.inner
+                .streaming(request.into_streaming_request(), path, codec)
+                .await
         }
         #[doc = " Updates the committed cursor."]
         pub async fn commit_cursor(
@@ -1383,7 +1451,9 @@ pub mod publisher_service_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.pubsublite.v1.PublisherService/Publish",
             );
-            self.inner.streaming(request.into_streaming_request(), path, codec).await
+            self.inner
+                .streaming(request.into_streaming_request(), path, codec)
+                .await
         }
     }
 }
@@ -1650,7 +1720,9 @@ pub mod subscriber_service_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.pubsublite.v1.SubscriberService/Subscribe",
             );
-            self.inner.streaming(request.into_streaming_request(), path, codec).await
+            self.inner
+                .streaming(request.into_streaming_request(), path, codec)
+                .await
         }
     }
 }
@@ -1729,7 +1801,9 @@ pub mod partition_assignment_service_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.pubsublite.v1.PartitionAssignmentService/AssignPartitions",
             );
-            self.inner.streaming(request.into_streaming_request(), path, codec).await
+            self.inner
+                .streaming(request.into_streaming_request(), path, codec)
+                .await
         }
     }
 }

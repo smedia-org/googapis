@@ -29,7 +29,7 @@ pub struct AnnotateAssessmentRequest {
         tag = "3"
     )]
     pub reasons: ::prost::alloc::vec::Vec<i32>,
-    /// Optional. Optional unique stable hashed user identifier to apply to the assessment.
+    /// Optional. Unique stable hashed user identifier to apply to the assessment.
     /// This is an alternative to setting the hashed_account_id in
     /// CreateAssessment, for example when the account identifier is not yet known
     /// in the initial request. It is recommended that the identifier is hashed
@@ -64,9 +64,31 @@ pub mod annotate_assessment_request {
     pub enum Reason {
         /// Default unspecified reason.
         Unspecified = 0,
-        /// Indicates a chargeback for fraud was issued for the transaction
-        /// associated with the assessment.
+        /// Indicates that the transaction had a chargeback issued with no other
+        /// details. When possible, specify the type by using CHARGEBACK_FRAUD or
+        /// CHARGEBACK_DISPUTE instead.
         Chargeback = 1,
+        /// Indicates that the transaction had a chargeback issued related to an
+        /// alleged unauthorized transaction from the cardholder's perspective (for
+        /// example, the card number was stolen).
+        ChargebackFraud = 8,
+        /// Indicates that the transaction had a chargeback issued related to the
+        /// cardholder having provided their card details but allegedly not being
+        /// satisfied with the purchase (for example, misrepresentation, attempted
+        /// cancellation).
+        ChargebackDispute = 9,
+        /// Indicates that the completed payment transaction was refunded by the
+        /// seller.
+        Refund = 10,
+        /// Indicates that the completed payment transaction was determined to be
+        /// fraudulent by the seller, and was cancelled and refunded as a result.
+        RefundFraud = 11,
+        /// Indicates that the payment transaction was accepted, and the user was
+        /// charged.
+        TransactionAccepted = 12,
+        /// Indicates that the payment transaction was declined, for example due to
+        /// invalid card details.
+        TransactionDeclined = 13,
         /// Indicates the transaction associated with the assessment is suspected of
         /// being fraudulent based on the payment method, billing details, shipping
         /// address or other transaction information.
@@ -84,11 +106,37 @@ pub mod annotate_assessment_request {
         CorrectPassword = 5,
         /// Indicates the user provided an incorrect password.
         IncorrectPassword = 6,
+        /// Indicates that the user sent unwanted and abusive messages to other users
+        /// of the platform, such as spam, scams, phishing, or social engineering.
+        SocialSpam = 14,
     }
 }
 /// Empty response for AnnotateAssessment.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AnnotateAssessmentResponse {}
+/// Private password leak verification info.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PrivatePasswordLeakVerification {
+    /// Optional. Exactly 26-bit prefix of the SHA-256 hash of the canonicalized username. It
+    /// is used to look up password leaks associated with that hash prefix.
+    #[prost(bytes = "vec", tag = "1")]
+    pub lookup_hash_prefix: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. Encrypted Scrypt hash of the canonicalized username+password. It is
+    /// re-encrypted by the server and returned through
+    /// `reencrypted_user_credentials_hash`.
+    #[prost(bytes = "vec", tag = "2")]
+    pub encrypted_user_credentials_hash: ::prost::alloc::vec::Vec<u8>,
+    /// Output only. List of prefixes of the encrypted potential password leaks that matched the
+    /// given parameters. They must be compared with the client-side decryption
+    /// prefix of `reencrypted_user_credentials_hash`
+    #[prost(bytes = "vec", repeated, tag = "3")]
+    pub encrypted_leak_match_prefixes: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+    /// Output only. Corresponds to the re-encryption of the `encrypted_user_credentials_hash`
+    /// field. It is used to match potential password leaks within
+    /// `encrypted_leak_match_prefixes`.
+    #[prost(bytes = "vec", tag = "4")]
+    pub reencrypted_user_credentials_hash: ::prost::alloc::vec::Vec<u8>,
+}
 /// A recaptcha assessment resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Assessment {
@@ -105,10 +153,14 @@ pub struct Assessment {
     /// Output only. Properties of the provided event token.
     #[prost(message, optional, tag = "4")]
     pub token_properties: ::core::option::Option<TokenProperties>,
-    /// Assessment returned by Account Defender when a hashed_account_id is
+    /// Assessment returned by account defender when a hashed_account_id is
     /// provided.
     #[prost(message, optional, tag = "6")]
     pub account_defender_assessment: ::core::option::Option<AccountDefenderAssessment>,
+    /// The private password leak verification field contains the parameters that
+    /// are used to to check for leaks privately without sharing user credentials.
+    #[prost(message, optional, tag = "8")]
+    pub private_password_leak_verification: ::core::option::Option<PrivatePasswordLeakVerification>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Event {
@@ -132,8 +184,8 @@ pub struct Event {
     /// integrated with recaptcha enterprise.
     #[prost(string, tag = "5")]
     pub expected_action: ::prost::alloc::string::String,
-    /// Optional. Optional unique stable hashed user identifier for the request. The
-    /// identifier should ideally be hashed using sha256 with stable secret.
+    /// Optional. Unique stable hashed user identifier for the request. The identifier must
+    /// be hashed using hmac-sha256 with stable secret.
     #[prost(bytes = "vec", tag = "6")]
     pub hashed_account_id: ::prost::alloc::vec::Vec<u8>,
 }
@@ -146,7 +198,11 @@ pub struct RiskAnalysis {
     #[prost(float, tag = "1")]
     pub score: f32,
     /// Reasons contributing to the risk analysis verdict.
-    #[prost(enumeration = "risk_analysis::ClassificationReason", repeated, tag = "2")]
+    #[prost(
+        enumeration = "risk_analysis::ClassificationReason",
+        repeated,
+        tag = "2"
+    )]
     pub reasons: ::prost::alloc::vec::Vec<i32>,
 }
 /// Nested message and enum types in `RiskAnalysis`.
@@ -186,7 +242,7 @@ pub struct TokenProperties {
     /// The timestamp corresponding to the generation of the token.
     #[prost(message, optional, tag = "3")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The hostname of the page on which the token was generated.
+    /// The hostname of the page on which the token was generated (Web keys only).
     #[prost(string, tag = "4")]
     pub hostname: ::prost::alloc::string::String,
     /// Action name provided at token generation.
@@ -216,7 +272,7 @@ pub mod token_properties {
         BrowserError = 6,
     }
 }
-/// Account Defender risk assessment.
+/// Account defender risk assessment.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AccountDefenderAssessment {
     /// Labels for this request.
@@ -229,7 +285,7 @@ pub struct AccountDefenderAssessment {
 }
 /// Nested message and enum types in `AccountDefenderAssessment`.
 pub mod account_defender_assessment {
-    /// Labels returned by Account Defender for this request.
+    /// Labels returned by account defender for this request.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum AccountDefenderLabel {
@@ -237,15 +293,15 @@ pub mod account_defender_assessment {
         Unspecified = 0,
         /// The request matches a known good profile for the user.
         ProfileMatch = 1,
-        /// The request is potentially a suspicious login event and should be further
-        /// verified either via multi-factor authentication or another system.
+        /// The request is potentially a suspicious login event and must be further
+        /// verified either through multi-factor authentication or another system.
         SuspiciousLoginActivity = 2,
         /// The request matched a profile that previously had suspicious account
-        /// creation behavior. This could mean this is a fake account.
+        /// creation behavior. This can mean that this is a fake account.
         SuspiciousAccountCreation = 3,
         /// The account in the request has a high number of related accounts. It does
-        /// not necessarily imply that the account is bad but could require
-        /// investigating.
+        /// not necessarily imply that the account is bad but can require further
+        /// investigation.
         RelatedAccountsNumberHigh = 4,
     }
 }
@@ -286,6 +342,14 @@ pub struct ListKeysResponse {
     /// remain in results.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
+}
+/// The retrieve legacy secret key request message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RetrieveLegacySecretKeyRequest {
+    /// Required. The public key name linked to the requested secret key in the format
+    /// "projects/{project}/keys/{key}".
+    #[prost(string, tag = "1")]
+    pub key: ::prost::alloc::string::String,
 }
 /// The get key request message.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -350,6 +414,17 @@ pub struct Metrics {
     #[prost(message, repeated, tag = "3")]
     pub challenge_metrics: ::prost::alloc::vec::Vec<ChallengeMetrics>,
 }
+/// Secret key is used only in legacy reCAPTCHA. It must be used in a 3rd party
+/// integration with legacy reCAPTCHA.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RetrieveLegacySecretKeyResponse {
+    /// The secret key (also known as shared secret) authorizes communication
+    /// between your application backend and the reCAPTCHA Enterprise server to
+    /// create an assessment.
+    /// The secret key needs to be kept safe for security purposes.
+    #[prost(string, tag = "1")]
+    pub legacy_secret_key: ::prost::alloc::string::String,
+}
 /// A key used to identify and configure applications (web and/or mobile) that
 /// use reCAPTCHA Enterprise.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -372,15 +447,18 @@ pub struct Key {
     /// Options for user acceptance testing.
     #[prost(message, optional, tag = "9")]
     pub testing_options: ::core::option::Option<TestingOptions>,
-    /// Platform specific settings for this key. The key can only be used on one
-    /// platform, the one it has settings for.
+    /// Settings for WAF
+    #[prost(message, optional, tag = "10")]
+    pub waf_settings: ::core::option::Option<WafSettings>,
+    /// Platform specific settings for this key. The key can only be used on a
+    /// platform for which the settings are enabled.
     #[prost(oneof = "key::PlatformSettings", tags = "3, 4, 5")]
     pub platform_settings: ::core::option::Option<key::PlatformSettings>,
 }
 /// Nested message and enum types in `Key`.
 pub mod key {
-    /// Platform specific settings for this key. The key can only be used on one
-    /// platform, the one it has settings for.
+    /// Platform specific settings for this key. The key can only be used on a
+    /// platform for which the settings are enabled.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PlatformSettings {
         /// Settings for keys that can be used by websites.
@@ -447,7 +525,10 @@ pub struct WebKeySettings {
     /// Settings for the frequency and difficulty at which this key triggers
     /// captcha challenges. This should only be specified for IntegrationTypes
     /// CHECKBOX and INVISIBLE.
-    #[prost(enumeration = "web_key_settings::ChallengeSecurityPreference", tag = "5")]
+    #[prost(
+        enumeration = "web_key_settings::ChallengeSecurityPreference",
+        tag = "5"
+    )]
     pub challenge_security_preference: i32,
 }
 /// Nested message and enum types in `WebKeySettings`.
@@ -556,10 +637,10 @@ pub struct ListRelatedAccountGroupMembershipsRequest {
     /// `projects/{project}/relatedaccountgroups/{relatedaccountgroup}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Optional. The maximum number of accounts to return. The service may return fewer than
-    /// this value.
-    /// If unspecified, at most 50 accounts will be returned.
-    /// The maximum value is 1000; values above 1000 will be coerced to 1000.
+    /// Optional. The maximum number of accounts to return. The service might return fewer
+    /// than this value.
+    /// If unspecified, at most 50 accounts are returned.
+    /// The maximum value is 1000; values above 1000 are coerced to 1000.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Optional. A page token, received from a previous `ListRelatedAccountGroupMemberships`
@@ -589,10 +670,10 @@ pub struct ListRelatedAccountGroupsRequest {
     /// "projects/{project}".
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Optional. The maximum number of groups to return. The service may return fewer than
+    /// Optional. The maximum number of groups to return. The service might return fewer than
     /// this value.
-    /// If unspecified, at most 50 groups will be returned.
-    /// The maximum value is 1000; values above 1000 will be coerced to 1000.
+    /// If unspecified, at most 50 groups are returned.
+    /// The maximum value is 1000; values above 1000 are coerced to 1000.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Optional. A page token, received from a previous `ListRelatedAccountGroups` call.
@@ -618,19 +699,19 @@ pub struct ListRelatedAccountGroupsResponse {
 /// The request message to search related account group memberships.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchRelatedAccountGroupMembershipsRequest {
-    /// Required. The name of the project to search related account group memberships from,
-    /// in the format "projects/{project}".
+    /// Required. The name of the project to search related account group memberships from.
+    /// Specify the project name in the following format: "projects/{project}".
     #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
+    pub project: ::prost::alloc::string::String,
     /// Optional. The unique stable hashed user identifier we should search connections to.
     /// The identifier should correspond to a `hashed_account_id` provided in a
-    /// previous CreateAssessment or AnnotateAssessment call.
+    /// previous `CreateAssessment` or `AnnotateAssessment` call.
     #[prost(bytes = "vec", tag = "2")]
     pub hashed_account_id: ::prost::alloc::vec::Vec<u8>,
-    /// Optional. The maximum number of groups to return. The service may return fewer than
+    /// Optional. The maximum number of groups to return. The service might return fewer than
     /// this value.
-    /// If unspecified, at most 50 groups will be returned.
-    /// The maximum value is 1000; values above 1000 will be coerced to 1000.
+    /// If unspecified, at most 50 groups are returned.
+    /// The maximum value is 1000; values above 1000 are coerced to 1000.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
     /// Optional. A page token, received from a previous
@@ -663,7 +744,7 @@ pub struct RelatedAccountGroupMembership {
     pub name: ::prost::alloc::string::String,
     /// The unique stable hashed user identifier of the member. The identifier
     /// corresponds to a `hashed_account_id` provided in a previous
-    /// CreateAssessment or AnnotateAssessment call.
+    /// `CreateAssessment` or `AnnotateAssessment` call.
     #[prost(bytes = "vec", tag = "2")]
     pub hashed_account_id: ::prost::alloc::vec::Vec<u8>,
 }
@@ -674,6 +755,44 @@ pub struct RelatedAccountGroup {
     /// `projects/{project}/relatedaccountgroups/{related_account_group}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+}
+/// Settings specific to keys that can be used for WAF (Web Application
+/// Firewall).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WafSettings {
+    /// Required. The WAF service that uses this key.
+    #[prost(enumeration = "waf_settings::WafService", tag = "1")]
+    pub waf_service: i32,
+    /// Required. The WAF feature for which this key is enabled.
+    #[prost(enumeration = "waf_settings::WafFeature", tag = "2")]
+    pub waf_feature: i32,
+}
+/// Nested message and enum types in `WafSettings`.
+pub mod waf_settings {
+    /// Supported WAF features. For more information, see
+    /// <https://cloud.google.com/recaptcha-enterprise/docs/usecase#comparison_of_features.>
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum WafFeature {
+        /// Undefined feature.
+        Unspecified = 0,
+        /// Redirects suspicious traffic to reCAPTCHA.
+        ChallengePage = 1,
+        /// Use reCAPTCHA session-tokens to protect the whole user session on the
+        /// site's domain.
+        SessionToken = 2,
+        /// Use reCAPTCHA action-tokens to protect user actions.
+        ActionToken = 3,
+    }
+    /// Web Application Firewalls supported by reCAPTCHA Enterprise.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum WafService {
+        /// Undefined WAF
+        Unspecified = 0,
+        /// Cloud Armor
+        Ca = 1,
+    }
 }
 #[doc = r" Generated client implementations."]
 pub mod recaptcha_enterprise_service_client {
@@ -792,6 +911,24 @@ pub mod recaptcha_enterprise_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Returns the secret key related to the specified public key."]
+        #[doc = " You must use the legacy secret key only in a 3rd party integration with"]
+        #[doc = " legacy reCAPTCHA."]
+        pub async fn retrieve_legacy_secret_key(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RetrieveLegacySecretKeyRequest>,
+        ) -> Result<tonic::Response<super::RetrieveLegacySecretKeyResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/RetrieveLegacySecretKey") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Returns the specified key."]
         pub async fn get_key(
             &mut self,
@@ -899,7 +1036,7 @@ pub mod recaptcha_enterprise_service_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/ListRelatedAccountGroups") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Get the memberships in a group of related accounts."]
+        #[doc = " Get memberships in a group of related accounts."]
         pub async fn list_related_account_group_memberships(
             &mut self,
             request: impl tonic::IntoRequest<super::ListRelatedAccountGroupMembershipsRequest>,

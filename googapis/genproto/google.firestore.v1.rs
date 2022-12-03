@@ -52,7 +52,10 @@ pub struct Document {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Value {
     /// Must have a value set.
-    #[prost(oneof = "value::ValueType", tags = "11, 1, 2, 3, 10, 17, 18, 5, 8, 9, 6")]
+    #[prost(
+        oneof = "value::ValueType",
+        tags = "11, 1, 2, 3, 10, 17, 18, 5, 8, 9, 6"
+    )]
     pub value_type: ::core::option::Option<value::ValueType>,
 }
 /// Nested message and enum types in `Value`.
@@ -142,40 +145,87 @@ pub struct StructuredQuery {
     pub r#where: ::core::option::Option<structured_query::Filter>,
     /// The order to apply to the query results.
     ///
-    /// Firestore guarantees a stable ordering through the following rules:
+    /// Firestore allows callers to provide a full ordering, a partial ordering, or
+    /// no ordering at all. In all cases, Firestore guarantees a stable ordering
+    /// through the following rules:
     ///
-    ///  * Any field required to appear in `order_by`, that is not already
-    ///    specified in `order_by`, is appended to the order in field name order
-    ///    by default.
+    ///  * The `order_by` is required to reference all fields used with an
+    ///    inequality filter.
+    ///  * All fields that are required to be in the `order_by` but are not already
+    ///    present are appended in lexicographical ordering of the field name.
     ///  * If an order on `__name__` is not specified, it is appended by default.
     ///
     /// Fields are appended with the same sort direction as the last order
     /// specified, or 'ASCENDING' if no order was specified. For example:
     ///
-    ///  * `SELECT * FROM Foo ORDER BY A` becomes
-    ///    `SELECT * FROM Foo ORDER BY A, __name__`
-    ///  * `SELECT * FROM Foo ORDER BY A DESC` becomes
-    ///    `SELECT * FROM Foo ORDER BY A DESC, __name__ DESC`
-    ///  * `SELECT * FROM Foo WHERE A > 1` becomes
-    ///    `SELECT * FROM Foo WHERE A > 1 ORDER BY A, __name__`
+    ///  * `ORDER BY a` becomes `ORDER BY a ASC, __name__ ASC`
+    ///  * `ORDER BY a DESC` becomes `ORDER BY a DESC, __name__ DESC`
+    ///  * `WHERE a > 1` becomes `WHERE a > 1 ORDER BY a ASC, __name__ ASC`
+    ///  * `WHERE __name__ > ... AND a > 1` becomes
+    ///     `WHERE __name__ > ... AND a > 1 ORDER BY a ASC, __name__ ASC`
     #[prost(message, repeated, tag = "4")]
     pub order_by: ::prost::alloc::vec::Vec<structured_query::Order>,
-    /// A starting point for the query results.
+    /// A potential prefix of a position in the result set to start the query at.
+    ///
+    /// The ordering of the result set is based on the `ORDER BY` clause of the
+    /// original query.
+    ///
+    /// ```
+    /// SELECT * FROM k WHERE a = 1 AND b > 2 ORDER BY b ASC, __name__ ASC;
+    /// ```
+    ///
+    /// This query's results are ordered by `(b ASC, __name__ ASC)`.
+    ///
+    /// Cursors can reference either the full ordering or a prefix of the location,
+    /// though it cannot reference more fields than what are in the provided
+    /// `ORDER BY`.
+    ///
+    /// Continuing off the example above, attaching the following start cursors
+    /// will have varying impact:
+    ///
+    /// - `START BEFORE (2, /k/123)`: start the query right before `a = 1 AND
+    ///    b > 2 AND __name__ > /k/123`.
+    /// - `START AFTER (10)`: start the query right after `a = 1 AND b > 10`.
+    ///
+    /// Unlike `OFFSET` which requires scanning over the first N results to skip,
+    /// a start cursor allows the query to begin at a logical position. This
+    /// position is not required to match an actual result, it will scan forward
+    /// from this position to find the next document.
+    ///
+    /// Requires:
+    ///
+    /// * The number of values cannot be greater than the number of fields
+    ///   specified in the `ORDER BY` clause.
     #[prost(message, optional, tag = "7")]
     pub start_at: ::core::option::Option<Cursor>,
-    /// A end point for the query results.
+    /// A potential prefix of a position in the result set to end the query at.
+    ///
+    /// This is similar to `START_AT` but with it controlling the end position
+    /// rather than the start position.
+    ///
+    /// Requires:
+    ///
+    /// * The number of values cannot be greater than the number of fields
+    ///   specified in the `ORDER BY` clause.
     #[prost(message, optional, tag = "8")]
     pub end_at: ::core::option::Option<Cursor>,
-    /// The number of results to skip.
+    /// The number of documents to skip before returning the first result.
     ///
-    /// Applies before limit, but after all other constraints. Must be >= 0 if
-    /// specified.
+    /// This applies after the constraints specified by the `WHERE`, `START AT`, &
+    /// `END AT` but before the `LIMIT` clause.
+    ///
+    /// Requires:
+    ///
+    /// * The value must be greater than or equal to zero if specified.
     #[prost(int32, tag = "6")]
     pub offset: i32,
     /// The maximum number of results to return.
     ///
     /// Applies after all other constraints.
-    /// Must be >= 0 if specified.
+    ///
+    /// Requires:
+    ///
+    /// * The value must be greater than or equal to zero if specified.
     #[prost(message, optional, tag = "5")]
     pub limit: ::core::option::Option<i32>,
 }
@@ -224,7 +274,10 @@ pub mod structured_query {
         #[prost(enumeration = "composite_filter::Operator", tag = "1")]
         pub op: i32,
         /// The list of filters to combine.
-        /// Must contain at least one filter.
+        ///
+        /// Requires:
+        ///
+        /// * At least one filter is present.
         #[prost(message, repeated, tag = "2")]
         pub filters: ::prost::alloc::vec::Vec<Filter>,
     }
@@ -238,7 +291,7 @@ pub mod structured_query {
         pub enum Operator {
             /// Unspecified. This value must not be used.
             Unspecified = 0,
-            /// The results are required to satisfy each of the combined filters.
+            /// Documents are required to satisfy all of the combined filters.
             And = 1,
         }
     }
@@ -383,9 +436,14 @@ pub mod structured_query {
         #[prost(enumeration = "Direction", tag = "2")]
         pub direction: i32,
     }
-    /// A reference to a field, such as `max(messages.time) as max_time`.
+    /// A reference to a field in a document, ex: `stats.operations`.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct FieldReference {
+        /// The relative path of the document being referenced.
+        ///
+        /// Requires:
+        ///
+        /// * Conform to [document field name]\[google.firestore.v1.Document.fields\] limitations.
         #[prost(string, tag = "2")]
         pub field_path: ::prost::alloc::string::String,
     }
@@ -411,6 +469,107 @@ pub mod structured_query {
         Descending = 2,
     }
 }
+/// Firestore query for running an aggregation over a \[StructuredQuery][google.firestore.v1.StructuredQuery\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StructuredAggregationQuery {
+    /// Optional. Series of aggregations to apply over the results of the `structured_query`.
+    ///
+    /// Requires:
+    ///
+    /// * A minimum of one and maximum of five aggregations per query.
+    #[prost(message, repeated, tag = "3")]
+    pub aggregations: ::prost::alloc::vec::Vec<structured_aggregation_query::Aggregation>,
+    /// The base query to aggregate over.
+    #[prost(oneof = "structured_aggregation_query::QueryType", tags = "1")]
+    pub query_type: ::core::option::Option<structured_aggregation_query::QueryType>,
+}
+/// Nested message and enum types in `StructuredAggregationQuery`.
+pub mod structured_aggregation_query {
+    /// Defines a aggregation that produces a single result.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Aggregation {
+        /// Optional. Optional name of the field to store the result of the aggregation into.
+        ///
+        /// If not provided, Firestore will pick a default name following the format
+        /// `field_<incremental_id++>`. For example:
+        ///
+        /// ```
+        /// AGGREGATE
+        ///   COUNT_UP_TO(1) AS count_up_to_1,
+        ///   COUNT_UP_TO(2),
+        ///   COUNT_UP_TO(3) AS count_up_to_3,
+        ///   COUNT_UP_TO(4)
+        /// OVER (
+        ///   ...
+        /// );
+        /// ```
+        ///
+        /// becomes:
+        ///
+        /// ```
+        /// AGGREGATE
+        ///   COUNT_UP_TO(1) AS count_up_to_1,
+        ///   COUNT_UP_TO(2) AS field_1,
+        ///   COUNT_UP_TO(3) AS count_up_to_3,
+        ///   COUNT_UP_TO(4) AS field_2
+        /// OVER (
+        ///   ...
+        /// );
+        /// ```
+        ///
+        /// Requires:
+        ///
+        /// * Must be unique across all aggregation aliases.
+        /// * Conform to [document field name]\[google.firestore.v1.Document.fields\] limitations.
+        #[prost(string, tag = "7")]
+        pub alias: ::prost::alloc::string::String,
+        /// The type of aggregation to perform, required.
+        #[prost(oneof = "aggregation::Operator", tags = "1")]
+        pub operator: ::core::option::Option<aggregation::Operator>,
+    }
+    /// Nested message and enum types in `Aggregation`.
+    pub mod aggregation {
+        /// Count of documents that match the query.
+        ///
+        /// The `COUNT(*)` aggregation function operates on the entire document
+        /// so it does not require a field reference.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Count {
+            /// Optional. Optional constraint on the maximum number of documents to count.
+            ///
+            /// This provides a way to set an upper bound on the number of documents
+            /// to scan, limiting latency and cost.
+            ///
+            /// Unspecified is interpreted as no bound.
+            ///
+            /// High-Level Example:
+            ///
+            /// ```
+            /// AGGREGATE COUNT_UP_TO(1000) OVER ( SELECT * FROM k );
+            /// ```
+            ///
+            /// Requires:
+            ///
+            /// * Must be greater than zero when present.
+            #[prost(message, optional, tag = "1")]
+            pub up_to: ::core::option::Option<i64>,
+        }
+        /// The type of aggregation to perform, required.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Operator {
+            /// Count aggregator.
+            #[prost(message, tag = "1")]
+            Count(Count),
+        }
+    }
+    /// The base query to aggregate over.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum QueryType {
+        /// Nested structured query.
+        #[prost(message, tag = "1")]
+        StructuredQuery(super::StructuredQuery),
+    }
+}
 /// A position in a query result set.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Cursor {
@@ -424,6 +583,21 @@ pub struct Cursor {
     /// to the sort order defined by the query.
     #[prost(bool, tag = "2")]
     pub before: bool,
+}
+/// The result of a single bucket from a Firestore aggregation query.
+///
+/// The keys of `aggregate_fields` are the same for all results in an aggregation
+/// query, unlike document queries which can have different fields present for
+/// each result.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AggregationResult {
+    /// The result of the aggregation functions, ex: `COUNT(*) AS total_docs`.
+    ///
+    /// The key is the \[alias][google.firestore.v1.StructuredAggregationQuery.Aggregation.alias\]
+    /// assigned to the aggregation function on input and the size of this map
+    /// equals the number of aggregation functions in the query.
+    #[prost(map = "string, message", tag = "2")]
+    pub aggregate_fields: ::std::collections::HashMap<::prost::alloc::string::String, Value>,
 }
 /// A set of field paths on a document.
 /// Used to restrict a get or update operation on a document to a subset of its
@@ -454,7 +628,7 @@ pub mod precondition {
         #[prost(bool, tag = "1")]
         Exists(bool),
         /// When set, the target document must exist and have been last updated at
-        /// that time.
+        /// that time. Timestamp must be microsecond aligned.
         #[prost(message, tag = "2")]
         UpdateTime(::prost_types::Timestamp),
     }
@@ -949,7 +1123,10 @@ pub struct BatchGetDocumentsRequest {
     pub mask: ::core::option::Option<DocumentMask>,
     /// The consistency mode for this transaction.
     /// If not set, defaults to strong consistency.
-    #[prost(oneof = "batch_get_documents_request::ConsistencySelector", tags = "4, 5, 7")]
+    #[prost(
+        oneof = "batch_get_documents_request::ConsistencySelector",
+        tags = "4, 5, 7"
+    )]
     pub consistency_selector:
         ::core::option::Option<batch_get_documents_request::ConsistencySelector>,
 }
@@ -1100,7 +1277,9 @@ pub mod run_query_request {
     /// If not set, defaults to strong consistency.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ConsistencySelector {
-        /// Reads documents in a transaction.
+        /// Run the query within an already active transaction.
+        ///
+        /// The value here is the opaque transaction ID to execute the query in.
         #[prost(bytes, tag = "5")]
         Transaction(::prost::alloc::vec::Vec<u8>),
         /// Starts a new transaction and reads the documents.
@@ -1124,8 +1303,7 @@ pub struct RunQueryResponse {
     /// If set, no other fields will be set in this response.
     #[prost(bytes = "vec", tag = "2")]
     pub transaction: ::prost::alloc::vec::Vec<u8>,
-    /// A query result.
-    /// Not set when reporting partial progress.
+    /// A query result, not set when reporting partial progress.
     #[prost(message, optional, tag = "1")]
     pub document: ::core::option::Option<Document>,
     /// The time at which the document was read. This may be monotonically
@@ -1141,6 +1319,96 @@ pub struct RunQueryResponse {
     /// the last response and the current response.
     #[prost(int32, tag = "4")]
     pub skipped_results: i32,
+    /// The continuation mode for the query. If present, it indicates the current
+    /// query response stream has finished. This can be set with or without a
+    /// `document` present, but when set, no more results are returned.
+    #[prost(oneof = "run_query_response::ContinuationSelector", tags = "6")]
+    pub continuation_selector: ::core::option::Option<run_query_response::ContinuationSelector>,
+}
+/// Nested message and enum types in `RunQueryResponse`.
+pub mod run_query_response {
+    /// The continuation mode for the query. If present, it indicates the current
+    /// query response stream has finished. This can be set with or without a
+    /// `document` present, but when set, no more results are returned.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ContinuationSelector {
+        /// If present, Firestore has completely finished the request and no more
+        /// documents will be returned.
+        #[prost(bool, tag = "6")]
+        Done(bool),
+    }
+}
+/// The request for \[Firestore.RunAggregationQuery][google.firestore.v1.Firestore.RunAggregationQuery\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RunAggregationQueryRequest {
+    /// Required. The parent resource name. In the format:
+    /// `projects/{project_id}/databases/{database_id}/documents` or
+    /// `projects/{project_id}/databases/{database_id}/documents/{document_path}`.
+    /// For example:
+    /// `projects/my-project/databases/my-database/documents` or
+    /// `projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The query to run.
+    #[prost(oneof = "run_aggregation_query_request::QueryType", tags = "2")]
+    pub query_type: ::core::option::Option<run_aggregation_query_request::QueryType>,
+    /// The consistency mode for the query, defaults to strong consistency.
+    #[prost(
+        oneof = "run_aggregation_query_request::ConsistencySelector",
+        tags = "4, 5, 6"
+    )]
+    pub consistency_selector:
+        ::core::option::Option<run_aggregation_query_request::ConsistencySelector>,
+}
+/// Nested message and enum types in `RunAggregationQueryRequest`.
+pub mod run_aggregation_query_request {
+    /// The query to run.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum QueryType {
+        /// An aggregation query.
+        #[prost(message, tag = "2")]
+        StructuredAggregationQuery(super::StructuredAggregationQuery),
+    }
+    /// The consistency mode for the query, defaults to strong consistency.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ConsistencySelector {
+        /// Run the aggregation within an already active transaction.
+        ///
+        /// The value here is the opaque transaction ID to execute the query in.
+        #[prost(bytes, tag = "4")]
+        Transaction(::prost::alloc::vec::Vec<u8>),
+        /// Starts a new transaction as part of the query, defaulting to read-only.
+        ///
+        /// The new transaction ID will be returned as the first response in the
+        /// stream.
+        #[prost(message, tag = "5")]
+        NewTransaction(super::TransactionOptions),
+        /// Executes the query at the given timestamp.
+        ///
+        /// Requires:
+        ///
+        /// * Cannot be more than 270 seconds in the past.
+        #[prost(message, tag = "6")]
+        ReadTime(::prost_types::Timestamp),
+    }
+}
+/// The response for \[Firestore.RunAggregationQuery][google.firestore.v1.Firestore.RunAggregationQuery\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RunAggregationQueryResponse {
+    /// A single aggregation result.
+    ///
+    /// Not present when reporting partial progress.
+    #[prost(message, optional, tag = "1")]
+    pub result: ::core::option::Option<AggregationResult>,
+    /// The transaction that was started as part of this request.
+    ///
+    /// Only present on the first response when the request requested to start
+    /// a new transaction.
+    #[prost(bytes = "vec", tag = "2")]
+    pub transaction: ::prost::alloc::vec::Vec<u8>,
+    /// The time at which the aggregate value is valid for.
+    #[prost(message, optional, tag = "3")]
+    pub read_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// The request for \[Firestore.PartitionQuery][google.firestore.v1.Firestore.PartitionQuery\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1188,6 +1456,10 @@ pub struct PartitionQueryRequest {
     /// The query to partition.
     #[prost(oneof = "partition_query_request::QueryType", tags = "2")]
     pub query_type: ::core::option::Option<partition_query_request::QueryType>,
+    /// The consistency mode for this request.
+    /// If not set, defaults to strong consistency.
+    #[prost(oneof = "partition_query_request::ConsistencySelector", tags = "6")]
+    pub consistency_selector: ::core::option::Option<partition_query_request::ConsistencySelector>,
 }
 /// Nested message and enum types in `PartitionQueryRequest`.
 pub mod partition_query_request {
@@ -1200,6 +1472,15 @@ pub mod partition_query_request {
         /// cursors are not supported.
         #[prost(message, tag = "2")]
         StructuredQuery(super::StructuredQuery),
+    }
+    /// The consistency mode for this request.
+    /// If not set, defaults to strong consistency.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ConsistencySelector {
+        /// Reads documents as they were at the given time.
+        /// This may not be older than 270 seconds.
+        #[prost(message, tag = "6")]
+        ReadTime(::prost_types::Timestamp),
     }
 }
 /// The response for \[Firestore.PartitionQuery][google.firestore.v1.Firestore.PartitionQuery\].
@@ -1532,6 +1813,23 @@ pub struct ListCollectionIdsRequest {
     /// \[ListCollectionIdsResponse][google.firestore.v1.ListCollectionIdsResponse\].
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
+    /// The consistency mode for this request.
+    /// If not set, defaults to strong consistency.
+    #[prost(oneof = "list_collection_ids_request::ConsistencySelector", tags = "4")]
+    pub consistency_selector:
+        ::core::option::Option<list_collection_ids_request::ConsistencySelector>,
+}
+/// Nested message and enum types in `ListCollectionIdsRequest`.
+pub mod list_collection_ids_request {
+    /// The consistency mode for this request.
+    /// If not set, defaults to strong consistency.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ConsistencySelector {
+        /// Reads documents as they were at the given time.
+        /// This may not be older than 270 seconds.
+        #[prost(message, tag = "4")]
+        ReadTime(::prost_types::Timestamp),
+    }
 }
 /// The response from \[Firestore.ListCollectionIds][google.firestore.v1.Firestore.ListCollectionIds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1723,7 +2021,9 @@ pub mod firestore_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.firestore.v1.Firestore/BatchGetDocuments",
             );
-            self.inner.server_streaming(request.into_request(), path, codec).await
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
         }
         #[doc = " Starts a new transaction."]
         pub async fn begin_transaction(
@@ -1789,7 +2089,42 @@ pub mod firestore_client {
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.firestore.v1.Firestore/RunQuery");
-            self.inner.server_streaming(request.into_request(), path, codec).await
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
+        }
+        #[doc = " Runs an aggregation query."]
+        #[doc = ""]
+        #[doc = " Rather than producing [Document][google.firestore.v1.Document] results like [Firestore.RunQuery][google.firestore.v1.Firestore.RunQuery],"]
+        #[doc = " this API allows running an aggregation to produce a series of"]
+        #[doc = " [AggregationResult][google.firestore.v1.AggregationResult] server-side."]
+        #[doc = ""]
+        #[doc = " High-Level Example:"]
+        #[doc = ""]
+        #[doc = " ```"]
+        #[doc = " -- Return the number of documents in table given a filter."]
+        #[doc = " SELECT COUNT(*) FROM ( SELECT * FROM k where a = true );"]
+        #[doc = " ```"]
+        pub async fn run_aggregation_query(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RunAggregationQueryRequest>,
+        ) -> Result<
+            tonic::Response<tonic::codec::Streaming<super::RunAggregationQueryResponse>>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.v1.Firestore/RunAggregationQuery",
+            );
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
         }
         #[doc = " Partitions a query by returning partition cursors that can be used to run"]
         #[doc = " the query in parallel. The returned partition cursors are split points that"]
@@ -1824,7 +2159,9 @@ pub mod firestore_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/google.firestore.v1.Firestore/Write");
-            self.inner.streaming(request.into_streaming_request(), path, codec).await
+            self.inner
+                .streaming(request.into_streaming_request(), path, codec)
+                .await
         }
         #[doc = " Listens to changes."]
         pub async fn listen(
@@ -1841,7 +2178,9 @@ pub mod firestore_client {
             let codec = tonic::codec::ProstCodec::default();
             let path =
                 http::uri::PathAndQuery::from_static("/google.firestore.v1.Firestore/Listen");
-            self.inner.streaming(request.into_streaming_request(), path, codec).await
+            self.inner
+                .streaming(request.into_streaming_request(), path, codec)
+                .await
         }
         #[doc = " Lists all the collection IDs underneath a document."]
         pub async fn list_collection_ids(

@@ -198,6 +198,9 @@ pub struct Node {
     /// Output only. The Symptoms that have occurred to the TPU Node.
     #[prost(message, repeated, tag = "39")]
     pub symptoms: ::prost::alloc::vec::Vec<Symptom>,
+    /// Shielded Instance options.
+    #[prost(message, optional, tag = "45")]
+    pub shielded_instance_config: ::core::option::Option<ShieldedInstanceConfig>,
 }
 /// Nested message and enum types in `Node`.
 pub mod node {
@@ -567,6 +570,13 @@ pub struct GetGuestAttributesResponse {
     /// The guest attributes for the TPU workers.
     #[prost(message, repeated, tag = "1")]
     pub guest_attributes: ::prost::alloc::vec::Vec<GuestAttributes>,
+}
+/// A set of Shielded Instance options.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ShieldedInstanceConfig {
+    /// Defines whether the instance has Secure Boot enabled.
+    #[prost(bool, tag = "1")]
+    pub enable_secure_boot: bool,
 }
 #[doc = r" Generated client implementations."]
 pub mod tpu_client {
