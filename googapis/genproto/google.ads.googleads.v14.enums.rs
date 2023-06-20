@@ -115,6 +115,113 @@ pub mod policy_topic_evidence_destination_not_working_dns_error_type_enum {
         GoogleCrawlerDnsIssue = 3,
     }
 }
+// Proto file describing asset source.
+
+/// Provides the primary status of an asset link.
+/// For example: a sitelink may be paused for a particular campaign.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AssetLinkPrimaryStatusEnum {}
+/// Nested message and enum types in `AssetLinkPrimaryStatusEnum`.
+pub mod asset_link_primary_status_enum {
+    /// Enum Provides insight into why an asset is not serving or not serving
+    /// at full capacity for a particular link level. There could be one status
+    /// with multiple reasons. For example, a sitelink might be paused by the user,
+    /// but also limited in serving due to violation of an alcohol policy. In
+    /// this case, the PrimaryStatus will be returned as PAUSED, since the asset's
+    /// effective status is determined by its paused state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AssetLinkPrimaryStatus {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The asset is eligible to serve.
+        Eligible = 2,
+        /// The user-specified asset link status is paused.
+        Paused = 3,
+        /// The user-specified asset link status is removed.
+        Removed = 4,
+        /// The asset may serve in the future.
+        Pending = 5,
+        /// The asset is serving in a partial capacity.
+        Limited = 6,
+        /// The asset is not eligible to serve.
+        NotEligible = 7,
+    }
+}
+// Proto file describing asset source.
+
+/// Provides the reason of a primary status.
+/// For example: a sitelink may be paused for a particular campaign.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AssetLinkPrimaryStatusReasonEnum {}
+/// Nested message and enum types in `AssetLinkPrimaryStatusReasonEnum`.
+pub mod asset_link_primary_status_reason_enum {
+    /// Enum Provides insight into why an asset is not serving or not serving
+    /// at full capacity for a particular link level. These reasons are
+    /// aggregated to determine a final PrimaryStatus.
+    /// For example, a sitelink might be paused by the user,
+    /// but also limited in serving due to violation of an alcohol policy. In
+    /// this case, the PrimaryStatus will be returned as PAUSED, since the asset's
+    /// effective status is determined by its paused state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AssetLinkPrimaryStatusReason {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The asset is paused for its linked rollup level. Contributes to a
+        /// PrimaryStatus of PAUSED.
+        AssetLinkPaused = 2,
+        /// The asset is removed for its linked rollup level. Contributes to a
+        /// PrimaryStatus of REMOVED.
+        AssetLinkRemoved = 3,
+        /// The asset has been marked as disapproved. Contributes to a PrimaryStatus
+        /// of NOT_ELIGIBLE
+        AssetDisapproved = 4,
+        /// The asset has not completed policy review. Contributes to a PrimaryStatus
+        /// of PENDING.
+        AssetUnderReview = 5,
+        /// The asset is approved with policies applied. Contributes to a
+        /// PrimaryStatus of LIMITED.
+        AssetApprovedLabeled = 6,
+    }
+}
+// Proto file describing asset source.
+
+/// Provides the quality evaluation disapproval reason of an asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AssetOfflineEvaluationErrorReasonsEnum {}
+/// Nested message and enum types in `AssetOfflineEvaluationErrorReasonsEnum`.
+pub mod asset_offline_evaluation_error_reasons_enum {
+    /// Enum describing the quality evaluation disapproval reason of an asset.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AssetOfflineEvaluationErrorReasons {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// One or more descriptions repeats its corresponding row header.
+        PriceAssetDescriptionRepeatsRowHeader = 2,
+        /// Price asset contains repetitive headers.
+        PriceAssetRepetitiveHeaders = 3,
+        /// Price item header is not relevant to the price type.
+        PriceAssetHeaderIncompatibleWithPriceType = 4,
+        /// Price item description is not relevant to the item header.
+        PriceAssetDescriptionIncompatibleWithItemHeader = 5,
+        /// Price asset has a price qualifier in a description.
+        PriceAssetDescriptionHasPriceQualifier = 6,
+        /// Unsupported language for price assets
+        PriceAssetUnsupportedLanguage = 7,
+        /// Human raters identified an issue with the price asset that isn't captured
+        /// by other error reasons. The primary purpose of this value is to represent
+        /// legacy FeedItem disapprovals that are no longer produced.
+        PriceAssetOtherError = 8,
+    }
+}
 // Proto file describing policy approval statuses.
 
 /// Container for enum describing possible policy approval statuses.
@@ -231,6 +338,26 @@ pub mod served_asset_field_type_enum {
         Description1 = 5,
         /// The asset is used in description 2.
         Description2 = 6,
+        /// This asset is used as a sitelink.
+        Sitelink = 22,
+        /// This asset is used as a call.
+        Call = 23,
+        /// This asset is used as a mobile app.
+        MobileApp = 24,
+        /// This asset is used as a callout.
+        Callout = 25,
+        /// This asset is used as a structured snippet.
+        StructuredSnippet = 26,
+        /// This asset is used as a price.
+        Price = 27,
+        /// This asset is used as a promotion.
+        Promotion = 28,
+        /// This asset is used as an image.
+        AdImage = 29,
+        /// The asset is used as a lead form.
+        LeadForm = 30,
+        /// The asset is used as a business logo.
+        BusinessLogo = 31,
     }
 }
 // Proto file describing call conversion reporting state.
@@ -278,8 +405,8 @@ pub mod display_ad_format_setting_enum {
         AllFormats = 2,
         /// Text and image formats.
         NonNative = 3,
-        /// Native format, i.e. the format rendering is controlled by the publisher
-        /// and not by Google.
+        /// Native format, for example, the format rendering is controlled by the
+        /// publisher and not by Google.
         Native = 4,
     }
 }
@@ -441,6 +568,67 @@ pub mod video_thumbnail_enum {
         Thumbnail3 = 5,
     }
 }
+// Proto file describing relationship type.
+
+/// Container for enum describing possible types of a relationship.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ChainRelationshipTypeEnum {}
+/// Nested message and enum types in `ChainRelationshipTypeEnum`.
+pub mod chain_relationship_type_enum {
+    /// Possible types of a relationship.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ChainRelationshipType {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Auto dealer relationship.
+        AutoDealers = 2,
+        /// General retailer relationship.
+        GeneralRetailers = 3,
+    }
+}
+// Proto file describing location ownership type.
+
+/// Container for enum describing possible types of a location ownership.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LocationOwnershipTypeEnum {}
+/// Nested message and enum types in `LocationOwnershipTypeEnum`.
+pub mod location_ownership_type_enum {
+    /// Possible types of a location ownership.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum LocationOwnershipType {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Business Owner of location(legacy location extension - LE).
+        BusinessOwner = 2,
+        /// Affiliate location(Third party location extension - ALE).
+        Affiliate = 3,
+    }
+}
+// Proto file describing location string filter type.
+
+/// Container for enum describing possible types of a location string filter.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LocationStringFilterTypeEnum {}
+/// Nested message and enum types in `LocationStringFilterTypeEnum`.
+pub mod location_string_filter_type_enum {
+    /// Possible types of a location string filter.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum LocationStringFilterType {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The filter will use exact string matching.
+        Exact = 2,
+    }
+}
 // Proto file describing age range types.
 
 /// Container for enum describing the type of demographic age ranges.
@@ -448,7 +636,8 @@ pub mod video_thumbnail_enum {
 pub struct AgeRangeTypeEnum {}
 /// Nested message and enum types in `AgeRangeTypeEnum`.
 pub mod age_range_type_enum {
-    /// The type of demographic age ranges (e.g. between 18 and 24 years old).
+    /// The type of demographic age ranges (for example, between 18 and 24 years
+    /// old).
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum AgeRangeType {
@@ -540,12 +729,12 @@ pub mod content_label_type_enum {
 }
 // Proto file describing days of week.
 
-/// Container for enumeration of days of the week, e.g., "Monday".
+/// Container for enumeration of days of the week, for example, "Monday".
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DayOfWeekEnum {}
 /// Nested message and enum types in `DayOfWeekEnum`.
 pub mod day_of_week_enum {
-    /// Enumerates days of the week, e.g., "Monday".
+    /// Enumerates days of the week, for example, "Monday".
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum DayOfWeek {
@@ -603,7 +792,7 @@ pub mod device_enum {
 pub struct GenderTypeEnum {}
 /// Nested message and enum types in `GenderTypeEnum`.
 pub mod gender_type_enum {
-    /// The type of demographic genders (e.g. female).
+    /// The type of demographic genders (for example, female).
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum GenderType {
@@ -647,7 +836,7 @@ pub mod hotel_date_selection_type_enum {
 pub struct IncomeRangeTypeEnum {}
 /// Nested message and enum types in `IncomeRangeTypeEnum`.
 pub mod income_range_type_enum {
-    /// The type of demographic income ranges (e.g. between 0% to 50%).
+    /// The type of demographic income ranges (for example, between 0% to 50%).
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum IncomeRangeType {
@@ -743,7 +932,7 @@ pub mod listing_group_type_enum {
 pub struct LocationGroupRadiusUnitsEnum {}
 /// Nested message and enum types in `LocationGroupRadiusUnitsEnum`.
 pub mod location_group_radius_units_enum {
-    /// The unit of radius distance in location group (e.g. MILES)
+    /// The unit of radius distance in location group (for example, MILES)
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum LocationGroupRadiusUnits {
@@ -766,7 +955,7 @@ pub mod location_group_radius_units_enum {
 pub struct MinuteOfHourEnum {}
 /// Nested message and enum types in `MinuteOfHourEnum`.
 pub mod minute_of_hour_enum {
-    /// Enumerates of quarter-hours. E.g. "FIFTEEN"
+    /// Enumerates of quarter-hours. For example, "FIFTEEN"
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum MinuteOfHour {
@@ -791,7 +980,7 @@ pub mod minute_of_hour_enum {
 pub struct ParentalStatusTypeEnum {}
 /// Nested message and enum types in `ParentalStatusTypeEnum`.
 pub mod parental_status_type_enum {
-    /// The type of parental statuses (e.g. not a parent).
+    /// The type of parental statuses (for example, not a parent).
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum ParentalStatusType {
@@ -805,25 +994,6 @@ pub mod parental_status_type_enum {
         NotAParent = 301,
         /// Undetermined parental status.
         Undetermined = 302,
-    }
-}
-// Proto file describing preferred content criterion type.
-
-/// Container for enumeration of preferred content criterion type.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PreferredContentTypeEnum {}
-/// Nested message and enum types in `PreferredContentTypeEnum`.
-pub mod preferred_content_type_enum {
-    /// Enumerates preferred content criterion type.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum PreferredContentType {
-        /// Not specified.
-        Unspecified = 0,
-        /// The value is unknown in this version.
-        Unknown = 1,
-        /// Represents top content on YouTube.
-        YoutubeTopContent = 400,
     }
 }
 /// Level of a product bidding category.
@@ -979,7 +1149,7 @@ pub mod product_type_level_enum {
 pub struct ProximityRadiusUnitsEnum {}
 /// Nested message and enum types in `ProximityRadiusUnitsEnum`.
 pub mod proximity_radius_units_enum {
-    /// The unit of radius distance in proximity (e.g. MILES)
+    /// The unit of radius distance in proximity (for example, MILES)
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum ProximityRadiusUnits {
@@ -1120,12 +1290,12 @@ pub mod lead_form_call_to_action_type_enum {
         GetStarted = 15,
     }
 }
-/// Describes the desired level of intent of generated leads.
+/// Describes the chosen level of intent of generated leads.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LeadFormDesiredIntentEnum {}
 /// Nested message and enum types in `LeadFormDesiredIntentEnum`.
 pub mod lead_form_desired_intent_enum {
-    /// Enum describing the desired level of intent of generated leads.
+    /// Enum describing the chosen level of intent of generated leads.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum LeadFormDesiredIntent {
@@ -1161,10 +1331,12 @@ pub mod lead_form_field_user_input_type_enum {
         PhoneNumber = 4,
         /// The user will be asked to fill in their zip code.
         PostalCode = 5,
+        /// The user will be asked to fill in their street address.
+        StreetAddress = 8,
         /// The user will be asked to fill in their city.
         City = 9,
-        /// The user will be asked to fill in their region part of the address (e.g.
-        /// state for US, province for Canada).
+        /// The user will be asked to fill in their region part of the address (for
+        /// example, state for US, province for Canada).
         Region = 10,
         /// The user will be asked to fill in their country.
         Country = 11,
@@ -1198,144 +1370,478 @@ pub mod lead_form_field_user_input_type_enum {
         LastName = 24,
         /// Question: "Which model are you interested in?"
         /// Category: "Auto"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         VehicleModel = 1001,
         /// Question: "Which type of vehicle are you interested in?"
         /// Category: "Auto"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         VehicleType = 1002,
         /// Question: "What is your preferred dealership?"
         /// Category: "Auto"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PreferredDealership = 1003,
         /// Question: "When do you plan on purchasing a vehicle?"
         /// Category: "Auto"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         VehiclePurchaseTimeline = 1004,
         /// Question: "Do you own a vehicle?"
         /// Category: "Auto"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         VehicleOwnership = 1005,
         /// Question: "What vehicle ownership option are you interested in?"
         /// Category: "Auto"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         VehiclePaymentType = 1009,
         /// Question: "What type of vehicle condition are you interested in?"
         /// Category: "Auto"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         VehicleCondition = 1010,
         /// Question: "What size is your company?"
         /// Category: "Business"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         CompanySize = 1006,
         /// Question: "What is your annual sales volume?"
         /// Category: "Business"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         AnnualSales = 1007,
         /// Question: "How many years have you been in business?"
         /// Category: "Business"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         YearsInBusiness = 1008,
         /// Question: "What is your job department?"
         /// Category: "Business"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         JobDepartment = 1011,
         /// Question: "What is your job role?"
         /// Category: "Business"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         JobRole = 1012,
+        /// Question: "Are you over 18 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over18Age = 1078,
+        /// Question: "Are you over 19 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over19Age = 1079,
+        /// Question: "Are you over 20 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over20Age = 1080,
+        /// Question: "Are you over 21 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over21Age = 1081,
+        /// Question: "Are you over 22 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over22Age = 1082,
+        /// Question: "Are you over 23 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over23Age = 1083,
+        /// Question: "Are you over 24 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over24Age = 1084,
+        /// Question: "Are you over 25 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over25Age = 1085,
+        /// Question: "Are you over 26 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over26Age = 1086,
+        /// Question: "Are you over 27 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over27Age = 1087,
+        /// Question: "Are you over 28 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over28Age = 1088,
+        /// Question: "Are you over 29 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over29Age = 1089,
+        /// Question: "Are you over 30 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over30Age = 1090,
+        /// Question: "Are you over 31 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over31Age = 1091,
+        /// Question: "Are you over 32 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over32Age = 1092,
+        /// Question: "Are you over 33 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over33Age = 1093,
+        /// Question: "Are you over 34 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over34Age = 1094,
+        /// Question: "Are you over 35 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over35Age = 1095,
+        /// Question: "Are you over 36 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over36Age = 1096,
+        /// Question: "Are you over 37 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over37Age = 1097,
+        /// Question: "Are you over 38 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over38Age = 1098,
+        /// Question: "Are you over 39 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over39Age = 1099,
+        /// Question: "Are you over 40 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over40Age = 1100,
+        /// Question: "Are you over 41 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over41Age = 1101,
+        /// Question: "Are you over 42 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over42Age = 1102,
+        /// Question: "Are you over 43 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over43Age = 1103,
+        /// Question: "Are you over 44 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over44Age = 1104,
+        /// Question: "Are you over 45 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over45Age = 1105,
+        /// Question: "Are you over 46 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over46Age = 1106,
+        /// Question: "Are you over 47 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over47Age = 1107,
+        /// Question: "Are you over 48 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over48Age = 1108,
+        /// Question: "Are you over 49 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over49Age = 1109,
+        /// Question: "Are you over 50 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over50Age = 1110,
+        /// Question: "Are you over 51 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over51Age = 1111,
+        /// Question: "Are you over 52 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over52Age = 1112,
+        /// Question: "Are you over 53 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over53Age = 1113,
+        /// Question: "Are you over 54 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over54Age = 1114,
+        /// Question: "Are you over 55 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over55Age = 1115,
+        /// Question: "Are you over 56 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over56Age = 1116,
+        /// Question: "Are you over 57 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over57Age = 1117,
+        /// Question: "Are you over 58 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over58Age = 1118,
+        /// Question: "Are you over 59 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over59Age = 1119,
+        /// Question: "Are you over 60 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over60Age = 1120,
+        /// Question: "Are you over 61 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over61Age = 1121,
+        /// Question: "Are you over 62 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over62Age = 1122,
+        /// Question: "Are you over 63 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over63Age = 1123,
+        /// Question: "Are you over 64 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over64Age = 1124,
+        /// Question: "Are you over 65 years of age?"
+        /// Category: "Demographics"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
+        Over65Age = 1125,
         /// Question: "Which program are you interested in?"
         /// Category: "Education"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         EducationProgram = 1013,
         /// Question: "Which course are you interested in?"
         /// Category: "Education"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         EducationCourse = 1014,
         /// Question: "Which product are you interested in?"
         /// Category: "General"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         Product = 1016,
         /// Question: "Which service are you interested in?"
         /// Category: "General"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         Service = 1017,
         /// Question: "Which offer are you interested in?"
         /// Category: "General"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         Offer = 1018,
         /// Question: "Which category are you interested in?"
         /// Category: "General"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         Category = 1019,
         /// Question: "What is your preferred method of contact?"
         /// Category: "General"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PreferredContactMethod = 1020,
         /// Question: "What is your preferred location?"
         /// Category: "General"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PreferredLocation = 1021,
         /// Question: "What is the best time to contact you?"
         /// Category: "General"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PreferredContactTime = 1022,
         /// Question: "When are you looking to make a purchase?"
         /// Category: "General"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PurchaseTimeline = 1023,
         /// Question: "How many years of work experience do you have?"
         /// Category: "Jobs"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         YearsOfExperience = 1048,
         /// Question: "What industry do you work in?"
         /// Category: "Jobs"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         JobIndustry = 1049,
         /// Question: "What is your highest level of education?"
         /// Category: "Jobs"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         LevelOfEducation = 1050,
         /// Question: "What type of property are you looking for?"
         /// Category: "Real Estate"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PropertyType = 1024,
         /// Question: "What do you need a realtor's help with?"
         /// Category: "Real Estate"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         RealtorHelpGoal = 1025,
         /// Question: "What neighborhood are you interested in?"
         /// Category: "Real Estate"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PropertyCommunity = 1026,
         /// Question: "What price range are you looking for?"
         /// Category: "Real Estate"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PriceRange = 1027,
         /// Question: "How many bedrooms are you looking for?"
         /// Category: "Real Estate"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         NumberOfBedrooms = 1028,
         /// Question: "Are you looking for a fully furnished property?"
         /// Category: "Real Estate"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         FurnishedProperty = 1029,
         /// Question: "Are you looking for properties that allow pets?"
         /// Category: "Real Estate"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PetsAllowedProperty = 1030,
         /// Question: "What is the next product you plan to purchase?"
         /// Category: "Retail"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         NextPlannedPurchase = 1031,
         /// Question: "Would you like to sign up for an event?"
         /// Category: "Retail"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         EventSignupInterest = 1033,
         /// Question: "Where are you interested in shopping?"
         /// Category: "Retail"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         PreferredShoppingPlaces = 1034,
         /// Question: "What is your favorite brand?"
         /// Category: "Retail"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         FavoriteBrand = 1035,
         /// Question: "Which type of valid commercial license do you have?"
         /// Category: "Transportation"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         TransportationCommercialLicenseType = 1036,
         /// Question: "Interested in booking an event?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         EventBookingInterest = 1038,
         /// Question: "What is your destination country?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         DestinationCountry = 1039,
         /// Question: "What is your destination city?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         DestinationCity = 1040,
         /// Question: "What is your departure country?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         DepartureCountry = 1041,
         /// Question: "What is your departure city?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         DepartureCity = 1042,
         /// Question: "What is your departure date?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         DepartureDate = 1043,
         /// Question: "What is your return date?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         ReturnDate = 1044,
         /// Question: "How many people are you traveling with?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         NumberOfTravelers = 1045,
         /// Question: "What is your travel budget?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         TravelBudget = 1046,
         /// Question: "Where do you want to stay during your travel?"
         /// Category: "Travel"
+        /// This field is subject to a limit of 5 qualifying questions per form and
+        /// cannot be used if values are set using custom_question_fields.
         TravelAccommodation = 1047,
     }
 }
@@ -1492,7 +1998,7 @@ pub mod promotion_extension_discount_modifier_enum {
 // Proto file describing promotion extension occasion.
 
 /// Container for enum describing a promotion extension occasion.
-/// For more information about the occasions please check:
+/// For more information about the occasions  check:
 /// <https://support.google.com/google-ads/answer/7367521>
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PromotionExtensionOccasionEnum {}
@@ -1582,6 +2088,25 @@ pub mod promotion_extension_occasion_enum {
         YearEndGift = 38,
     }
 }
+// Proto file describing bidding goal Target Frequency time units.
+
+/// Container for enum describing bidding goal Target Frequency time units.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TargetFrequencyTimeUnitEnum {}
+/// Nested message and enum types in `TargetFrequencyTimeUnitEnum`.
+pub mod target_frequency_time_unit_enum {
+    /// Enum describing time window over which we want to reach Target Frequency.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum TargetFrequencyTimeUnit {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Optimize bidding to reach Target Frequency in a week.
+        Weekly = 2,
+    }
+}
 // Proto file describing target impression share goal.
 
 /// Container for enum describing where on the first search results page the
@@ -1634,7 +2159,8 @@ pub mod advertising_channel_sub_type_enum {
         ShoppingSmartAds = 6,
         /// Gmail Ad campaigns.
         DisplayGmailAd = 7,
-        /// Smart display campaigns.
+        /// Smart display campaigns. New campaigns of this sub type cannot be
+        /// created.
         DisplaySmartCampaign = 8,
         /// Video Outstream campaigns.
         VideoOutstream = 9,
@@ -1642,7 +2168,7 @@ pub mod advertising_channel_sub_type_enum {
         VideoAction = 10,
         /// Video campaigns with non-skippable video ads.
         VideoNonSkippable = 11,
-        /// App Campaign that allows you to easily promote your Android or iOS app
+        /// App Campaign that lets you easily promote your Android or iOS app
         /// across Google's top properties including Search, Play, YouTube, and the
         /// Google Display Network.
         AppCampaign = 12,
@@ -1663,6 +2189,10 @@ pub mod advertising_channel_sub_type_enum {
         /// Google Play, YouTube and Display Network. See
         /// <https://support.google.com/google-ads/answer/9441344> to learn more.
         AppCampaignForPreRegistration = 18,
+        /// Video reach campaign with Target Frequency bidding strategy.
+        VideoReachTargetFrequency = 19,
+        /// Travel Activities campaigns.
+        TravelActivities = 20,
     }
 }
 // Proto file describing advertising channel types
@@ -1704,6 +2234,8 @@ pub mod advertising_channel_type_enum {
         LocalServices = 11,
         /// Discovery campaigns.
         Discovery = 12,
+        /// Travel campaigns.
+        Travel = 13,
     }
 }
 // Proto file describing the criterion category channel availability mode.
@@ -1791,12 +2323,12 @@ pub mod customizer_attribute_type_enum {
 }
 // Proto file describing days of week.
 
-/// Container for enumeration of months of the year, e.g., "January".
+/// Container for enumeration of months of the year, for example, "January".
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MonthOfYearEnum {}
 /// Nested message and enum types in `MonthOfYearEnum`.
 pub mod month_of_year_enum {
-    /// Enumerates months of the year, e.g., "January".
+    /// Enumerates months of the year, for example, "January".
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum MonthOfYear {
@@ -1896,7 +2428,7 @@ pub mod app_url_operating_system_type_enum {
 pub struct FrequencyCapEventTypeEnum {}
 /// Nested message and enum types in `FrequencyCapEventTypeEnum`.
 pub mod frequency_cap_event_type_enum {
-    /// The type of event that the cap applies to (e.g. impression).
+    /// The type of event that the cap applies to (for example, impression).
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum FrequencyCapEventType {
@@ -1941,7 +2473,7 @@ pub mod frequency_cap_level_enum {
 pub struct FrequencyCapTimeUnitEnum {}
 /// Nested message and enum types in `FrequencyCapTimeUnitEnum`.
 pub mod frequency_cap_time_unit_enum {
-    /// Unit of time the cap is defined at (e.g. day, week).
+    /// Unit of time the cap is defined at (for example, day, week).
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum FrequencyCapTimeUnit {
@@ -2184,7 +2716,7 @@ pub mod interaction_event_type_enum {
         VideoView = 4,
         /// The default InteractionEventType for ad conversion events.
         /// This is used when an ad conversion row does NOT indicate
-        /// that the free interactions (i.e., the ad conversions)
+        /// that the free interactions (for example, the ad conversions)
         /// should be 'promoted' and reported as part of the core metrics.
         /// These are simply other (ad) conversions.
         None = 5,
@@ -2516,7 +3048,7 @@ pub mod conversion_action_category_enum {
         /// "qualified leads".
         QualifiedLead = 22,
         /// A lead conversion imported from an external source into Google Ads, that
-        /// has further completed a desired stage as defined by the lead gen
+        /// has further completed a chosen stage as defined by the lead gen
         /// advertiser.
         ConvertedLead = 23,
     }
@@ -2934,9 +3466,9 @@ pub mod hotel_rate_type_enum {
         /// more on Qualified Rates, visit
         /// <https://developers.google.com/hotels/hotel-ads/dev-guide/qualified-rates>
         QualifiedRate = 4,
-        /// Rates available to users that satisfy some eligibility criteria. e.g.
-        /// all signed-in users, 20% of mobile users, all mobile users in Canada,
-        /// etc.
+        /// Rates available to users that satisfy some eligibility criteria, for
+        /// example, all signed-in users, 20% of mobile users, all mobile users in
+        /// Canada, etc.
         PrivateRate = 5,
     }
 }
@@ -2989,7 +3521,7 @@ pub mod placeholder_type_enum {
         /// Lets you display prices for a list of items along with your ads. A price
         /// feed is composed of three to eight price table rows.
         Price = 10,
-        /// Allows you to highlight sales and other promotions that let users see how
+        /// Lets you highlight sales and other promotions that let users see how
         /// they can save by buying now.
         Promotion = 11,
         /// Lets you dynamically inject custom data into the title and description
@@ -3057,12 +3589,6 @@ pub mod recommendation_type_enum {
         /// Recommendation to start using the "Optimize" ad rotation setting for the
         /// given ad group.
         OptimizeAdRotation = 10,
-        /// Recommendation to add callout extensions to a campaign.
-        CalloutExtension = 11,
-        /// Recommendation to add sitelink extensions to a campaign.
-        SitelinkExtension = 12,
-        /// Recommendation to add call extensions to a campaign.
-        CallExtension = 13,
         /// Recommendation to change an existing keyword from one match type to a
         /// broader match type.
         KeywordMatchType = 14,
@@ -3082,11 +3608,79 @@ pub mod recommendation_type_enum {
         /// Budget recommendation for campaigns whose ROI is predicted to increase
         /// with a budget adjustment.
         MarginalRoiCampaignBudget = 19,
-        /// Recommendation to expand keywords to broad match for fully automated
-        /// conversion-based bidding campaigns.
+        /// Recommendation to add broad match versions of keywords for fully
+        /// automated conversion-based bidding campaigns.
         UseBroadMatchKeyword = 20,
         /// Recommendation to add new responsive search ad assets.
         ResponsiveSearchAdAsset = 21,
+        /// Recommendation to upgrade a Smart Shopping campaign to a Performance Max
+        /// campaign.
+        UpgradeSmartShoppingCampaignToPerformanceMax = 22,
+        /// Recommendation to improve strength of responsive search ad.
+        ResponsiveSearchAdImproveAdStrength = 23,
+        /// Recommendation to update a campaign to use Display Expansion.
+        DisplayExpansionOptIn = 24,
+        /// Recommendation to upgrade a Local campaign to a Performance Max
+        /// campaign.
+        UpgradeLocalCampaignToPerformanceMax = 25,
+        /// Recommendation to raise target CPA when it is too low and there are very
+        /// few or no conversions.
+        /// It is applied asynchronously and can take minutes
+        /// depending on the number of ad groups there are in the related campaign.
+        RaiseTargetCpaBidTooLow = 26,
+        /// Recommendation to raise the budget in advance of a seasonal event that is
+        /// forecasted to increase traffic, and change bidding strategy from maximize
+        /// conversion value to target ROAS.
+        ForecastingSetTargetRoas = 27,
+        /// Recommendation to add callout assets to campaign or customer level.
+        CalloutAsset = 28,
+        /// Recommendation to add sitelink assets to campaign or customer level.
+        SitelinkAsset = 29,
+        /// Recommendation to add call assets to campaign or customer level.
+        CallAsset = 30,
+        /// Recommendation to add the age group attribute to offers that are
+        /// demoted because of a missing age group.
+        ShoppingAddAgeGroup = 31,
+        /// Recommendation to add a color to offers that are demoted
+        /// because of a missing color.
+        ShoppingAddColor = 32,
+        /// Recommendation to add a gender to offers that are demoted
+        /// because of a missing gender.
+        ShoppingAddGender = 33,
+        /// Recommendation to add a GTIN (Global Trade Item Number) to offers
+        /// that are demoted because of a missing GTIN.
+        ShoppingAddGtin = 34,
+        /// Recommendation to add more identifiers to offers that are demoted because
+        /// of missing identifiers.
+        ShoppingAddMoreIdentifiers = 35,
+        /// Recommendation to add the size to offers that are demoted
+        /// because of a missing size.
+        ShoppingAddSize = 36,
+        /// Recommendation informing a customer about a campaign that cannot serve
+        /// because no products are being targeted.
+        ShoppingAddProductsToCampaign = 37,
+        /// The shopping recommendation informing a customer about campaign with a
+        /// high percentage of disapproved products.
+        ShoppingFixDisapprovedProducts = 38,
+        /// Recommendation to create a catch-all campaign that targets all offers.
+        ShoppingTargetAllOffers = 39,
+        /// Recommendation to fix Merchant Center account suspension issues.
+        ShoppingFixSuspendedMerchantCenterAccount = 40,
+        /// Recommendation to fix Merchant Center account suspension warning issues.
+        ShoppingFixMerchantCenterAccountSuspensionWarning = 41,
+        /// Recommendation to migrate offers targeted by Regular Shopping Campaigns
+        /// to existing Performance Max campaigns.
+        ShoppingMigrateRegularShoppingCampaignOffersToPerformanceMax = 42,
+        /// Recommendation to enable dynamic image extensions on the account,
+        /// allowing Google to find the best images from ad landing pages and
+        /// complement text ads.
+        DynamicImageExtensionOptIn = 43,
+        /// Recommendation to raise Target CPA based on Google predictions modeled
+        /// from past conversions. It is applied asynchronously and can take minutes
+        /// depending on the number of ad groups there are in the related campaign.
+        RaiseTargetCpa = 44,
+        /// Recommendation to lower Target ROAS.
+        LowerTargetRoas = 45,
     }
 }
 // Proto file describing search engine results page types.
@@ -3308,14 +3902,14 @@ pub mod targeting_dimension_enum {
         Unspecified = 0,
         /// Used for return value only. Represents value unknown in this version.
         Unknown = 1,
-        /// Keyword criteria, e.g. 'mars cruise'. KEYWORD may be used as a custom bid
-        /// dimension. Keywords are always a targeting dimension, so may not be set
-        /// as a target "ALL" dimension with TargetRestriction.
+        /// Keyword criteria, for example, 'mars cruise'. KEYWORD may be used as a
+        /// custom bid dimension. Keywords are always a targeting dimension, so may
+        /// not be set as a target "ALL" dimension with TargetRestriction.
         Keyword = 2,
         /// Audience criteria, which include user list, user interest, custom
         /// affinity,  and custom in market.
         Audience = 3,
-        /// Topic criteria for targeting categories of content, e.g.
+        /// Topic criteria for targeting categories of content, for example,
         /// 'category::Animals>Pets' Used for Display and Video targeting.
         Topic = 4,
         /// Criteria for targeting gender.
@@ -3353,25 +3947,6 @@ pub mod customer_match_upload_key_type_enum {
         CrmId = 3,
         /// Members are matched from mobile advertising ids.
         MobileAdvertisingId = 4,
-    }
-}
-/// Logical operator connecting two rules.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserListCombinedRuleOperatorEnum {}
-/// Nested message and enum types in `UserListCombinedRuleOperatorEnum`.
-pub mod user_list_combined_rule_operator_enum {
-    /// Enum describing possible user list combined rule operators.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum UserListCombinedRuleOperator {
-        /// Not specified.
-        Unspecified = 0,
-        /// Used for return value only. Represents value unknown in this version.
-        Unknown = 1,
-        /// A AND B.
-        And = 2,
-        /// A AND NOT B.
-        AndNot = 3,
     }
 }
 /// Indicates source of Crm upload data.
@@ -3416,6 +3991,25 @@ pub mod user_list_date_rule_item_operator_enum {
         Before = 4,
         /// After.
         After = 5,
+    }
+}
+/// Logical operator connecting two rules.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserListFlexibleRuleOperatorEnum {}
+/// Nested message and enum types in `UserListFlexibleRuleOperatorEnum`.
+pub mod user_list_flexible_rule_operator_enum {
+    /// Enum describing possible user list combined rule operators.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum UserListFlexibleRuleOperator {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// A AND B.
+        And = 2,
+        /// A OR B.
+        Or = 3,
     }
 }
 /// The logical operator of the rule.
@@ -3637,7 +4231,7 @@ pub mod account_budget_proposal_status_enum {
         Approved = 4,
         /// The proposal has been cancelled by the user.
         Cancelled = 5,
-        /// The proposal has been rejected by the user, e.g. by rejecting an
+        /// The proposal has been rejected by the user, for example, by rejecting an
         /// acceptance email.
         Rejected = 6,
     }
@@ -3920,6 +4514,8 @@ pub mod ad_group_type_enum {
         VideoEfficientReach = 17,
         /// Ad group type for Smart campaigns.
         SmartCampaignAds = 18,
+        /// Ad group type for Travel campaigns.
+        TravelAds = 19,
     }
 }
 // Proto file describing ad serving statuses.
@@ -4014,8 +4610,6 @@ pub mod ad_type_enum {
         ShoppingProductAd = 10,
         /// The ad is a video ad.
         VideoAd = 12,
-        /// This ad is a Gmail ad.
-        GmailAd = 13,
         /// This ad is an Image ad.
         ImageAd = 14,
         /// The ad is a responsive search ad.
@@ -4061,6 +4655,8 @@ pub mod ad_type_enum {
         DiscoveryMultiAssetAd = 35,
         /// Discovery carousel ad.
         DiscoveryCarouselAd = 36,
+        /// Travel ad.
+        TravelAd = 37,
     }
 }
 // Proto file describing relation type for affiliate location feeds.
@@ -4122,6 +4718,47 @@ pub mod affiliate_location_placeholder_field_enum {
         ChainName = 12,
     }
 }
+/// Container for enum describing an app bidding goal for raise Target CPA
+/// recommendation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AppBiddingGoalEnum {}
+/// Nested message and enum types in `AppBiddingGoalEnum`.
+pub mod app_bidding_goal_enum {
+    /// Represents the goal towards which the bidding strategy, of an app
+    /// campaign, should optimize for.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AppBiddingGoal {
+        /// Not specified.
+        Unspecified = 0,
+        /// Represents value unknown in this version of the API.
+        Unknown = 1,
+        /// The bidding strategy of the app campaign should aim to maximize
+        /// installation of the app.
+        OptimizeForInstallConversionVolume = 2,
+        /// The bidding strategy of the app campaign should aim to maximize
+        /// the selected in-app conversions' volume.
+        OptimizeForInAppConversionVolume = 3,
+        /// The bidding strategy of the app campaign should aim to maximize
+        /// all conversions' value, that is, install and selected in-app conversions.
+        OptimizeForTotalConversionValue = 4,
+        /// The bidding strategy of the app campaign should aim to maximize
+        /// just the selected in-app conversion's volume, while achieving or
+        /// exceeding target cost per in-app conversion.
+        OptimizeForTargetInAppConversion = 5,
+        /// The bidding strategy of the app campaign should aim to maximize
+        /// all conversions' value, that is, install and selected in-app conversions
+        /// while achieving or exceeding target return on advertising spend.
+        OptimizeForReturnOnAdvertisingSpend = 6,
+        /// This bidding strategy of the app campaign should aim to
+        /// maximize installation of the app without advertiser-provided target
+        /// cost-per-install.
+        OptimizeForInstallConversionVolumeWithoutTargetCpi = 7,
+        /// This bidding strategy of the app campaign should aim to
+        /// maximize pre-registration of the app.
+        OptimizeForPreRegistrationConversionVolume = 8,
+    }
+}
 // Proto file describing App Campaign app store.
 
 /// The application store that distributes mobile applications.
@@ -4170,9 +4807,9 @@ pub mod app_campaign_bidding_strategy_goal_type_enum {
         /// that the actual cpa may seem higher than the target cpa at first, since
         /// the long term conversions haven't happened yet.
         OptimizeInAppConversionsTargetConversionCost = 4,
-        /// Aim to maximize all conversions' value, i.e. install + selected in-app
-        /// conversions while achieving or exceeding target return on advertising
-        /// spend.
+        /// Aim to maximize all conversions' value, for example, install + selected
+        /// in-app conversions while achieving or exceeding target return on
+        /// advertising spend.
         OptimizeReturnOnAdvertisingSpend = 5,
         /// Aim to maximize the pre-registration of the app.
         OptimizePreRegistrationConversionVolume = 6,
@@ -4258,7 +4895,7 @@ pub mod asset_field_type_enum {
         Callout = 11,
         /// The asset is linked for use as a Structured Snippet extension.
         StructuredSnippet = 12,
-        /// The asset is linked for use as a Sitelink extension.
+        /// The asset is linked for use as a Sitelink.
         Sitelink = 13,
         /// The asset is linked for use as a Mobile App extension.
         MobileApp = 14,
@@ -4284,6 +4921,13 @@ pub mod asset_field_type_enum {
         Video = 23,
         /// The asset is linked for use to select a call-to-action.
         CallToActionSelection = 25,
+        /// The asset is linked for use to select an ad image.
+        AdImage = 26,
+        /// The asset is linked for use as a business logo.
+        BusinessLogo = 27,
+        /// The asset is linked for use as a hotel property in a Performance Max for
+        /// travel goals campaign.
+        HotelProperty = 28,
     }
 }
 // Proto file describing asset group status.
@@ -4362,7 +5006,7 @@ pub mod asset_set_asset_status_enum {
 pub struct AssetSetLinkStatusEnum {}
 /// Nested message and enum types in `AssetSetLinkStatusEnum`.
 pub mod asset_set_link_status_enum {
-    /// The possible statuses of he linkage between asset set and its container.
+    /// The possible statuses of the linkage between asset set and its container.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum AssetSetLinkStatus {
@@ -4434,6 +5078,41 @@ pub mod asset_set_type_enum {
         DynamicLocal = 10,
         /// Dynamic jobs asset set.
         DynamicJobs = 11,
+        /// Location sync level asset set.
+        LocationSync = 12,
+        /// Business Profile location group asset set.
+        BusinessProfileDynamicLocationGroup = 13,
+        /// Chain location group asset set which can be used for both owned
+        /// locations and affiliate locations.
+        ChainDynamicLocationGroup = 14,
+        /// Static location group asset set which can be used for both owned
+        /// locations and affiliate locations.
+        StaticLocationGroup = 15,
+        /// Hotel Property asset set which is used to link a hotel property feed to
+        /// Performance Max for travel goals campaigns.
+        HotelProperty = 16,
+    }
+}
+// Proto file describing asset source.
+
+/// Source of the asset or asset link for who generated the entity.
+/// For example, advertiser or automatically created.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AssetSourceEnum {}
+/// Nested message and enum types in `AssetSourceEnum`.
+pub mod asset_source_enum {
+    /// Enum describing possible source of asset.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AssetSource {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The asset or asset link is provided by advertiser.
+        Advertiser = 2,
+        /// The asset or asset link is generated by Google.
+        AutomaticallyCreated = 3,
     }
 }
 // Proto file describing asset type.
@@ -4501,6 +5180,10 @@ pub mod asset_type_enum {
         DynamicLocal = 25,
         /// Dynamic jobs asset.
         DynamicJobs = 26,
+        /// Location asset.
+        Location = 27,
+        /// Hotel property asset.
+        HotelProperty = 28,
     }
 }
 // Proto file describing experiment async action status.
@@ -4566,6 +5249,47 @@ pub mod attribution_model_enum {
         /// Flexible model that uses machine learning to determine the appropriate
         /// distribution of credit among clicks using Google Search attribution.
         GoogleSearchAttributionDataDriven = 106,
+    }
+}
+// Proto file describing audience insights dimensions.
+
+/// Container for enum describing insights dimensions.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AudienceInsightsDimensionEnum {}
+/// Nested message and enum types in `AudienceInsightsDimensionEnum`.
+pub mod audience_insights_dimension_enum {
+    /// Possible dimensions for use in generating insights.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AudienceInsightsDimension {
+        /// Not specified.
+        Unspecified = 0,
+        /// The value is unknown in this version.
+        Unknown = 1,
+        /// A Product & Service category.
+        Category = 2,
+        /// A Knowledge Graph entity.
+        KnowledgeGraph = 3,
+        /// A country, represented by a geo target.
+        GeoTargetCountry = 4,
+        /// A geographic location within a country.
+        SubCountryLocation = 5,
+        /// A YouTube channel.
+        YoutubeChannel = 6,
+        /// A YouTube Dynamic Lineup.
+        YoutubeDynamicLineup = 7,
+        /// An Affinity UserInterest.
+        AffinityUserInterest = 8,
+        /// An In-Market UserInterest.
+        InMarketUserInterest = 9,
+        /// A Parental Status value (parent, or not a parent).
+        ParentalStatus = 10,
+        /// A household income percentile range.
+        IncomeRange = 11,
+        /// An age range.
+        AgeRange = 12,
+        /// A gender.
+        Gender = 13,
     }
 }
 // Proto file describing audience status.
@@ -4683,6 +5407,95 @@ pub mod bidding_strategy_status_enum {
         Removed = 4,
     }
 }
+// Proto file describing BiddingStrategy statuses.
+
+/// Message describing BiddingStrategy system statuses.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BiddingStrategySystemStatusEnum {}
+/// Nested message and enum types in `BiddingStrategySystemStatusEnum`.
+pub mod bidding_strategy_system_status_enum {
+    /// The possible system statuses of a BiddingStrategy.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum BiddingStrategySystemStatus {
+        /// Signals that an unexpected error occurred, for example, no bidding
+        /// strategy type was found, or no status information was found.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The bid strategy is active, and AdWords cannot find any specific issues
+        /// with the strategy.
+        Enabled = 2,
+        /// The bid strategy is learning because it has been recently created or
+        /// recently reactivated.
+        LearningNew = 3,
+        /// The bid strategy is learning because of a recent setting change.
+        LearningSettingChange = 4,
+        /// The bid strategy is learning because of a recent budget change.
+        LearningBudgetChange = 5,
+        /// The bid strategy is learning because of recent change in number of
+        /// campaigns, ad groups or keywords attached to it.
+        LearningCompositionChange = 6,
+        /// The bid strategy depends on conversion reporting and the customer
+        /// recently modified conversion types that were relevant to the
+        /// bid strategy.
+        LearningConversionTypeChange = 7,
+        /// The bid strategy depends on conversion reporting and the customer
+        /// recently changed their conversion settings.
+        LearningConversionSettingChange = 8,
+        /// The bid strategy is limited by its bid ceiling.
+        LimitedByCpcBidCeiling = 9,
+        /// The bid strategy is limited by its bid floor.
+        LimitedByCpcBidFloor = 10,
+        /// The bid strategy is limited because there was not enough conversion
+        /// traffic over the past weeks.
+        LimitedByData = 11,
+        /// A significant fraction of keywords in this bid strategy are limited by
+        /// budget.
+        LimitedByBudget = 12,
+        /// The bid strategy cannot reach its target spend because its spend has
+        /// been de-prioritized.
+        LimitedByLowPrioritySpend = 13,
+        /// A significant fraction of keywords in this bid strategy have a low
+        /// Quality Score.
+        LimitedByLowQuality = 14,
+        /// The bid strategy cannot fully spend its budget because of narrow
+        /// targeting.
+        LimitedByInventory = 15,
+        /// Missing conversion tracking (no pings present) and/or remarketing lists
+        /// for SSC.
+        MisconfiguredZeroEligibility = 16,
+        /// The bid strategy depends on conversion reporting and the customer is
+        /// lacking conversion types that might be reported against this strategy.
+        MisconfiguredConversionTypes = 17,
+        /// The bid strategy depends on conversion reporting and the customer's
+        /// conversion settings are misconfigured.
+        MisconfiguredConversionSettings = 18,
+        /// There are campaigns outside the bid strategy that share budgets with
+        /// campaigns included in the strategy.
+        MisconfiguredSharedBudget = 19,
+        /// The campaign has an invalid strategy type and is not serving.
+        MisconfiguredStrategyType = 20,
+        /// The bid strategy is not active. Either there are no active campaigns,
+        /// ad groups or keywords attached to the bid strategy. Or there are no
+        /// active budgets connected to the bid strategy.
+        Paused = 21,
+        /// This bid strategy currently does not support status reporting.
+        Unavailable = 22,
+        /// There were multiple LEARNING_* system statuses for this bid strategy
+        /// during the time in question.
+        MultipleLearning = 23,
+        /// There were multiple LIMITED_* system statuses for this bid strategy
+        /// during the time in question.
+        MultipleLimited = 24,
+        /// There were multiple MISCONFIGURED_* system statuses for this bid strategy
+        /// during the time in question.
+        MultipleMisconfigured = 25,
+        /// There were multiple system statuses for this bid strategy during the
+        /// time in question.
+        Multiple = 26,
+    }
+}
 // Proto file describing bidding schemes.
 
 /// Container for enum describing possible bidding strategy types.
@@ -4713,6 +5526,9 @@ pub mod bidding_strategy_type_enum {
         /// manager bidding strategy and transition to the INVALID bidding strategy
         /// type.
         Invalid = 17,
+        /// Manual bidding strategy that allows advertiser to set the bid per
+        /// advertiser-specified action.
+        ManualCpa = 18,
         /// Manual click based bidding where user pays per click.
         ManualCpc = 3,
         /// Manual impression based bidding
@@ -5094,71 +5910,6 @@ pub mod campaign_draft_status_enum {
         PromoteFailed = 6,
     }
 }
-// Proto file describing campaign experiment status.
-
-/// Container for enum describing possible statuses of a campaign experiment.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CampaignExperimentStatusEnum {}
-/// Nested message and enum types in `CampaignExperimentStatusEnum`.
-pub mod campaign_experiment_status_enum {
-    /// Possible statuses of a campaign experiment.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum CampaignExperimentStatus {
-        /// The status has not been specified.
-        Unspecified = 0,
-        /// Used for return value only. Represents value unknown in this version.
-        Unknown = 1,
-        /// The experiment campaign is being initialized.
-        Initializing = 2,
-        /// Initialization of the experiment campaign failed.
-        InitializationFailed = 8,
-        /// The experiment campaign is fully initialized. The experiment is currently
-        /// running, scheduled to run in the future or has ended based on its
-        /// end date. An experiment with the status INITIALIZING will be updated to
-        /// ENABLED when it is fully created.
-        Enabled = 3,
-        /// The experiment campaign was graduated to a stand-alone
-        /// campaign, existing independently of the experiment.
-        Graduated = 4,
-        /// The experiment is removed.
-        Removed = 5,
-        /// The experiment's changes are being applied to the original campaign.
-        /// The long running operation returned by the promote method can be polled
-        /// to see the status of the promotion.
-        Promoting = 6,
-        /// Promote of the experiment campaign failed.
-        PromotionFailed = 9,
-        /// The changes of the experiment are promoted to their original campaign.
-        Promoted = 7,
-        /// The experiment was ended manually. It did not end based on its end date.
-        EndedManually = 10,
-    }
-}
-// Proto file describing campaign experiment traffic split type.
-
-/// Container for enum describing campaign experiment traffic split type.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CampaignExperimentTrafficSplitTypeEnum {}
-/// Nested message and enum types in `CampaignExperimentTrafficSplitTypeEnum`.
-pub mod campaign_experiment_traffic_split_type_enum {
-    /// Enum of strategies for splitting traffic between base and experiment
-    /// campaigns in campaign experiment.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum CampaignExperimentTrafficSplitType {
-        /// Not specified.
-        Unspecified = 0,
-        /// Used for return value only. Represents value unknown in this version.
-        Unknown = 1,
-        /// Traffic is randomly assigned to the base or experiment arm for each
-        /// query, independent of previous assignments for the same user.
-        RandomQuery = 2,
-        /// Traffic is split using cookies to keep users in the same arm (base or
-        /// experiment) of the experiment.
-        Cookie = 3,
-    }
-}
 // Proto file describing campaign experiment type.
 
 /// Container for enum describing campaign experiment type.
@@ -5207,6 +5958,137 @@ pub mod campaign_group_status_enum {
         Enabled = 2,
         /// The campaign group has been removed.
         Removed = 3,
+    }
+}
+// Proto file describing Campaign primary statuses.
+
+/// Container for enum describing possible campaign primary status.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CampaignPrimaryStatusEnum {}
+/// Nested message and enum types in `CampaignPrimaryStatusEnum`.
+pub mod campaign_primary_status_enum {
+    /// Enum describing the possible campaign primary status. Provides insight into
+    /// why a campaign is not serving or not serving optimally. Modification to the
+    /// campaign and its related entities might take a while to be reflected in
+    /// this status.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CampaignPrimaryStatus {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The campaign is eligible to serve.
+        Eligible = 2,
+        /// The user-specified campaign status is paused.
+        Paused = 3,
+        /// The user-specified campaign status is removed.
+        Removed = 4,
+        /// The user-specified time for this campaign to end has passed.
+        Ended = 5,
+        /// The campaign may serve in the future.
+        Pending = 6,
+        /// The campaign or its associated entities have incorrect user-specified
+        /// settings.
+        Misconfigured = 7,
+        /// The campaign or its associated entities are limited by user-specified
+        /// settings.
+        Limited = 8,
+        /// The automated bidding system is adjusting to user-specified changes to
+        /// the campaign or associated entities.
+        Learning = 9,
+        /// The campaign is not eligible to serve.
+        NotEligible = 10,
+    }
+}
+// Proto file describing CampaignPrimaryStatusReasons.
+
+/// Container for enum describing possible campaign primary status reasons.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CampaignPrimaryStatusReasonEnum {}
+/// Nested message and enum types in `CampaignPrimaryStatusReasonEnum`.
+pub mod campaign_primary_status_reason_enum {
+    /// Enum describing the possible campaign primary status reasons.  Provides
+    /// insight into why a campaign is not serving or not serving optimally. These
+    /// reasons are aggregated to determine an overall campaign primary status.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CampaignPrimaryStatusReason {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The user-specified campaign status is removed.
+        CampaignRemoved = 2,
+        /// The user-specified campaign status is paused.
+        CampaignPaused = 3,
+        /// The user-specified time for this campaign to start is in the future.
+        CampaignPending = 4,
+        /// The user-specified time for this campaign to end has passed.
+        CampaignEnded = 5,
+        /// The campaign is a draft.
+        CampaignDraft = 6,
+        /// The bidding strategy has incorrect user-specified settings.
+        BiddingStrategyMisconfigured = 7,
+        /// The bidding strategy is limited by user-specified settings such as lack
+        /// of data or similar.
+        BiddingStrategyLimited = 8,
+        /// The automated bidding system is adjusting to user-specified changes to
+        /// the bidding strategy.
+        BiddingStrategyLearning = 9,
+        /// Campaign could capture more conversion value by adjusting CPA/ROAS
+        /// targets.
+        BiddingStrategyConstrained = 10,
+        /// The budget is limiting the campaign's ability to serve.
+        BudgetConstrained = 11,
+        /// The budget has incorrect user-specified settings.
+        BudgetMisconfigured = 12,
+        /// Campaign is not targeting all relevant queries.
+        SearchVolumeLimited = 13,
+        /// The user-specified ad group statuses are all paused.
+        AdGroupsPaused = 14,
+        /// No eligible ad groups exist in this campaign.
+        NoAdGroups = 15,
+        /// The user-specified keyword statuses are all paused.
+        KeywordsPaused = 16,
+        /// No eligible keywords exist in this campaign.
+        NoKeywords = 17,
+        /// The user-specified ad group ad statuses are all paused.
+        AdGroupAdsPaused = 18,
+        /// No eligible ad group ads exist in this campaign.
+        NoAdGroupAds = 19,
+        /// At least one ad in this campaign is limited by policy.
+        HasAdsLimitedByPolicy = 20,
+        /// At least one ad in this campaign is disapproved.
+        HasAdsDisapproved = 21,
+        /// Most ads in this campaign are pending review.
+        MostAdsUnderReview = 22,
+        /// The campaign has a lead form goal, and the lead form extension is
+        /// missing.
+        MissingLeadFormExtension = 23,
+        /// The campaign has a call goal, and the call extension is missing.
+        MissingCallExtension = 24,
+        /// The lead form extension is under review.
+        LeadFormExtensionUnderReview = 25,
+        /// The lead extension is disapproved.
+        LeadFormExtensionDisapproved = 26,
+        /// The call extension is under review.
+        CallExtensionUnderReview = 27,
+        /// The call extension is disapproved.
+        CallExtensionDisapproved = 28,
+        /// No eligible mobile application ad group criteria exist in this campaign.
+        NoMobileApplicationAdGroupCriteria = 29,
+        /// The user-specified campaign group status is paused.
+        CampaignGroupPaused = 30,
+        /// The user-specified times of all group budgets associated with the parent
+        /// campaign group has passed.
+        CampaignGroupAllGroupBudgetsEnded = 31,
+        /// The app associated with this ACi campaign is not released in the target
+        /// countries of the campaign.
+        AppNotReleased = 32,
+        /// The app associated with this ACi campaign is partially released in the
+        /// target countries of the campaign.
+        AppPartiallyReleased = 33,
     }
 }
 // Proto file describing Campaign serving statuses.
@@ -5274,7 +6156,7 @@ pub mod campaign_status_enum {
         Unspecified = 0,
         /// Used for return value only. Represents value unknown in this version.
         Unknown = 1,
-        /// Campaign is currently serving ads depending on budget information.
+        /// Campaign is active and can show ads.
         Enabled = 2,
         /// Campaign has been paused by the user.
         Paused = 3,
@@ -5311,7 +6193,8 @@ pub mod change_client_type_enum {
         GoogleAdsBulkUpload = 5,
         /// Changes made by Google Ads API.
         GoogleAdsApi = 6,
-        /// Changes made by Google Ads Editor.
+        /// Changes made by Google Ads Editor. This value is a placeholder.
+        /// The API does not return these changes.
         GoogleAdsEditor = 7,
         /// Changes made by Google Ads mobile app.
         GoogleAdsMobileApp = 8,
@@ -5460,6 +6343,8 @@ pub mod change_status_resource_type_enum {
         CampaignAsset = 18,
         /// An AdGroupAsset resource change.
         AdGroupAsset = 19,
+        /// A CombinedAudience resource change.
+        CombinedAudience = 20,
     }
 }
 // Proto file describing combined audience status.
@@ -5577,31 +6462,32 @@ pub mod conversion_action_type_enum {
         /// Only customers on the allowlist can use store sales types.
         /// Read only.
         StoreSales = 11,
-        /// Android app first open conversions tracked via Firebase.
+        /// Android app first open conversions tracked through Firebase.
         FirebaseAndroidFirstOpen = 12,
-        /// Android app in app purchase conversions tracked via Firebase.
+        /// Android app in app purchase conversions tracked through Firebase.
         FirebaseAndroidInAppPurchase = 13,
-        /// Android app custom conversions tracked via Firebase.
+        /// Android app custom conversions tracked through Firebase.
         FirebaseAndroidCustom = 14,
-        /// iOS app first open conversions tracked via Firebase.
+        /// iOS app first open conversions tracked through Firebase.
         FirebaseIosFirstOpen = 15,
-        /// iOS app in app purchase conversions tracked via Firebase.
+        /// iOS app in app purchase conversions tracked through Firebase.
         FirebaseIosInAppPurchase = 16,
-        /// iOS app custom conversions tracked via Firebase.
+        /// iOS app custom conversions tracked through Firebase.
         FirebaseIosCustom = 17,
-        /// Android app first open conversions tracked via Third Party App Analytics.
+        /// Android app first open conversions tracked through Third Party App
+        /// Analytics.
         ThirdPartyAppAnalyticsAndroidFirstOpen = 18,
-        /// Android app in app purchase conversions tracked via Third Party App
+        /// Android app in app purchase conversions tracked through Third Party App
         /// Analytics.
         ThirdPartyAppAnalyticsAndroidInAppPurchase = 19,
-        /// Android app custom conversions tracked via Third Party App Analytics.
+        /// Android app custom conversions tracked through Third Party App Analytics.
         ThirdPartyAppAnalyticsAndroidCustom = 20,
-        /// iOS app first open conversions tracked via Third Party App Analytics.
+        /// iOS app first open conversions tracked through Third Party App Analytics.
         ThirdPartyAppAnalyticsIosFirstOpen = 21,
-        /// iOS app in app purchase conversions tracked via Third Party App
+        /// iOS app in app purchase conversions tracked through Third Party App
         /// Analytics.
         ThirdPartyAppAnalyticsIosInAppPurchase = 22,
-        /// iOS app custom conversions tracked via Third Party App Analytics.
+        /// iOS app custom conversions tracked through Third Party App Analytics.
         ThirdPartyAppAnalyticsIosCustom = 23,
         /// Conversions that occur when a user pre-registers a mobile app from the
         /// Google Play Store. Read only.
@@ -5641,6 +6527,19 @@ pub mod conversion_action_type_enum {
         /// Conversions that occur when a user visits an advertiser's retail store.
         /// Read only.
         StoreVisits = 36,
+        /// Conversions created from website events (such as form submissions or page
+        /// loads), that don't use individually coded event snippets.
+        WebpageCodeless = 37,
+        /// Conversions that come from linked Universal Analytics goals.
+        UniversalAnalyticsGoal = 38,
+        /// Conversions that come from linked Universal Analytics transactions.
+        UniversalAnalyticsTransaction = 39,
+        /// Conversions that come from linked Google Analytics 4 custom event
+        /// conversions.
+        GoogleAnalytics4Custom = 40,
+        /// Conversions that come from linked Google Analytics 4 purchase
+        /// conversions.
+        GoogleAnalytics4Purchase = 41,
     }
 }
 // Proto file describing conversion adjustment type.
@@ -5698,7 +6597,7 @@ pub mod conversion_custom_variable_status_enum {
     }
 }
 /// Container for enum representing the conversion environment an uploaded
-/// conversion was recorded on. e.g. App or Web.
+/// conversion was recorded on, for example, App or Web.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ConversionEnvironmentEnum {}
 /// Nested message and enum types in `ConversionEnvironmentEnum`.
@@ -5736,10 +6635,10 @@ pub mod conversion_origin_enum {
         /// there after viewing an ad.
         Website = 2,
         /// Conversions reported by an offline pipeline which collects local actions
-        /// from Google-hosted pages (e.g. Google Maps, Google Place Page, etc) and
-        /// attributes them to relevant ad events.
+        /// from Google-hosted pages (for example, Google Maps, Google Place Page,
+        /// etc) and attributes them to relevant ad events.
         GoogleHosted = 3,
-        /// Conversion that occurs when a user performs an action via any app
+        /// Conversion that occurs when a user performs an action through any app
         /// platforms.
         App = 4,
         /// Conversion that occurs when a user makes a call from ads.
@@ -5862,9 +6761,9 @@ pub mod criterion_type_enum {
         Unspecified = 0,
         /// Used for return value only. Represents value unknown in this version.
         Unknown = 1,
-        /// Keyword. e.g. 'mars cruise'.
+        /// Keyword, for example, 'mars cruise'.
         Keyword = 2,
-        /// Placement, aka Website. e.g. 'www.flowers4sale.com'
+        /// Placement, also known as Website, for example, 'www.flowers4sale.com'
         Placement = 3,
         /// Mobile application categories to target.
         MobileAppCategory = 4,
@@ -5894,7 +6793,7 @@ pub mod criterion_type_enum {
         UserList = 16,
         /// Proximity.
         Proximity = 17,
-        /// A topic target on the display network (e.g. "Pets & Animals").
+        /// A topic target on the display network (for example, "Pets & Animals").
         Topic = 18,
         /// Listing scope to target.
         ListingScope = 19,
@@ -5930,6 +6829,10 @@ pub mod criterion_type_enum {
         KeywordTheme = 34,
         /// Audience
         Audience = 35,
+        /// Negative Keyword List
+        NegativeKeywordList = 36,
+        /// Local Services Ads Service ID.
+        LocalServiceId = 37,
     }
 }
 // Proto file describing custom audience member type.
@@ -6442,8 +7345,8 @@ pub mod education_placeholder_field_enum {
         /// Data Type: URL. Alternative hosted file of image to be used in the ad.
         AlternativeThumbnailImageUrl = 10,
         /// Data Type: URL_LIST. Required. Final URLs to be used in ad when using
-        /// Upgraded URLs; the more specific the better (e.g. the individual URL of a
-        /// specific program and its location).
+        /// Upgraded URLs; the more specific the better (for example, the individual
+        /// URL of a specific program and its location).
         FinalUrls = 11,
         /// Data Type: URL_LIST. Final mobile URLs for the ad when using Upgraded
         /// URLs.
@@ -6521,8 +7424,6 @@ pub mod experiment_type_enum {
         DisplayAndVideo360 = 2,
         /// This is an ad variation experiment.
         AdVariation = 3,
-        /// This is a smart display experiment.
-        SmartDisplay = 4,
         /// A custom experiment consisting of Video campaigns.
         YoutubeCustom = 5,
         /// A custom experiment consisting of display campaigns.
@@ -7242,6 +8143,29 @@ pub mod google_voice_call_status_enum {
         Received = 3,
     }
 }
+// Proto file describing hotel asset suggestion status.
+
+/// Container for enum describing possible statuses of a hotel asset suggestion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct HotelAssetSuggestionStatusEnum {}
+/// Nested message and enum types in `HotelAssetSuggestionStatusEnum`.
+pub mod hotel_asset_suggestion_status_enum {
+    /// Possible statuses of a hotel asset suggestion.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum HotelAssetSuggestionStatus {
+        /// Enum unspecified.
+        Unspecified = 0,
+        /// The received error code is not known in this version.
+        Unknown = 1,
+        /// The hotel asset suggestion was successfully retrieved.
+        Success = 2,
+        /// A hotel look up returns nothing.
+        HotelNotFound = 3,
+        /// A Google Places ID is invalid and cannot be decoded.
+        InvalidPlaceId = 4,
+    }
+}
 // Proto file describing Hotel placeholder fields.
 
 /// Values for Hotel placeholder fields.
@@ -7436,8 +8360,8 @@ pub mod job_placeholder_field_enum {
         /// ad.
         Salary = 11,
         /// Data Type: URL_LIST. Required. Final URLs to be used in ad when using
-        /// Upgraded URLs; the more specific the better (e.g. the individual URL of a
-        /// specific job and its location).
+        /// Upgraded URLs; the more specific the better (for example, the individual
+        /// URL of a specific job and its location).
         FinalUrls = 12,
         /// Data Type: URL_LIST. Final mobile URLs for the ad when using Upgraded
         /// URLs.
@@ -7568,6 +8492,30 @@ pub mod linked_account_type_enum {
         GoogleAds = 4,
         /// A link to Hotel Center.
         HotelCenter = 5,
+        /// A link to Google Ads account of the partner advertiser.
+        /// Increase performance and share data by partnering with businesses that
+        /// advertise the same items.
+        AdvertisingPartner = 6,
+    }
+}
+/// Container for enum describing different types of linked products.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LinkedProductTypeEnum {}
+/// Nested message and enum types in `LinkedProductTypeEnum`.
+pub mod linked_product_type_enum {
+    /// Describes the possible link types for a link between a Google
+    /// Ads customer and another product.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum LinkedProductType {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// A link to Data partner.
+        DataPartner = 2,
+        /// A link to Google Ads.
+        GoogleAds = 3,
     }
 }
 // Proto file describing listing groups.
@@ -7740,6 +8688,25 @@ pub mod listing_group_filter_vertical_enum {
         Shopping = 2,
     }
 }
+// Proto file describing listing type.
+
+/// Container for enum describing possible listing types.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListingTypeEnum {}
+/// Nested message and enum types in `ListingTypeEnum`.
+pub mod listing_type_enum {
+    /// Possible listing types.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ListingType {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// This campaign serves vehicle ads.
+        Vehicles = 2,
+    }
+}
 // Proto file describing Local placeholder fields.
 
 /// Values for Local placeholder fields.
@@ -7788,8 +8755,8 @@ pub mod local_placeholder_field_enum {
         /// Data Type: STRING_LIST. Keywords used for product retrieval.
         ContextualKeywords = 13,
         /// Data Type: URL_LIST. Required. Final URLs to be used in ad when using
-        /// Upgraded URLs; the more specific the better (e.g. the individual URL of a
-        /// specific local deal and its location).
+        /// Upgraded URLs; the more specific the better (for example, the individual
+        /// URL of a specific local deal and its location).
         FinalUrls = 14,
         /// Data Type: URL_LIST. Final mobile URLs for the ad when using Upgraded
         /// URLs.
@@ -8051,6 +9018,55 @@ pub mod negative_geo_target_type_enum {
         Presence = 5,
     }
 }
+/// All possible statuses for oci diagnostics.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OfflineConversionDiagnosticStatusEnum {}
+/// Nested message and enum types in `OfflineConversionDiagnosticStatusEnum`.
+pub mod offline_conversion_diagnostic_status_enum {
+    /// Next id: 8
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum OfflineConversionDiagnosticStatus {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Your offline data ingestion setup is active and optimal for downstream
+        /// processing.
+        Excellent = 2,
+        /// Your offline ingestion setup is active, but there are further
+        /// improvements you could make. See alerts.
+        Good = 3,
+        /// Your offline ingestion setup is active, but there are errors that require
+        /// your attention. See alerts.
+        NeedsAttention = 4,
+        /// Your offline ingestion setup has not received data in the last 28 days,
+        /// there may be something wrong.
+        NoRecentUpload = 6,
+    }
+}
+/// All possible clients for an offline upload event.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OfflineEventUploadClientEnum {}
+/// Nested message and enum types in `OfflineEventUploadClientEnum`.
+pub mod offline_event_upload_client_enum {
+    /// Next id: 5
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum OfflineEventUploadClient {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Google Ads API.
+        GoogleAdsApi = 2,
+        /// Google Ads web client, which could include multiple sources like Ads UI,
+        /// SFTP, etc.
+        GoogleAdsWebClient = 3,
+        /// Connection platform.
+        AdsDataConnector = 4,
+    }
+}
 // Proto file describing offline user data job failure reasons.
 
 /// Container for enum describing reasons why an offline user data job
@@ -8071,6 +9087,18 @@ pub mod offline_user_data_job_failure_reason_enum {
         InsufficientMatchedTransactions = 2,
         /// The uploaded transactions are insufficient.
         InsufficientTransactions = 3,
+        /// The average transaction value is unusually high for your account. If this
+        ///  is intended, contact support to request an exception. Learn more at
+        ///  <https://support.google.com/google-ads/answer/10018944#transaction_value>
+        HighAverageTransactionValue = 4,
+        /// The average transaction value is unusually low for your account. If this
+        /// is intended, contact support to request an exception. Learn more at
+        /// <https://support.google.com/google-ads/answer/10018944#transaction_value>
+        LowAverageTransactionValue = 5,
+        /// There's a currency code that you haven't used before in your uploads. If
+        /// this is intended, contact support to request an exception. Learn more at
+        /// <https://support.google.com/google-ads/answer/10018944#Unrecognized_currency>
+        NewlyObservedCurrencyCode = 6,
     }
 }
 /// Container for enum describing reasons match rate ranges for a customer match
@@ -8103,7 +9131,7 @@ pub mod offline_user_data_job_match_rate_range_enum {
         MatchRange71To80 = 8,
         /// Match rate range for offline data upload entity is between 81% and 90%.
         MatchRange81To90 = 9,
-        /// Match rate range for offline data upload entity more than or equal to
+        /// Match rate range for offline data upload entity is more than or equal to
         /// 91%.
         MatchRange91To100 = 10,
     }
@@ -8222,11 +9250,11 @@ pub mod payment_mode_enum {
         Unspecified = 0,
         /// Used for return value only. Represents value unknown in this version.
         Unknown = 1,
-        /// Pay per click.
+        /// Pay per interaction.
         Clicks = 4,
         /// Pay per conversion value. This mode is only supported by campaigns with
         /// AdvertisingChannelType.HOTEL, BiddingStrategyType.COMMISSION, and
-        /// BudgetType.HOTEL_ADS_COMMISSION.
+        /// BudgetType.STANDARD.
         ConversionValue = 5,
         /// Pay per conversion. This mode is only supported by campaigns with
         /// AdvertisingChannelType.DISPLAY (excluding
@@ -8238,6 +9266,32 @@ pub mod payment_mode_enum {
         /// AdvertisingChannelType.HOTEL, BiddingStrategyType.COMMISSION, and
         /// BudgetType.STANDARD.
         GuestStay = 7,
+    }
+}
+// Proto file describing advertising channel types
+
+/// Performance Max Upgrade status for campaign.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PerformanceMaxUpgradeStatusEnum {}
+/// Nested message and enum types in `PerformanceMaxUpgradeStatusEnum`.
+pub mod performance_max_upgrade_status_enum {
+    /// Performance Max Upgrade status enum for campaign.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum PerformanceMaxUpgradeStatus {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The campaign is eligible for upgrade to a Performance Max campaign.
+        UpgradeElibigle = 2,
+        /// The upgrade to a Performance Max campaign is in progress.
+        UpgradeInProgress = 3,
+        /// The upgrade to a Performance Max campaign is complete.
+        UpgradeComplete = 4,
+        /// The upgrade to a Performance Max campaign failed.
+        /// The campaign will still serve as it was before upgrade was attempted.
+        UpgradeFailed = 5,
     }
 }
 // Proto file describing placement types.
@@ -8255,16 +9309,18 @@ pub mod placement_type_enum {
         Unspecified = 0,
         /// Used for return value only. Represents value unknown in this version.
         Unknown = 1,
-        /// Websites(e.g. 'www.flowers4sale.com').
+        /// Websites(for example, 'www.flowers4sale.com').
         Website = 2,
-        /// Mobile application categories(e.g. 'Games').
+        /// Mobile application categories(for example, 'Games').
         MobileAppCategory = 3,
-        /// mobile applications(e.g. 'mobileapp::2-com.whatsthewordanswers').
+        /// mobile applications(for example, 'mobileapp::2-com.whatsthewordanswers').
         MobileApplication = 4,
-        /// YouTube videos(e.g. 'youtube.com/video/wtLJPvx7-ys').
+        /// YouTube videos(for example, 'youtube.com/video/wtLJPvx7-ys').
         YoutubeVideo = 5,
-        /// YouTube channels(e.g. 'youtube.com::L8ZULXASCc1I_oaOT0NaOQ').
+        /// YouTube channels(for example, 'youtube.com::L8ZULXASCc1I_oaOT0NaOQ').
         YoutubeChannel = 6,
+        /// Surfaces owned and operated by Google(for example, 'tv.google.com').
+        GoogleProducts = 7,
     }
 }
 // Proto file describing positive geo target types.
@@ -8330,7 +9386,8 @@ pub mod price_placeholder_field_enum {
         /// Data Type: STRING. The description of item 1 of the table.
         Item1Description = 101,
         /// Data Type: MONEY. The price (money with currency) of item 1 of the table,
-        /// e.g., 30 USD. The currency must match one of the available currencies.
+        /// for example, 30 USD. The currency must match one of the available
+        /// currencies.
         Item1Price = 102,
         /// Data Type: STRING. The price unit of item 1 of the table. Must match one
         /// of the predefined price units.
@@ -8346,7 +9403,8 @@ pub mod price_placeholder_field_enum {
         /// Data Type: STRING. The description of item 2 of the table.
         Item2Description = 201,
         /// Data Type: MONEY. The price (money with currency) of item 2 of the table,
-        /// e.g., 30 USD. The currency must match one of the available currencies.
+        /// for example, 30 USD. The currency must match one of the available
+        /// currencies.
         Item2Price = 202,
         /// Data Type: STRING. The price unit of item 2 of the table. Must match one
         /// of the predefined price units.
@@ -8362,7 +9420,8 @@ pub mod price_placeholder_field_enum {
         /// Data Type: STRING. The description of item 3 of the table.
         Item3Description = 301,
         /// Data Type: MONEY. The price (money with currency) of item 3 of the table,
-        /// e.g., 30 USD. The currency must match one of the available currencies.
+        /// for example, 30 USD. The currency must match one of the available
+        /// currencies.
         Item3Price = 302,
         /// Data Type: STRING. The price unit of item 3 of the table. Must match one
         /// of the predefined price units.
@@ -8378,7 +9437,8 @@ pub mod price_placeholder_field_enum {
         /// Data Type: STRING. The description of item 4 of the table.
         Item4Description = 401,
         /// Data Type: MONEY. The price (money with currency) of item 4 of the table,
-        /// e.g., 30 USD. The currency must match one of the available currencies.
+        /// for example, 30 USD. The currency must match one of the available
+        /// currencies.
         Item4Price = 402,
         /// Data Type: STRING. The price unit of item 4 of the table. Must match one
         /// of the predefined price units.
@@ -8394,7 +9454,8 @@ pub mod price_placeholder_field_enum {
         /// Data Type: STRING. The description of item 5 of the table.
         Item5Description = 501,
         /// Data Type: MONEY. The price (money with currency) of item 5 of the table,
-        /// e.g., 30 USD. The currency must match one of the available currencies.
+        /// for example, 30 USD. The currency must match one of the available
+        /// currencies.
         Item5Price = 502,
         /// Data Type: STRING. The price unit of item 5 of the table. Must match one
         /// of the predefined price units.
@@ -8410,7 +9471,8 @@ pub mod price_placeholder_field_enum {
         /// Data Type: STRING. The description of item 6 of the table.
         Item6Description = 601,
         /// Data Type: MONEY. The price (money with currency) of item 6 of the table,
-        /// e.g., 30 USD. The currency must match one of the available currencies.
+        /// for example, 30 USD. The currency must match one of the available
+        /// currencies.
         Item6Price = 602,
         /// Data Type: STRING. The price unit of item 6 of the table. Must match one
         /// of the predefined price units.
@@ -8426,7 +9488,8 @@ pub mod price_placeholder_field_enum {
         /// Data Type: STRING. The description of item 7 of the table.
         Item7Description = 701,
         /// Data Type: MONEY. The price (money with currency) of item 7 of the table,
-        /// e.g., 30 USD. The currency must match one of the available currencies.
+        /// for example, 30 USD. The currency must match one of the available
+        /// currencies.
         Item7Price = 702,
         /// Data Type: STRING. The price unit of item 7 of the table. Must match one
         /// of the predefined price units.
@@ -8442,7 +9505,8 @@ pub mod price_placeholder_field_enum {
         /// Data Type: STRING. The description of item 8 of the table.
         Item8Description = 801,
         /// Data Type: MONEY. The price (money with currency) of item 8 of the table,
-        /// e.g., 30 USD. The currency must match one of the available currencies.
+        /// for example, 30 USD. The currency must match one of the available
+        /// currencies.
         Item8Price = 802,
         /// Data Type: STRING. The price unit of item 8 of the table. Must match one
         /// of the predefined price units.
@@ -8494,7 +9558,7 @@ pub mod promotion_placeholder_field_enum {
         /// Data Type: STRING. The text that appears on the ad when the extension is
         /// shown.
         PromotionTarget = 2,
-        /// Data Type: STRING. Allows you to add "up to" phrase to the promotion,
+        /// Data Type: STRING. Lets you add "up to" phrase to the promotion,
         /// in case you have variable promotion rates.
         DiscountModifier = 3,
         /// Data Type: INT64. Takes a value in micros, where 1 million micros
@@ -8528,29 +9592,6 @@ pub mod promotion_placeholder_field_enum {
         /// Data Type: STRING. Final URL suffix for the ad when using parallel
         /// tracking.
         FinalUrlSuffix = 15,
-    }
-}
-// Proto file describing ad lengths of a plannable video ad.
-
-/// Message describing length of a plannable video ad.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ReachPlanAdLengthEnum {}
-/// Nested message and enum types in `ReachPlanAdLengthEnum`.
-pub mod reach_plan_ad_length_enum {
-    /// Possible ad length values.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum ReachPlanAdLength {
-        /// Not specified.
-        Unspecified = 0,
-        /// The value is unknown in this version.
-        Unknown = 1,
-        /// 6 seconds long ad.
-        SixSeconds = 2,
-        /// 15 or 20 seconds long ad.
-        FifteenOrTwentySeconds = 3,
-        /// More than 20 seconds long ad.
-        TwentySecondsOrMore = 4,
     }
 }
 // Proto file describing a plannable age range.
@@ -8691,8 +9732,8 @@ pub mod real_estate_placeholder_field_enum {
         /// Data Type: STRING_LIST. Keywords used for product retrieval.
         ContextualKeywords = 12,
         /// Data Type: URL_LIST. Final URLs to be used in ad when using Upgraded
-        /// URLs; the more specific the better (e.g. the individual URL of a specific
-        /// listing and its location).
+        /// URLs; the more specific the better (for example, the individual URL of a
+        /// specific listing and its location).
         FinalUrls = 13,
         /// Data Type: URL_LIST. Final mobile URLs for the ad when using Upgraded
         /// URLs.
@@ -8829,7 +9870,7 @@ pub mod resource_limit_type_enum {
         CombinedAudienceCriteriaPerCampaign = 27,
         /// Number of negative keywords per campaign.
         NegativeKeywordsPerCampaign = 28,
-        /// Number of excluded campaign criteria in placement dimension, e.g.
+        /// Number of excluded campaign criteria in placement dimension, for example,
         /// placement, mobile application, YouTube channel, etc. The API criterion
         /// type is NOT limited to placement only, and this does not include
         /// exclusions at the ad group or other levels.
@@ -8938,6 +9979,10 @@ pub mod resource_limit_type_enum {
         PriceCampaignAssetsPerCampaign = 155,
         /// Number of ENABLED price AdGroupAssets per ad group.
         PriceAdGroupAssetsPerAdGroup = 156,
+        /// Number of ENABLED ad image CampaignAssets per campaign.
+        AdImageCampaignAssetsPerCampaign = 175,
+        /// Number of ENABLED ad image AdGroupAssets per ad group.
+        AdImageAdGroupAssetsPerAdGroup = 176,
         /// Number of ENABLED page feed asset sets per customer.
         PageFeedAssetSetsPerCustomer = 157,
         /// Number of ENABLED dynamic education feed asset sets per customer.
@@ -8975,6 +10020,10 @@ pub mod resource_limit_type_enum {
         DynamicJobsAssetSetsPerCustomer = 173,
         /// Number of ENABLED assets per dynamic jobs asset set.
         AssetsPerDynamicJobsAssetSet = 174,
+        /// Number of ENABLED business name CampaignAssets per campaign.
+        BusinessNameCampaignAssetsPerCampaign = 179,
+        /// Number of ENABLED business logo CampaignAssets per campaign.
+        BusinessLogoCampaignAssetsPerCampaign = 180,
         /// Number of versions per ad.
         VersionsPerAd = 82,
         /// Number of ENABLED user feeds per customer.
@@ -9025,8 +10074,8 @@ pub mod resource_limit_type_enum {
         TargetCustomersPerLabel = 121,
         /// Number of ENABLED keyword plans per user per customer.
         /// The limit is applied per <user, customer> pair because by default a plan
-        /// is private to a user of a customer. Each user of a customer has his or
-        /// her own independent limit.
+        /// is private to a user of a customer. Each user of a customer has their own
+        /// independent limit.
         KeywordPlansPerUserPerCustomer = 122,
         /// Number of keyword plan ad group keywords per keyword plan.
         KeywordPlanAdGroupKeywordsPerKeywordPlan = 123,
@@ -9045,6 +10094,15 @@ pub mod resource_limit_type_enum {
         BatchJobsPerCustomer = 131,
         /// Number of hotel check-in date range bid modifiers per ad agroup.
         HotelCheckInDateRangeBidModifiersPerAdGroup = 132,
+        /// Number of shared sets of type ACCOUNT_LEVEL_NEGATIVE_KEYWORDS per
+        /// account.
+        SharedSetsPerAccountForAccountLevelNegativeKeywords = 177,
+        /// Number of keywords per ACCOUNT_LEVEL_NEGATIVE_KEYWORDS shared set.
+        AccountLevelNegativeKeywordsPerSharedSet = 178,
+        /// Maximum number of asset per hotel property asset set.
+        EnabledAssetPerHotelPropertyAssetSet = 181,
+        /// Maximum number of enabled hotel property assets per asset group.
+        EnabledHotelPropertyAssetLinksPerAssetGroup = 182,
     }
 }
 // Proto file describing the response content types used in mutate operations.
@@ -9187,6 +10245,38 @@ pub mod shared_set_type_enum {
         NegativeKeywords = 2,
         /// A set of placements that can be excluded from targeting.
         NegativePlacements = 3,
+        /// An account-level set of keywords that can be excluded from targeting.
+        AccountLevelNegativeKeywords = 4,
+    }
+}
+// Proto file describing ShoppingAddProductsToCampaignRecommendationEnum enum.
+
+/// Indicates the key issue that results in a shopping campaign targeting zero
+/// products.
+/// Next Id: 5
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ShoppingAddProductsToCampaignRecommendationEnum {}
+/// Nested message and enum types in `ShoppingAddProductsToCampaignRecommendationEnum`.
+pub mod shopping_add_products_to_campaign_recommendation_enum {
+    /// Issues that results in a shopping campaign targeting zero products.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Reason {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// The Merchant Center account does not have any submitted products.
+        MerchantCenterAccountHasNoSubmittedProducts = 2,
+        /// The Merchant Center account does not have any submitted products in the
+        /// feed.
+        MerchantCenterAccountHasNoSubmittedProductsInFeed = 3,
+        /// The Google Ads account has active campaign filters that prevents
+        /// inclusion of offers in the campaign.
+        AdsAccountExcludesOffersFromCampaign = 4,
+        /// All products available have been explicitly excluded from
+        /// being targeted by the campaign.
+        AllProductsAreExcludedFromCampaign = 5,
     }
 }
 // Proto file describing simulation modification methods.
@@ -9286,6 +10376,70 @@ pub mod sitelink_placeholder_field_enum {
         FinalUrlSuffix = 8,
     }
 }
+// Proto file describing reasons for why a Smart campaign is not eligible to
+// serve.
+
+/// A container for an enum that describes reasons for why a Smart campaign
+/// is not eligible to serve.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignNotEligibleReasonEnum {}
+/// Nested message and enum types in `SmartCampaignNotEligibleReasonEnum`.
+pub mod smart_campaign_not_eligible_reason_enum {
+    /// Reasons for why a Smart campaign is not eligible to serve.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SmartCampaignNotEligibleReason {
+        /// The status has not been specified.
+        Unspecified = 0,
+        /// The received value is not known in this version.
+        ///
+        /// This is a response-only value.
+        Unknown = 1,
+        /// The campaign is not eligible to serve because of an issue with the
+        /// account.
+        AccountIssue = 2,
+        /// The campaign is not eligible to serve because of a payment issue.
+        BillingIssue = 3,
+        /// The business profile location associated with the campaign has been
+        /// removed.
+        BusinessProfileLocationRemoved = 4,
+        /// All system-generated ads have been disapproved. Consult the
+        /// policy_summary field in the AdGroupAd resource for more details.
+        AllAdsDisapproved = 5,
+    }
+}
+// Proto file describing Smart campaign statuses.
+
+/// A container for an enum that describes Smart campaign statuses.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignStatusEnum {}
+/// Nested message and enum types in `SmartCampaignStatusEnum`.
+pub mod smart_campaign_status_enum {
+    /// Smart campaign statuses.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SmartCampaignStatus {
+        /// The status has not been specified.
+        Unspecified = 0,
+        /// The received value is not known in this version.
+        ///
+        /// This is a response-only value.
+        Unknown = 1,
+        /// The campaign was paused.
+        Paused = 2,
+        /// The campaign is not eligible to serve and has issues that may require
+        /// intervention.
+        NotEligible = 3,
+        /// The campaign is pending the approval of at least one ad.
+        Pending = 4,
+        /// The campaign is eligible to serve.
+        Eligible = 5,
+        /// The campaign has been removed.
+        Removed = 6,
+        /// The campaign has ended.
+        Ended = 7,
+    }
+}
 // Proto file describing SpendingLimit types.
 
 /// Message describing spending limit types.
@@ -9324,7 +10478,7 @@ pub mod structured_snippet_placeholder_field_enum {
         /// Data Type: STRING. The category of snippet of your products/services.
         /// Must match exactly one of the predefined structured snippets headers.
         /// For a list, visit
-        /// <https://developers.google.com/adwords/api/docs/appendix/structured-snippet-headers>
+        /// <https://developers.google.com/google-ads/api/reference/data/structured-snippet-headers>
         Header = 2,
         /// Data Type: STRING_LIST. Text values that describe your products/services.
         /// All text must be family safe. Special or non-ASCII characters are not
@@ -9479,8 +10633,8 @@ pub mod travel_placeholder_field_enum {
         /// Data Type: STRING. Address of travel offer, including postal code.
         DestinationAddress = 14,
         /// Data Type: URL_LIST. Required. Final URLs to be used in ad, when using
-        /// Upgraded URLs; the more specific the better (e.g. the individual URL of a
-        /// specific travel offer and its location).
+        /// Upgraded URLs; the more specific the better (for example, the individual
+        /// URL of a specific travel offer and its location).
         FinalUrl = 15,
         /// Data Type: URL_LIST. Final mobile URLs for the ad when using Upgraded
         /// URLs.

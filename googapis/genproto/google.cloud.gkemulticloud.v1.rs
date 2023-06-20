@@ -34,9 +34,21 @@ pub struct OperationMetadata {
     /// Output only. Human-readable status of the operation, if any.
     #[prost(string, tag = "4")]
     pub status_detail: ::prost::alloc::string::String,
-    /// Output only. Human-readable status of any error that occurred during the operation.
+    /// Output only. Human-readable status of any error that occurred during the
+    /// operation.
     #[prost(string, tag = "5")]
     pub error_detail: ::prost::alloc::string::String,
+    /// Output only. The verb associated with the API method which triggered this
+    /// operation. Possible values are "create", "delete", "update" and "import".
+    #[prost(string, tag = "7")]
+    pub verb: ::prost::alloc::string::String,
+    /// Output only. Identifies whether it has been requested cancellation
+    /// for the operation. Operations that have successfully been cancelled
+    /// have \[Operation.error][\] value with a
+    /// \[google.rpc.Status.code][google.rpc.Status.code\] of 1, corresponding to
+    /// `Code.CANCELLED`.
+    #[prost(bool, tag = "6")]
+    pub requested_cancellation: bool,
 }
 /// The taint content for the node taint.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -84,13 +96,15 @@ pub mod node_taint {
 /// more details on Anthos multi-cluster capabilities using Fleets.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Fleet {
-    /// Required. The name of the Fleet host project where this cluster will be registered.
+    /// Required. The name of the Fleet host project where this cluster will be
+    /// registered.
     ///
     /// Project names are formatted as
     /// `projects/<project-number>`.
     #[prost(string, tag = "1")]
     pub project: ::prost::alloc::string::String,
-    /// Output only. The name of the managed Hub Membership resource associated to this cluster.
+    /// Output only. The name of the managed Hub Membership resource associated to
+    /// this cluster.
     ///
     /// Membership names are formatted as
     /// `projects/<project-number>/locations/global/membership/<cluster-id>`.
@@ -129,6 +143,685 @@ pub mod logging_component_config {
         Workloads = 2,
     }
 }
+/// Parameters that describe the Monitoring configuration in a cluster.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MonitoringConfig {
+    /// Enable Google Cloud Managed Service for Prometheus in the cluster.
+    #[prost(message, optional, tag = "2")]
+    pub managed_prometheus_config: ::core::option::Option<ManagedPrometheusConfig>,
+}
+/// ManagedPrometheusConfig defines the configuration for
+/// Google Cloud Managed Service for Prometheus.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ManagedPrometheusConfig {
+    /// Enable Managed Collection.
+    #[prost(bool, tag = "1")]
+    pub enabled: bool,
+}
+/// An Anthos cluster running on customer own infrastructure.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttachedCluster {
+    /// The name of this resource.
+    ///
+    /// Cluster names are formatted as
+    /// `projects/<project-number>/locations/<region>/attachedClusters/<cluster-id>`.
+    ///
+    /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
+    /// for more details on Google Cloud Platform resource names.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A human readable description of this cluster.
+    /// Cannot be longer than 255 UTF-8 encoded bytes.
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    /// Required. OpenID Connect (OIDC) configuration for the cluster.
+    #[prost(message, optional, tag = "3")]
+    pub oidc_config: ::core::option::Option<AttachedOidcConfig>,
+    /// Required. The platform version for the cluster (e.g. `1.19.0-gke.1000`).
+    ///
+    /// You can list all supported versions on a given Google Cloud region by
+    /// calling
+    /// \[GetAttachedServerConfig][google.cloud.gkemulticloud.v1.AttachedClusters.GetAttachedServerConfig\].
+    #[prost(string, tag = "4")]
+    pub platform_version: ::prost::alloc::string::String,
+    /// Required. The Kubernetes distribution of the underlying attached cluster.
+    ///
+    /// Supported values: ["eks", "aks"].
+    #[prost(string, tag = "16")]
+    pub distribution: ::prost::alloc::string::String,
+    /// Output only. The region where this cluster runs.
+    ///
+    /// For EKS clusters, this is a AWS region. For AKS clusters,
+    /// this is an Azure region.
+    #[prost(string, tag = "22")]
+    pub cluster_region: ::prost::alloc::string::String,
+    /// Required. Fleet configuration.
+    #[prost(message, optional, tag = "5")]
+    pub fleet: ::core::option::Option<Fleet>,
+    /// Output only. The current state of the cluster.
+    #[prost(enumeration = "attached_cluster::State", tag = "6")]
+    pub state: i32,
+    /// Output only. A globally unique identifier for the cluster.
+    #[prost(string, tag = "7")]
+    pub uid: ::prost::alloc::string::String,
+    /// Output only. If set, there are currently changes in flight to the cluster.
+    #[prost(bool, tag = "8")]
+    pub reconciling: bool,
+    /// Output only. The time at which this cluster was registered.
+    #[prost(message, optional, tag = "9")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The time at which this cluster was last updated.
+    #[prost(message, optional, tag = "10")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Allows clients to perform consistent read-modify-writes
+    /// through optimistic concurrency control.
+    ///
+    /// Can be sent on update and delete requests to ensure the
+    /// client has an up-to-date value before proceeding.
+    #[prost(string, tag = "11")]
+    pub etag: ::prost::alloc::string::String,
+    /// Output only. The Kubernetes version of the cluster.
+    #[prost(string, tag = "12")]
+    pub kubernetes_version: ::prost::alloc::string::String,
+    /// Optional. Annotations on the cluster.
+    ///
+    /// This field has the same restrictions as Kubernetes annotations.
+    /// The total size of all keys and values combined is limited to 256k.
+    /// Key can have 2 segments: prefix (optional) and name (required),
+    /// separated by a slash (/).
+    /// Prefix must be a DNS subdomain.
+    /// Name must be 63 characters or less, begin and end with alphanumerics,
+    /// with dashes (-), underscores (_), dots (.), and alphanumerics between.
+    #[prost(map = "string, string", tag = "13")]
+    pub annotations:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Workload Identity settings.
+    #[prost(message, optional, tag = "14")]
+    pub workload_identity_config: ::core::option::Option<WorkloadIdentityConfig>,
+    /// Optional. Logging configuration for this cluster.
+    #[prost(message, optional, tag = "15")]
+    pub logging_config: ::core::option::Option<LoggingConfig>,
+    /// Output only. A set of errors found in the cluster.
+    #[prost(message, repeated, tag = "20")]
+    pub errors: ::prost::alloc::vec::Vec<AttachedClusterError>,
+    /// Optional. Configuration related to the cluster RBAC settings.
+    #[prost(message, optional, tag = "21")]
+    pub authorization: ::core::option::Option<AttachedClustersAuthorization>,
+    /// Optional. Monitoring configuration for this cluster.
+    #[prost(message, optional, tag = "23")]
+    pub monitoring_config: ::core::option::Option<MonitoringConfig>,
+}
+/// Nested message and enum types in `AttachedCluster`.
+pub mod attached_cluster {
+    /// The lifecycle state of the cluster.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Not set.
+        Unspecified = 0,
+        /// The PROVISIONING state indicates the cluster is being registered.
+        Provisioning = 1,
+        /// The RUNNING state indicates the cluster has been register and is fully
+        /// usable.
+        Running = 2,
+        /// The RECONCILING state indicates that some work is actively being done on
+        /// the cluster, such as upgrading software components.
+        Reconciling = 3,
+        /// The STOPPING state indicates the cluster is being de-registered.
+        Stopping = 4,
+        /// The ERROR state indicates the cluster is in a broken unrecoverable
+        /// state.
+        Error = 5,
+        /// The DEGRADED state indicates the cluster requires user action to
+        /// restore full functionality.
+        Degraded = 6,
+    }
+}
+/// Configuration related to the cluster RBAC settings.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttachedClustersAuthorization {
+    /// Required. Users that can perform operations as a cluster admin. A managed
+    /// ClusterRoleBinding will be created to grant the `cluster-admin` ClusterRole
+    /// to the users. Up to ten admin users can be provided.
+    ///
+    /// For more info on RBAC, see
+    /// <https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles>
+    #[prost(message, repeated, tag = "1")]
+    pub admin_users: ::prost::alloc::vec::Vec<AttachedClusterUser>,
+}
+/// Identities of a user-type subject for Attached clusters.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttachedClusterUser {
+    /// Required. The name of the user, e.g. `my-gcp-id@gmail.com`.
+    #[prost(string, tag = "1")]
+    pub username: ::prost::alloc::string::String,
+}
+/// OIDC discovery information of the target cluster.
+///
+/// Kubernetes Service Account (KSA) tokens are JWT tokens signed by the cluster
+/// API server. This fields indicates how Google Cloud Platform services
+/// validate KSA tokens in order to allow system workloads (such as GKE Connect
+/// and telemetry agents) to authenticate back to Google Cloud Platform.
+///
+/// Both clusters with public and private issuer URLs are supported.
+/// Clusters with public issuers only need to specify the `issuer_url` field
+/// while clusters with private issuers need to provide both
+/// `issuer_url` and `oidc_jwks`.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttachedOidcConfig {
+    /// A JSON Web Token (JWT) issuer URI. `issuer` must start with `<https://`.>
+    #[prost(string, tag = "1")]
+    pub issuer_url: ::prost::alloc::string::String,
+    /// Optional. OIDC verification keys in JWKS format (RFC 7517).
+    /// It contains a list of OIDC verification keys that can be used to verify
+    /// OIDC JWTs.
+    ///
+    /// This field is required for cluster that doesn't have a publicly available
+    /// discovery endpoint. When provided, it will be directly used
+    /// to verify the OIDC JWT asserted by the IDP.
+    #[prost(bytes = "vec", tag = "2")]
+    pub jwks: ::prost::alloc::vec::Vec<u8>,
+}
+/// AttachedServerConfig provides information about supported
+/// Kubernetes versions
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttachedServerConfig {
+    /// The resource name of the config.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// List of valid platform versions.
+    #[prost(message, repeated, tag = "2")]
+    pub valid_versions: ::prost::alloc::vec::Vec<AttachedPlatformVersionInfo>,
+}
+/// Information about a supported Attached Clusters platform version.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttachedPlatformVersionInfo {
+    /// Platform version name.
+    #[prost(string, tag = "1")]
+    pub version: ::prost::alloc::string::String,
+}
+/// AttachedClusterError describes errors found on attached clusters.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttachedClusterError {
+    /// Human-friendly description of the error.
+    #[prost(string, tag = "1")]
+    pub message: ::prost::alloc::string::String,
+}
+/// Request message for `AttachedClusters.GenerateAttachedClusterInstallManifest`
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenerateAttachedClusterInstallManifestRequest {
+    /// Required. The parent location where this
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// will be created.
+    ///
+    /// Location names are formatted as `projects/<project-id>/locations/<region>`.
+    ///
+    /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
+    /// for more details on Google Cloud resource names.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. A client provided ID of the resource. Must be unique within the
+    /// parent resource.
+    ///
+    /// The provided ID will be part of the
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// name formatted as
+    /// `projects/<project-id>/locations/<region>/attachedClusters/<cluster-id>`.
+    ///
+    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 63 characters.
+    ///
+    /// When generating an install manifest for importing an existing Membership
+    /// resource, the attached_cluster_id field must be the Membership id.
+    ///
+    /// Membership names are formatted as
+    /// `projects/<project-id>/locations/<region>/memberships/<membership-id>`.
+    #[prost(string, tag = "2")]
+    pub attached_cluster_id: ::prost::alloc::string::String,
+    /// Required. The platform version for the cluster (e.g. `1.19.0-gke.1000`).
+    ///
+    /// You can list all supported versions on a given Google Cloud region by
+    /// calling
+    /// \[GetAttachedServerConfig][google.cloud.gkemulticloud.v1.AttachedClusters.GetAttachedServerConfig\].
+    #[prost(string, tag = "3")]
+    pub platform_version: ::prost::alloc::string::String,
+}
+/// Response message for
+/// `AttachedClusters.GenerateAttachedClusterInstallManifest` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenerateAttachedClusterInstallManifestResponse {
+    /// A set of Kubernetes resources (in YAML format) to be applied
+    /// to the cluster to be attached.
+    #[prost(string, tag = "1")]
+    pub manifest: ::prost::alloc::string::String,
+}
+/// Request message for `AttachedClusters.CreateAttachedCluster` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateAttachedClusterRequest {
+    /// Required. The parent location where this
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// will be created.
+    ///
+    /// Location names are formatted as `projects/<project-id>/locations/<region>`.
+    ///
+    /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
+    /// for more details on Google Cloud resource names.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The specification of the
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] to create.
+    #[prost(message, optional, tag = "2")]
+    pub attached_cluster: ::core::option::Option<AttachedCluster>,
+    /// Required. A client provided ID the resource. Must be unique within the
+    /// parent resource.
+    ///
+    /// The provided ID will be part of the
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// name formatted as
+    /// `projects/<project-id>/locations/<region>/attachedClusters/<cluster-id>`.
+    ///
+    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 63 characters.
+    #[prost(string, tag = "3")]
+    pub attached_cluster_id: ::prost::alloc::string::String,
+    /// If set, only validate the request, but do not actually create the cluster.
+    #[prost(bool, tag = "4")]
+    pub validate_only: bool,
+}
+/// Request message for `AttachedClusters.ImportAttachedCluster` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportAttachedClusterRequest {
+    /// Required. The parent location where this
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// will be created.
+    ///
+    /// Location names are formatted as `projects/<project-id>/locations/<region>`.
+    ///
+    /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
+    /// for more details on Google Cloud resource names.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// If set, only validate the request, but do not actually import the cluster.
+    #[prost(bool, tag = "2")]
+    pub validate_only: bool,
+    /// Required. The name of the fleet membership resource to import.
+    #[prost(string, tag = "3")]
+    pub fleet_membership: ::prost::alloc::string::String,
+    /// Required. The platform version for the cluster (e.g. `1.19.0-gke.1000`).
+    ///
+    /// You can list all supported versions on a given Google Cloud region by
+    /// calling
+    /// \[GetAttachedServerConfig][google.cloud.gkemulticloud.v1.AttachedClusters.GetAttachedServerConfig\].
+    #[prost(string, tag = "4")]
+    pub platform_version: ::prost::alloc::string::String,
+    /// Required. The Kubernetes distribution of the underlying attached cluster.
+    ///
+    /// Supported values: ["eks", "aks"].
+    #[prost(string, tag = "5")]
+    pub distribution: ::prost::alloc::string::String,
+}
+/// Request message for `AttachedClusters.UpdateAttachedCluster` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateAttachedClusterRequest {
+    /// Required. The
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// to update.
+    #[prost(message, optional, tag = "1")]
+    pub attached_cluster: ::core::option::Option<AttachedCluster>,
+    /// If set, only validate the request, but do not actually update the cluster.
+    #[prost(bool, tag = "2")]
+    pub validate_only: bool,
+    /// Required. Mask of fields to update. At least one path must be supplied in
+    /// this field. The elements of the repeated paths field can only include these
+    /// fields from
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\]:
+    ///
+    ///  *   `description`.
+    ///  *   `annotations`.
+    ///  *   `platform_version`.
+    ///  *   `authorization.admin_users`.
+    ///  *   `logging_config.component_config.enable_components`.
+    ///  *   `monitoring_config.managed_prometheus_config.enabled`.
+    #[prost(message, optional, tag = "3")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request message for `AttachedClusters.GetAttachedCluster` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetAttachedClusterRequest {
+    /// Required. The name of the
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// to describe.
+    ///
+    /// `AttachedCluster` names are formatted as
+    /// `projects/<project-id>/locations/<region>/attachedClusters/<cluster-id>`.
+    ///
+    /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
+    /// for more details on Google Cloud Platform resource names.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for `AttachedClusters.ListAttachedClusters` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAttachedClustersRequest {
+    /// Required. The parent location which owns this collection of
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resources.
+    ///
+    /// Location names are formatted as `projects/<project-id>/locations/<region>`.
+    ///
+    /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
+    /// for more details on Google Cloud Platform resource names.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of items to return.
+    ///
+    /// If not specified, a default value of 50 will be used by the service.
+    /// Regardless of the pageSize value, the response can include a partial list
+    /// and a caller should only rely on response's
+    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAttachedClustersResponse.next_page_token\]
+    /// to determine if there are more instances left to be queried.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// The `nextPageToken` value returned from a previous
+    /// \[attachedClusters.list][google.cloud.gkemulticloud.v1.AttachedClusters.ListAttachedClusters\]
+    /// request, if any.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for `AttachedClusters.ListAttachedClusters` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAttachedClustersResponse {
+    /// A list of \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\]
+    /// resources in the specified Google Cloud Platform project and region region.
+    #[prost(message, repeated, tag = "1")]
+    pub attached_clusters: ::prost::alloc::vec::Vec<AttachedCluster>,
+    /// Token to retrieve the next page of results, or empty if there are no more
+    /// results in the list.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for `AttachedClusters.DeleteAttachedCluster` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteAttachedClusterRequest {
+    /// Required. The resource name the
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] to delete.
+    ///
+    /// `AttachedCluster` names are formatted as
+    /// `projects/<project-id>/locations/<region>/attachedClusters/<cluster-id>`.
+    ///
+    /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
+    /// for more details on Google Cloud Platform resource names.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// If set, only validate the request, but do not actually delete the resource.
+    #[prost(bool, tag = "2")]
+    pub validate_only: bool,
+    /// If set to true, and the
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// is not found, the request will succeed but no action will be taken on the
+    /// server and a completed \[Operation][google.longrunning.Operation\] will be
+    /// returned.
+    ///
+    /// Useful for idempotent deletion.
+    #[prost(bool, tag = "3")]
+    pub allow_missing: bool,
+    /// If set to true, the deletion of
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\] resource
+    /// will succeed even if errors occur during deleting in cluster resources.
+    /// Using this parameter may result in orphaned resources in the cluster.
+    #[prost(bool, tag = "5")]
+    pub ignore_errors: bool,
+    /// The current etag of the
+    /// \[AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster\].
+    ///
+    /// Allows clients to perform deletions through optimistic concurrency control.
+    ///
+    /// If the provided etag does not match the current etag of the cluster,
+    /// the request will fail and an ABORTED error will be returned.
+    #[prost(string, tag = "4")]
+    pub etag: ::prost::alloc::string::String,
+}
+/// GetAttachedServerConfigRequest gets the server config for attached
+/// clusters.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetAttachedServerConfigRequest {
+    /// Required. The name of the
+    /// \[AttachedServerConfig][google.cloud.gkemulticloud.v1.AttachedServerConfig\]
+    /// resource to describe.
+    ///
+    /// `AttachedServerConfig` names are formatted as
+    /// `projects/<project-id>/locations/<region>/attachedServerConfig`.
+    ///
+    /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
+    /// for more details on Google Cloud resource names.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+#[doc = r" Generated client implementations."]
+pub mod attached_clusters_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " The AttachedClusters API provides a single centrally managed service"]
+    #[doc = " to register and manage Anthos attached clusters that run on customer's owned"]
+    #[doc = " infrastructure."]
+    #[derive(Debug, Clone)]
+    pub struct AttachedClustersClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> AttachedClustersClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> AttachedClustersClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            AttachedClustersClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a new"]
+        #[doc = " [AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster] resource"]
+        #[doc = " on a given Google Cloud Platform project and region."]
+        #[doc = ""]
+        #[doc = " If successful, the response contains a newly created"]
+        #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
+        #[doc = " described to track the status of the operation."]
+        pub async fn create_attached_cluster(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateAttachedClusterRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.gkemulticloud.v1.AttachedClusters/CreateAttachedCluster",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates an"]
+        #[doc = " [AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster]."]
+        pub async fn update_attached_cluster(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateAttachedClusterRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.gkemulticloud.v1.AttachedClusters/UpdateAttachedCluster",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Imports creates a new"]
+        #[doc = " [AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster] resource"]
+        #[doc = " by importing an existing Fleet Membership resource."]
+        #[doc = ""]
+        #[doc = " Attached Clusters created before the introduction of the Anthos Multi-Cloud"]
+        #[doc = " API can be imported through this method."]
+        #[doc = ""]
+        #[doc = " If successful, the response contains a newly created"]
+        #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
+        #[doc = " described to track the status of the operation."]
+        pub async fn import_attached_cluster(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ImportAttachedClusterRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.gkemulticloud.v1.AttachedClusters/ImportAttachedCluster",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Describes a specific"]
+        #[doc = " [AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster] resource."]
+        pub async fn get_attached_cluster(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetAttachedClusterRequest>,
+        ) -> Result<tonic::Response<super::AttachedCluster>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.gkemulticloud.v1.AttachedClusters/GetAttachedCluster",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all [AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster]"]
+        #[doc = " resources on a given Google Cloud project and region."]
+        pub async fn list_attached_clusters(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListAttachedClustersRequest>,
+        ) -> Result<tonic::Response<super::ListAttachedClustersResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.gkemulticloud.v1.AttachedClusters/ListAttachedClusters",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a specific"]
+        #[doc = " [AttachedCluster][google.cloud.gkemulticloud.v1.AttachedCluster] resource."]
+        #[doc = ""]
+        #[doc = " If successful, the response contains a newly created"]
+        #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
+        #[doc = " described to track the status of the operation."]
+        pub async fn delete_attached_cluster(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteAttachedClusterRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.gkemulticloud.v1.AttachedClusters/DeleteAttachedCluster",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns information, such as supported Kubernetes versions, on a given"]
+        #[doc = " Google Cloud location."]
+        pub async fn get_attached_server_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetAttachedServerConfigRequest>,
+        ) -> Result<tonic::Response<super::AttachedServerConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.gkemulticloud.v1.AttachedClusters/GetAttachedServerConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Generates the install manifest to be installed on the target cluster."]
+        pub async fn generate_attached_cluster_install_manifest(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GenerateAttachedClusterInstallManifestRequest>,
+        ) -> Result<
+            tonic::Response<super::GenerateAttachedClusterInstallManifestResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.gkemulticloud.v1.AttachedClusters/GenerateAttachedClusterInstallManifest") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
 /// An Anthos cluster running on AWS.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AwsCluster {
@@ -138,7 +831,7 @@ pub struct AwsCluster {
     /// `projects/<project-number>/locations/<region>/awsClusters/<cluster-id>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Optional. A human readable description of this cluster.
@@ -205,12 +898,18 @@ pub struct AwsCluster {
     /// Output only. PEM encoded x509 certificate of the cluster root of trust.
     #[prost(string, tag = "17")]
     pub cluster_ca_certificate: ::prost::alloc::string::String,
-    /// Optional. Fleet configuration.
+    /// Required. Fleet configuration.
     #[prost(message, optional, tag = "18")]
     pub fleet: ::core::option::Option<Fleet>,
     /// Optional. Logging configuration for this cluster.
     #[prost(message, optional, tag = "19")]
     pub logging_config: ::core::option::Option<LoggingConfig>,
+    /// Output only. A set of errors found in the cluster.
+    #[prost(message, repeated, tag = "20")]
+    pub errors: ::prost::alloc::vec::Vec<AwsClusterError>,
+    /// Optional. Monitoring configuration for this cluster.
+    #[prost(message, optional, tag = "21")]
+    pub monitoring_config: ::core::option::Option<MonitoringConfig>,
 }
 /// Nested message and enum types in `AwsCluster`.
 pub mod aws_cluster {
@@ -269,8 +968,8 @@ pub struct AwsControlPlane {
     /// security groups with the minimum rules needed for a functioning cluster.
     #[prost(string, repeated, tag = "5")]
     pub security_group_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Required. The name or ARN of the AWS IAM instance profile to assign to each control
-    /// plane replica.
+    /// Required. The name or ARN of the AWS IAM instance profile to assign to each
+    /// control plane replica.
     #[prost(string, tag = "7")]
     pub iam_instance_profile: ::prost::alloc::string::String,
     /// Optional. Configuration related to the root volume provisioned for each
@@ -295,8 +994,8 @@ pub struct AwsControlPlane {
     /// Required. The ARN of the AWS KMS key used to encrypt cluster secrets.
     #[prost(message, optional, tag = "10")]
     pub database_encryption: ::core::option::Option<AwsDatabaseEncryption>,
-    /// Optional. A set of AWS resource tags to propagate to all underlying managed AWS
-    /// resources.
+    /// Optional. A set of AWS resource tags to propagate to all underlying managed
+    /// AWS resources.
     ///
     /// Specify at most 50 pairs containing alphanumerics, spaces, and symbols
     /// (.+-=_:@/). Keys can be up to 127 Unicode characters. Values can be up to
@@ -321,8 +1020,8 @@ pub struct AwsControlPlane {
 /// Authentication configuration for the management of AWS resources.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AwsServicesAuthentication {
-    /// Required. The Amazon Resource Name (ARN) of the role that the Anthos Multi-Cloud API
-    /// will assume when managing AWS resources on your account.
+    /// Required. The Amazon Resource Name (ARN) of the role that the Anthos
+    /// Multi-Cloud API will assume when managing AWS resources on your account.
     #[prost(string, tag = "1")]
     pub role_arn: ::prost::alloc::string::String,
     /// Optional. An identifier for the assumed role session.
@@ -371,11 +1070,12 @@ pub struct AwsVolumeTemplate {
     /// When unspecified, it defaults to GP2 volume.
     #[prost(enumeration = "aws_volume_template::VolumeType", tag = "2")]
     pub volume_type: i32,
-    /// Optional. The number of I/O operations per second (IOPS) to provision for GP3 volume.
+    /// Optional. The number of I/O operations per second (IOPS) to provision for
+    /// GP3 volume.
     #[prost(int32, tag = "3")]
     pub iops: i32,
-    /// Optional. The Amazon Resource Name (ARN) of the Customer Managed Key (CMK) used to
-    /// encrypt AWS EBS volumes.
+    /// Optional. The Amazon Resource Name (ARN) of the Customer Managed Key (CMK)
+    /// used to encrypt AWS EBS volumes.
     ///
     /// If not specified, the default Amazon managed key associated to
     /// the AWS region where this cluster runs will be used.
@@ -411,14 +1111,14 @@ pub struct AwsClusterNetworking {
     /// This field cannot be changed after creation.
     #[prost(string, tag = "1")]
     pub vpc_id: ::prost::alloc::string::String,
-    /// Required. All pods in the cluster are assigned an IPv4 address from these ranges.
-    /// Only a single range is supported.
-    /// This field cannot be changed after creation.
+    /// Required. All pods in the cluster are assigned an IPv4 address from these
+    /// ranges. Only a single range is supported. This field cannot be changed
+    /// after creation.
     #[prost(string, repeated, tag = "2")]
     pub pod_address_cidr_blocks: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Required. All services in the cluster are assigned an IPv4 address from these ranges.
-    /// Only a single range is supported.
-    /// This field cannot be changed after creation.
+    /// Required. All services in the cluster are assigned an IPv4 address from
+    /// these ranges. Only a single range is supported. This field cannot be
+    /// changed after creation.
     #[prost(string, repeated, tag = "3")]
     pub service_address_cidr_blocks: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
@@ -434,7 +1134,8 @@ pub struct AwsNodePool {
     /// see [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. The Kubernetes version to run on this node pool (e.g. `1.19.10-gke.1000`).
+    /// Required. The Kubernetes version to run on this node pool (e.g.
+    /// `1.19.10-gke.1000`).
     ///
     /// You can list all supported versions on a given Google Cloud region by
     /// calling
@@ -489,6 +1190,9 @@ pub struct AwsNodePool {
     /// simultaneously on a node in the node pool.
     #[prost(message, optional, tag = "27")]
     pub max_pods_constraint: ::core::option::Option<MaxPodsConstraint>,
+    /// Output only. A set of errors found in the node pool.
+    #[prost(message, repeated, tag = "29")]
+    pub errors: ::prost::alloc::vec::Vec<AwsNodePoolError>,
 }
 /// Nested message and enum types in `AwsNodePool`.
 pub mod aws_node_pool {
@@ -539,14 +1243,15 @@ pub struct AwsNodeConfig {
     #[prost(map = "string, string", tag = "4")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Optional. Key/value metadata to assign to each underlying AWS resource. Specify at
-    /// most 50 pairs containing alphanumerics, spaces, and symbols (.+-=_:@/).
-    /// Keys can be up to 127 Unicode characters.
-    /// Values can be up to 255 Unicode characters.
+    /// Optional. Key/value metadata to assign to each underlying AWS resource.
+    /// Specify at most 50 pairs containing alphanumerics, spaces, and symbols
+    /// (.+-=_:@/). Keys can be up to 127 Unicode characters. Values can be up to
+    /// 255 Unicode characters.
     #[prost(map = "string, string", tag = "5")]
     pub tags:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Required. The name or ARN of the AWS IAM role assigned to nodes in the pool.
+    /// Required. The name or ARN of the AWS IAM role assigned to nodes in the
+    /// pool.
     #[prost(string, tag = "6")]
     pub iam_instance_profile: ::prost::alloc::string::String,
     /// Optional. The OS image type to use on node pool instances.
@@ -559,9 +1264,9 @@ pub struct AwsNodeConfig {
     /// Optional. The SSH configuration.
     #[prost(message, optional, tag = "9")]
     pub ssh_config: ::core::option::Option<AwsSshConfig>,
-    /// Optional. The IDs of additional security groups to add to nodes in this pool. The
-    /// manager will automatically create security groups with minimum rules
-    /// needed for a functioning cluster.
+    /// Optional. The IDs of additional security groups to add to nodes in this
+    /// pool. The manager will automatically create security groups with minimum
+    /// rules needed for a functioning cluster.
     #[prost(string, repeated, tag = "10")]
     pub security_group_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Optional. Proxy configuration for outbound HTTP(S) traffic.
@@ -574,17 +1279,24 @@ pub struct AwsNodeConfig {
     /// When unspecified, the VPC's default tenancy will be used.
     #[prost(message, optional, tag = "14")]
     pub instance_placement: ::core::option::Option<AwsInstancePlacement>,
+    /// Optional. Configuration related to CloudWatch metrics collection on the
+    /// Auto Scaling group of the node pool.
+    ///
+    /// When unspecified, metrics collection is disabled.
+    #[prost(message, optional, tag = "15")]
+    pub autoscaling_metrics_collection:
+        ::core::option::Option<AwsAutoscalingGroupMetricsCollection>,
 }
 /// AwsNodePoolAutoscaling contains information required by cluster autoscaler
 /// to adjust the size of the node pool to the current cluster usage.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AwsNodePoolAutoscaling {
-    /// Required. Minimum number of nodes in the node pool. Must be greater than or equal to
-    /// 1 and less than or equal to max_node_count.
+    /// Required. Minimum number of nodes in the node pool. Must be greater than or
+    /// equal to 1 and less than or equal to max_node_count.
     #[prost(int32, tag = "1")]
     pub min_node_count: i32,
-    /// Required. Maximum number of nodes in the node pool. Must be greater than or equal to
-    /// min_node_count and less than or equal to 50.
+    /// Required. Maximum number of nodes in the node pool. Must be greater than or
+    /// equal to min_node_count and less than or equal to 50.
     #[prost(int32, tag = "2")]
     pub max_node_count: i32,
 }
@@ -620,6 +1332,10 @@ pub struct AwsSshConfig {
 pub struct AwsProxyConfig {
     /// The ARN of the AWS Secret Manager secret that contains the HTTP(S) proxy
     /// configuration.
+    ///
+    /// The secret must be a JSON encoded proxy configuration
+    /// as described in
+    /// <https://cloud.google.com/anthos/clusters/docs/multi-cloud/aws/how-to/use-a-proxy#create_a_proxy_configuration_file>
     #[prost(string, tag = "1")]
     pub secret_arn: ::prost::alloc::string::String,
     /// The version string of the AWS Secret Manager secret that contains the
@@ -661,11 +1377,41 @@ pub mod aws_instance_placement {
         Host = 3,
     }
 }
+/// Configuration related to CloudWatch metrics collection in an AWS
+/// Auto Scaling group.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AwsAutoscalingGroupMetricsCollection {
+    /// Required. The frequency at which EC2 Auto Scaling sends aggregated data to
+    /// AWS CloudWatch. The only valid value is "1Minute".
+    #[prost(string, tag = "1")]
+    pub granularity: ::prost::alloc::string::String,
+    /// Optional. The metrics to enable. For a list of valid metrics, see
+    /// <https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_EnableMetricsCollection.html.>
+    /// If you specify Granularity and don't specify any metrics, all metrics are
+    /// enabled.
+    #[prost(string, repeated, tag = "2")]
+    pub metrics: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// AwsClusterError describes errors found on AWS clusters.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AwsClusterError {
+    /// Human-friendly description of the error.
+    #[prost(string, tag = "1")]
+    pub message: ::prost::alloc::string::String,
+}
+/// AwsNodePoolError describes errors found on AWS node pools.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AwsNodePoolError {
+    /// Human-friendly description of the error.
+    #[prost(string, tag = "1")]
+    pub message: ::prost::alloc::string::String,
+}
 /// Request message for `AwsClusters.CreateAwsCluster` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAwsClusterRequest {
-    /// Required. The parent location where this \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource
-    /// will be created.
+    /// Required. The parent location where this
+    /// \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource will be
+    /// created.
     ///
     /// Location names are formatted as `projects/<project-id>/locations/<region>`.
     ///
@@ -673,17 +1419,19 @@ pub struct CreateAwsClusterRequest {
     /// for more details on Google Cloud resource names.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The specification of the \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] to create.
+    /// Required. The specification of the
+    /// \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] to create.
     #[prost(message, optional, tag = "2")]
     pub aws_cluster: ::core::option::Option<AwsCluster>,
-    /// Required. A client provided ID the resource. Must be unique within the parent
-    /// resource.
+    /// Required. A client provided ID the resource. Must be unique within the
+    /// parent resource.
     ///
-    /// The provided ID will be part of the \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\]
-    /// resource name formatted as
+    /// The provided ID will be part of the
+    /// \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource name
+    /// formatted as
     /// `projects/<project-id>/locations/<region>/awsClusters/<cluster-id>`.
     ///
-    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 40 characters.
+    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 63 characters.
     #[prost(string, tag = "3")]
     pub aws_cluster_id: ::prost::alloc::string::String,
     /// If set, only validate the request, but do not actually create the cluster.
@@ -693,7 +1441,8 @@ pub struct CreateAwsClusterRequest {
 /// Request message for `AwsClusters.UpdateAwsCluster` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateAwsClusterRequest {
-    /// Required. The \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource to update.
+    /// Required. The \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\]
+    /// resource to update.
     #[prost(message, optional, tag = "1")]
     pub aws_cluster: ::core::option::Option<AwsCluster>,
     /// If set, only validate the request, but do not actually update the cluster.
@@ -715,27 +1464,32 @@ pub struct UpdateAwsClusterRequest {
     ///  *   `control_plane.proxy_config`.
     ///  *   `control_plane.proxy_config.secret_arn`.
     ///  *   `control_plane.proxy_config.secret_version`.
+    ///  *   `control_plane.root_volume.size_gib`.
+    ///  *   `control_plane.root_volume.volume_type`.
     ///  *   `control_plane.root_volume.iops`.
     ///  *   `control_plane.root_volume.kms_key_arn`.
-    ///  *   `control_plane.root_volume.volume_type`.
-    ///  *   `control_plane.root_volume.size_gib`.
     ///  *   `control_plane.ssh_config`.
     ///  *   `control_plane.ssh_config.ec2_key_pair`.
     ///  *   `control_plane.instance_placement.tenancy`.
-    ///  *   `logging_config`.
+    ///  *   `control_plane.iam_instance_profile`.
+    ///  *   `logging_config.component_config.enable_components`.
+    ///  *   `control_plane.tags`.
+    ///  *   `monitoring_config.managed_prometheus_config.enabled`.
     #[prost(message, optional, tag = "4")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Request message for `AwsClusters.GetAwsCluster` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAwsClusterRequest {
-    /// Required. The name of the \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource to describe.
+    /// Required. The name of the
+    /// \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource to
+    /// describe.
     ///
     /// `AwsCluster` names are formatted as
     /// `projects/<project-id>/locations/<region>/awsClusters/<cluster-id>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -748,7 +1502,7 @@ pub struct ListAwsClustersRequest {
     /// Location names are formatted as `projects/<project-id>/locations/<region>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of items to return.
@@ -756,20 +1510,21 @@ pub struct ListAwsClustersRequest {
     /// If not specified, a default value of 50 will be used by the service.
     /// Regardless of the pageSize value, the response can include a partial list
     /// and a caller should only rely on response's
-    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAwsClustersResponse.next_page_token\] to determine if
-    /// there are more instances left to be queried.
+    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAwsClustersResponse.next_page_token\]
+    /// to determine if there are more instances left to be queried.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// The `nextPageToken` value returned from a previous
-    /// \[awsClusters.list][google.cloud.gkemulticloud.v1.AwsClusters.ListAwsClusters\] request, if any.
+    /// \[awsClusters.list][google.cloud.gkemulticloud.v1.AwsClusters.ListAwsClusters\]
+    /// request, if any.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
 }
 /// Response message for `AwsClusters.ListAwsClusters` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAwsClustersResponse {
-    /// A list of \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resources in the specified GCP
-    /// project and region region.
+    /// A list of \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resources
+    /// in the specified Google Cloud Platform project and region region.
     #[prost(message, repeated, tag = "1")]
     pub aws_clusters: ::prost::alloc::vec::Vec<AwsCluster>,
     /// Token to retrieve the next page of results, or empty if there are no more
@@ -780,26 +1535,29 @@ pub struct ListAwsClustersResponse {
 /// Request message for `AwsClusters.DeleteAwsCluster` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteAwsClusterRequest {
-    /// Required. The resource name the \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] to delete.
+    /// Required. The resource name the
+    /// \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] to delete.
     ///
     /// `AwsCluster` names are formatted as
     /// `projects/<project-id>/locations/<region>/awsClusters/<cluster-id>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// If set, only validate the request, but do not actually delete the resource.
     #[prost(bool, tag = "2")]
     pub validate_only: bool,
-    /// If set to true, and the \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource is not found,
-    /// the request will succeed but no action will be taken on the server and a
-    /// completed \[Operation][google.longrunning.Operation\] will be returned.
+    /// If set to true, and the
+    /// \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource is not
+    /// found, the request will succeed but no action will be taken on the server
+    /// and a completed \[Operation][google.longrunning.Operation\] will be returned.
     ///
     /// Useful for idempotent deletion.
     #[prost(bool, tag = "3")]
     pub allow_missing: bool,
-    /// The current etag of the \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\].
+    /// The current etag of the
+    /// \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\].
     ///
     /// Allows clients to perform deletions through optimistic concurrency control.
     ///
@@ -811,7 +1569,8 @@ pub struct DeleteAwsClusterRequest {
 /// Response message for `AwsClusters.CreateAwsNodePool` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAwsNodePoolRequest {
-    /// Required. The \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource where this node pool will be created.
+    /// Required. The \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\]
+    /// resource where this node pool will be created.
     ///
     /// `AwsCluster` names are formatted as
     /// `projects/<project-id>/locations/<region>/awsClusters/<cluster-id>`.
@@ -820,17 +1579,19 @@ pub struct CreateAwsNodePoolRequest {
     /// for more details on Google Cloud resource names.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The specification of the \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] to create.
+    /// Required. The specification of the
+    /// \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] to create.
     #[prost(message, optional, tag = "2")]
     pub aws_node_pool: ::core::option::Option<AwsNodePool>,
-    /// Required. A client provided ID the resource. Must be unique within the parent
-    /// resource.
+    /// Required. A client provided ID the resource. Must be unique within the
+    /// parent resource.
     ///
-    /// The provided ID will be part of the \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\]
-    /// resource name formatted as
+    /// The provided ID will be part of the
+    /// \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] resource name
+    /// formatted as
     /// `projects/<project-id>/locations/<region>/awsClusters/<cluster-id>/awsNodePools/<node-pool-id>`.
     ///
-    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 40 characters.
+    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 63 characters.
     #[prost(string, tag = "3")]
     pub aws_node_pool_id: ::prost::alloc::string::String,
     /// If set, only validate the request, but do not actually create the node
@@ -841,7 +1602,8 @@ pub struct CreateAwsNodePoolRequest {
 /// Request message for `AwsClusters.UpdateAwsNodePool` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateAwsNodePoolRequest {
-    /// Required. The \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] resource to update.
+    /// Required. The \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\]
+    /// resource to update.
     #[prost(message, optional, tag = "1")]
     pub aws_node_pool: ::core::option::Option<AwsNodePool>,
     /// If set, only validate the request, but don't actually update the node pool.
@@ -866,13 +1628,22 @@ pub struct UpdateAwsNodePoolRequest {
     ///  *   `config.proxy_config.secret_version`.
     ///  *   `config.ssh_config`.
     ///  *   `config.ssh_config.ec2_key_pair`.
+    ///  *   `config.instance_placement.tenancy`.
+    ///  *   `config.iam_instance_profile`.
+    ///  *   `config.labels`.
+    ///  *   `config.tags`.
+    ///  *   `config.autoscaling_metrics_collection`.
+    ///  *   `config.autoscaling_metrics_collection.granularity`.
+    ///  *   `config.autoscaling_metrics_collection.metrics`.
     #[prost(message, optional, tag = "3")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Request message for `AwsClusters.GetAwsNodePool` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAwsNodePoolRequest {
-    /// Required. The name of the \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] resource to describe.
+    /// Required. The name of the
+    /// \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] resource to
+    /// describe.
     ///
     /// `AwsNodePool` names are formatted as
     /// `projects/<project-id>/locations/<region>/awsClusters/<cluster-id>/awsNodePools/<node-pool-id>`.
@@ -900,19 +1671,21 @@ pub struct ListAwsNodePoolsRequest {
     /// If not specified, a default value of 50 will be used by the service.
     /// Regardless of the pageSize value, the response can include a partial list
     /// and a caller should only rely on response's
-    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAwsNodePoolsResponse.next_page_token\] to determine if
-    /// there are more instances left to be queried.
+    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAwsNodePoolsResponse.next_page_token\]
+    /// to determine if there are more instances left to be queried.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// The `nextPageToken` value returned from a previous
-    /// \[awsNodePools.list][google.cloud.gkemulticloud.v1.AwsClusters.ListAwsNodePools\] request, if any.
+    /// \[awsNodePools.list][google.cloud.gkemulticloud.v1.AwsClusters.ListAwsNodePools\]
+    /// request, if any.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
 }
 /// Response message for `AwsClusters.ListAwsNodePools` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAwsNodePoolsResponse {
-    /// A list of \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] resources in the specified `AwsCluster`.
+    /// A list of \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\]
+    /// resources in the specified `AwsCluster`.
     #[prost(message, repeated, tag = "1")]
     pub aws_node_pools: ::prost::alloc::vec::Vec<AwsNodePool>,
     /// Token to retrieve the next page of results, or empty if there are no more
@@ -920,10 +1693,11 @@ pub struct ListAwsNodePoolsResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
-/// Request message for `AwsClusters.DeleteNodePool` method.
+/// Request message for `AwsClusters.DeleteAwsNodePool` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteAwsNodePoolRequest {
-    /// Required. The resource name the \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] to delete.
+    /// Required. The resource name the
+    /// \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] to delete.
     ///
     /// `AwsNodePool` names are formatted as
     /// `projects/<project-id>/locations/<region>/awsClusters/<cluster-id>/awsNodePools/<node-pool-id>`.
@@ -936,14 +1710,16 @@ pub struct DeleteAwsNodePoolRequest {
     /// pool.
     #[prost(bool, tag = "2")]
     pub validate_only: bool,
-    /// If set to true, and the \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] resource is not found,
-    /// the request will succeed but no action will be taken on the server and a
-    /// completed \[Operation][google.longrunning.Operation\] will be returned.
+    /// If set to true, and the
+    /// \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\] resource is not
+    /// found, the request will succeed but no action will be taken on the server
+    /// and a completed \[Operation][google.longrunning.Operation\] will be returned.
     ///
     /// Useful for idempotent deletion.
     #[prost(bool, tag = "3")]
     pub allow_missing: bool,
-    /// The current ETag of the \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\].
+    /// The current ETag of the
+    /// \[AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool\].
     ///
     /// Allows clients to perform deletions through optimistic concurrency control.
     ///
@@ -955,7 +1731,9 @@ pub struct DeleteAwsNodePoolRequest {
 /// GetAwsServerConfigRequest gets the server config of GKE cluster on AWS.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAwsServerConfigRequest {
-    /// Required. The name of the \[AwsServerConfig][google.cloud.gkemulticloud.v1.AwsServerConfig\] resource to describe.
+    /// Required. The name of the
+    /// \[AwsServerConfig][google.cloud.gkemulticloud.v1.AwsServerConfig\] resource
+    /// to describe.
     ///
     /// `AwsServerConfig` names are formatted as
     /// `projects/<project-id>/locations/<region>/awsServerConfig`.
@@ -968,7 +1746,9 @@ pub struct GetAwsServerConfigRequest {
 /// Request message for `AwsClusters.GenerateAwsAccessToken` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateAwsAccessTokenRequest {
-    /// Required. The name of the \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource to authenticate to.
+    /// Required. The name of the
+    /// \[AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster\] resource to
+    /// authenticate to.
     ///
     /// `AwsCluster` names are formatted as
     /// `projects/<project-id>/locations/<region>/awsClusters/<cluster-id>`.
@@ -1039,7 +1819,8 @@ pub mod aws_clusters_client {
             self.inner = self.inner.accept_gzip();
             self
         }
-        #[doc = " Creates a new [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster] resource on a given GCP project and region."]
+        #[doc = " Creates a new [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster]"]
+        #[doc = " resource on a given Google Cloud Platform project and region."]
         #[doc = ""]
         #[doc = " If successful, the response contains a newly created"]
         #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
@@ -1083,7 +1864,8 @@ pub mod aws_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Describes a specific [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster] resource."]
+        #[doc = " Describes a specific [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster]"]
+        #[doc = " resource."]
         pub async fn get_aws_cluster(
             &mut self,
             request: impl tonic::IntoRequest<super::GetAwsClusterRequest>,
@@ -1100,8 +1882,8 @@ pub mod aws_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists all [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster] resources on a given Google Cloud project and"]
-        #[doc = " region."]
+        #[doc = " Lists all [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster] resources"]
+        #[doc = " on a given Google Cloud project and region."]
         pub async fn list_aws_clusters(
             &mut self,
             request: impl tonic::IntoRequest<super::ListAwsClustersRequest>,
@@ -1118,10 +1900,11 @@ pub mod aws_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Deletes a specific [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster] resource."]
+        #[doc = " Deletes a specific [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster]"]
+        #[doc = " resource."]
         #[doc = ""]
-        #[doc = " Fails if the cluster has one or more associated [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool]"]
-        #[doc = " resources."]
+        #[doc = " Fails if the cluster has one or more associated"]
+        #[doc = " [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool] resources."]
         #[doc = ""]
         #[doc = " If successful, the response contains a newly created"]
         #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
@@ -1163,7 +1946,8 @@ pub mod aws_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Creates a new [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool], attached to a given [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster]."]
+        #[doc = " Creates a new [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool],"]
+        #[doc = " attached to a given [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster]."]
         #[doc = ""]
         #[doc = " If successful, the response contains a newly created"]
         #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
@@ -1207,7 +1991,8 @@ pub mod aws_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Describes a specific [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool] resource."]
+        #[doc = " Describes a specific"]
+        #[doc = " [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool] resource."]
         pub async fn get_aws_node_pool(
             &mut self,
             request: impl tonic::IntoRequest<super::GetAwsNodePoolRequest>,
@@ -1224,7 +2009,9 @@ pub mod aws_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists all [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool] resources on a given [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster]."]
+        #[doc = " Lists all [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool]"]
+        #[doc = " resources on a given"]
+        #[doc = " [AwsCluster][google.cloud.gkemulticloud.v1.AwsCluster]."]
         pub async fn list_aws_node_pools(
             &mut self,
             request: impl tonic::IntoRequest<super::ListAwsNodePoolsRequest>,
@@ -1241,7 +2028,8 @@ pub mod aws_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Deletes a specific [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool] resource."]
+        #[doc = " Deletes a specific [AwsNodePool][google.cloud.gkemulticloud.v1.AwsNodePool]"]
+        #[doc = " resource."]
         #[doc = ""]
         #[doc = " If successful, the response contains a newly created"]
         #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
@@ -1294,7 +2082,7 @@ pub struct AzureCluster {
     /// `projects/<project-number>/locations/<region>/azureClusters/<cluster-id>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Optional. A human readable description of this cluster.
@@ -1309,16 +2097,18 @@ pub struct AzureCluster {
     /// to list all supported Azure regions within a given Google Cloud region.
     #[prost(string, tag = "3")]
     pub azure_region: ::prost::alloc::string::String,
-    /// Required. The ARM ID of the resource group where the cluster resources are deployed.
-    /// For example:
+    /// Required. The ARM ID of the resource group where the cluster resources are
+    /// deployed. For example:
     /// `/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>`
     #[prost(string, tag = "17")]
     pub resource_group_id: ::prost::alloc::string::String,
-    /// Required. Name of the \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] that contains authentication configuration for
-    /// how the Anthos Multi-Cloud API connects to Azure APIs.
+    /// Optional. Name of the
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] that contains
+    /// authentication configuration for how the Anthos Multi-Cloud API connects to
+    /// Azure APIs.
     ///
-    /// The `AzureClient` resource must reside on the same GCP project and region
-    /// as the `AzureCluster`.
+    /// The `AzureClient` resource must reside on the same Google Cloud Platform
+    /// project and region as the `AzureCluster`.
     ///
     /// `AzureClient` names are formatted as
     /// `projects/<project-number>/locations/<region>/azureClients/<client-id>`.
@@ -1336,6 +2126,9 @@ pub struct AzureCluster {
     /// Required. Configuration related to the cluster RBAC settings.
     #[prost(message, optional, tag = "6")]
     pub authorization: ::core::option::Option<AzureAuthorization>,
+    /// Optional. Authentication configuration for management of Azure resources.
+    #[prost(message, optional, tag = "22")]
+    pub azure_services_authentication: ::core::option::Option<AzureServicesAuthentication>,
     /// Output only. The current state of the cluster.
     #[prost(enumeration = "azure_cluster::State", tag = "7")]
     pub state: i32,
@@ -1379,15 +2172,21 @@ pub struct AzureCluster {
     /// Output only. PEM encoded x509 certificate of the cluster root of trust.
     #[prost(string, tag = "19")]
     pub cluster_ca_certificate: ::prost::alloc::string::String,
-    /// Optional. Fleet configuration.
+    /// Required. Fleet configuration.
     #[prost(message, optional, tag = "20")]
     pub fleet: ::core::option::Option<Fleet>,
-    /// Output only. Mananged Azure resources for this cluster.
+    /// Output only. Managed Azure resources for this cluster.
     #[prost(message, optional, tag = "21")]
     pub managed_resources: ::core::option::Option<AzureClusterResources>,
     /// Optional. Logging configuration for this cluster.
     #[prost(message, optional, tag = "23")]
     pub logging_config: ::core::option::Option<LoggingConfig>,
+    /// Output only. A set of errors found in the cluster.
+    #[prost(message, repeated, tag = "24")]
+    pub errors: ::prost::alloc::vec::Vec<AzureClusterError>,
+    /// Optional. Monitoring configuration for this cluster.
+    #[prost(message, optional, tag = "25")]
+    pub monitoring_config: ::core::option::Option<MonitoringConfig>,
 }
 /// Nested message and enum types in `AzureCluster`.
 pub mod azure_cluster {
@@ -1418,8 +2217,8 @@ pub mod azure_cluster {
 /// ClusterNetworking contains cluster-wide networking configuration.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AzureClusterNetworking {
-    /// Required. The Azure Resource Manager (ARM) ID of the VNet associated with your
-    /// cluster.
+    /// Required. The Azure Resource Manager (ARM) ID of the VNet associated with
+    /// your cluster.
     ///
     /// All components in the cluster (i.e. control plane and node pools) run on a
     /// single VNet.
@@ -1448,8 +2247,8 @@ pub struct AzureClusterNetworking {
     /// This field cannot be changed after creating a cluster.
     #[prost(string, repeated, tag = "3")]
     pub service_address_cidr_blocks: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Optional. The ARM ID of the subnet where Kubernetes private service type load
-    /// balancers are deployed. When unspecified, it defaults to
+    /// Optional. The ARM ID of the subnet where Kubernetes private service type
+    /// load balancers are deployed. When unspecified, it defaults to
     /// AzureControlPlane.subnet_id.
     ///
     /// Example:
@@ -1468,8 +2267,8 @@ pub struct AzureControlPlane {
     /// \[GetAzureServerConfig][google.cloud.gkemulticloud.v1.AzureClusters.GetAzureServerConfig\].
     #[prost(string, tag = "1")]
     pub version: ::prost::alloc::string::String,
-    /// Optional. The ARM ID of the default subnet for the control plane. The control plane
-    /// VMs are deployed in this subnet, unless
+    /// Optional. The ARM ID of the default subnet for the control plane. The
+    /// control plane VMs are deployed in this subnet, unless
     /// `AzureControlPlane.replica_placements` is specified. This subnet will also
     /// be used as default for `AzureControlPlane.endpoint_subnet_id` if
     /// `AzureControlPlane.endpoint_subnet_id` is not specified. Similarly it will
@@ -1514,7 +2313,8 @@ pub struct AzureControlPlane {
     /// Optional. Configuration related to vm config encryption.
     #[prost(message, optional, tag = "14")]
     pub config_encryption: ::core::option::Option<AzureConfigEncryption>,
-    /// Optional. A set of tags to apply to all underlying control plane Azure resources.
+    /// Optional. A set of tags to apply to all underlying control plane Azure
+    /// resources.
     #[prost(map = "string, string", tag = "7")]
     pub tags:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
@@ -1525,8 +2325,8 @@ pub struct AzureControlPlane {
     /// to the three control plane replicas as evenly as possible.
     #[prost(message, repeated, tag = "13")]
     pub replica_placements: ::prost::alloc::vec::Vec<ReplicaPlacement>,
-    /// Optional. The ARM ID of the subnet where the control plane load balancer is deployed.
-    /// When unspecified, it defaults to AzureControlPlane.subnet_id.
+    /// Optional. The ARM ID of the subnet where the control plane load balancer is
+    /// deployed. When unspecified, it defaults to AzureControlPlane.subnet_id.
     ///
     /// Example:
     /// "/subscriptions/d00494d6-6f3c-4280-bbb2-899e163d1d30/resourceGroups/anthos_cluster_gkeust4/providers/Microsoft.Network/virtualNetworks/gke-vnet-gkeust4/subnets/subnetid123"
@@ -1536,13 +2336,13 @@ pub struct AzureControlPlane {
 /// Configuration for the placement of a control plane replica.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReplicaPlacement {
-    /// Required. For a given replica, the ARM ID of the subnet where the control plane VM is
-    /// deployed. Make sure it's a subnet under the virtual network in the cluster
-    /// configuration.
+    /// Required. For a given replica, the ARM ID of the subnet where the control
+    /// plane VM is deployed. Make sure it's a subnet under the virtual network in
+    /// the cluster configuration.
     #[prost(string, tag = "1")]
     pub subnet_id: ::prost::alloc::string::String,
-    /// Required. For a given replica, the Azure availability zone where to provision the
-    /// control plane VM and the ETCD disk.
+    /// Required. For a given replica, the Azure availability zone where to
+    /// provision the control plane VM and the ETCD disk.
     #[prost(string, tag = "2")]
     pub azure_availability_zone: ::prost::alloc::string::String,
 }
@@ -1556,6 +2356,10 @@ pub struct AzureProxyConfig {
     #[prost(string, tag = "1")]
     pub resource_group_id: ::prost::alloc::string::String,
     /// The URL the of the proxy setting secret with its version.
+    ///
+    /// The secret must be a JSON encoded proxy configuration
+    /// as described in
+    /// <https://cloud.google.com/anthos/clusters/docs/multi-cloud/azure/how-to/use-a-proxy#create_a_proxy_configuration_file>
     ///
     /// Secret ids are formatted as
     /// `<https://<key-vault-name>.vault.azure.net/secrets/<secret-name>/<secret-version>`.>
@@ -1583,13 +2387,15 @@ pub struct AzureDatabaseEncryption {
 /// key.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AzureConfigEncryption {
-    /// Required. The ARM ID of the Azure Key Vault key to encrypt / decrypt config data.
+    /// Required. The ARM ID of the Azure Key Vault key to encrypt / decrypt config
+    /// data.
     ///
     /// For example:
     /// `/subscriptions/<subscription-id>/resourceGroups/<resource-group-id>/providers/Microsoft.KeyVault/vaults/<key-vault-id>/keys/<key-name>`
     #[prost(string, tag = "2")]
     pub key_id: ::prost::alloc::string::String,
-    /// Optional. RSA key of the Azure Key Vault public key to use for encrypting the data.
+    /// Optional. RSA key of the Azure Key Vault public key to use for encrypting
+    /// the data.
     ///
     /// This key must be formatted as a PEM-encoded SubjectPublicKeyInfo (RFC 5280)
     /// in ASN.1 DER form. The string must be comprised of a single PEM block of
@@ -1610,9 +2416,10 @@ pub struct AzureDiskTemplate {
 /// `AzureClient` resources hold client authentication information needed by the
 /// Anthos Multi-Cloud API to manage Azure resources on your Azure subscription.
 ///
-/// When an \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] is created, an `AzureClient` resource needs to be
-/// provided and all operations on Azure resources associated to that cluster
-/// will authenticate to Azure services using the given client.
+/// When an \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] is
+/// created, an `AzureClient` resource needs to be provided and all operations on
+/// Azure resources associated to that cluster will authenticate to Azure
+/// services using the given client.
 ///
 /// `AzureClient` resources are immutable and cannot be modified upon creation.
 ///
@@ -1635,6 +2442,9 @@ pub struct AzureClient {
     /// Required. The Azure Active Directory Application ID.
     #[prost(string, tag = "3")]
     pub application_id: ::prost::alloc::string::String,
+    /// Output only. If set, there are currently pending changes to the client.
+    #[prost(bool, tag = "9")]
+    pub reconciling: bool,
     /// Optional. Annotations on the resource.
     ///
     /// This field has the same restrictions as Kubernetes annotations.
@@ -1656,6 +2466,9 @@ pub struct AzureClient {
     /// Output only. The time at which this resource was created.
     #[prost(message, optional, tag = "6")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The time at which this client was last updated.
+    #[prost(message, optional, tag = "10")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Configuration related to the cluster RBAC settings.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1668,6 +2481,16 @@ pub struct AzureAuthorization {
     /// <https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles>
     #[prost(message, repeated, tag = "1")]
     pub admin_users: ::prost::alloc::vec::Vec<AzureClusterUser>,
+}
+/// Authentication configuration for the management of Azure resources.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AzureServicesAuthentication {
+    /// Required. The Azure Active Directory Tenant ID.
+    #[prost(string, tag = "1")]
+    pub tenant_id: ::prost::alloc::string::String,
+    /// Required. The Azure Active Directory Application ID.
+    #[prost(string, tag = "2")]
+    pub application_id: ::prost::alloc::string::String,
 }
 /// Identities of a user-type subject for Azure clusters.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1688,14 +2511,15 @@ pub struct AzureNodePool {
     /// see [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. The Kubernetes version (e.g. `1.19.10-gke.1000`) running on this node pool.
+    /// Required. The Kubernetes version (e.g. `1.19.10-gke.1000`) running on this
+    /// node pool.
     #[prost(string, tag = "2")]
     pub version: ::prost::alloc::string::String,
     /// Required. The node configuration of the node pool.
     #[prost(message, optional, tag = "22")]
     pub config: ::core::option::Option<AzureNodeConfig>,
-    /// Required. The ARM ID of the subnet where the node pool VMs run. Make sure it's a
-    /// subnet under the virtual network in the cluster configuration.
+    /// Required. The ARM ID of the subnet where the node pool VMs run. Make sure
+    /// it's a subnet under the virtual network in the cluster configuration.
     #[prost(string, tag = "3")]
     pub subnet_id: ::prost::alloc::string::String,
     /// Required. Autoscaler configuration for this node pool.
@@ -1745,6 +2569,9 @@ pub struct AzureNodePool {
     /// When unspecified, it defaults to `1`.
     #[prost(string, tag = "23")]
     pub azure_availability_zone: ::prost::alloc::string::String,
+    /// Output only. A set of errors found in the node pool.
+    #[prost(message, repeated, tag = "29")]
+    pub errors: ::prost::alloc::vec::Vec<AzureNodePoolError>,
 }
 /// Nested message and enum types in `AzureNodePool`.
 pub mod azure_node_pool {
@@ -1789,8 +2616,8 @@ pub struct AzureNodeConfig {
     /// When unspecified, it defaults to a 32-GiB Azure Disk.
     #[prost(message, optional, tag = "2")]
     pub root_volume: ::core::option::Option<AzureDiskTemplate>,
-    /// Optional. A set of tags to apply to all underlying Azure resources for this node
-    /// pool. This currently only includes Virtual Machine Scale Sets.
+    /// Optional. A set of tags to apply to all underlying Azure resources for this
+    /// node pool. This currently only includes Virtual Machine Scale Sets.
     ///
     /// Specify at most 50 pairs containing alphanumerics, spaces, and symbols
     /// (.+-=_:@/). Keys can be up to 127 Unicode characters. Values can be up to
@@ -1830,12 +2657,12 @@ pub struct AzureNodeConfig {
 /// size of the node pool based on the cluster load.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AzureNodePoolAutoscaling {
-    /// Required. Minimum number of nodes in the node pool. Must be greater than or equal to
-    /// 1 and less than or equal to max_node_count.
+    /// Required. Minimum number of nodes in the node pool. Must be greater than or
+    /// equal to 1 and less than or equal to max_node_count.
     #[prost(int32, tag = "1")]
     pub min_node_count: i32,
-    /// Required. Maximum number of nodes in the node pool. Must be greater than or equal to
-    /// min_node_count and less than or equal to 50.
+    /// Required. Maximum number of nodes in the node pool. Must be greater than or
+    /// equal to min_node_count and less than or equal to 50.
     #[prost(int32, tag = "2")]
     pub max_node_count: i32,
 }
@@ -1849,7 +2676,7 @@ pub struct AzureServerConfig {
     /// `projects/<project-number>/locations/<region>/azureServerConfig`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// List of valid Kubernetes versions.
@@ -1869,9 +2696,9 @@ pub struct AzureK8sVersionInfo {
 /// SSH configuration for Azure resources.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AzureSshConfig {
-    /// Required. The SSH public key data for VMs managed by Anthos. This accepts the
-    /// authorized_keys file format used in OpenSSH according to the sshd(8) manual
-    /// page.
+    /// Required. The SSH public key data for VMs managed by Anthos. This accepts
+    /// the authorized_keys file format used in OpenSSH according to the sshd(8)
+    /// manual page.
     #[prost(string, tag = "1")]
     pub authorized_key: ::prost::alloc::string::String,
 }
@@ -1887,11 +2714,26 @@ pub struct AzureClusterResources {
     #[prost(string, tag = "2")]
     pub control_plane_application_security_group_id: ::prost::alloc::string::String,
 }
+/// AzureClusterError describes errors found on Azure clusters.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AzureClusterError {
+    /// Human-friendly description of the error.
+    #[prost(string, tag = "1")]
+    pub message: ::prost::alloc::string::String,
+}
+/// AzureNodePoolError describes errors found on Azure node pools.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AzureNodePoolError {
+    /// Human-friendly description of the error.
+    #[prost(string, tag = "1")]
+    pub message: ::prost::alloc::string::String,
+}
 /// Request message for `AzureClusters.CreateAzureCluster` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAzureClusterRequest {
-    /// Required. The parent location where this \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource
-    /// will be created.
+    /// Required. The parent location where this
+    /// \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource will be
+    /// created.
     ///
     /// Location names are formatted as `projects/<project-id>/locations/<region>`.
     ///
@@ -1899,17 +2741,19 @@ pub struct CreateAzureClusterRequest {
     /// for more details on Google Cloud resource names.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The specification of the \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] to create.
+    /// Required. The specification of the
+    /// \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] to create.
     #[prost(message, optional, tag = "2")]
     pub azure_cluster: ::core::option::Option<AzureCluster>,
-    /// Required. A client provided ID the resource. Must be unique within the parent
-    /// resource.
+    /// Required. A client provided ID the resource. Must be unique within the
+    /// parent resource.
     ///
-    /// The provided ID will be part of the \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\]
-    /// resource name formatted as
+    /// The provided ID will be part of the
+    /// \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource name
+    /// formatted as
     /// `projects/<project-id>/locations/<region>/azureClusters/<cluster-id>`.
     ///
-    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 40 characters.
+    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 63 characters.
     #[prost(string, tag = "3")]
     pub azure_cluster_id: ::prost::alloc::string::String,
     /// If set, only validate the request, but do not actually create the cluster.
@@ -1919,7 +2763,8 @@ pub struct CreateAzureClusterRequest {
 /// Request message for `AzureClusters.UpdateAzureCluster` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateAzureClusterRequest {
-    /// Required. The \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource to update.
+    /// Required. The \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\]
+    /// resource to update.
     #[prost(message, optional, tag = "1")]
     pub azure_cluster: ::core::option::Option<AzureCluster>,
     /// If set, only validate the request, but do not actually update the cluster.
@@ -1930,26 +2775,36 @@ pub struct UpdateAzureClusterRequest {
     /// fields from \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\]:
     ///
     ///  *   `description`.
-    ///  *   `annotations`.
     ///  *   `azureClient`.
     ///  *   `control_plane.version`.
     ///  *   `control_plane.vm_size`.
+    ///  *   `annotations`.
     ///  *   `authorization.admin_users`.
     ///  *   `control_plane.root_volume.size_gib`.
-    ///  *   `logging_config`
+    ///  *   `azure_services_authentication`.
+    ///  *   `azure_services_authentication.tenant_id`.
+    ///  *   `azure_services_authentication.application_id`.
+    ///  *   `control_plane.proxy_config`.
+    ///  *   `control_plane.proxy_config.resource_group_id`.
+    ///  *   `control_plane.proxy_config.secret_id`.
+    ///  *   `control_plane.ssh_config.authorized_key`.
+    ///  *   `logging_config.component_config.enable_components`
+    ///  *   `monitoring_config.managed_prometheus_config.enabled`.
     #[prost(message, optional, tag = "4")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Request message for `AzureClusters.GetAzureCluster` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAzureClusterRequest {
-    /// Required. The name of the \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource to describe.
+    /// Required. The name of the
+    /// \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource to
+    /// describe.
     ///
     /// `AzureCluster` names are formatted as
     /// `projects/<project-id>/locations/<region>/azureClusters/<cluster-id>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -1962,7 +2817,7 @@ pub struct ListAzureClustersRequest {
     /// Location names are formatted as `projects/<project-id>/locations/<region>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of items to return.
@@ -1970,20 +2825,21 @@ pub struct ListAzureClustersRequest {
     /// If not specified, a default value of 50 will be used by the service.
     /// Regardless of the pageSize value, the response can include a partial list
     /// and a caller should only rely on response's
-    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAzureClustersResponse.next_page_token\] to determine if
-    /// there are more instances left to be queried.
+    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAzureClustersResponse.next_page_token\]
+    /// to determine if there are more instances left to be queried.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// The `nextPageToken` value returned from a previous
-    /// \[azureClusters.list][google.cloud.gkemulticloud.v1.AzureClusters.ListAzureClusters\] request, if any.
+    /// \[azureClusters.list][google.cloud.gkemulticloud.v1.AzureClusters.ListAzureClusters\]
+    /// request, if any.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
 }
 /// Response message for `AzureClusters.ListAzureClusters` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAzureClustersResponse {
-    /// A list of \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resources in the specified GCP
-    /// project and region region.
+    /// A list of \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\]
+    /// resources in the specified Google Cloud Platform project and region region.
     #[prost(message, repeated, tag = "1")]
     pub azure_clusters: ::prost::alloc::vec::Vec<AzureCluster>,
     /// Token to retrieve the next page of results, or empty if there are no more
@@ -1994,18 +2850,20 @@ pub struct ListAzureClustersResponse {
 /// Request message for `Clusters.DeleteAzureCluster` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteAzureClusterRequest {
-    /// Required. The resource name the \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] to delete.
+    /// Required. The resource name the
+    /// \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] to delete.
     ///
     /// `AzureCluster` names are formatted as
     /// `projects/<project-id>/locations/<region>/azureClusters/<cluster-id>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// If set to true, and the \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource is not found,
-    /// the request will succeed but no action will be taken on the server and a
-    /// completed \[Operation][google.longrunning.Operation\] will be returned.
+    /// If set to true, and the
+    /// \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource is not
+    /// found, the request will succeed but no action will be taken on the server
+    /// and a completed \[Operation][google.longrunning.Operation\] will be returned.
     ///
     /// Useful for idempotent deletion.
     #[prost(bool, tag = "2")]
@@ -2013,7 +2871,8 @@ pub struct DeleteAzureClusterRequest {
     /// If set, only validate the request, but do not actually delete the resource.
     #[prost(bool, tag = "3")]
     pub validate_only: bool,
-    /// The current etag of the \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\].
+    /// The current etag of the
+    /// \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\].
     ///
     /// Allows clients to perform deletions through optimistic concurrency control.
     ///
@@ -2025,7 +2884,8 @@ pub struct DeleteAzureClusterRequest {
 /// Response message for `AzureClusters.CreateAzureNodePool` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAzureNodePoolRequest {
-    /// Required. The \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource where this node pool will be created.
+    /// Required. The \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\]
+    /// resource where this node pool will be created.
     ///
     /// Location names are formatted as `projects/<project-id>/locations/<region>`.
     ///
@@ -2033,17 +2893,19 @@ pub struct CreateAzureNodePoolRequest {
     /// for more details on Google Cloud resource names.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The specification of the \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] to create.
+    /// Required. The specification of the
+    /// \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] to create.
     #[prost(message, optional, tag = "2")]
     pub azure_node_pool: ::core::option::Option<AzureNodePool>,
-    /// Required. A client provided ID the resource. Must be unique within the parent
-    /// resource.
+    /// Required. A client provided ID the resource. Must be unique within the
+    /// parent resource.
     ///
-    /// The provided ID will be part of the \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\]
-    /// resource name formatted as
+    /// The provided ID will be part of the
+    /// \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] resource name
+    /// formatted as
     /// `projects/<project-id>/locations/<region>/azureClusters/<cluster-id>/azureNodePools/<node-pool-id>`.
     ///
-    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 40 characters.
+    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 63 characters.
     #[prost(string, tag = "3")]
     pub azure_node_pool_id: ::prost::alloc::string::String,
     /// If set, only validate the request, but do not actually create the node
@@ -2054,7 +2916,8 @@ pub struct CreateAzureNodePoolRequest {
 /// Request message for `AzureClusters.UpdateAzureNodePool` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateAzureNodePoolRequest {
-    /// Required. The \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] resource to update.
+    /// Required. The \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\]
+    /// resource to update.
     #[prost(message, optional, tag = "1")]
     pub azure_node_pool: ::core::option::Option<AzureNodePool>,
     /// If set, only validate the request, but don't actually update the node pool.
@@ -2068,14 +2931,16 @@ pub struct UpdateAzureNodePoolRequest {
     ///  *   `version`.
     ///  *   `autoscaling.min_node_count`.
     ///  *   `autoscaling.max_node_count`.
-    ///  *   `config.vm_size`.
+    ///  *   `config.ssh_config.authorized_key`.
     #[prost(message, optional, tag = "3")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Request message for `AzureClusters.GetAzureNodePool` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAzureNodePoolRequest {
-    /// Required. The name of the \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] resource to describe.
+    /// Required. The name of the
+    /// \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] resource to
+    /// describe.
     ///
     /// `AzureNodePool` names are formatted as
     /// `projects/<project-id>/locations/<region>/azureClusters/<cluster-id>/azureNodePools/<node-pool-id>`.
@@ -2103,19 +2968,21 @@ pub struct ListAzureNodePoolsRequest {
     /// If not specified, a default value of 50 will be used by the service.
     /// Regardless of the pageSize value, the response can include a partial list
     /// and a caller should only rely on response's
-    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAzureNodePoolsResponse.next_page_token\] to determine if
-    /// there are more instances left to be queried.
+    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAzureNodePoolsResponse.next_page_token\]
+    /// to determine if there are more instances left to be queried.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// The `nextPageToken` value returned from a previous
-    /// \[azureNodePools.list][google.cloud.gkemulticloud.v1.AzureClusters.ListAzureNodePools\] request, if any.
+    /// \[azureNodePools.list][google.cloud.gkemulticloud.v1.AzureClusters.ListAzureNodePools\]
+    /// request, if any.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
 }
 /// Response message for `AzureClusters.ListAzureNodePools` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAzureNodePoolsResponse {
-    /// A list of \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] resources in the specified `AzureCluster`.
+    /// A list of \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\]
+    /// resources in the specified `AzureCluster`.
     #[prost(message, repeated, tag = "1")]
     pub azure_node_pools: ::prost::alloc::vec::Vec<AzureNodePool>,
     /// Token to retrieve the next page of results, or empty if there are no more
@@ -2123,10 +2990,11 @@ pub struct ListAzureNodePoolsResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
-/// Delete message for `AzureClusters.DeleteNodePool` method.
+/// Delete message for `AzureClusters.DeleteAzureNodePool` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteAzureNodePoolRequest {
-    /// Required. The resource name the \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] to delete.
+    /// Required. The resource name the
+    /// \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] to delete.
     ///
     /// `AzureNodePool` names are formatted as
     /// `projects/<project-id>/locations/<region>/azureClusters/<cluster-id>/azureNodePools/<node-pool-id>`.
@@ -2139,14 +3007,17 @@ pub struct DeleteAzureNodePoolRequest {
     /// pool.
     #[prost(bool, tag = "2")]
     pub validate_only: bool,
-    /// If set to true, and the \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] resource is not found,
-    /// the request will succeed but no action will be taken on the server and a
-    /// completed \[Operation][google.longrunning.Operation\] will be returned.
+    /// If set to true, and the
+    /// \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\] resource is
+    /// not found, the request will succeed but no action will be taken on the
+    /// server and a completed \[Operation][google.longrunning.Operation\] will be
+    /// returned.
     ///
     /// Useful for idempotent deletion.
     #[prost(bool, tag = "3")]
     pub allow_missing: bool,
-    /// The current ETag of the \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\].
+    /// The current ETag of the
+    /// \[AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool\].
     ///
     /// Allows clients to perform deletions through optimistic concurrency control.
     ///
@@ -2158,7 +3029,9 @@ pub struct DeleteAzureNodePoolRequest {
 /// GetAzureServerConfigRequest gets the server config of GKE cluster on Azure.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAzureServerConfigRequest {
-    /// Required. The name of the \[AzureServerConfig][google.cloud.gkemulticloud.v1.AzureServerConfig\] resource to describe.
+    /// Required. The name of the
+    /// \[AzureServerConfig][google.cloud.gkemulticloud.v1.AzureServerConfig\]
+    /// resource to describe.
     ///
     /// `AzureServerConfig` names are formatted as
     /// `projects/<project-id>/locations/<region>/azureServerConfig`.
@@ -2171,8 +3044,9 @@ pub struct GetAzureServerConfigRequest {
 /// Request message for `AzureClusters.CreateAzureClient` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAzureClientRequest {
-    /// Required. The parent location where this \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] resource
-    /// will be created.
+    /// Required. The parent location where this
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] resource will be
+    /// created.
     ///
     /// Location names are formatted as `projects/<project-id>/locations/<region>`.
     ///
@@ -2180,17 +3054,19 @@ pub struct CreateAzureClientRequest {
     /// for more details on Google Cloud resource names.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The specification of the \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] to create.
+    /// Required. The specification of the
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] to create.
     #[prost(message, optional, tag = "2")]
     pub azure_client: ::core::option::Option<AzureClient>,
-    /// Required. A client provided ID the resource. Must be unique within the parent
-    /// resource.
+    /// Required. A client provided ID the resource. Must be unique within the
+    /// parent resource.
     ///
-    /// The provided ID will be part of the \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\]
-    /// resource name formatted as
+    /// The provided ID will be part of the
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] resource name
+    /// formatted as
     /// `projects/<project-id>/locations/<region>/azureClients/<client-id>`.
     ///
-    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 40 characters.
+    /// Valid characters are `/\[a-z][0-9\]-/`. Cannot be longer than 63 characters.
     #[prost(string, tag = "4")]
     pub azure_client_id: ::prost::alloc::string::String,
     /// If set, only validate the request, but do not actually create the client.
@@ -2200,9 +3076,12 @@ pub struct CreateAzureClientRequest {
 /// Request message for `AzureClusters.GetAzureClient` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAzureClientRequest {
-    /// Required. The name of the \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] resource to describe.
+    /// Required. The name of the
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] resource to
+    /// describe.
     ///
-    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] names are formatted as
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] names are
+    /// formatted as
     /// `projects/<project-id>/locations/<region>/azureClients/<client-id>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
@@ -2219,7 +3098,7 @@ pub struct ListAzureClientsRequest {
     /// Location names are formatted as `projects/<project-id>/locations/<region>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
-    /// for more details on GCP resource names.
+    /// for more details on Google Cloud Platform resource names.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of items to return.
@@ -2227,20 +3106,21 @@ pub struct ListAzureClientsRequest {
     /// If not specified, a default value of 50 will be used by the service.
     /// Regardless of the pageSize value, the response can include a partial list
     /// and a caller should only rely on response's
-    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAzureClientsResponse.next_page_token\] to determine if
-    /// there are more instances left to be queried.
+    /// \[nextPageToken][google.cloud.gkemulticloud.v1.ListAzureClientsResponse.next_page_token\]
+    /// to determine if there are more instances left to be queried.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// The `nextPageToken` value returned from a previous
-    /// \[azureClients.list][google.cloud.gkemulticloud.v1.AzureClusters.ListAzureClients\] request, if any.
+    /// \[azureClients.list][google.cloud.gkemulticloud.v1.AzureClusters.ListAzureClients\]
+    /// request, if any.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
 }
 /// Response message for `AzureClusters.ListAzureClients` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAzureClientsResponse {
-    /// A list of \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] resources in the specified Google Cloud
-    /// project and region region.
+    /// A list of \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\]
+    /// resources in the specified Google Cloud project and region region.
     #[prost(message, repeated, tag = "1")]
     pub azure_clients: ::prost::alloc::vec::Vec<AzureClient>,
     /// Token to retrieve the next page of results, or empty if there are no more
@@ -2251,18 +3131,21 @@ pub struct ListAzureClientsResponse {
 /// Request message for `AzureClusters.DeleteAzureClient` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteAzureClientRequest {
-    /// Required. The resource name the \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] to delete.
+    /// Required. The resource name the
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] to delete.
     ///
-    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] names are formatted as
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] names are
+    /// formatted as
     /// `projects/<project-id>/locations/<region>/azureClients/<client-id>`.
     ///
     /// See [Resource Names](<https://cloud.google.com/apis/design/resource_names>)
     /// for more details on Google Cloud resource names.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// If set to true, and the \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] resource is not found,
-    /// the request will succeed but no action will be taken on the server and a
-    /// completed \[Operation][google.longrunning.Operation\] will be returned.
+    /// If set to true, and the
+    /// \[AzureClient][google.cloud.gkemulticloud.v1.AzureClient\] resource is not
+    /// found, the request will succeed but no action will be taken on the server
+    /// and a completed \[Operation][google.longrunning.Operation\] will be returned.
     ///
     /// Useful for idempotent deletion.
     #[prost(bool, tag = "2")]
@@ -2274,7 +3157,9 @@ pub struct DeleteAzureClientRequest {
 /// Request message for `AzureClusters.GenerateAzureAccessToken` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateAzureAccessTokenRequest {
-    /// Required. The name of the \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource to authenticate to.
+    /// Required. The name of the
+    /// \[AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster\] resource to
+    /// authenticate to.
     ///
     /// `AzureCluster` names are formatted as
     /// `projects/<project-id>/locations/<region>/AzureClusters/<cluster-id>`.
@@ -2345,8 +3230,8 @@ pub mod azure_clusters_client {
             self.inner = self.inner.accept_gzip();
             self
         }
-        #[doc = " Creates a new [AzureClient][google.cloud.gkemulticloud.v1.AzureClient] resource on a given Google Cloud project"]
-        #[doc = " and region."]
+        #[doc = " Creates a new [AzureClient][google.cloud.gkemulticloud.v1.AzureClient]"]
+        #[doc = " resource on a given Google Cloud project and region."]
         #[doc = ""]
         #[doc = " `AzureClient` resources hold client authentication"]
         #[doc = " information needed by the Anthos Multicloud API to manage Azure resources"]
@@ -2374,7 +3259,8 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Describes a specific [AzureClient][google.cloud.gkemulticloud.v1.AzureClient] resource."]
+        #[doc = " Describes a specific"]
+        #[doc = " [AzureClient][google.cloud.gkemulticloud.v1.AzureClient] resource."]
         pub async fn get_azure_client(
             &mut self,
             request: impl tonic::IntoRequest<super::GetAzureClientRequest>,
@@ -2391,8 +3277,8 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists all [AzureClient][google.cloud.gkemulticloud.v1.AzureClient] resources on a given Google Cloud project and"]
-        #[doc = " region."]
+        #[doc = " Lists all [AzureClient][google.cloud.gkemulticloud.v1.AzureClient]"]
+        #[doc = " resources on a given Google Cloud project and region."]
         pub async fn list_azure_clients(
             &mut self,
             request: impl tonic::IntoRequest<super::ListAzureClientsRequest>,
@@ -2409,7 +3295,8 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Deletes a specific [AzureClient][google.cloud.gkemulticloud.v1.AzureClient] resource."]
+        #[doc = " Deletes a specific [AzureClient][google.cloud.gkemulticloud.v1.AzureClient]"]
+        #[doc = " resource."]
         #[doc = ""]
         #[doc = " If the client is used by one or more clusters, deletion will"]
         #[doc = " fail and a `FAILED_PRECONDITION` error will be returned."]
@@ -2436,7 +3323,8 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Creates a new [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster] resource on a given GCP project and region."]
+        #[doc = " Creates a new [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster]"]
+        #[doc = " resource on a given Google Cloud Platform project and region."]
         #[doc = ""]
         #[doc = " If successful, the response contains a newly created"]
         #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
@@ -2480,7 +3368,8 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Describes a specific [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster] resource."]
+        #[doc = " Describes a specific"]
+        #[doc = " [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster] resource."]
         pub async fn get_azure_cluster(
             &mut self,
             request: impl tonic::IntoRequest<super::GetAzureClusterRequest>,
@@ -2497,8 +3386,8 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists all [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster] resources on a given Google Cloud project and"]
-        #[doc = " region."]
+        #[doc = " Lists all [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster]"]
+        #[doc = " resources on a given Google Cloud project and region."]
         pub async fn list_azure_clusters(
             &mut self,
             request: impl tonic::IntoRequest<super::ListAzureClustersRequest>,
@@ -2515,10 +3404,11 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Deletes a specific [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster] resource."]
+        #[doc = " Deletes a specific"]
+        #[doc = " [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster] resource."]
         #[doc = ""]
-        #[doc = " Fails if the cluster has one or more associated [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool]"]
-        #[doc = " resources."]
+        #[doc = " Fails if the cluster has one or more associated"]
+        #[doc = " [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool] resources."]
         #[doc = ""]
         #[doc = " If successful, the response contains a newly created"]
         #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
@@ -2561,7 +3451,9 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Creates a new [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool], attached to a given [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster]."]
+        #[doc = " Creates a new [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool],"]
+        #[doc = " attached to a given"]
+        #[doc = " [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster]."]
         #[doc = ""]
         #[doc = " If successful, the response contains a newly created"]
         #[doc = " [Operation][google.longrunning.Operation] resource that can be"]
@@ -2605,7 +3497,8 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Describes a specific [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool] resource."]
+        #[doc = " Describes a specific"]
+        #[doc = " [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool] resource."]
         pub async fn get_azure_node_pool(
             &mut self,
             request: impl tonic::IntoRequest<super::GetAzureNodePoolRequest>,
@@ -2622,7 +3515,9 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists all [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool] resources on a given [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster]."]
+        #[doc = " Lists all [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool]"]
+        #[doc = " resources on a given"]
+        #[doc = " [AzureCluster][google.cloud.gkemulticloud.v1.AzureCluster]."]
         pub async fn list_azure_node_pools(
             &mut self,
             request: impl tonic::IntoRequest<super::ListAzureNodePoolsRequest>,
@@ -2639,7 +3534,8 @@ pub mod azure_clusters_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Deletes a specific [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool] resource."]
+        #[doc = " Deletes a specific"]
+        #[doc = " [AzureNodePool][google.cloud.gkemulticloud.v1.AzureNodePool] resource."]
         #[doc = ""]
         #[doc = " If successful, the response contains a newly created"]
         #[doc = " [Operation][google.longrunning.Operation] resource that can be"]

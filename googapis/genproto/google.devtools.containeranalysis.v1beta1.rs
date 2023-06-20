@@ -1,73 +1,38 @@
-/// A scan configuration specifies whether Cloud components in a project have a
-/// particular type of analysis being run. For example, it can configure whether
-/// vulnerability scanning is being done on Docker images or not.
+/// GeneratePackagesSummaryRequest is the request body for the
+/// GeneratePackagesSummary API method. It just takes a single name argument,
+/// referring to the resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ScanConfig {
-    /// Output only. The name of the scan configuration in the form of
-    /// `projects/\[PROJECT_ID]/scanConfigs/[SCAN_CONFIG_ID\]`.
-    #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
-    /// Output only. A human-readable description of what the scan configuration
-    /// does.
-    #[prost(string, tag = "2")]
-    pub description: ::prost::alloc::string::String,
-    /// Whether the scan is enabled.
-    #[prost(bool, tag = "3")]
-    pub enabled: bool,
-    /// Output only. The time this scan config was created.
-    #[prost(message, optional, tag = "4")]
-    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. The time this scan config was last updated.
-    #[prost(message, optional, tag = "5")]
-    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-}
-/// Request to get a scan configuration.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetScanConfigRequest {
-    /// Required. The name of the scan configuration in the form of
-    /// `projects/\[PROJECT_ID]/scanConfigs/[SCAN_CONFIG_ID\]`.
+pub struct GeneratePackagesSummaryRequest {
+    /// Required. The name of the resource to get a packages summary for in the
+    /// form of `projects/\[PROJECT_ID]/resources/[RESOURCE_URL\]`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// Request to list scan configurations.
+/// A summary of the packages found within the given resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListScanConfigsRequest {
-    /// Required. The name of the project to list scan configurations for in the form of
-    /// `projects/\[PROJECT_ID\]`.
+pub struct PackagesSummaryResponse {
+    /// The unique URL of the image or the container for which this summary
+    /// applies.
     #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// Required. The filter expression.
-    #[prost(string, tag = "2")]
-    pub filter: ::prost::alloc::string::String,
-    /// The number of scan configs to return in the list.
-    #[prost(int32, tag = "3")]
-    pub page_size: i32,
-    /// Token to provide to skip to a particular spot in the list.
-    #[prost(string, tag = "4")]
-    pub page_token: ::prost::alloc::string::String,
+    pub resource_url: ::prost::alloc::string::String,
+    /// A listing by license name of each of the licenses and their counts.
+    #[prost(message, repeated, tag = "2")]
+    pub licenses_summary: ::prost::alloc::vec::Vec<packages_summary_response::LicensesSummary>,
 }
-/// Response for listing scan configurations.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListScanConfigsResponse {
-    /// The scan configurations requested.
-    #[prost(message, repeated, tag = "1")]
-    pub scan_configs: ::prost::alloc::vec::Vec<ScanConfig>,
-    /// The next pagination token in the list response. It should be used as
-    /// `page_token` for the following request. An empty value means no more
-    /// results.
-    #[prost(string, tag = "2")]
-    pub next_page_token: ::prost::alloc::string::String,
-}
-/// A request to update a scan configuration.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateScanConfigRequest {
-    /// Required. The name of the scan configuration in the form of
-    /// `projects/\[PROJECT_ID]/scanConfigs/[SCAN_CONFIG_ID\]`.
-    #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
-    /// Required. The updated scan configuration.
-    #[prost(message, optional, tag = "2")]
-    pub scan_config: ::core::option::Option<ScanConfig>,
+/// Nested message and enum types in `PackagesSummaryResponse`.
+pub mod packages_summary_response {
+    /// Per license count
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct LicensesSummary {
+        /// The license of the package. Note that the format of this value is not
+        /// guaranteed. It may be nil, an empty string, a boolean value (A | B), a
+        /// differently formed boolean value (A OR B), etc...
+        #[prost(string, tag = "1")]
+        pub license: ::prost::alloc::string::String,
+        /// The number of fixable vulnerabilities associated with this resource.
+        #[prost(int64, tag = "2")]
+        pub count: i64,
+    }
 }
 #[doc = r" Generated client implementations."]
 pub mod container_analysis_v1_beta1_client {
@@ -75,7 +40,7 @@ pub mod container_analysis_v1_beta1_client {
     use tonic::codegen::*;
     #[doc = " Retrieves analysis results of Cloud components such as Docker container"]
     #[doc = " images. The Container Analysis API is an implementation of the"]
-    #[doc = " [Grafeas](grafeas.io) API."]
+    #[doc = " [Grafeas](https://grafeas.io) API."]
     #[doc = ""]
     #[doc = " Analysis results are stored as a series of occurrences. An `Occurrence`"]
     #[doc = " contains information about a specific analysis instance on a resource. An"]
@@ -207,11 +172,11 @@ pub mod container_analysis_v1_beta1_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.devtools.containeranalysis.v1beta1.ContainerAnalysisV1Beta1/TestIamPermissions") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Gets the specified scan configuration."]
-        pub async fn get_scan_config(
+        #[doc = " Gets a summary of the packages within a given resource."]
+        pub async fn generate_packages_summary(
             &mut self,
-            request: impl tonic::IntoRequest<super::GetScanConfigRequest>,
-        ) -> Result<tonic::Response<super::ScanConfig>, tonic::Status> {
+            request: impl tonic::IntoRequest<super::GeneratePackagesSummaryRequest>,
+        ) -> Result<tonic::Response<super::PackagesSummaryResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -219,39 +184,7 @@ pub mod container_analysis_v1_beta1_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.devtools.containeranalysis.v1beta1.ContainerAnalysisV1Beta1/GetScanConfig",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Lists scan configurations for the specified project."]
-        pub async fn list_scan_configs(
-            &mut self,
-            request: impl tonic::IntoRequest<super::ListScanConfigsRequest>,
-        ) -> Result<tonic::Response<super::ListScanConfigsResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.devtools.containeranalysis.v1beta1.ContainerAnalysisV1Beta1/ListScanConfigs") ;
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Updates the specified scan configuration."]
-        pub async fn update_scan_config(
-            &mut self,
-            request: impl tonic::IntoRequest<super::UpdateScanConfigRequest>,
-        ) -> Result<tonic::Response<super::ScanConfig>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.devtools.containeranalysis.v1beta1.ContainerAnalysisV1Beta1/UpdateScanConfig") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.devtools.containeranalysis.v1beta1.ContainerAnalysisV1Beta1/GeneratePackagesSummary") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }

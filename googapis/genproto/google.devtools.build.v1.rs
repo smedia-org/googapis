@@ -12,6 +12,9 @@ pub struct BuildStatus {
     /// Might not be available in some cases, e.g., a build timeout.
     #[prost(message, optional, tag = "4")]
     pub build_tool_exit_code: ::core::option::Option<i32>,
+    /// Human-readable error message. Do not use for programmatic purposes.
+    #[prost(string, tag = "5")]
+    pub error_message: ::prost::alloc::string::String,
     /// Fine-grained diagnostic information to complement the status.
     #[prost(message, optional, tag = "2")]
     pub details: ::core::option::Option<::prost_types::Any>,
@@ -46,7 +49,8 @@ pub mod build_status {
 /// message does not include field for uniquely identifying an event.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BuildEvent {
-    /// The timestamp of this event.
+    /// This should be precisely the time when this event happened, and not when
+    /// the event proto was created or sent.
     #[prost(message, optional, tag = "1")]
     pub event_time: ::core::option::Option<::prost_types::Timestamp>,
     /// //////////////////////////////////////////////////////////////////////////
@@ -415,7 +419,7 @@ pub mod publish_build_event_client {
         #[doc = " jobs immediately without batching."]
         #[doc = ""]
         #[doc = " The commit status of the request is reported by the RPC's util_status()"]
-        #[doc = " function. The error code is the canoncial error code defined in"]
+        #[doc = " function. The error code is the canonical error code defined in"]
         #[doc = " //util/task/codes.proto."]
         pub async fn publish_lifecycle_event(
             &mut self,

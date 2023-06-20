@@ -1,3 +1,84 @@
+// Proto file containing info messages for specific ad types.
+
+/// A Search Ads 360 text ad.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchAds360TextAdInfo {
+    /// The headline of the ad.
+    #[prost(string, optional, tag = "1")]
+    pub headline: ::core::option::Option<::prost::alloc::string::String>,
+    /// The first line of the ad's description.
+    #[prost(string, optional, tag = "2")]
+    pub description1: ::core::option::Option<::prost::alloc::string::String>,
+    /// The second line of the ad's description.
+    #[prost(string, optional, tag = "3")]
+    pub description2: ::core::option::Option<::prost::alloc::string::String>,
+    /// The displayed URL of the ad.
+    #[prost(string, optional, tag = "4")]
+    pub display_url: ::core::option::Option<::prost::alloc::string::String>,
+    /// The displayed mobile URL of the ad.
+    #[prost(string, optional, tag = "5")]
+    pub display_mobile_url: ::core::option::Option<::prost::alloc::string::String>,
+    /// The tracking id of the ad.
+    #[prost(int64, optional, tag = "6")]
+    pub ad_tracking_id: ::core::option::Option<i64>,
+}
+/// A Search Ads 360 expanded text ad.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchAds360ExpandedTextAdInfo {
+    /// The headline of the ad.
+    #[prost(string, optional, tag = "1")]
+    pub headline: ::core::option::Option<::prost::alloc::string::String>,
+    /// The second headline of the ad.
+    #[prost(string, optional, tag = "2")]
+    pub headline2: ::core::option::Option<::prost::alloc::string::String>,
+    /// The third headline of the ad.
+    #[prost(string, optional, tag = "3")]
+    pub headline3: ::core::option::Option<::prost::alloc::string::String>,
+    /// The first line of the ad's description.
+    #[prost(string, optional, tag = "4")]
+    pub description1: ::core::option::Option<::prost::alloc::string::String>,
+    /// The second line of the ad's description.
+    #[prost(string, optional, tag = "5")]
+    pub description2: ::core::option::Option<::prost::alloc::string::String>,
+    /// Text appended to the auto-generated visible URL with a delimiter.
+    #[prost(string, optional, tag = "6")]
+    pub path1: ::core::option::Option<::prost::alloc::string::String>,
+    /// Text appended to path1 with a delimiter.
+    #[prost(string, optional, tag = "7")]
+    pub path2: ::core::option::Option<::prost::alloc::string::String>,
+    /// The tracking id of the ad.
+    #[prost(int64, optional, tag = "8")]
+    pub ad_tracking_id: ::core::option::Option<i64>,
+}
+/// An expanded dynamic search ad.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchAds360ExpandedDynamicSearchAdInfo {
+    /// The first line of the ad's description.
+    #[prost(string, optional, tag = "1")]
+    pub description1: ::core::option::Option<::prost::alloc::string::String>,
+    /// The second line of the ad's description.
+    #[prost(string, optional, tag = "2")]
+    pub description2: ::core::option::Option<::prost::alloc::string::String>,
+    /// The tracking id of the ad.
+    #[prost(int64, optional, tag = "3")]
+    pub ad_tracking_id: ::core::option::Option<i64>,
+}
+/// A Search Ads 360 product ad.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchAds360ProductAdInfo {}
+/// A Search Ads 360 responsive search ad.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchAds360ResponsiveSearchAdInfo {
+    /// Text appended to the auto-generated visible URL with a delimiter.
+    #[prost(string, optional, tag = "1")]
+    pub path1: ::core::option::Option<::prost::alloc::string::String>,
+    /// Text appended to path1 with a delimiter.
+    #[prost(string, optional, tag = "2")]
+    pub path2: ::core::option::Option<::prost::alloc::string::String>,
+    /// The tracking id of the ad.
+    #[prost(int64, optional, tag = "3")]
+    pub ad_tracking_id: ::core::option::Option<i64>,
+}
 // Proto file describing bidding schemes.
 
 /// An automated bidding strategy that raises bids for clicks
@@ -233,6 +314,14 @@ pub struct GenderInfo {
     #[prost(enumeration = "super::enums::gender_type_enum::GenderType", tag = "1")]
     pub r#type: i32,
 }
+/// A User List criterion. Represents a user list that is defined by the
+/// advertiser to be targeted.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserListInfo {
+    /// The User List resource name.
+    #[prost(string, optional, tag = "2")]
+    pub user_list: ::core::option::Option<::prost::alloc::string::String>,
+}
 /// A language criterion.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LanguageInfo {
@@ -372,11 +461,13 @@ pub struct Metrics {
     /// The number of times people clicked the "Call" button to call a store during
     /// or after clicking an ad. This number doesn't include whether or not calls
     /// were connected, or the duration of any calls.
+    ///
     /// This metric applies to feed items only.
     #[prost(double, optional, tag = "195")]
     pub all_conversions_from_click_to_call: ::core::option::Option<f64>,
     /// The number of times people clicked a "Get directions" button to navigate to
     /// a store after clicking an ad.
+    ///
     /// This metric applies to feed items only.
     #[prost(double, optional, tag = "196")]
     pub all_conversions_from_directions: ::core::option::Option<f64>,
@@ -386,24 +477,33 @@ pub struct Metrics {
     pub all_conversions_from_interactions_value_per_interaction: ::core::option::Option<f64>,
     /// The number of times people clicked a link to view a store's menu after
     /// clicking an ad.
+    ///
     /// This metric applies to feed items only.
     #[prost(double, optional, tag = "198")]
     pub all_conversions_from_menu: ::core::option::Option<f64>,
     /// The number of times people placed an order at a store after clicking an ad.
+    ///
     /// This metric applies to feed items only.
     #[prost(double, optional, tag = "199")]
     pub all_conversions_from_order: ::core::option::Option<f64>,
     /// The number of other conversions (for example, posting a review or saving a
     /// location for a store) that occurred after people clicked an ad.
+    ///
     /// This metric applies to feed items only.
     #[prost(double, optional, tag = "200")]
     pub all_conversions_from_other_engagement: ::core::option::Option<f64>,
     /// Estimated number of times people visited a store after clicking an ad.
+    ///
     /// This metric applies to feed items only.
     #[prost(double, optional, tag = "201")]
     pub all_conversions_from_store_visit: ::core::option::Option<f64>,
+    /// Clicks that Search Ads 360 has successfully recorded and forwarded to an
+    /// advertiser's landing page.
+    #[prost(double, optional, tag = "289")]
+    pub visits: ::core::option::Option<f64>,
     /// The number of times that people were taken to a store's URL after clicking
     /// an ad.
+    ///
     /// This metric applies to feed items only.
     #[prost(double, optional, tag = "202")]
     pub all_conversions_from_store_website: ::core::option::Option<f64>,
@@ -708,6 +808,9 @@ pub struct Segments {
     /// Device to which metrics apply.
     #[prost(enumeration = "super::enums::device_enum::Device", tag = "1")]
     pub device: i32,
+    /// Keyword criterion.
+    #[prost(message, optional, tag = "61")]
+    pub keyword: ::core::option::Option<Keyword>,
     /// Month as represented by the date of the first day of a month. Formatted as
     /// yyyy-MM-dd.
     #[prost(string, optional, tag = "90")]
@@ -724,6 +827,60 @@ pub struct Segments {
     /// Year, formatted as yyyy.
     #[prost(int32, optional, tag = "131")]
     pub year: ::core::option::Option<i32>,
+}
+/// A Keyword criterion segment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Keyword {
+    /// The AdGroupCriterion resource name.
+    #[prost(string, optional, tag = "3")]
+    pub ad_group_criterion: ::core::option::Option<::prost::alloc::string::String>,
+    /// Keyword info.
+    #[prost(message, optional, tag = "2")]
+    pub info: ::core::option::Option<KeywordInfo>,
+}
+// Proto file describing TargetingSetting
+
+/// Settings for the targeting-related features, at the campaign and ad group
+/// levels. For more details about the targeting setting, visit
+/// <https://support.google.com/google-ads/answer/7365594>
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TargetingSetting {
+    /// The per-targeting-dimension setting to restrict the reach of your campaign
+    /// or ad group.
+    #[prost(message, repeated, tag = "1")]
+    pub target_restrictions: ::prost::alloc::vec::Vec<TargetRestriction>,
+}
+/// The list of per-targeting-dimension targeting settings.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TargetRestriction {
+    /// The targeting dimension that these settings apply to.
+    #[prost(
+        enumeration = "super::enums::targeting_dimension_enum::TargetingDimension",
+        tag = "1"
+    )]
+    pub targeting_dimension: i32,
+    /// Indicates whether to restrict your ads to show only for the criteria you
+    /// have selected for this targeting_dimension, or to target all values for
+    /// this targeting_dimension and show ads based on your targeting in other
+    /// TargetingDimensions. A value of `true` means that these criteria will only
+    /// apply bid modifiers, and not affect targeting. A value of `false` means
+    /// that these criteria will restrict targeting as well as applying bid
+    /// modifiers.
+    #[prost(bool, optional, tag = "3")]
+    pub bid_only: ::core::option::Option<bool>,
+}
+/// A type of label displaying text on a colored background.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TextLabel {
+    /// Background color of the label in RGB format. This string must match the
+    /// regular expression '^\#(\[a-fA-F0-9]{6}|[a-fA-F0-9\]{3})$'.
+    /// Note: The background color may not be visible for manager accounts.
+    #[prost(string, optional, tag = "3")]
+    pub background_color: ::core::option::Option<::prost::alloc::string::String>,
+    /// A short description of the label. The length must be no more than 200
+    /// characters.
+    #[prost(string, optional, tag = "4")]
+    pub description: ::core::option::Option<::prost::alloc::string::String>,
 }
 // Proto file describing value types.
 

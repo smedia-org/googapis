@@ -92,6 +92,13 @@ pub struct ReportRequest {
 /// If the request contains any invalid data, the server returns an RPC error.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReportResponse {}
+/// Message containing resource details in a batch mode.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourceInfoList {
+    /// The resource details.
+    #[prost(message, repeated, tag = "1")]
+    pub resources: ::prost::alloc::vec::Vec<ResourceInfo>,
+}
 #[doc = r" Generated client implementations."]
 pub mod service_controller_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]

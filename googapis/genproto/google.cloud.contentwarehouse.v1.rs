@@ -19,6 +19,7 @@ pub struct ResponseMetadata {
     #[prost(string, tag = "1")]
     pub request_id: ::prost::alloc::string::String,
 }
+/// The user information.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UserInfo {
     /// A unique user identification string, as determined by the client.
@@ -78,7 +79,8 @@ pub struct MergeFieldsOptions {
 pub enum UpdateType {
     /// Defaults to full replace behavior, ie. FULL_REPLACE.
     Unspecified = 0,
-    /// Fully replace all the fields. Any field masks will be ignored.
+    /// Fully replace all the fields (including previously linked raw document).
+    /// Any field masks will be ignored.
     Replace = 1,
     /// Merge the fields into the existing entities.
     Merge = 2,
@@ -88,6 +90,10 @@ pub enum UpdateType {
     ReplacePropertiesByNames = 4,
     /// Delete the properties by names.
     DeletePropertiesByNames = 5,
+    /// For each of the property, replaces the property if the it exists, otherwise
+    /// inserts a new property. And for the rest of the fields, merge them based on
+    /// update mask and merge fields options.
+    MergeAndReplaceOrInsertPropertiesByNames = 6,
 }
 /// Type of database used by the customer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -113,6 +119,19 @@ pub enum AccessControlMode {
     /// Document level access control using Google Cloud Identity.
     AclModeDocumentLevelAccessControlGci = 3,
 }
+/// The default role of the document creator.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum DocumentCreatorDefaultRole {
+    /// Unspecified, will be default to document admin role.
+    Unspecified = 0,
+    /// Document Admin, same as contentwarehouse.googleapis.com/documentAdmin.
+    DocumentAdmin = 1,
+    /// Document Editor, same as contentwarehouse.googleapis.com/documentEditor.
+    DocumentEditor = 2,
+    /// Document Viewer, same as contentwarehouse.googleapis.com/documentViewer.
+    DocumentViewer = 3,
+}
 /// Defines the structure for content warehouse document proto.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Document {
@@ -126,16 +145,14 @@ pub struct Document {
     /// The reference ID set by customers. Must be unique per project and location.
     #[prost(string, tag = "11")]
     pub reference_id: ::prost::alloc::string::String,
-    /// Required. Display name of the document given by the user. This name will be displayed
-    /// in the UI.
-    /// Customer can populate this field with the name of the document. This
-    /// differs from the 'title' field as 'title' is optional and stores the top
-    /// heading in the document.
+    /// Required. Display name of the document given by the user. This name will be
+    /// displayed in the UI. Customer can populate this field with the name of the
+    /// document. This differs from the 'title' field as 'title' is optional and
+    /// stores the top heading in the document.
     #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// Title that describes the document.
-    /// This is usually present in the top section of the document, and is a
-    /// mandatory field for the question-answering feature.
+    /// This can be the top heading or text that describes the document.
     #[prost(string, tag = "18")]
     pub title: ::prost::alloc::string::String,
     /// Uri to display the document, for example, in the UI.
@@ -147,6 +164,7 @@ pub struct Document {
     #[prost(string, tag = "3")]
     pub document_schema_name: ::prost::alloc::string::String,
     /// A path linked to structured content file.
+    #[deprecated]
     #[prost(string, tag = "16")]
     pub structured_content_uri: ::prost::alloc::string::String,
     /// List of values that are user supplied metadata.
@@ -165,11 +183,19 @@ pub struct Document {
     #[prost(enumeration = "RawDocumentFileType", tag = "10")]
     pub raw_document_file_type: i32,
     /// If true, makes the document visible to asynchronous policies and rules.
+    #[deprecated]
     #[prost(bool, tag = "12")]
     pub async_enabled: bool,
+    /// Indicates the category (image, audio, video etc.) of the original content.
+    #[prost(enumeration = "ContentCategory", tag = "20")]
+    pub content_category: i32,
     /// If true, text extraction will not be performed.
+    #[deprecated]
     #[prost(bool, tag = "19")]
     pub text_extraction_disabled: bool,
+    /// If true, text extraction will be performed.
+    #[prost(bool, tag = "21")]
+    pub text_extraction_enabled: bool,
     /// The user who creates the document.
     #[prost(string, tag = "13")]
     pub creator: ::prost::alloc::string::String,
@@ -236,7 +262,8 @@ pub struct DocumentReference {
 /// Property of a document.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Property {
-    /// Required. Must match the name of a PropertyDefinition in the DocumentSchema.
+    /// Required. Must match the name of a PropertyDefinition in the
+    /// DocumentSchema.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Type of the property.
@@ -425,6 +452,22 @@ pub enum RawDocumentFileType {
     Pptx = 4,
     /// UTF-8 encoded text format
     Text = 5,
+    /// TIFF or TIF image file format
+    Tiff = 6,
+}
+/// When a raw document or structured content is supplied, this stores the
+/// content category.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ContentCategory {
+    /// No category is specified.
+    Unspecified = 0,
+    /// Content is of image type.
+    Image = 1,
+    /// Content is of audio type.
+    Audio = 2,
+    /// Content is of video type.
+    Video = 3,
 }
 /// Response message for DocumentLinkService.ListLinkedTargets.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -440,8 +483,8 @@ pub struct ListLinkedTargetsResponse {
 /// Request message for DocumentLinkService.ListLinkedTargets.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListLinkedTargetsRequest {
-    /// Required. The name of the document, for which all target links are returned.
-    /// Format:
+    /// Required. The name of the document, for which all target links are
+    /// returned. Format:
     /// projects/{project_number}/locations/{location}/documents/{target_document_id}.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
@@ -464,8 +507,8 @@ pub struct ListLinkedSourcesResponse {
 /// Response message for DocumentLinkService.ListLinkedSources.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListLinkedSourcesRequest {
-    /// Required. The name of the document, for which all source links are returned.
-    /// Format:
+    /// Required. The name of the document, for which all source links are
+    /// returned. Format:
     /// projects/{project_number}/locations/{location}/documents/{source_document_id}.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
@@ -542,7 +585,8 @@ pub struct CreateDocumentLinkRequest {
     /// projects/{project_number}/locations/{location}/documents/{source_document_id}.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. Document links associated with the source documents (source_document_id).
+    /// Required. Document links associated with the source documents
+    /// (source_document_id).
     #[prost(message, optional, tag = "2")]
     pub document_link: ::core::option::Option<DocumentLink>,
     /// The meta information collected about the document creator, used to enforce
@@ -694,7 +738,7 @@ pub struct DocumentSchema {
     /// The name is ignored when creating a document schema.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. Name of the schema given by the user. Must be unique per customer.
+    /// Required. Name of the schema given by the user. Must be unique per project.
     #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// Document details.
@@ -737,6 +781,9 @@ pub struct PropertyDefinition {
     #[prost(bool, tag = "4")]
     pub is_searchable: bool,
     /// Whether the property is user supplied metadata.
+    /// This out-of-the box placeholder setting can be used to tag derived
+    /// properties. Its value and interpretation logic should be implemented by API
+    /// user.
     #[prost(bool, tag = "5")]
     pub is_metadata: bool,
     /// Whether the property is mandatory.
@@ -744,6 +791,12 @@ pub struct PropertyDefinition {
     /// If 'true' then user must populate the value for this property.
     #[prost(bool, tag = "14")]
     pub is_required: bool,
+    /// The retrieval importance of the property during search.
+    #[prost(enumeration = "property_definition::RetrievalImportance", tag = "18")]
+    pub retrieval_importance: i32,
+    /// The mapping information between this property to another schema source.
+    #[prost(message, repeated, tag = "19")]
+    pub schema_sources: ::prost::alloc::vec::Vec<property_definition::SchemaSource>,
     /// Type of the property.
     #[prost(
         oneof = "property_definition::ValueTypeOptions",
@@ -753,6 +806,35 @@ pub struct PropertyDefinition {
 }
 /// Nested message and enum types in `PropertyDefinition`.
 pub mod property_definition {
+    /// The schema source information.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SchemaSource {
+        /// The schema name in the source.
+        #[prost(string, tag = "1")]
+        pub name: ::prost::alloc::string::String,
+        /// The Doc AI processor type name.
+        #[prost(string, tag = "2")]
+        pub processor_type: ::prost::alloc::string::String,
+    }
+    /// Stores the retrieval importance.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RetrievalImportance {
+        /// No importance specified. Default medium importance.
+        Unspecified = 0,
+        /// Highest importance.
+        Highest = 1,
+        /// Higher importance.
+        Higher = 2,
+        /// High importance.
+        High = 3,
+        /// Medium importance.
+        Medium = 4,
+        /// Low importance (negative).
+        Low = 5,
+        /// Lowest importance (negative).
+        Lowest = 6,
+    }
     /// Type of the property.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ValueTypeOptions {
@@ -959,9 +1041,10 @@ pub mod document_schema_service_client {
         #[doc = " Updates a Document Schema. Returns INVALID_ARGUMENT if the name of the"]
         #[doc = " Document Schema is non-empty and does not equal the existing name."]
         #[doc = " Supports only appending new properties, adding new ENUM possible values,"]
-        #[doc = " and updating the [EnumTypeOptions.validation_check_disabled][google.cloud.contentwarehouse.v1.EnumTypeOptions.validation_check_disabled] flag for"]
-        #[doc = " ENUM possible values. Updating existing properties will result into"]
-        #[doc = " INVALID_ARGUMENT."]
+        #[doc = " and updating the"]
+        #[doc = " [EnumTypeOptions.validation_check_disabled][google.cloud.contentwarehouse.v1.EnumTypeOptions.validation_check_disabled]"]
+        #[doc = " flag for ENUM possible values. Updating existing properties will result"]
+        #[doc = " into INVALID_ARGUMENT."]
         pub async fn update_document_schema(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateDocumentSchemaRequest>,
@@ -1038,15 +1121,57 @@ pub mod document_schema_service_client {
 pub struct DocumentQuery {
     /// The query string that matches against the full text of the document and
     /// the searchable properties.
+    ///
+    /// The query partially supports [Google AIP style
+    /// syntax](<https://google.aip.dev/160>). Specifically, the query supports
+    /// literals, logical operators, negation operators, comparison operators, and
+    /// functions.
+    ///
+    /// Literals: A bare literal value (examples: "42", "Hugo") is a value to be
+    /// matched against. It searches over the full text of the document and the
+    /// searchable properties.
+    ///
+    /// Logical operators: "AND", "and", "OR", and "or" are binary logical
+    /// operators (example: "engineer OR developer").
+    ///
+    /// Negation operators: "NOT" and "!" are negation operators (example: "NOT
+    /// software").
+    ///
+    /// Comparison operators: support the binary comparison operators =, !=, <, >,
+    /// <= and >= for string, numeric, enum, boolean. Also support like operator
+    /// `~~` for string. It provides semantic search functionality by parsing,
+    /// stemming and doing synonyms expansion against the input query.
+    ///
+    /// To specify a property in the query, the left hand side expression in the
+    /// comparison must be the property ID including the parent. The right hand
+    /// side must be literals. For example:
+    /// "\"projects/123/locations/us\".property_a < 1" matches results whose
+    /// "property_a" is less than 1 in project 123 and us location.
+    /// The literals and comparison expression can be connected in a single query
+    /// (example: "software engineer \"projects/123/locations/us\".salary > 100").
+    ///
+    /// Functions: supported functions are `LOWER(\[property_name\])` to perform a
+    /// case insensitive match and `EMPTY(\[property_name\])` to filter on the
+    /// existence of a key.
+    ///
+    /// Support nested expressions connected using parenthesis and logical
+    /// operators. The default logical operators is `AND` if there is no operators
+    /// between expressions.
+    ///
+    /// The query can be used with other filters e.g. `time_filters` and
+    /// `folder_name_filter`. They are connected with `AND` operator under the
+    /// hood.
+    ///
     /// The maximum number of allowed characters is 255.
     #[prost(string, tag = "1")]
     pub query: ::prost::alloc::string::String,
     /// Experimental, do not use.
     /// If the query is a natural language question. False by default. If true,
     /// then the question-answering feature will be used instead of search, and
-    /// `result_count` in \[SearchDocumentsRequest][google.cloud.contentwarehouse.v1.SearchDocumentsRequest\] must be set. In addition, all
-    /// other input fields related to search (pagination, histograms, etc.) will be
-    /// ignored.
+    /// `result_count` in
+    /// \[SearchDocumentsRequest][google.cloud.contentwarehouse.v1.SearchDocumentsRequest\]
+    /// must be set. In addition, all other input fields related to search
+    /// (pagination, histograms, etc.) will be ignored.
     #[prost(bool, tag = "12")]
     pub is_nl_query: bool,
     /// This filter specifies a structured syntax to match against the
@@ -1076,7 +1201,8 @@ pub struct DocumentQuery {
     #[prost(message, repeated, tag = "5")]
     pub time_filters: ::prost::alloc::vec::Vec<TimeFilter>,
     /// This filter specifies the exact document schema
-    /// \[Document.document_schema_name][google.cloud.contentwarehouse.v1.Document.document_schema_name\] of the documents to search against.
+    /// \[Document.document_schema_name][google.cloud.contentwarehouse.v1.Document.document_schema_name\]
+    /// of the documents to search against.
     ///
     /// If a value isn't specified, documents within the search results are
     /// associated with any schema. If multiple values are specified, documents
@@ -1087,8 +1213,8 @@ pub struct DocumentQuery {
     #[prost(string, repeated, tag = "6")]
     pub document_schema_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// This filter specifies a structured syntax to match against the
-    /// \[PropertyDefinition.is_filterable][google.cloud.contentwarehouse.v1.PropertyDefinition.is_filterable\] marked as `true`. The relationship
-    /// between the PropertyFilters is OR.
+    /// \[PropertyDefinition.is_filterable][google.cloud.contentwarehouse.v1.PropertyDefinition.is_filterable\]
+    /// marked as `true`. The relationship between the PropertyFilters is OR.
     #[prost(message, repeated, tag = "7")]
     pub property_filter: ::prost::alloc::vec::Vec<PropertyFilter>,
     /// This filter specifies the types of files to return: ALL, FOLDER, or FILE.
@@ -1121,6 +1247,13 @@ pub struct DocumentQuery {
     /// creators.
     #[prost(string, repeated, tag = "11")]
     pub document_creator_filter: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// To support the custom weighting across document schemas, customers need to
+    /// provide the properties to be used to boost the ranking in the search
+    /// request. For a search query with CustomWeightsMetadata specified, only the
+    /// RetrievalImportance for the properties in the CustomWeightsMetadata will
+    /// be honored.
+    #[prost(message, optional, tag = "13")]
+    pub custom_weights_metadata: ::core::option::Option<CustomWeightsMetadata>,
 }
 /// Filter on create timestamp or update timestamp of documents.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1149,7 +1282,8 @@ pub mod time_filter {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PropertyFilter {
-    /// The Document schema name \[Document.document_schema_name][google.cloud.contentwarehouse.v1.Document.document_schema_name\].
+    /// The Document schema name
+    /// \[Document.document_schema_name][google.cloud.contentwarehouse.v1.Document.document_schema_name\].
     /// Format:
     /// projects/{project_number}/locations/{location}/documentSchemas/{document_schema_id}.
     #[prost(string, tag = "1")]
@@ -1181,10 +1315,11 @@ pub struct PropertyFilter {
     /// be < 6000 bytes in length.
     ///
     /// Only properties that are marked filterable are allowed
-    /// (\[PropertyDefinition.is_filterable][google.cloud.contentwarehouse.v1.PropertyDefinition.is_filterable\]). Property names do not need to be
-    /// prefixed by the document schema id (as is the case with histograms),
-    /// however property names will need to be prefixed by its parent hierarchy, if
-    /// any.  For example: top_property_name.sub_property_name.
+    /// (\[PropertyDefinition.is_filterable][google.cloud.contentwarehouse.v1.PropertyDefinition.is_filterable\]).
+    /// Property names do not need to be prefixed by the document schema id (as is
+    /// the case with histograms), however property names will need to be prefixed
+    /// by its parent hierarchy, if any.  For example:
+    /// top_property_name.sub_property_name.
     ///
     /// Sample Query:
     /// `(LOWER(driving_license)="class \"a\"" OR EMPTY(driving_license)) AND
@@ -1221,13 +1356,33 @@ pub mod file_type_filter {
         Document = 3,
     }
 }
+/// To support the custom weighting across document schemas.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CustomWeightsMetadata {
+    /// List of schema and property name. Allows a maximum of 10 schemas to be
+    /// specified for relevance boosting.
+    #[prost(message, repeated, tag = "1")]
+    pub weighted_schema_properties: ::prost::alloc::vec::Vec<WeightedSchemaProperty>,
+}
+/// Specifies the schema property name.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WeightedSchemaProperty {
+    /// The document schema name.
+    #[prost(string, tag = "1")]
+    pub document_schema_name: ::prost::alloc::string::String,
+    /// The property definition names in the schema.
+    #[prost(string, repeated, tag = "2")]
+    pub property_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
 /// The histogram request.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HistogramQuery {
     /// An expression specifies a histogram request against matching documents for
     /// searches.
     ///
-    /// See \[SearchDocumentsRequest.histogram_queries][google.cloud.contentwarehouse.v1.SearchDocumentsRequest.histogram_queries\] for details about syntax.
+    /// See
+    /// \[SearchDocumentsRequest.histogram_queries][google.cloud.contentwarehouse.v1.SearchDocumentsRequest.histogram_queries\]
+    /// for details about syntax.
     #[prost(string, tag = "1")]
     pub histogram_query: ::prost::alloc::string::String,
     /// Controls if the histogram query requires the return of a precise count.
@@ -1236,20 +1391,19 @@ pub struct HistogramQuery {
     /// Defaults to true.
     #[prost(bool, tag = "2")]
     pub require_precise_result_size: bool,
-    /// Optional. Filter the result of histogram query by the property names. It only works
-    /// with histogram query count('FilterableProperties').
-    /// It is an optional. It will perform histogram on all the property names for
-    /// all the document schemas. Setting this field will have a better
-    /// performance.
+    /// Optional. Filter the result of histogram query by the property names. It
+    /// only works with histogram query count('FilterableProperties'). It is an
+    /// optional. It will perform histogram on all the property names for all the
+    /// document schemas. Setting this field will have a better performance.
     #[prost(message, optional, tag = "3")]
     pub filters: ::core::option::Option<HistogramQueryPropertyNameFilter>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HistogramQueryPropertyNameFilter {
     /// This filter specifies the exact document schema(s)
-    /// \[Document.document_schema_name][google.cloud.contentwarehouse.v1.Document.document_schema_name\] to run histogram query against.
-    /// It is optional. It will perform histogram for property names for all the
-    /// document schemas if it is not set.
+    /// \[Document.document_schema_name][google.cloud.contentwarehouse.v1.Document.document_schema_name\]
+    /// to run histogram query against. It is optional. It will perform histogram
+    /// for property names for all the document schemas if it is not set.
     ///
     /// At most 10 document schema names are allowed.
     /// Format:
@@ -1290,7 +1444,9 @@ pub mod histogram_query_property_name_filter {
         HistogramYaxisProperty = 1,
     }
 }
-/// Histogram result that matches \[HistogramQuery][google.cloud.contentwarehouse.v1.HistogramQuery\] specified in searches.
+/// Histogram result that matches
+/// \[HistogramQuery][google.cloud.contentwarehouse.v1.HistogramQuery\] specified
+/// in searches.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HistogramQueryResult {
     /// Requested histogram expression.
@@ -1330,18 +1486,23 @@ pub struct CreateDocumentRequest {
     /// control for the service.
     #[prost(message, optional, tag = "3")]
     pub request_metadata: ::core::option::Option<RequestMetadata>,
-    /// Default document policy during creation. Conditions defined in the policy
-    /// will be ignored.
+    /// Default document policy during creation.
+    /// This refers to an Identity and Access (IAM) policy, which specifies access
+    /// controls for the Document.
+    /// Conditions defined in the policy will be ignored.
     #[prost(message, optional, tag = "4")]
     pub policy: ::core::option::Option<super::super::super::iam::v1::Policy>,
-    /// Request Option for processing Cloud AI Document in CW Document.
+    /// Request Option for processing Cloud AI Document in Document Warehouse.
+    /// This field offers limited support for mapping entities from Cloud AI
+    /// Document to Warehouse Document. Please consult with product team before
+    /// using this field and other available options.
     #[prost(message, optional, tag = "5")]
     pub cloud_ai_document_option: ::core::option::Option<CloudAiDocumentOption>,
     /// Field mask for creating Document fields. If mask path is empty,
     /// it means all fields are masked.
     /// For the `FieldMask` definition,
     /// see
-    /// <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask>
+    /// <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask.>
     #[prost(message, optional, tag = "6")]
     pub create_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
@@ -1376,7 +1537,10 @@ pub struct UpdateDocumentRequest {
     /// control for the service.
     #[prost(message, optional, tag = "3")]
     pub request_metadata: ::core::option::Option<RequestMetadata>,
-    /// Request Option for processing Cloud AI Document in CW Document.
+    /// Request Option for processing Cloud AI Document in Document Warehouse.
+    /// This field offers limited support for mapping entities from Cloud AI
+    /// Document to Warehouse Document. Please consult with product team before
+    /// using this field and other available options.
     #[prost(message, optional, tag = "5")]
     pub cloud_ai_document_option: ::core::option::Option<CloudAiDocumentOption>,
     /// Options for the update operation.
@@ -1414,7 +1578,9 @@ pub struct SearchDocumentsRequest {
     pub document_query: ::core::option::Option<DocumentQuery>,
     /// An integer that specifies the current offset (that is, starting result
     /// location, amongst the documents deemed by the API as relevant) in search
-    /// results. This field is only considered if \[page_token][google.cloud.contentwarehouse.v1.SearchDocumentsRequest.page_token\] is unset.
+    /// results. This field is only considered if
+    /// \[page_token][google.cloud.contentwarehouse.v1.SearchDocumentsRequest.page_token\]
+    /// is unset.
     ///
     /// The maximum allowed value is 5000. Otherwise an error is thrown.
     ///
@@ -1430,8 +1596,9 @@ pub struct SearchDocumentsRequest {
     #[prost(int32, tag = "6")]
     pub page_size: i32,
     /// The token specifying the current offset within search results.
-    /// See \[SearchDocumentsResponse.next_page_token][google.cloud.contentwarehouse.v1.SearchDocumentsResponse.next_page_token\] for an explanation of how
-    /// to obtain the next set of query results.
+    /// See
+    /// \[SearchDocumentsResponse.next_page_token][google.cloud.contentwarehouse.v1.SearchDocumentsResponse.next_page_token\]
+    /// for an explanation of how to obtain the next set of query results.
     #[prost(string, tag = "7")]
     pub page_token: ::prost::alloc::string::String,
     /// The criteria determining how search results are sorted. For non-empty
@@ -1446,6 +1613,9 @@ pub struct SearchDocumentsRequest {
     /// * `"upload_date"`: By upload date ascending.
     /// * `"update_date desc"`: By last updated date descending.
     /// * `"update_date"`: By last updated date ascending.
+    /// * `"retrieval_importance desc"`: By retrieval importance of properties
+    ///   descending. This feature is still under development, please do not use
+    ///   unless otherwise instructed to do so.
     #[prost(string, tag = "8")]
     pub order_by: ::prost::alloc::string::String,
     /// An expression specifying a histogram request against matching
@@ -1480,8 +1650,9 @@ pub struct SearchDocumentsRequest {
     ///   count('abc123.MORTGAGE_TYPE')
     #[prost(message, repeated, tag = "9")]
     pub histogram_queries: ::prost::alloc::vec::Vec<HistogramQuery>,
-    /// Optional. Controls if the search document request requires the return of a total size
-    /// of matched documents. See \[SearchDocumentsResponse.total_size][google.cloud.contentwarehouse.v1.SearchDocumentsResponse.total_size\].
+    /// Controls if the search document request requires the return of a total size
+    /// of matched documents. See
+    /// \[SearchDocumentsResponse.total_size][google.cloud.contentwarehouse.v1.SearchDocumentsResponse.total_size\].
     ///
     /// Enabling this flag may adversely impact performance. Hint: If this is
     /// used with pagination, set this flag on the initial query but set this
@@ -1490,6 +1661,11 @@ pub struct SearchDocumentsRequest {
     /// Defaults to false.
     #[prost(bool, tag = "10")]
     pub require_total_size: bool,
+    /// Controls if the search document request requires the return of a total size
+    /// of matched documents. See
+    /// \[SearchDocumentsResponse.total_size][google.cloud.contentwarehouse.v1.SearchDocumentsResponse.total_size\].
+    #[prost(enumeration = "search_documents_request::TotalResultSize", tag = "12")]
+    pub total_result_size: i32,
     /// Experimental, do not use.
     /// The limit on the number of documents returned for the question-answering
     /// feature. To enable the question-answering feature, set
@@ -1497,12 +1673,44 @@ pub struct SearchDocumentsRequest {
     #[prost(int32, tag = "11")]
     pub qa_size_limit: i32,
 }
+/// Nested message and enum types in `SearchDocumentsRequest`.
+pub mod search_documents_request {
+    /// The total number of matching documents.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum TotalResultSize {
+        /// Total number calculation will be skipped.
+        Unspecified = 0,
+        /// Estimate total number. The total result size will be accurated up to
+        /// 10,000. This option will add cost and latency to your request.
+        EstimatedSize = 1,
+        /// It may adversely impact performance. The limit is 1000,000.
+        ActualSize = 2,
+    }
+}
+/// Request message for DocumentService.LockDocument.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LockDocumentRequest {
+    /// Required. The name of the document to lock.
+    /// Format:
+    /// projects/{project_number}/locations/{location}/documents/{document}.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The collection the document connects to.
+    #[prost(string, tag = "2")]
+    pub collection_id: ::prost::alloc::string::String,
+    /// The user information who locks the document.
+    #[prost(message, optional, tag = "3")]
+    pub locking_user: ::core::option::Option<UserInfo>,
+}
 /// Request message for DocumentService.FetchAcl
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FetchAclRequest {
     /// Required. REQUIRED: The resource for which the policy is being requested.
     /// Format for document:
     /// projects/{project_number}/locations/{location}/documents/{document_id}.
+    /// Format for collection:
+    /// projects/{project_number}/locations/{location}/collections/{collection_id}.
     /// Format for project: projects/{project_number}.
     #[prost(string, tag = "1")]
     pub resource: ::prost::alloc::string::String,
@@ -1521,11 +1729,30 @@ pub struct SetAclRequest {
     /// Required. REQUIRED: The resource for which the policy is being requested.
     /// Format for document:
     /// projects/{project_number}/locations/{location}/documents/{document_id}.
+    /// Format for collection:
+    /// projects/{project_number}/locations/{location}/collections/{collection_id}.
     /// Format for project: projects/{project_number}.
     #[prost(string, tag = "1")]
     pub resource: ::prost::alloc::string::String,
-    /// Required. REQUIRED: The complete policy to be applied to the `resource`. The size of
-    /// the policy is limited to a few 10s of KB.
+    /// Required. REQUIRED: The complete policy to be applied to the `resource`.
+    /// The size of the policy is limited to a few 10s of KB. This refers to an
+    /// Identity and Access (IAM) policy, which specifies access controls for the
+    /// Document.
+    ///
+    /// You can set ACL with condition for projects only.
+    ///
+    /// Supported operators are: `=`, `!=`, `<`, `<=`, `>`, and `>=` where
+    /// the left of the operator is `DocumentSchemaId` or property name and the
+    /// right of the operator is a number or a quoted string. You must escape
+    /// backslash (\\) and quote (\") characters.
+    ///
+    /// Boolean expressions (AND/OR) are supported up to 3 levels of nesting (for
+    /// example, "((A AND B AND C) OR D) AND E"), a maximum of 10 comparisons are
+    /// allowed in the expression. The expression must be < 6000 bytes in length.
+    ///
+    /// Sample condition:
+    ///     `"DocumentSchemaId = \"some schema id\" OR SchemaId.floatPropertyName
+    ///     >= 10"`
     #[prost(message, optional, tag = "2")]
     pub policy: ::core::option::Option<super::super::super::iam::v1::Policy>,
     /// The meta information collected about the end user, used to enforce access
@@ -1582,9 +1809,11 @@ pub struct Rule {
 }
 /// Nested message and enum types in `Rule`.
 pub mod rule {
+    /// The trigger types for actions.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum TriggerType {
+        /// Trigger for unknown action.
         Unknown = 0,
         /// Trigger for create document action.
         OnCreate = 1,
@@ -1647,6 +1876,7 @@ pub mod access_control_action {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum OperationType {
+        /// The unknown operation type.
         Unknown = 0,
         /// Adds newly given policy bindings in the existing bindings list.
         AddPolicyBinding = 1,
@@ -1794,6 +2024,7 @@ pub mod action_output {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum State {
+        /// The unknown state.
         Unknown = 0,
         /// State indicating action executed successfully.
         ActionSucceeded = 1,
@@ -1821,6 +2052,10 @@ pub struct CreateDocumentResponse {
     /// id.
     #[prost(message, optional, tag = "3")]
     pub metadata: ::core::option::Option<ResponseMetadata>,
+    /// post-processing LROs
+    #[prost(message, repeated, tag = "4")]
+    pub long_running_operations:
+        ::prost::alloc::vec::Vec<super::super::super::longrunning::Operation>,
 }
 /// Response message for DocumentService.UpdateDocument.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1868,7 +2103,8 @@ pub mod qa_result {
 /// Response message for DocumentService.SearchDocuments.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchDocumentsResponse {
-    /// The document entities that match the specified \[SearchDocumentsRequest][google.cloud.contentwarehouse.v1.SearchDocumentsRequest\].
+    /// The document entities that match the specified
+    /// \[SearchDocumentsRequest][google.cloud.contentwarehouse.v1.SearchDocumentsRequest\].
     #[prost(message, repeated, tag = "1")]
     pub matching_documents: ::prost::alloc::vec::Vec<search_documents_response::MatchingDocument>,
     /// The token that specifies the starting position of the next page of results.
@@ -1876,11 +2112,13 @@ pub struct SearchDocumentsResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
     /// The total number of matched documents which is available only if the client
-    /// set \[SearchDocumentsRequest.require_total_size][google.cloud.contentwarehouse.v1.SearchDocumentsRequest.require_total_size\] to `true`. Otherwise, the
-    /// value will be `-1`. `total_size` will max at &quot;100,000&quot;. If this
-    /// is returned, then it can be assumed that the count is equal to or greater
-    /// than 100,000. Typically a UI would handle this condition by displaying
-    /// &quot;of many&quot;, for example: &quot;Displaying 10 of many&quot;.
+    /// set
+    /// \[SearchDocumentsRequest.require_total_size][google.cloud.contentwarehouse.v1.SearchDocumentsRequest.require_total_size\]
+    /// to `true` or set
+    /// \[SearchDocumentsRequest.total_result_size][google.cloud.contentwarehouse.v1.SearchDocumentsRequest.total_result_size\]
+    /// to `ESTIMATED_SIZE` or `ACTUAL_SIZE`. Otherwise, the value will be `-1`.
+    /// Typically a UI would handle this condition by displaying &quot;of
+    /// many&quot;, for example: &quot;Displaying 10 of many&quot;.
     #[prost(int32, tag = "3")]
     pub total_size: i32,
     /// Additional information for the API invocation, such as the request tracking
@@ -1894,10 +2132,12 @@ pub struct SearchDocumentsResponse {
 }
 /// Nested message and enum types in `SearchDocumentsResponse`.
 pub mod search_documents_response {
-    /// Document entry with metadata inside \[SearchDocumentsResponse][google.cloud.contentwarehouse.v1.SearchDocumentsResponse\]
+    /// Document entry with metadata inside
+    /// \[SearchDocumentsResponse][google.cloud.contentwarehouse.v1.SearchDocumentsResponse\]
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct MatchingDocument {
-        /// Document that matches the specified \[SearchDocumentsRequest][google.cloud.contentwarehouse.v1.SearchDocumentsRequest\].
+        /// Document that matches the specified
+        /// \[SearchDocumentsRequest][google.cloud.contentwarehouse.v1.SearchDocumentsRequest\].
         /// This document only contains indexed metadata information.
         #[prost(message, optional, tag = "1")]
         pub document: ::core::option::Option<super::Document>,
@@ -1909,7 +2149,8 @@ pub mod search_documents_response {
         /// If the question-answering feature is enabled, this field will instead
         /// contain a snippet that answers the user's natural-language query. No HTML
         /// bold tags will be present, and highlights in the answer snippet can be
-        /// found in \[QAResult.highlights][google.cloud.contentwarehouse.v1.QAResult.highlights\].
+        /// found in
+        /// \[QAResult.highlights][google.cloud.contentwarehouse.v1.QAResult.highlights\].
         #[prost(string, tag = "2")]
         pub search_text_snippet: ::prost::alloc::string::String,
         /// Experimental.
@@ -2059,7 +2300,8 @@ pub mod document_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Searches for documents using provided [SearchDocumentsRequest][google.cloud.contentwarehouse.v1.SearchDocumentsRequest]."]
+        #[doc = " Searches for documents using provided"]
+        #[doc = " [SearchDocumentsRequest][google.cloud.contentwarehouse.v1.SearchDocumentsRequest]."]
         #[doc = " This call only returns documents that the caller has permission to search"]
         #[doc = " against."]
         pub async fn search_documents(
@@ -2075,6 +2317,23 @@ pub mod document_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.contentwarehouse.v1.DocumentService/SearchDocuments",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lock the document so the document cannot be updated by other users."]
+        pub async fn lock_document(
+            &mut self,
+            request: impl tonic::IntoRequest<super::LockDocumentRequest>,
+        ) -> Result<tonic::Response<super::Document>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.contentwarehouse.v1.DocumentService/LockDocument",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

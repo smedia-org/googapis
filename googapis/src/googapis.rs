@@ -69,86 +69,6 @@ pub mod google {
             }
         }
         pub mod googleads {
-            pub mod v10 {
-                pub mod common {
-                    #[cfg(any(
-                        feature = "google-ads-googleads-v10-common",
-                        feature = "google-ads-googleads-v10-errors",
-                        feature = "google-ads-googleads-v10-resources",
-                        feature = "google-ads-googleads-v10-services",
-                    ))]
-                    include_proto!("google.ads.googleads.v10.common");
-                }
-                pub mod enums {
-                    #[cfg(any(
-                        feature = "google-ads-googleads-v10-common",
-                        feature = "google-ads-googleads-v10-enums",
-                        feature = "google-ads-googleads-v10-errors",
-                        feature = "google-ads-googleads-v10-resources",
-                        feature = "google-ads-googleads-v10-services",
-                    ))]
-                    include_proto!("google.ads.googleads.v10.enums");
-                }
-                pub mod errors {
-                    #[cfg(any(
-                        feature = "google-ads-googleads-v10-errors",
-                        feature = "google-ads-googleads-v10-resources",
-                        feature = "google-ads-googleads-v10-services",
-                    ))]
-                    include_proto!("google.ads.googleads.v10.errors");
-                }
-                pub mod resources {
-                    #[cfg(any(
-                        feature = "google-ads-googleads-v10-resources",
-                        feature = "google-ads-googleads-v10-services",
-                    ))]
-                    include_proto!("google.ads.googleads.v10.resources");
-                }
-                pub mod services {
-                    #[cfg(any(feature = "google-ads-googleads-v10-services",))]
-                    include_proto!("google.ads.googleads.v10.services");
-                }
-            }
-            pub mod v11 {
-                pub mod common {
-                    #[cfg(any(
-                        feature = "google-ads-googleads-v11-common",
-                        feature = "google-ads-googleads-v11-errors",
-                        feature = "google-ads-googleads-v11-resources",
-                        feature = "google-ads-googleads-v11-services",
-                    ))]
-                    include_proto!("google.ads.googleads.v11.common");
-                }
-                pub mod enums {
-                    #[cfg(any(
-                        feature = "google-ads-googleads-v11-common",
-                        feature = "google-ads-googleads-v11-enums",
-                        feature = "google-ads-googleads-v11-errors",
-                        feature = "google-ads-googleads-v11-resources",
-                        feature = "google-ads-googleads-v11-services",
-                    ))]
-                    include_proto!("google.ads.googleads.v11.enums");
-                }
-                pub mod errors {
-                    #[cfg(any(
-                        feature = "google-ads-googleads-v11-errors",
-                        feature = "google-ads-googleads-v11-resources",
-                        feature = "google-ads-googleads-v11-services",
-                    ))]
-                    include_proto!("google.ads.googleads.v11.errors");
-                }
-                pub mod resources {
-                    #[cfg(any(
-                        feature = "google-ads-googleads-v11-resources",
-                        feature = "google-ads-googleads-v11-services",
-                    ))]
-                    include_proto!("google.ads.googleads.v11.resources");
-                }
-                pub mod services {
-                    #[cfg(any(feature = "google-ads-googleads-v11-services",))]
-                    include_proto!("google.ads.googleads.v11.services");
-                }
-            }
             pub mod v12 {
                 pub mod common {
                     #[cfg(any(
@@ -189,6 +109,86 @@ pub mod google {
                     include_proto!("google.ads.googleads.v12.services");
                 }
             }
+            pub mod v13 {
+                pub mod common {
+                    #[cfg(any(
+                        feature = "google-ads-googleads-v13-common",
+                        feature = "google-ads-googleads-v13-errors",
+                        feature = "google-ads-googleads-v13-resources",
+                        feature = "google-ads-googleads-v13-services",
+                    ))]
+                    include_proto!("google.ads.googleads.v13.common");
+                }
+                pub mod enums {
+                    #[cfg(any(
+                        feature = "google-ads-googleads-v13-common",
+                        feature = "google-ads-googleads-v13-enums",
+                        feature = "google-ads-googleads-v13-errors",
+                        feature = "google-ads-googleads-v13-resources",
+                        feature = "google-ads-googleads-v13-services",
+                    ))]
+                    include_proto!("google.ads.googleads.v13.enums");
+                }
+                pub mod errors {
+                    #[cfg(any(
+                        feature = "google-ads-googleads-v13-errors",
+                        feature = "google-ads-googleads-v13-resources",
+                        feature = "google-ads-googleads-v13-services",
+                    ))]
+                    include_proto!("google.ads.googleads.v13.errors");
+                }
+                pub mod resources {
+                    #[cfg(any(
+                        feature = "google-ads-googleads-v13-resources",
+                        feature = "google-ads-googleads-v13-services",
+                    ))]
+                    include_proto!("google.ads.googleads.v13.resources");
+                }
+                pub mod services {
+                    #[cfg(any(feature = "google-ads-googleads-v13-services",))]
+                    include_proto!("google.ads.googleads.v13.services");
+                }
+            }
+            pub mod v14 {
+                pub mod common {
+                    #[cfg(any(
+                        feature = "google-ads-googleads-v14-common",
+                        feature = "google-ads-googleads-v14-errors",
+                        feature = "google-ads-googleads-v14-resources",
+                        feature = "google-ads-googleads-v14-services",
+                    ))]
+                    include_proto!("google.ads.googleads.v14.common");
+                }
+                pub mod enums {
+                    #[cfg(any(
+                        feature = "google-ads-googleads-v14-common",
+                        feature = "google-ads-googleads-v14-enums",
+                        feature = "google-ads-googleads-v14-errors",
+                        feature = "google-ads-googleads-v14-resources",
+                        feature = "google-ads-googleads-v14-services",
+                    ))]
+                    include_proto!("google.ads.googleads.v14.enums");
+                }
+                pub mod errors {
+                    #[cfg(any(
+                        feature = "google-ads-googleads-v14-errors",
+                        feature = "google-ads-googleads-v14-resources",
+                        feature = "google-ads-googleads-v14-services",
+                    ))]
+                    include_proto!("google.ads.googleads.v14.errors");
+                }
+                pub mod resources {
+                    #[cfg(any(
+                        feature = "google-ads-googleads-v14-resources",
+                        feature = "google-ads-googleads-v14-services",
+                    ))]
+                    include_proto!("google.ads.googleads.v14.resources");
+                }
+                pub mod services {
+                    #[cfg(any(feature = "google-ads-googleads-v14-services",))]
+                    include_proto!("google.ads.googleads.v14.services");
+                }
+            }
         }
         pub mod searchads360 {
             pub mod v0 {
@@ -223,6 +223,14 @@ pub mod google {
             }
         }
     }
+    pub mod ai {
+        pub mod generativelanguage {
+            pub mod v1beta2 {
+                #[cfg(any(feature = "google-ai-generativelanguage-v1beta2",))]
+                include_proto!("google.ai.generativelanguage.v1beta2");
+            }
+        }
+    }
     pub mod analytics {
         pub mod admin {
             pub mod v1alpha {
@@ -253,18 +261,19 @@ pub mod google {
             feature = "google-actions-sdk-v2-interactionmodel-prompt",
             feature = "google-actions-sdk-v2-interactionmodel-type",
             feature = "google-ads-admob-v1",
-            feature = "google-ads-googleads-v10-common",
-            feature = "google-ads-googleads-v10-resources",
-            feature = "google-ads-googleads-v10-services",
-            feature = "google-ads-googleads-v11-common",
-            feature = "google-ads-googleads-v11-resources",
-            feature = "google-ads-googleads-v11-services",
             feature = "google-ads-googleads-v12-common",
             feature = "google-ads-googleads-v12-resources",
             feature = "google-ads-googleads-v12-services",
+            feature = "google-ads-googleads-v13-common",
+            feature = "google-ads-googleads-v13-resources",
+            feature = "google-ads-googleads-v13-services",
+            feature = "google-ads-googleads-v14-common",
+            feature = "google-ads-googleads-v14-resources",
+            feature = "google-ads-googleads-v14-services",
             feature = "google-ads-searchads360-v0-common",
             feature = "google-ads-searchads360-v0-resources",
             feature = "google-ads-searchads360-v0-services",
+            feature = "google-ai-generativelanguage-v1beta2",
             feature = "google-analytics-admin-v1alpha",
             feature = "google-analytics-admin-v1beta",
             feature = "google-analytics-data-v1alpha",
@@ -297,9 +306,13 @@ pub mod google {
             feature = "google-chromeos-uidetection-v1",
             feature = "google-cloud",
             feature = "google-cloud-accessapproval-v1",
+            feature = "google-cloud-advisorynotifications-v1",
             feature = "google-cloud-aiplatform-v1",
             feature = "google-cloud-aiplatform-v1beta1",
             feature = "google-cloud-aiplatform-v1beta1-schema",
+            feature = "google-cloud-alloydb-v1",
+            feature = "google-cloud-alloydb-v1alpha",
+            feature = "google-cloud-alloydb-v1beta",
             feature = "google-cloud-apigateway-v1",
             feature = "google-cloud-apigeeconnect-v1",
             feature = "google-cloud-apigeeregistry-v1",
@@ -322,6 +335,8 @@ pub mod google {
             feature = "google-cloud-beyondcorp-clientconnectorservices-v1",
             feature = "google-cloud-beyondcorp-clientgateways-v1",
             feature = "google-cloud-bigquery-analyticshub-v1",
+            feature = "google-cloud-bigquery-biglake-v1",
+            feature = "google-cloud-bigquery-biglake-v1alpha1",
             feature = "google-cloud-bigquery-connection-v1",
             feature = "google-cloud-bigquery-connection-v1beta1",
             feature = "google-cloud-bigquery-dataexchange-v1beta1",
@@ -335,7 +350,6 @@ pub mod google {
             feature = "google-cloud-bigquery-storage-v1",
             feature = "google-cloud-bigquery-storage-v1beta1",
             feature = "google-cloud-bigquery-storage-v1beta2",
-            feature = "google-cloud-bigquery-v2",
             feature = "google-cloud-billing-budgets-v1",
             feature = "google-cloud-billing-budgets-v1beta1",
             feature = "google-cloud-billing-v1",
@@ -350,11 +364,15 @@ pub mod google {
             feature = "google-cloud-common",
             feature = "google-cloud-compute-v1",
             feature = "google-cloud-compute-v1small",
+            feature = "google-cloud-confidentialcomputing-v1",
+            feature = "google-cloud-confidentialcomputing-v1alpha1",
             feature = "google-cloud-connectors-v1",
             feature = "google-cloud-contactcenterinsights-v1",
             feature = "google-cloud-contentwarehouse-v1",
+            feature = "google-cloud-datacatalog-lineage-v1",
             feature = "google-cloud-datacatalog-v1",
             feature = "google-cloud-datacatalog-v1beta1",
+            feature = "google-cloud-dataform-logging-v1",
             feature = "google-cloud-dataform-v1alpha2",
             feature = "google-cloud-dataform-v1beta1",
             feature = "google-cloud-datafusion-v1",
@@ -370,6 +388,7 @@ pub mod google {
             feature = "google-cloud-dialogflow-cx-v3beta1",
             feature = "google-cloud-dialogflow-v2",
             feature = "google-cloud-dialogflow-v2beta1",
+            feature = "google-cloud-discoveryengine-v1",
             feature = "google-cloud-discoveryengine-v1beta",
             feature = "google-cloud-documentai-v1",
             feature = "google-cloud-documentai-v1beta1",
@@ -409,6 +428,7 @@ pub mod google {
             feature = "google-cloud-ids-v1",
             feature = "google-cloud-integrations-v1alpha",
             feature = "google-cloud-iot-v1",
+            feature = "google-cloud-kms-inventory-v1",
             feature = "google-cloud-kms-v1",
             feature = "google-cloud-language-v1",
             feature = "google-cloud-language-v1beta1",
@@ -424,6 +444,7 @@ pub mod google {
             feature = "google-cloud-metastore-v1",
             feature = "google-cloud-metastore-v1alpha",
             feature = "google-cloud-metastore-v1beta",
+            feature = "google-cloud-migrationcenter-v1",
             feature = "google-cloud-networkconnectivity-v1",
             feature = "google-cloud-networkconnectivity-v1alpha1",
             feature = "google-cloud-networkmanagement-v1",
@@ -453,6 +474,7 @@ pub mod google {
             feature = "google-cloud-policytroubleshooter-v1",
             feature = "google-cloud-privatecatalog-v1beta1",
             feature = "google-cloud-pubsublite-v1",
+            feature = "google-cloud-rapidmigrationassessment-v1",
             feature = "google-cloud-recaptchaenterprise-v1",
             feature = "google-cloud-recaptchaenterprise-v1beta1",
             feature = "google-cloud-recommendationengine-v1beta1",
@@ -490,8 +512,7 @@ pub mod google {
             feature = "google-cloud-sql-v1",
             feature = "google-cloud-sql-v1beta4",
             feature = "google-cloud-storageinsights-v1",
-            feature = "google-cloud-support-common",
-            feature = "google-cloud-support-v1alpha1",
+            feature = "google-cloud-support-v2",
             feature = "google-cloud-talent-v4",
             feature = "google-cloud-talent-v4beta1",
             feature = "google-cloud-tasks-v2",
@@ -501,6 +522,7 @@ pub mod google {
             feature = "google-cloud-texttospeech-v1beta1",
             feature = "google-cloud-timeseriesinsights-v1",
             feature = "google-cloud-tpu-v1",
+            feature = "google-cloud-tpu-v2",
             feature = "google-cloud-tpu-v2alpha1",
             feature = "google-cloud-translation-v3",
             feature = "google-cloud-translation-v3beta1",
@@ -518,6 +540,7 @@ pub mod google {
             feature = "google-cloud-vision-v1p2beta1",
             feature = "google-cloud-vision-v1p3beta1",
             feature = "google-cloud-vision-v1p4beta1",
+            feature = "google-cloud-visionai-v1",
             feature = "google-cloud-visionai-v1alpha1",
             feature = "google-cloud-vmmigration-v1",
             feature = "google-cloud-vmwareengine-v1",
@@ -531,6 +554,8 @@ pub mod google {
             feature = "google-cloud-workflows-executions-v1beta",
             feature = "google-cloud-workflows-v1",
             feature = "google-cloud-workflows-v1beta",
+            feature = "google-cloud-workstations-v1",
+            feature = "google-cloud-workstations-v1beta",
             feature = "google-container-v1",
             feature = "google-container-v1alpha1",
             feature = "google-container-v1beta1",
@@ -543,6 +568,7 @@ pub mod google {
             feature = "google-devtools-artifactregistry-v1beta2",
             feature = "google-devtools-build-v1",
             feature = "google-devtools-cloudbuild-v1",
+            feature = "google-devtools-cloudbuild-v2",
             feature = "google-devtools-clouddebugger-v2",
             feature = "google-devtools-clouderrorreporting-v1beta1",
             feature = "google-devtools-cloudprofiler-v2",
@@ -577,7 +603,9 @@ pub mod google {
             feature = "google-logging-v2",
             feature = "google-longrunning",
             feature = "google-maps-addressvalidation-v1",
+            feature = "google-maps-mapsplatformdatasets-v1",
             feature = "google-maps-mapsplatformdatasets-v1alpha",
+            feature = "google-maps-places-v1",
             feature = "google-maps-playablelocations-v3",
             feature = "google-maps-playablelocations-v3-sample",
             feature = "google-maps-regionlookup-v1alpha",
@@ -832,6 +860,12 @@ pub mod google {
                 include_proto!("google.cloud.accessapproval.v1");
             }
         }
+        pub mod advisorynotifications {
+            pub mod v1 {
+                #[cfg(any(feature = "google-cloud-advisorynotifications-v1",))]
+                include_proto!("google.cloud.advisorynotifications.v1");
+            }
+        }
         pub mod aiplatform {
             pub mod logging {
                 #[cfg(any(feature = "google-cloud-aiplatform-logging",))]
@@ -915,6 +949,20 @@ pub mod google {
                         }
                     }
                 }
+            }
+        }
+        pub mod alloydb {
+            pub mod v1 {
+                #[cfg(any(feature = "google-cloud-alloydb-v1",))]
+                include_proto!("google.cloud.alloydb.v1");
+            }
+            pub mod v1alpha {
+                #[cfg(any(feature = "google-cloud-alloydb-v1alpha",))]
+                include_proto!("google.cloud.alloydb.v1alpha");
+            }
+            pub mod v1beta {
+                #[cfg(any(feature = "google-cloud-alloydb-v1beta",))]
+                include_proto!("google.cloud.alloydb.v1beta");
             }
         }
         pub mod apigateway {
@@ -1056,6 +1104,16 @@ pub mod google {
                     include_proto!("google.cloud.bigquery.analyticshub.v1");
                 }
             }
+            pub mod biglake {
+                pub mod v1 {
+                    #[cfg(any(feature = "google-cloud-bigquery-biglake-v1",))]
+                    include_proto!("google.cloud.bigquery.biglake.v1");
+                }
+                pub mod v1alpha1 {
+                    #[cfg(any(feature = "google-cloud-bigquery-biglake-v1alpha1",))]
+                    include_proto!("google.cloud.bigquery.biglake.v1alpha1");
+                }
+            }
             pub mod connection {
                 pub mod v1 {
                     #[cfg(any(feature = "google-cloud-bigquery-connection-v1",))]
@@ -1123,10 +1181,6 @@ pub mod google {
                     #[cfg(any(feature = "google-cloud-bigquery-storage-v1beta2",))]
                     include_proto!("google.cloud.bigquery.storage.v1beta2");
                 }
-            }
-            pub mod v2 {
-                #[cfg(any(feature = "google-cloud-bigquery-v2",))]
-                include_proto!("google.cloud.bigquery.v2");
             }
         }
         pub mod billing {
@@ -1223,6 +1277,16 @@ pub mod google {
                 include_proto!("google.cloud.compute.v1small");
             }
         }
+        pub mod confidentialcomputing {
+            pub mod v1 {
+                #[cfg(any(feature = "google-cloud-confidentialcomputing-v1",))]
+                include_proto!("google.cloud.confidentialcomputing.v1");
+            }
+            pub mod v1alpha1 {
+                #[cfg(any(feature = "google-cloud-confidentialcomputing-v1alpha1",))]
+                include_proto!("google.cloud.confidentialcomputing.v1alpha1");
+            }
+        }
         pub mod connectors {
             pub mod v1 {
                 #[cfg(any(feature = "google-cloud-connectors-v1",))]
@@ -1242,6 +1306,12 @@ pub mod google {
             }
         }
         pub mod datacatalog {
+            pub mod lineage {
+                pub mod v1 {
+                    #[cfg(any(feature = "google-cloud-datacatalog-lineage-v1",))]
+                    include_proto!("google.cloud.datacatalog.lineage.v1");
+                }
+            }
             pub mod v1 {
                 #[cfg(any(feature = "google-cloud-datacatalog-v1",))]
                 include_proto!("google.cloud.datacatalog.v1");
@@ -1252,6 +1322,12 @@ pub mod google {
             }
         }
         pub mod dataform {
+            pub mod logging {
+                pub mod v1 {
+                    #[cfg(any(feature = "google-cloud-dataform-logging-v1",))]
+                    include_proto!("google.cloud.dataform.logging.v1");
+                }
+            }
             pub mod v1alpha2 {
                 #[cfg(any(feature = "google-cloud-dataform-v1alpha2",))]
                 include_proto!("google.cloud.dataform.v1alpha2");
@@ -1277,6 +1353,14 @@ pub mod google {
                 include_proto!("google.cloud.datalabeling.v1beta1");
             }
         }
+        pub mod datapipelines {
+            pub mod logging {
+                pub mod v1 {
+                    #[cfg(any(feature = "google-cloud-datapipelines-logging-v1",))]
+                    include_proto!("google.cloud.datapipelines.logging.v1");
+                }
+            }
+        }
         pub mod dataplex {
             pub mod v1 {
                 #[cfg(any(feature = "google-cloud-dataplex-v1",))]
@@ -1300,6 +1384,12 @@ pub mod google {
             }
         }
         pub mod datastream {
+            pub mod logging {
+                pub mod v1 {
+                    #[cfg(any(feature = "google-cloud-datastream-logging-v1",))]
+                    include_proto!("google.cloud.datastream.logging.v1");
+                }
+            }
             pub mod v1 {
                 #[cfg(any(feature = "google-cloud-datastream-v1",))]
                 include_proto!("google.cloud.datastream.v1");
@@ -1336,6 +1426,10 @@ pub mod google {
             }
         }
         pub mod discoveryengine {
+            pub mod v1 {
+                #[cfg(any(feature = "google-cloud-discoveryengine-v1",))]
+                include_proto!("google.cloud.discoveryengine.v1");
+            }
             pub mod v1beta {
                 #[cfg(any(feature = "google-cloud-discoveryengine-v1beta",))]
                 include_proto!("google.cloud.discoveryengine.v1beta");
@@ -1643,8 +1737,23 @@ pub mod google {
             }
         }
         pub mod kms {
+            pub mod inventory {
+                pub mod v1 {
+                    #[cfg(any(feature = "google-cloud-kms-inventory-v1",))]
+                    include_proto!("google.cloud.kms.inventory.v1");
+                }
+            }
+            pub mod logging {
+                pub mod v1 {
+                    #[cfg(any(feature = "google-cloud-kms-logging-v1",))]
+                    include_proto!("google.cloud.kms.logging.v1");
+                }
+            }
             pub mod v1 {
-                #[cfg(any(feature = "google-cloud-kms-v1",))]
+                #[cfg(any(
+                    feature = "google-cloud-kms-inventory-v1",
+                    feature = "google-cloud-kms-v1",
+                ))]
                 include_proto!("google.cloud.kms.v1");
             }
         }
@@ -1720,6 +1829,12 @@ pub mod google {
             pub mod v1beta {
                 #[cfg(any(feature = "google-cloud-metastore-v1beta",))]
                 include_proto!("google.cloud.metastore.v1beta");
+            }
+        }
+        pub mod migrationcenter {
+            pub mod v1 {
+                #[cfg(any(feature = "google-cloud-migrationcenter-v1",))]
+                include_proto!("google.cloud.migrationcenter.v1");
             }
         }
         pub mod networkanalyzer {
@@ -1839,7 +1954,6 @@ pub mod google {
             pub mod v1 {
                 #[cfg(any(
                     feature = "google-cloud-asset-v1",
-                    feature = "google-cloud-asset-v1p7beta1",
                     feature = "google-cloud-osconfig-v1",
                 ))]
                 include_proto!("google.cloud.osconfig.v1");
@@ -1906,6 +2020,12 @@ pub mod google {
             pub mod v1 {
                 #[cfg(any(feature = "google-cloud-pubsublite-v1",))]
                 include_proto!("google.cloud.pubsublite.v1");
+            }
+        }
+        pub mod rapidmigrationassessment {
+            pub mod v1 {
+                #[cfg(any(feature = "google-cloud-rapidmigrationassessment-v1",))]
+                include_proto!("google.cloud.rapidmigrationassessment.v1");
             }
         }
         pub mod recaptchaenterprise {
@@ -2148,16 +2268,9 @@ pub mod google {
             }
         }
         pub mod support {
-            pub mod common {
-                #[cfg(any(
-                    feature = "google-cloud-support-common",
-                    feature = "google-cloud-support-v1alpha1",
-                ))]
-                include_proto!("google.cloud.support.common");
-            }
-            pub mod v1alpha1 {
-                #[cfg(any(feature = "google-cloud-support-v1alpha1",))]
-                include_proto!("google.cloud.support.v1alpha1");
+            pub mod v2 {
+                #[cfg(any(feature = "google-cloud-support-v2",))]
+                include_proto!("google.cloud.support.v2");
             }
         }
         pub mod talent {
@@ -2204,6 +2317,10 @@ pub mod google {
             pub mod v1 {
                 #[cfg(any(feature = "google-cloud-tpu-v1",))]
                 include_proto!("google.cloud.tpu.v1");
+            }
+            pub mod v2 {
+                #[cfg(any(feature = "google-cloud-tpu-v2",))]
+                include_proto!("google.cloud.tpu.v2");
             }
             pub mod v2alpha1 {
                 #[cfg(any(feature = "google-cloud-tpu-v2alpha1",))]
@@ -2294,6 +2411,10 @@ pub mod google {
             }
         }
         pub mod visionai {
+            pub mod v1 {
+                #[cfg(any(feature = "google-cloud-visionai-v1",))]
+                include_proto!("google.cloud.visionai.v1");
+            }
             pub mod v1alpha1 {
                 #[cfg(any(feature = "google-cloud-visionai-v1alpha1",))]
                 include_proto!("google.cloud.visionai.v1alpha1");
@@ -2365,6 +2486,22 @@ pub mod google {
                 include_proto!("google.cloud.workflows.v1beta");
             }
         }
+        pub mod workstations {
+            pub mod logging {
+                pub mod v1 {
+                    #[cfg(any(feature = "google-cloud-workstations-logging-v1",))]
+                    include_proto!("google.cloud.workstations.logging.v1");
+                }
+            }
+            pub mod v1 {
+                #[cfg(any(feature = "google-cloud-workstations-v1",))]
+                include_proto!("google.cloud.workstations.v1");
+            }
+            pub mod v1beta {
+                #[cfg(any(feature = "google-cloud-workstations-v1beta",))]
+                include_proto!("google.cloud.workstations.v1beta");
+            }
+        }
     }
     pub mod container {
         pub mod v1 {
@@ -2427,6 +2564,10 @@ pub mod google {
             pub mod v1 {
                 #[cfg(any(feature = "google-devtools-cloudbuild-v1",))]
                 include_proto!("google.devtools.cloudbuild.v1");
+            }
+            pub mod v2 {
+                #[cfg(any(feature = "google-devtools-cloudbuild-v2",))]
+                include_proto!("google.devtools.cloudbuild.v2");
             }
         }
         pub mod clouddebugger {
@@ -2574,6 +2715,7 @@ pub mod google {
             #[cfg(any(
                 feature = "google-geo-type",
                 feature = "google-maps-addressvalidation-v1",
+                feature = "google-maps-places-v1",
                 feature = "google-maps-routes-v1",
                 feature = "google-maps-routes-v1alpha",
                 feature = "google-maps-routing-v2",
@@ -2726,9 +2868,9 @@ pub mod google {
     }
     pub mod longrunning {
         #[cfg(any(
-            feature = "google-ads-googleads-v10-services",
-            feature = "google-ads-googleads-v11-services",
             feature = "google-ads-googleads-v12-services",
+            feature = "google-ads-googleads-v13-services",
+            feature = "google-ads-googleads-v14-services",
             feature = "google-api-apikeys-v2",
             feature = "google-api-servicemanagement-v1",
             feature = "google-api-serviceusage-v1",
@@ -2739,6 +2881,9 @@ pub mod google {
             feature = "google-chromeos-moblab-v1beta1",
             feature = "google-cloud-aiplatform-v1",
             feature = "google-cloud-aiplatform-v1beta1",
+            feature = "google-cloud-alloydb-v1",
+            feature = "google-cloud-alloydb-v1alpha",
+            feature = "google-cloud-alloydb-v1beta",
             feature = "google-cloud-apigateway-v1",
             feature = "google-cloud-apigeeregistry-v1",
             feature = "google-cloud-asset-v1",
@@ -2761,6 +2906,9 @@ pub mod google {
             feature = "google-cloud-commerce-consumer-procurement-v1alpha1",
             feature = "google-cloud-connectors-v1",
             feature = "google-cloud-contactcenterinsights-v1",
+            feature = "google-cloud-contentwarehouse-v1",
+            feature = "google-cloud-datacatalog-lineage-v1",
+            feature = "google-cloud-datacatalog-v1",
             feature = "google-cloud-datafusion-v1",
             feature = "google-cloud-datafusion-v1beta1",
             feature = "google-cloud-datalabeling-v1beta1",
@@ -2773,6 +2921,7 @@ pub mod google {
             feature = "google-cloud-dialogflow-cx-v3beta1",
             feature = "google-cloud-dialogflow-v2",
             feature = "google-cloud-dialogflow-v2beta1",
+            feature = "google-cloud-discoveryengine-v1",
             feature = "google-cloud-discoveryengine-v1beta",
             feature = "google-cloud-documentai-v1",
             feature = "google-cloud-documentai-v1beta1",
@@ -2807,6 +2956,7 @@ pub mod google {
             feature = "google-cloud-metastore-v1",
             feature = "google-cloud-metastore-v1alpha",
             feature = "google-cloud-metastore-v1beta",
+            feature = "google-cloud-migrationcenter-v1",
             feature = "google-cloud-networkconnectivity-v1",
             feature = "google-cloud-networkconnectivity-v1alpha1",
             feature = "google-cloud-networkmanagement-v1",
@@ -2825,6 +2975,7 @@ pub mod google {
             feature = "google-cloud-paymentgateway-issuerswitch-v1",
             feature = "google-cloud-privatecatalog-v1beta1",
             feature = "google-cloud-pubsublite-v1",
+            feature = "google-cloud-rapidmigrationassessment-v1",
             feature = "google-cloud-recommendationengine-v1beta1",
             feature = "google-cloud-redis-v1",
             feature = "google-cloud-redis-v1beta1",
@@ -2846,11 +2997,15 @@ pub mod google {
             feature = "google-cloud-speech-v2",
             feature = "google-cloud-talent-v4",
             feature = "google-cloud-talent-v4beta1",
+            feature = "google-cloud-texttospeech-v1",
+            feature = "google-cloud-texttospeech-v1beta1",
             feature = "google-cloud-tpu-v1",
+            feature = "google-cloud-tpu-v2",
             feature = "google-cloud-tpu-v2alpha1",
             feature = "google-cloud-translation-v3",
             feature = "google-cloud-translation-v3beta1",
             feature = "google-cloud-video-livestream-v1",
+            feature = "google-cloud-video-stitcher-v1",
             feature = "google-cloud-videointelligence-v1",
             feature = "google-cloud-videointelligence-v1beta2",
             feature = "google-cloud-videointelligence-v1p1beta1",
@@ -2860,17 +3015,22 @@ pub mod google {
             feature = "google-cloud-vision-v1p2beta1",
             feature = "google-cloud-vision-v1p3beta1",
             feature = "google-cloud-vision-v1p4beta1",
+            feature = "google-cloud-visionai-v1",
             feature = "google-cloud-visionai-v1alpha1",
             feature = "google-cloud-vmmigration-v1",
             feature = "google-cloud-vmwareengine-v1",
             feature = "google-cloud-vpcaccess-v1",
+            feature = "google-cloud-webrisk-v1",
             feature = "google-cloud-workflows-v1",
             feature = "google-cloud-workflows-v1beta",
+            feature = "google-cloud-workstations-v1",
+            feature = "google-cloud-workstations-v1beta",
             feature = "google-datastore-admin-v1",
             feature = "google-datastore-admin-v1beta1",
             feature = "google-devtools-artifactregistry-v1",
             feature = "google-devtools-artifactregistry-v1beta2",
             feature = "google-devtools-cloudbuild-v1",
+            feature = "google-devtools-cloudbuild-v2",
             feature = "google-firestore-admin-v1",
             feature = "google-firestore-admin-v1beta1",
             feature = "google-firestore-admin-v1beta2",
@@ -2899,9 +3059,19 @@ pub mod google {
             }
         }
         pub mod mapsplatformdatasets {
+            pub mod v1 {
+                #[cfg(any(feature = "google-maps-mapsplatformdatasets-v1",))]
+                include_proto!("google.maps.mapsplatformdatasets.v1");
+            }
             pub mod v1alpha {
                 #[cfg(any(feature = "google-maps-mapsplatformdatasets-v1alpha",))]
                 include_proto!("google.maps.mapsplatformdatasets.v1alpha");
+            }
+        }
+        pub mod places {
+            pub mod v1 {
+                #[cfg(any(feature = "google-maps-places-v1",))]
+                include_proto!("google.maps.places.v1");
             }
         }
         pub mod playablelocations {
@@ -3020,6 +3190,9 @@ pub mod google {
             feature = "google-cloud-aiplatform-v1",
             feature = "google-cloud-aiplatform-v1beta1",
             feature = "google-cloud-aiplatform-v1beta1-schema",
+            feature = "google-cloud-alloydb-v1",
+            feature = "google-cloud-alloydb-v1alpha",
+            feature = "google-cloud-alloydb-v1beta",
             feature = "google-cloud-asset-v1",
             feature = "google-cloud-asset-v1p1beta1",
             feature = "google-cloud-asset-v1p2beta1",
@@ -3049,6 +3222,7 @@ pub mod google {
             feature = "google-cloud-dialogflow-cx-v3beta1",
             feature = "google-cloud-dialogflow-v2",
             feature = "google-cloud-dialogflow-v2beta1",
+            feature = "google-cloud-discoveryengine-v1",
             feature = "google-cloud-discoveryengine-v1beta",
             feature = "google-cloud-documentai-v1",
             feature = "google-cloud-documentai-v1beta1",
@@ -3066,6 +3240,7 @@ pub mod google {
             feature = "google-cloud-metastore-v1",
             feature = "google-cloud-metastore-v1alpha",
             feature = "google-cloud-metastore-v1beta",
+            feature = "google-cloud-migrationcenter-v1",
             feature = "google-cloud-optimization-v1",
             feature = "google-cloud-orchestration-airflow-service-v1",
             feature = "google-cloud-orchestration-airflow-service-v1beta1",
@@ -3102,11 +3277,15 @@ pub mod google {
             feature = "google-cloud-tasks-v2",
             feature = "google-cloud-tasks-v2beta2",
             feature = "google-cloud-tasks-v2beta3",
+            feature = "google-cloud-tpu-v2alpha1",
+            feature = "google-cloud-video-livestream-logging-v1",
+            feature = "google-cloud-video-livestream-v1",
             feature = "google-cloud-vision-v1",
             feature = "google-cloud-vision-v1p1beta1",
             feature = "google-cloud-vision-v1p2beta1",
             feature = "google-cloud-vision-v1p3beta1",
             feature = "google-cloud-vision-v1p4beta1",
+            feature = "google-cloud-visionai-v1",
             feature = "google-cloud-visionai-v1alpha1",
             feature = "google-container-v1beta1",
             feature = "google-datastore-v1",
@@ -3130,6 +3309,7 @@ pub mod google {
             feature = "google-iam-v2beta",
             feature = "google-identity-accesscontextmanager-v1",
             feature = "google-maps-addressvalidation-v1",
+            feature = "google-maps-places-v1",
             feature = "google-maps-playablelocations-v3",
             feature = "google-maps-playablelocations-v3-sample",
             feature = "google-maps-regionlookup-v1alpha",
@@ -3154,9 +3334,9 @@ pub mod google {
     pub mod rpc {
         #[cfg(any(
             feature = "google-actions-sdk-v2",
-            feature = "google-ads-googleads-v10-services",
-            feature = "google-ads-googleads-v11-services",
             feature = "google-ads-googleads-v12-services",
+            feature = "google-ads-googleads-v13-services",
+            feature = "google-ads-googleads-v14-services",
             feature = "google-api-apikeys-v2",
             feature = "google-api-expr-conformance-v1alpha1",
             feature = "google-api-expr-v1alpha1",
@@ -3178,6 +3358,9 @@ pub mod google {
             feature = "google-cloud-aiplatform-v1",
             feature = "google-cloud-aiplatform-v1beta1",
             feature = "google-cloud-aiplatform-v1beta1-schema",
+            feature = "google-cloud-alloydb-v1",
+            feature = "google-cloud-alloydb-v1alpha",
+            feature = "google-cloud-alloydb-v1beta",
             feature = "google-cloud-apigateway-v1",
             feature = "google-cloud-apigeeconnect-v1",
             feature = "google-cloud-apigeeregistry-v1",
@@ -3212,9 +3395,12 @@ pub mod google {
             feature = "google-cloud-connectors-v1",
             feature = "google-cloud-contactcenterinsights-v1",
             feature = "google-cloud-contentwarehouse-v1",
+            feature = "google-cloud-datacatalog-lineage-v1",
+            feature = "google-cloud-datacatalog-v1",
             feature = "google-cloud-datafusion-v1",
             feature = "google-cloud-datafusion-v1beta1",
             feature = "google-cloud-datalabeling-v1beta1",
+            feature = "google-cloud-datapipelines-logging-v1",
             feature = "google-cloud-dataplex-v1",
             feature = "google-cloud-dataproc-v1",
             feature = "google-cloud-dataqna-v1alpha",
@@ -3225,6 +3411,7 @@ pub mod google {
             feature = "google-cloud-dialogflow-cx-v3beta1",
             feature = "google-cloud-dialogflow-v2",
             feature = "google-cloud-dialogflow-v2beta1",
+            feature = "google-cloud-discoveryengine-v1",
             feature = "google-cloud-discoveryengine-v1beta",
             feature = "google-cloud-documentai-v1",
             feature = "google-cloud-documentai-v1beta1",
@@ -3257,6 +3444,7 @@ pub mod google {
             feature = "google-cloud-identitytoolkit-logging",
             feature = "google-cloud-ids-v1",
             feature = "google-cloud-iot-v1",
+            feature = "google-cloud-kms-logging-v1",
             feature = "google-cloud-lifesciences-v2beta",
             feature = "google-cloud-managedidentities-v1",
             feature = "google-cloud-managedidentities-v1beta1",
@@ -3267,6 +3455,7 @@ pub mod google {
             feature = "google-cloud-metastore-v1",
             feature = "google-cloud-metastore-v1alpha",
             feature = "google-cloud-metastore-v1beta",
+            feature = "google-cloud-migrationcenter-v1",
             feature = "google-cloud-networkconnectivity-v1",
             feature = "google-cloud-networkconnectivity-v1alpha1",
             feature = "google-cloud-networkmanagement-v1",
@@ -3285,6 +3474,7 @@ pub mod google {
             feature = "google-cloud-paymentgateway-issuerswitch-v1",
             feature = "google-cloud-privatecatalog-v1beta1",
             feature = "google-cloud-pubsublite-v1",
+            feature = "google-cloud-rapidmigrationassessment-v1",
             feature = "google-cloud-recommendationengine-v1beta1",
             feature = "google-cloud-redis-v1",
             feature = "google-cloud-redis-v1beta1",
@@ -3313,13 +3503,17 @@ pub mod google {
             feature = "google-cloud-tasks-v2",
             feature = "google-cloud-tasks-v2beta2",
             feature = "google-cloud-tasks-v2beta3",
+            feature = "google-cloud-texttospeech-v1",
+            feature = "google-cloud-texttospeech-v1beta1",
             feature = "google-cloud-timeseriesinsights-v1",
             feature = "google-cloud-tpu-v1",
+            feature = "google-cloud-tpu-v2",
             feature = "google-cloud-tpu-v2alpha1",
             feature = "google-cloud-translation-v3",
             feature = "google-cloud-translation-v3beta1",
             feature = "google-cloud-video-livestream-logging-v1",
             feature = "google-cloud-video-livestream-v1",
+            feature = "google-cloud-video-stitcher-v1",
             feature = "google-cloud-video-transcoder-v1",
             feature = "google-cloud-videointelligence-v1",
             feature = "google-cloud-videointelligence-v1beta2",
@@ -3331,12 +3525,16 @@ pub mod google {
             feature = "google-cloud-vision-v1p2beta1",
             feature = "google-cloud-vision-v1p3beta1",
             feature = "google-cloud-vision-v1p4beta1",
+            feature = "google-cloud-visionai-v1",
             feature = "google-cloud-visionai-v1alpha1",
             feature = "google-cloud-vmmigration-v1",
             feature = "google-cloud-vmwareengine-v1",
             feature = "google-cloud-vpcaccess-v1",
+            feature = "google-cloud-webrisk-v1",
             feature = "google-cloud-workflows-v1",
             feature = "google-cloud-workflows-v1beta",
+            feature = "google-cloud-workstations-v1",
+            feature = "google-cloud-workstations-v1beta",
             feature = "google-container-v1",
             feature = "google-container-v1beta1",
             feature = "google-dataflow-v1beta3",
@@ -3345,6 +3543,7 @@ pub mod google {
             feature = "google-devtools-artifactregistry-v1",
             feature = "google-devtools-artifactregistry-v1beta2",
             feature = "google-devtools-cloudbuild-v1",
+            feature = "google-devtools-cloudbuild-v2",
             feature = "google-devtools-cloudtrace-v2",
             feature = "google-devtools-remoteworkers-v1test2",
             feature = "google-firestore-admin-v1",

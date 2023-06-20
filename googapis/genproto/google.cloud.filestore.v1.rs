@@ -10,25 +10,40 @@ pub struct NetworkConfig {
     /// assigned. For this version, only MODE_IPV4 is supported.
     #[prost(enumeration = "network_config::AddressMode", repeated, tag = "3")]
     pub modes: ::prost::alloc::vec::Vec<i32>,
-    /// A /29 CIDR block in one of the
-    /// [internal IP address
+    /// Optional, reserved_ip_range can have one of the following two types of
+    /// values.
+    ///
+    /// * CIDR range value when using DIRECT_PEERING connect mode.
+    /// * [Allocated IP address
+    /// range](<https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address>)
+    /// when using PRIVATE_SERVICE_ACCESS connect mode.
+    ///
+    /// When the name of an allocated IP address range is specified, it must be one
+    /// of the ranges associated with the private service access connection.
+    /// When specified as a direct CIDR value, it must be a /29 CIDR block for
+    /// Basic tier, a /24 CIDR block for High Scale tier, or a /26 CIDR block for
+    /// Enterprise tier in one of the [internal IP address
     /// ranges](<https://www.arin.net/reference/research/statistics/address_filters/>)
     /// that identifies the range of IP addresses reserved for this instance. For
-    /// example, 10.0.0.0/29 or 192.168.0.0/29. The range you specify can't overlap
-    /// with either existing subnets or assigned IP address ranges for other Cloud
-    /// Filestore instances in the selected VPC network.
+    /// example, 10.0.0.0/29, 192.168.0.0/24 or 192.168.0.0/26, respectively. The
+    /// range you specify can't overlap with either existing subnets or assigned IP
+    /// address ranges for other Filestore instances in the selected VPC
+    /// network.
     #[prost(string, tag = "4")]
     pub reserved_ip_range: ::prost::alloc::string::String,
     /// Output only. IPv4 addresses in the format
-    /// IPv4 addresses in the format `{octet1}.{octet2}.{octet3}.{octet4}` or
-    /// IPv6 addresses in the format
+    /// `{octet1}.{octet2}.{octet3}.{octet4}` or IPv6 addresses in the format
     /// `{block1}:{block2}:{block3}:{block4}:{block5}:{block6}:{block7}:{block8}`.
     #[prost(string, repeated, tag = "5")]
     pub ip_addresses: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The network connect mode of the Filestore instance.
+    /// If not provided, the connect mode defaults to DIRECT_PEERING.
+    #[prost(enumeration = "network_config::ConnectMode", tag = "6")]
+    pub connect_mode: i32,
 }
 /// Nested message and enum types in `NetworkConfig`.
 pub mod network_config {
-    /// Internet protocol versions supported by Cloud Filestore.
+    /// Internet protocol versions supported by Filestore.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum AddressMode {
@@ -36,6 +51,19 @@ pub mod network_config {
         Unspecified = 0,
         /// Use the IPv4 internet protocol.
         ModeIpv4 = 1,
+    }
+    /// Available connection modes.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ConnectMode {
+        /// Not set.
+        Unspecified = 0,
+        /// Connect via direct peering to the Filestore service.
+        DirectPeering = 1,
+        /// Connect to your Filestore instance using Private Service
+        /// Access. Private services access provides an IP address range for multiple
+        /// Google Cloud services, including Filestore.
+        PrivateServiceAccess = 2,
     }
 }
 /// File share configuration for the instance.
@@ -45,7 +73,7 @@ pub struct FileShareConfig {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// File share capacity in gigabytes (GB).
-    /// Cloud Filestore defines 1 GB as 1024^3 bytes.
+    /// Filestore defines 1 GB as 1024^3 bytes.
     #[prost(int64, tag = "2")]
     pub capacity_gb: i64,
     /// Nfs Export Options.
@@ -131,7 +159,7 @@ pub mod nfs_export_options {
         RootSquash = 2,
     }
 }
-/// A Cloud Filestore instance.
+/// A Filestore instance.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Instance {
     /// Output only. The resource name of the instance, in the format
@@ -172,6 +200,18 @@ pub struct Instance {
     /// Output only. Reserved for future use.
     #[prost(message, optional, tag = "13")]
     pub satisfies_pzs: ::core::option::Option<bool>,
+    /// KMS key name used for data encryption.
+    #[prost(string, tag = "14")]
+    pub kms_key_name: ::prost::alloc::string::String,
+    /// Output only. Field indicates all the reasons the instance is in "SUSPENDED"
+    /// state.
+    #[prost(
+        enumeration = "instance::SuspensionReason",
+        repeated,
+        packed = "false",
+        tag = "15"
+    )]
+    pub suspension_reasons: ::prost::alloc::vec::Vec<i32>,
 }
 /// Nested message and enum types in `Instance`.
 pub mod instance {
@@ -197,6 +237,13 @@ pub mod instance {
         /// The instance is restoring a backup to an existing file share and may be
         /// unusable during this time.
         Restoring = 7,
+        /// The instance is suspended. You can get further details from
+        /// the `suspension_reasons` field of the `Instance` resource.
+        Suspended = 8,
+        /// The instance is in the process of becoming suspended.
+        Suspending = 9,
+        /// The instance is in the process of becoming active.
+        Resuming = 10,
     }
     /// Available service tiers.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -204,9 +251,9 @@ pub mod instance {
     pub enum Tier {
         /// Not set.
         Unspecified = 0,
-        /// STANDARD tier.
+        /// STANDARD tier. BASIC_HDD is the preferred term for this tier.
         Standard = 1,
-        /// PREMIUM tier.
+        /// PREMIUM tier. BASIC_SSD is the preferred term for this tier.
         Premium = 2,
         /// BASIC instances offer a maximum capacity of 63.9 TB.
         /// BASIC_HDD is an alias for STANDARD Tier, offering economical
@@ -219,14 +266,26 @@ pub mod instance {
         /// HIGH_SCALE instances offer expanded capacity and performance scaling
         /// capabilities.
         HighScaleSsd = 5,
+        /// ENTERPRISE instances offer the features and availability needed for
+        /// mission-critical workloads.
+        Enterprise = 6,
+    }
+    /// SuspensionReason contains the possible reasons for a suspension.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SuspensionReason {
+        /// Not set.
+        Unspecified = 0,
+        /// The KMS key used by the instance is either revoked or denied access to.
+        KmsKeyIssue = 1,
     }
 }
 /// CreateInstanceRequest creates an instance.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateInstanceRequest {
     /// Required. The instance's project and location, in the format
-    /// `projects/{project_id}/locations/{location}`. In Cloud Filestore,
-    /// locations map to GCP zones, for example **us-west1-b**.
+    /// `projects/{project_id}/locations/{location}`. In Filestore,
+    /// locations map to Google Cloud zones, for example **us-west1-b**.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The name of the instance to create.
@@ -261,7 +320,7 @@ pub struct UpdateInstanceRequest {
     #[prost(message, optional, tag = "2")]
     pub instance: ::core::option::Option<Instance>,
 }
-/// RestoreInstanceRequest restores an existing instances's file share from a
+/// RestoreInstanceRequest restores an existing instance's file share from a
 /// backup.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RestoreInstanceRequest {
@@ -269,8 +328,8 @@ pub struct RestoreInstanceRequest {
     /// `projects/{project_number}/locations/{location_id}/instances/{instance_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. Name of the file share in the Cloud Filestore instance that the
-    /// backup is being restored to.
+    /// Required. Name of the file share in the Filestore instance that the backup
+    /// is being restored to.
     #[prost(string, tag = "2")]
     pub file_share: ::prost::alloc::string::String,
     #[prost(oneof = "restore_instance_request::Source", tags = "3")]
@@ -293,14 +352,19 @@ pub struct DeleteInstanceRequest {
     /// `projects/{project_id}/locations/{location}/instances/{instance_id}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// If set to true, all snapshots of the instance will also be deleted.
+    /// (Otherwise, the request will only work if the instance has no snapshots.)
+    #[prost(bool, tag = "2")]
+    pub force: bool,
 }
 /// ListInstancesRequest lists instances.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListInstancesRequest {
     /// Required. The project and location for which to retrieve instance
     /// information, in the format `projects/{project_id}/locations/{location}`. In
-    /// Cloud Filestore, locations map to GCP zones, for example **us-west1-b**. To
-    /// retrieve instance information for all locations, use "-" for the
+    /// Cloud Filestore, locations map to Google Cloud zones, for example
+    /// **us-west1-b**. To retrieve instance information for all locations, use "-"
+    /// for the
     /// `{location}` value.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
@@ -337,7 +401,127 @@ pub struct ListInstancesResponse {
     #[prost(string, repeated, tag = "3")]
     pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
-/// A Cloud Filestore backup.
+/// A Filestore snapshot.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Snapshot {
+    /// Output only. The resource name of the snapshot, in the format
+    /// `projects/{project_id}/locations/{location_id}/instances/{instance_id}/snapshots/{snapshot_id}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// A description of the snapshot with 2048 characters or less.
+    /// Requests with longer descriptions will be rejected.
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. The snapshot state.
+    #[prost(enumeration = "snapshot::State", tag = "3")]
+    pub state: i32,
+    /// Output only. The time when the snapshot was created.
+    #[prost(message, optional, tag = "4")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Resource labels to represent user provided metadata.
+    #[prost(map = "string, string", tag = "5")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. The amount of bytes needed to allocate a full copy of the
+    /// snapshot content
+    #[prost(int64, tag = "6")]
+    pub filesystem_used_bytes: i64,
+}
+/// Nested message and enum types in `Snapshot`.
+pub mod snapshot {
+    /// The snapshot state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// State not set.
+        Unspecified = 0,
+        /// Snapshot is being created.
+        Creating = 1,
+        /// Snapshot is available for use.
+        Ready = 2,
+        /// Snapshot is being deleted.
+        Deleting = 3,
+    }
+}
+/// CreateSnapshotRequest creates a snapshot.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSnapshotRequest {
+    /// Required. The Filestore Instance to create the snapshots of, in the format
+    /// `projects/{project_id}/locations/{location}/instances/{instance_id}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The ID to use for the snapshot.
+    /// The ID must be unique within the specified instance.
+    ///
+    /// This value must start with a lowercase letter followed by up to 62
+    /// lowercase letters, numbers, or hyphens, and cannot end with a hyphen.
+    #[prost(string, tag = "2")]
+    pub snapshot_id: ::prost::alloc::string::String,
+    /// Required. A snapshot resource.
+    #[prost(message, optional, tag = "3")]
+    pub snapshot: ::core::option::Option<Snapshot>,
+}
+/// GetSnapshotRequest gets the state of a snapshot.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSnapshotRequest {
+    /// Required. The snapshot resource name, in the format
+    /// `projects/{project_id}/locations/{location}/instances/{instance_id}/snapshots/{snapshot_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// DeleteSnapshotRequest deletes a snapshot.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteSnapshotRequest {
+    /// Required. The snapshot resource name, in the format
+    /// `projects/{project_id}/locations/{location}/instances/{instance_id}/snapshots/{snapshot_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// UpdateSnapshotRequest updates description and/or labels for a snapshot.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateSnapshotRequest {
+    /// Required. Mask of fields to update. At least one path must be supplied in
+    /// this field.
+    #[prost(message, optional, tag = "1")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Required. A snapshot resource.
+    #[prost(message, optional, tag = "2")]
+    pub snapshot: ::core::option::Option<Snapshot>,
+}
+/// ListSnapshotsRequest lists snapshots.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSnapshotsRequest {
+    /// Required. The instance for which to retrieve snapshot information,
+    /// in the format
+    /// `projects/{project_id}/locations/{location}/instances/{instance_id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of items to return.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// The next_page_token value to use if there are additional
+    /// results to retrieve for this list request.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Sort results. Supported values are "name", "name desc" or "" (unsorted).
+    #[prost(string, tag = "4")]
+    pub order_by: ::prost::alloc::string::String,
+    /// List filter.
+    #[prost(string, tag = "5")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// ListSnapshotsResponse is the result of ListSnapshotsRequest.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSnapshotsResponse {
+    /// A list of snapshots in the project for the specified instance.
+    #[prost(message, repeated, tag = "1")]
+    pub snapshots: ::prost::alloc::vec::Vec<Snapshot>,
+    /// The token you can use to retrieve the next page of results. Not returned
+    /// if there are no more results in the list.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// A Filestore backup.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Backup {
     /// Output only. The resource name of the backup, in the format
@@ -365,17 +549,17 @@ pub struct Backup {
     /// storage, this number is expected to change with backup creation/deletion.
     #[prost(int64, tag = "7")]
     pub storage_bytes: i64,
-    /// The resource name of the source Cloud Filestore instance, in the format
+    /// The resource name of the source Filestore instance, in the format
     /// `projects/{project_number}/locations/{location_id}/instances/{instance_id}`,
     /// used to create this backup.
     #[prost(string, tag = "8")]
     pub source_instance: ::prost::alloc::string::String,
-    /// Name of the file share in the source Cloud Filestore instance that the
+    /// Name of the file share in the source Filestore instance that the
     /// backup is created from.
     #[prost(string, tag = "9")]
     pub source_file_share: ::prost::alloc::string::String,
-    /// Output only. The service tier of the source Cloud Filestore instance that
-    /// this backup is created from.
+    /// Output only. The service tier of the source Filestore instance that this
+    /// backup is created from.
     #[prost(enumeration = "instance::Tier", tag = "10")]
     pub source_instance_tier: i32,
     /// Output only. Amount of bytes that will be downloaded if the backup is
@@ -386,6 +570,9 @@ pub struct Backup {
     /// Output only. Reserved for future use.
     #[prost(message, optional, tag = "12")]
     pub satisfies_pzs: ::core::option::Option<bool>,
+    /// Immutable. KMS key name used for data encryption.
+    #[prost(string, tag = "13")]
+    pub kms_key: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `Backup`.
 pub mod backup {
@@ -410,8 +597,8 @@ pub mod backup {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateBackupRequest {
     /// Required. The backup's project and location, in the format
-    /// `projects/{project_number}/locations/{location}`. In Cloud Filestore,
-    /// backup locations map to GCP regions, for example **us-west1**.
+    /// `projects/{project_number}/locations/{location}`. In Filestore,
+    /// backup locations map to Google Cloud regions, for example **us-west1**.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. A [backup resource]\[google.cloud.filestore.v1.Backup\]
@@ -459,9 +646,9 @@ pub struct GetBackupRequest {
 pub struct ListBackupsRequest {
     /// Required. The project and location for which to retrieve backup
     /// information, in the format
-    /// `projects/{project_number}/locations/{location}`. In Cloud Filestore,
-    /// backup locations map to GCP regions, for example **us-west1**. To retrieve
-    /// backup information for all locations, use "-" for the
+    /// `projects/{project_number}/locations/{location}`. In Filestore, backup
+    /// locations map to Google Cloud regions, for example **us-west1**. To
+    /// retrieve backup information for all locations, use "-" for the
     /// `{location}` value.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
@@ -503,23 +690,23 @@ pub struct ListBackupsResponse {
 pub mod cloud_filestore_manager_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    #[doc = " Configures and manages Cloud Filestore resources."]
+    #[doc = " Configures and manages Filestore resources."]
     #[doc = ""]
-    #[doc = " Cloud Filestore Manager v1."]
+    #[doc = " Filestore Manager v1."]
     #[doc = ""]
-    #[doc = " The `file.googleapis.com` service implements the Cloud Filestore API and"]
+    #[doc = " The `file.googleapis.com` service implements the Filestore API and"]
     #[doc = " defines the following resource model for managing instances:"]
     #[doc = " * The service works with a collection of cloud projects, named: `/projects/*`"]
     #[doc = " * Each project has a collection of available locations, named: `/locations/*`"]
     #[doc = " * Each location has a collection of instances and backups, named:"]
     #[doc = " `/instances/*` and `/backups/*` respectively."]
-    #[doc = " * As such, Cloud Filestore instances are resources of the form:"]
+    #[doc = " * As such, Filestore instances are resources of the form:"]
     #[doc = "   `/projects/{project_number}/locations/{location_id}/instances/{instance_id}`"]
     #[doc = "   and backups are resources of the form:"]
     #[doc = "   `/projects/{project_number}/locations/{location_id}/backup/{backup_id}`"]
     #[doc = ""]
-    #[doc = " Note that location_id must be a GCP `zone` for instances and but to a GCP"]
-    #[doc = " `region` for backups; for example:"]
+    #[doc = " Note that location_id must be a Google Cloud `zone` for instances, but"]
+    #[doc = " a Google Cloud `region` for backups; for example:"]
     #[doc = " * `projects/12345/locations/us-central1-c/instances/my-filestore`"]
     #[doc = " * `projects/12345/locations/us-central1/backups/my-backup`"]
     #[derive(Debug, Clone)]
@@ -686,6 +873,101 @@ pub mod cloud_filestore_manager_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.filestore.v1.CloudFilestoreManager/DeleteInstance",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all snapshots in a project for either a specified location"]
+        #[doc = " or for all locations."]
+        pub async fn list_snapshots(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListSnapshotsRequest>,
+        ) -> Result<tonic::Response<super::ListSnapshotsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.filestore.v1.CloudFilestoreManager/ListSnapshots",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets the details of a specific snapshot."]
+        pub async fn get_snapshot(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSnapshotRequest>,
+        ) -> Result<tonic::Response<super::Snapshot>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.filestore.v1.CloudFilestoreManager/GetSnapshot",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a snapshot."]
+        pub async fn create_snapshot(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSnapshotRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.filestore.v1.CloudFilestoreManager/CreateSnapshot",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a snapshot."]
+        pub async fn delete_snapshot(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteSnapshotRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.filestore.v1.CloudFilestoreManager/DeleteSnapshot",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the settings of a specific snapshot."]
+        pub async fn update_snapshot(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateSnapshotRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.filestore.v1.CloudFilestoreManager/UpdateSnapshot",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

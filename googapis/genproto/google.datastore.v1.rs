@@ -16,7 +16,8 @@
 ///
 /// Foreign partition IDs (in which the project ID does
 /// not match the context project ID ) are discouraged.
-/// Reads and writes of foreign partition IDs may fail if the project is not in an active state.
+/// Reads and writes of foreign partition IDs may fail if the project is not in
+/// an active state.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PartitionId {
     /// The ID of the project to which the entities belong.
@@ -161,8 +162,8 @@ pub mod value {
         #[prost(message, tag = "5")]
         KeyValue(super::Key),
         /// A UTF-8 encoded string value.
-        /// When `exclude_from_indexes` is false (it is indexed) , may have at most 1500 bytes.
-        /// Otherwise, may be set to at most 1,000,000 bytes.
+        /// When `exclude_from_indexes` is false (it is indexed) , may have at most
+        /// 1500 bytes. Otherwise, may be set to at most 1,000,000 bytes.
         #[prost(string, tag = "17")]
         StringValue(::prost::alloc::string::String),
         /// A blob value.
@@ -191,9 +192,7 @@ pub mod value {
 }
 /// A Datastore data object.
 ///
-/// An entity is limited to 1 megabyte when stored. That _roughly_
-/// corresponds to a limit of 1 megabyte for the serialized form of this
-/// message.
+/// Must not exceed 1 MiB - 4 bytes.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Entity {
     /// The entity's key.
@@ -208,8 +207,8 @@ pub struct Entity {
     /// The map's keys are property names.
     /// A property name matching regex `__.*__` is reserved.
     /// A reserved property name is forbidden in certain documented contexts.
-    /// The name must not contain more than 500 characters.
-    /// The name cannot be `""`.
+    /// The map keys, represented as UTF-8, must not exceed 1,500 bytes and cannot
+    /// be empty.
     #[prost(map = "string, message", tag = "3")]
     pub properties: ::std::collections::HashMap<::prost::alloc::string::String, Value>,
 }
@@ -222,17 +221,23 @@ pub struct EntityResult {
     /// The version of the entity, a strictly positive number that monotonically
     /// increases with changes to the entity.
     ///
-    /// This field is set for \[`FULL`][google.datastore.v1.EntityResult.ResultType.FULL\] entity
-    /// results.
+    /// This field is set for
+    /// \[`FULL`][google.datastore.v1.EntityResult.ResultType.FULL\] entity results.
     ///
-    /// For \[missing][google.datastore.v1.LookupResponse.missing\] entities in `LookupResponse`, this
-    /// is the version of the snapshot that was used to look up the entity, and it
-    /// is always set except for eventually consistent reads.
+    /// For \[missing][google.datastore.v1.LookupResponse.missing\] entities in
+    /// `LookupResponse`, this is the version of the snapshot that was used to look
+    /// up the entity, and it is always set except for eventually consistent reads.
     #[prost(int64, tag = "4")]
     pub version: i64,
+    /// The time at which the entity was created.
+    /// This field is set for
+    /// \[`FULL`][google.datastore.v1.EntityResult.ResultType.FULL\] entity results.
+    /// If this entity is missing, this field will not be set.
+    #[prost(message, optional, tag = "6")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// The time at which the entity was last changed.
-    /// This field is set for \[`FULL`][google.datastore.v1.EntityResult.ResultType.FULL\] entity
-    /// results.
+    /// This field is set for
+    /// \[`FULL`][google.datastore.v1.EntityResult.ResultType.FULL\] entity results.
     /// If this entity is missing, this field will not be set.
     #[prost(message, optional, tag = "5")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
@@ -280,6 +285,11 @@ pub struct Query {
     /// The properties to make distinct. The query results will contain the first
     /// result for each distinct combination of values for the given properties
     /// (if empty, all results are returned).
+    ///
+    /// Requires:
+    ///
+    /// * If `order` is specified, the set of distinct on properties must appear
+    /// before the non-distinct on properties in `order`.
     #[prost(message, repeated, tag = "6")]
     pub distinct_on: ::prost::alloc::vec::Vec<PropertyReference>,
     /// A starting point for the query results. Query cursors are
@@ -305,10 +315,12 @@ pub struct Query {
     #[prost(message, optional, tag = "12")]
     pub limit: ::core::option::Option<i32>,
 }
-/// Datastore query for running an aggregation over a \[Query][google.datastore.v1.Query\].
+/// Datastore query for running an aggregation over a
+/// \[Query][google.datastore.v1.Query\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AggregationQuery {
-    /// Optional. Series of aggregations to apply over the results of the `nested_query`.
+    /// Optional. Series of aggregations to apply over the results of the
+    /// `nested_query`.
     ///
     /// Requires:
     ///
@@ -321,10 +333,11 @@ pub struct AggregationQuery {
 }
 /// Nested message and enum types in `AggregationQuery`.
 pub mod aggregation_query {
-    /// Defines a aggregation that produces a single result.
+    /// Defines an aggregation that produces a single result.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Aggregation {
-        /// Optional. Optional name of the property to store the result of the aggregation.
+        /// Optional. Optional name of the property to store the result of the
+        /// aggregation.
         ///
         /// If not provided, Datastore will pick a default name following the format
         /// `property_<incremental_id++>`. For example:
@@ -334,7 +347,7 @@ pub mod aggregation_query {
         ///   COUNT_UP_TO(1) AS count_up_to_1,
         ///   COUNT_UP_TO(2),
         ///   COUNT_UP_TO(3) AS count_up_to_3,
-        ///   COUNT_UP_TO(4)
+        ///   COUNT(*)
         /// OVER (
         ///   ...
         /// );
@@ -347,7 +360,7 @@ pub mod aggregation_query {
         ///   COUNT_UP_TO(1) AS count_up_to_1,
         ///   COUNT_UP_TO(2) AS property_1,
         ///   COUNT_UP_TO(3) AS count_up_to_3,
-        ///   COUNT_UP_TO(4) AS property_2
+        ///   COUNT(*) AS property_2
         /// OVER (
         ///   ...
         /// );
@@ -356,7 +369,8 @@ pub mod aggregation_query {
         /// Requires:
         ///
         /// * Must be unique across all aggregation aliases.
-        /// * Conform to [entity property name]\[google.datastore.v1.Entity.properties\] limitations.
+        /// * Conform to [entity property
+        /// name]\[google.datastore.v1.Entity.properties\] limitations.
         #[prost(string, tag = "7")]
         pub alias: ::prost::alloc::string::String,
         /// The type of aggregation to perform, required.
@@ -371,10 +385,11 @@ pub mod aggregation_query {
         /// so it does not require a field reference.
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct Count {
-            /// Optional. Optional constraint on the maximum number of entities to count.
+            /// Optional. Optional constraint on the maximum number of entities to
+            /// count.
             ///
             /// This provides a way to set an upper bound on the number of entities
-            /// to scan, limiting latency and cost.
+            /// to scan, limiting latency, and cost.
             ///
             /// Unspecified is interpreted as no bound.
             ///
@@ -499,6 +514,8 @@ pub mod composite_filter {
         Unspecified = 0,
         /// The results are required to satisfy each of the combined filters.
         And = 1,
+        /// Documents are required to satisfy at least one of the combined filters.
+        Or = 2,
     }
 }
 /// A filter on a specific property.
@@ -567,6 +584,7 @@ pub mod property_filter {
         /// Requires:
         ///
         /// * That `value` is an entity key.
+        /// * No other `HAS_ANCESTOR` is in the same query.
         HasAncestor = 11,
         /// The value of the `property` is not in the given array.
         ///
@@ -703,9 +721,10 @@ pub mod query_result_batch {
 pub struct AggregationResult {
     /// The result of the aggregation functions, ex: `COUNT(*) AS total_entities`.
     ///
-    /// The key is the \[alias][google.datastore.v1.AggregationQuery.Aggregation.alias\]
-    /// assigned to the aggregation function on input and the size of this map
-    /// equals the number of aggregation functions in the query.
+    /// The key is the
+    /// \[alias][google.datastore.v1.AggregationQuery.Aggregation.alias\] assigned to
+    /// the aggregation function on input and the size of this map equals the
+    /// number of aggregation functions in the query.
     #[prost(map = "string, message", tag = "2")]
     pub aggregate_properties: ::std::collections::HashMap<::prost::alloc::string::String, Value>,
 }
@@ -765,6 +784,15 @@ pub struct LookupResponse {
     /// order of the keys in the input.
     #[prost(message, repeated, tag = "3")]
     pub deferred: ::prost::alloc::vec::Vec<Key>,
+    /// The identifier of the transaction that was started as part of this Lookup
+    /// request.
+    ///
+    /// Set only when
+    /// \[ReadOptions.new_transaction][google.datastore.v1.ReadOptions.new_transaction\]
+    /// was set in
+    /// \[LookupRequest.read_options][google.datastore.v1.LookupRequest.read_options\].
+    #[prost(bytes = "vec", tag = "5")]
+    pub transaction: ::prost::alloc::vec::Vec<u8>,
     /// The time at which these entities were read or found missing.
     #[prost(message, optional, tag = "7")]
     pub read_time: ::core::option::Option<::prost_types::Timestamp>,
@@ -807,7 +835,8 @@ pub mod run_query_request {
         GqlQuery(super::GqlQuery),
     }
 }
-/// The response for \[Datastore.RunQuery][google.datastore.v1.Datastore.RunQuery\].
+/// The response for
+/// \[Datastore.RunQuery][google.datastore.v1.Datastore.RunQuery\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RunQueryResponse {
     /// A batch of query results (always present).
@@ -816,8 +845,18 @@ pub struct RunQueryResponse {
     /// The parsed form of the `GqlQuery` from the request, if it was set.
     #[prost(message, optional, tag = "2")]
     pub query: ::core::option::Option<Query>,
+    /// The identifier of the transaction that was started as part of this
+    /// RunQuery request.
+    ///
+    /// Set only when
+    /// \[ReadOptions.new_transaction][google.datastore.v1.ReadOptions.new_transaction\]
+    /// was set in
+    /// \[RunQueryRequest.read_options][google.datastore.v1.RunQueryRequest.read_options\].
+    #[prost(bytes = "vec", tag = "5")]
+    pub transaction: ::prost::alloc::vec::Vec<u8>,
 }
-/// The request for \[Datastore.RunAggregationQuery][google.datastore.v1.Datastore.RunAggregationQuery\].
+/// The request for
+/// \[Datastore.RunAggregationQuery][google.datastore.v1.Datastore.RunAggregationQuery\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RunAggregationQueryRequest {
     /// Required. The ID of the project against which to make the request.
@@ -855,7 +894,8 @@ pub mod run_aggregation_query_request {
         GqlQuery(super::GqlQuery),
     }
 }
-/// The response for \[Datastore.RunAggregationQuery][google.datastore.v1.Datastore.RunAggregationQuery\].
+/// The response for
+/// \[Datastore.RunAggregationQuery][google.datastore.v1.Datastore.RunAggregationQuery\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RunAggregationQueryResponse {
     /// A batch of aggregation results. Always present.
@@ -864,8 +904,18 @@ pub struct RunAggregationQueryResponse {
     /// The parsed form of the `GqlQuery` from the request, if it was set.
     #[prost(message, optional, tag = "2")]
     pub query: ::core::option::Option<AggregationQuery>,
+    /// The identifier of the transaction that was started as part of this
+    /// RunAggregationQuery request.
+    ///
+    /// Set only when
+    /// \[ReadOptions.new_transaction][google.datastore.v1.ReadOptions.new_transaction\]
+    /// was set in
+    /// \[RunAggregationQueryRequest.read_options][google.datastore.v1.RunAggregationQueryRequest.read_options\].
+    #[prost(bytes = "vec", tag = "5")]
+    pub transaction: ::prost::alloc::vec::Vec<u8>,
 }
-/// The request for \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\].
+/// The request for
+/// \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BeginTransactionRequest {
     /// Required. The ID of the project against which to make the request.
@@ -881,7 +931,8 @@ pub struct BeginTransactionRequest {
     #[prost(message, optional, tag = "10")]
     pub transaction_options: ::core::option::Option<TransactionOptions>,
 }
-/// The response for \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\].
+/// The response for
+/// \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BeginTransactionResponse {
     /// The transaction identifier (always present).
@@ -905,8 +956,9 @@ pub struct RollbackRequest {
     #[prost(bytes = "vec", tag = "1")]
     pub transaction: ::prost::alloc::vec::Vec<u8>,
 }
-/// The response for \[Datastore.Rollback][google.datastore.v1.Datastore.Rollback\].
-/// (an empty message).
+/// The response for
+/// \[Datastore.Rollback][google.datastore.v1.Datastore.Rollback\]. (an empty
+/// message).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RollbackResponse {}
 /// The request for \[Datastore.Commit][google.datastore.v1.Datastore.Commit\].
@@ -940,7 +992,7 @@ pub struct CommitRequest {
     #[prost(message, repeated, tag = "6")]
     pub mutations: ::prost::alloc::vec::Vec<Mutation>,
     /// Must be set when mode is `TRANSACTIONAL`.
-    #[prost(oneof = "commit_request::TransactionSelector", tags = "1")]
+    #[prost(oneof = "commit_request::TransactionSelector", tags = "1, 10")]
     pub transaction_selector: ::core::option::Option<commit_request::TransactionSelector>,
 }
 /// Nested message and enum types in `CommitRequest`.
@@ -966,6 +1018,12 @@ pub mod commit_request {
         /// \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\].
         #[prost(bytes, tag = "1")]
         Transaction(::prost::alloc::vec::Vec<u8>),
+        /// Options for beginning a new transaction for this request.
+        /// The transaction is committed when the request completes. If specified,
+        /// \[TransactionOptions.mode][google.datastore.v1.TransactionOptions\] must be
+        /// \[TransactionOptions.ReadWrite][google.datastore.v1.TransactionOptions.ReadWrite\].
+        #[prost(message, tag = "10")]
+        SingleUseTransaction(super::TransactionOptions),
     }
 }
 /// The response for \[Datastore.Commit][google.datastore.v1.Datastore.Commit\].
@@ -983,7 +1041,8 @@ pub struct CommitResponse {
     #[prost(message, optional, tag = "8")]
     pub commit_time: ::core::option::Option<::prost_types::Timestamp>,
 }
-/// The request for \[Datastore.AllocateIds][google.datastore.v1.Datastore.AllocateIds\].
+/// The request for
+/// \[Datastore.AllocateIds][google.datastore.v1.Datastore.AllocateIds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AllocateIdsRequest {
     /// Required. The ID of the project against which to make the request.
@@ -995,12 +1054,13 @@ pub struct AllocateIdsRequest {
     /// database.
     #[prost(string, tag = "9")]
     pub database_id: ::prost::alloc::string::String,
-    /// Required. A list of keys with incomplete key paths for which to allocate IDs.
-    /// No key may be reserved/read-only.
+    /// Required. A list of keys with incomplete key paths for which to allocate
+    /// IDs. No key may be reserved/read-only.
     #[prost(message, repeated, tag = "1")]
     pub keys: ::prost::alloc::vec::Vec<Key>,
 }
-/// The response for \[Datastore.AllocateIds][google.datastore.v1.Datastore.AllocateIds\].
+/// The response for
+/// \[Datastore.AllocateIds][google.datastore.v1.Datastore.AllocateIds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AllocateIdsResponse {
     /// The keys specified in the request (in the same order), each with
@@ -1008,7 +1068,8 @@ pub struct AllocateIdsResponse {
     #[prost(message, repeated, tag = "1")]
     pub keys: ::prost::alloc::vec::Vec<Key>,
 }
-/// The request for \[Datastore.ReserveIds][google.datastore.v1.Datastore.ReserveIds\].
+/// The request for
+/// \[Datastore.ReserveIds][google.datastore.v1.Datastore.ReserveIds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReserveIdsRequest {
     /// Required. The ID of the project against which to make the request.
@@ -1020,12 +1081,13 @@ pub struct ReserveIdsRequest {
     /// database.
     #[prost(string, tag = "9")]
     pub database_id: ::prost::alloc::string::String,
-    /// Required. A list of keys with complete key paths whose numeric IDs should not be
-    /// auto-allocated.
+    /// Required. A list of keys with complete key paths whose numeric IDs should
+    /// not be auto-allocated.
     #[prost(message, repeated, tag = "1")]
     pub keys: ::prost::alloc::vec::Vec<Key>,
 }
-/// The response for \[Datastore.ReserveIds][google.datastore.v1.Datastore.ReserveIds\].
+/// The response for
+/// \[Datastore.ReserveIds][google.datastore.v1.Datastore.ReserveIds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReserveIdsResponse {}
 /// A mutation to apply to an entity.
@@ -1107,6 +1169,9 @@ pub struct MutationResult {
     /// than the version of any possible future entity.
     #[prost(int64, tag = "4")]
     pub version: i64,
+    /// The create time of the entity. This field will not be set after a 'delete'.
+    #[prost(message, optional, tag = "7")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// The update time of the entity on the server after processing the mutation.
     /// If the mutation doesn't change anything on the server, then the timestamp
     /// will be the update timestamp of the current entity. This field will not be
@@ -1131,7 +1196,7 @@ pub struct ReadOptions {
     /// Explicitly setting `read_consistency`=`EVENTUAL` will result in eventually
     /// consistent lookups & queries in both Cloud Datastore & Cloud Firestore in
     /// Datastore mode.
-    #[prost(oneof = "read_options::ConsistencyType", tags = "1, 2, 4")]
+    #[prost(oneof = "read_options::ConsistencyType", tags = "1, 2, 3, 4")]
     pub consistency_type: ::core::option::Option<read_options::ConsistencyType>,
 }
 /// Nested message and enum types in `ReadOptions`.
@@ -1167,6 +1232,15 @@ pub mod read_options {
         /// \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\].
         #[prost(bytes, tag = "2")]
         Transaction(::prost::alloc::vec::Vec<u8>),
+        /// Options for beginning a new transaction for this request.
+        ///
+        /// The new transaction identifier will be returned in the corresponding
+        /// response as either
+        /// \[LookupResponse.transaction][google.datastore.v1.LookupResponse.transaction\]
+        /// or
+        /// \[RunQueryResponse.transaction][google.datastore.v1.RunQueryResponse.transaction\].
+        #[prost(message, tag = "3")]
+        NewTransaction(super::TransactionOptions),
         /// Reads entities as they were at the given time. This may not be older
         /// than 270 seconds.  This value is only supported for Cloud Firestore in
         /// Datastore mode.
@@ -1177,8 +1251,10 @@ pub mod read_options {
 /// Options for beginning a new transaction.
 ///
 /// Transactions can be created explicitly with calls to
-/// \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\] or implicitly by setting
-/// \[ReadOptions.new_transaction][google.datastore.v1.ReadOptions.new_transaction\] in read requests.
+/// \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\]
+/// or implicitly by setting
+/// \[ReadOptions.new_transaction][google.datastore.v1.ReadOptions.new_transaction\]
+/// in read requests.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransactionOptions {
     /// The `mode` of the transaction, indicating whether write operations are

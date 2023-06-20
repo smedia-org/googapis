@@ -1,14 +1,17 @@
-/// Request message for \[CustomColumnService.GetCustomColumn][google.ads.searchads360.v0.services.CustomColumnService.GetCustomColumn\].
+/// Request message for
+/// \[CustomColumnService.GetCustomColumn][google.ads.searchads360.v0.services.CustomColumnService.GetCustomColumn\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetCustomColumnRequest {
     /// Required. The resource name of the custom column to fetch.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[CustomColumnService.ListCustomColumns][google.ads.searchads360.v0.services.CustomColumnService.ListCustomColumns\]
+/// Request message for
+/// \[CustomColumnService.ListCustomColumns][google.ads.searchads360.v0.services.CustomColumnService.ListCustomColumns\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListCustomColumnsRequest {
-    /// Required. The ID of the customer to apply the CustomColumn list operation to.
+    /// Required. The ID of the customer to apply the CustomColumn list operation
+    /// to.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
 }
@@ -105,14 +108,16 @@ pub mod custom_column_service_client {
         }
     }
 }
-/// Request message for \[SearchAds360FieldService.GetSearchAds360Field][google.ads.searchads360.v0.services.SearchAds360FieldService.GetSearchAds360Field\].
+/// Request message for
+/// \[SearchAds360FieldService.GetSearchAds360Field][google.ads.searchads360.v0.services.SearchAds360FieldService.GetSearchAds360Field\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSearchAds360FieldRequest {
     /// Required. The resource name of the field to get.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[SearchAds360FieldService.SearchSearchAds360Fields][google.ads.searchads360.v0.services.SearchAds360FieldService.SearchSearchAds360Fields\].
+/// Request message for
+/// \[SearchAds360FieldService.SearchSearchAds360Fields][google.ads.searchads360.v0.services.SearchAds360FieldService.SearchSearchAds360Fields\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchSearchAds360FieldsRequest {
     /// Required. The query string.
@@ -129,7 +134,8 @@ pub struct SearchSearchAds360FieldsRequest {
     #[prost(int32, tag = "3")]
     pub page_size: i32,
 }
-/// Response message for \[SearchAds360FieldService.SearchSearchAds360Fields][google.ads.searchads360.v0.services.SearchAds360FieldService.SearchSearchAds360Fields\].
+/// Response message for
+/// \[SearchAds360FieldService.SearchSearchAds360Fields][google.ads.searchads360.v0.services.SearchAds360FieldService.SearchSearchAds360Fields\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchSearchAds360FieldsResponse {
     /// The list of fields that matched the query.
@@ -245,7 +251,8 @@ pub mod search_ads360_field_service_client {
         }
     }
 }
-/// Request message for \[SearchAds360Service.Search][google.ads.searchads360.v0.services.SearchAds360Service.Search\].
+/// Request message for
+/// \[SearchAds360Service.Search][google.ads.searchads360.v0.services.SearchAds360Service.Search\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchSearchAds360Request {
     /// Required. The ID of the customer being queried.
@@ -282,7 +289,8 @@ pub struct SearchSearchAds360Request {
     )]
     pub summary_row_setting: i32,
 }
-/// Response message for \[SearchAds360Service.Search][google.ads.searchads360.v0.services.SearchAds360Service.Search\].
+/// Response message for
+/// \[SearchAds360Service.Search][google.ads.searchads360.v0.services.SearchAds360Service.Search\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchSearchAds360Response {
     /// The list of rows that matched the query.
@@ -310,7 +318,8 @@ pub struct SearchSearchAds360Response {
     #[prost(message, repeated, tag = "7")]
     pub custom_column_headers: ::prost::alloc::vec::Vec<CustomColumnHeader>,
 }
-/// Request message for \[SearchAds360Service.SearchStream][google.ads.searchads360.v0.services.SearchAds360Service.SearchStream\].
+/// Request message for
+/// \[SearchAds360Service.SearchStream][google.ads.searchads360.v0.services.SearchAds360Service.SearchStream\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchSearchAds360StreamRequest {
     /// Required. The ID of the customer being queried.
@@ -333,7 +342,8 @@ pub struct SearchSearchAds360StreamRequest {
     )]
     pub summary_row_setting: i32,
 }
-/// Response message for \[SearchAds360Service.SearchStream][google.ads.searchads360.v0.services.SearchAds360Service.SearchStream\].
+/// Response message for
+/// \[SearchAds360Service.SearchStream][google.ads.searchads360.v0.services.SearchAds360Service.SearchStream\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchSearchAds360StreamResponse {
     /// The list of rows that matched the query.
@@ -360,12 +370,30 @@ pub struct SearchAds360Row {
     /// The ad group referenced in the query.
     #[prost(message, optional, tag = "3")]
     pub ad_group: ::core::option::Option<super::resources::AdGroup>,
+    /// The ad referenced in the query.
+    #[prost(message, optional, tag = "16")]
+    pub ad_group_ad: ::core::option::Option<super::resources::AdGroupAd>,
+    /// The ad group ad label referenced in the query.
+    #[prost(message, optional, tag = "120")]
+    pub ad_group_ad_label: ::core::option::Option<super::resources::AdGroupAdLabel>,
+    /// The ad group audience view referenced in the query.
+    #[prost(message, optional, tag = "57")]
+    pub ad_group_audience_view: ::core::option::Option<super::resources::AdGroupAudienceView>,
     /// The bid modifier referenced in the query.
     #[prost(message, optional, tag = "24")]
     pub ad_group_bid_modifier: ::core::option::Option<super::resources::AdGroupBidModifier>,
     /// The criterion referenced in the query.
     #[prost(message, optional, tag = "17")]
     pub ad_group_criterion: ::core::option::Option<super::resources::AdGroupCriterion>,
+    /// The ad group criterion label referenced in the query.
+    #[prost(message, optional, tag = "121")]
+    pub ad_group_criterion_label: ::core::option::Option<super::resources::AdGroupCriterionLabel>,
+    /// The ad group label referenced in the query.
+    #[prost(message, optional, tag = "115")]
+    pub ad_group_label: ::core::option::Option<super::resources::AdGroupLabel>,
+    /// The age range view referenced in the query.
+    #[prost(message, optional, tag = "48")]
+    pub age_range_view: ::core::option::Option<super::resources::AgeRangeView>,
     /// The bidding strategy referenced in the query.
     #[prost(message, optional, tag = "18")]
     pub bidding_strategy: ::core::option::Option<super::resources::BiddingStrategy>,
@@ -375,9 +403,15 @@ pub struct SearchAds360Row {
     /// The campaign referenced in the query.
     #[prost(message, optional, tag = "2")]
     pub campaign: ::core::option::Option<super::resources::Campaign>,
+    /// The campaign audience view referenced in the query.
+    #[prost(message, optional, tag = "69")]
+    pub campaign_audience_view: ::core::option::Option<super::resources::CampaignAudienceView>,
     /// The campaign criterion referenced in the query.
     #[prost(message, optional, tag = "20")]
     pub campaign_criterion: ::core::option::Option<super::resources::CampaignCriterion>,
+    /// The campaign label referenced in the query.
+    #[prost(message, optional, tag = "108")]
+    pub campaign_label: ::core::option::Option<super::resources::CampaignLabel>,
     /// The conversion action referenced in the query.
     #[prost(message, optional, tag = "103")]
     pub conversion_action: ::core::option::Option<super::resources::ConversionAction>,
@@ -390,12 +424,31 @@ pub struct SearchAds360Row {
     /// The CustomerClient referenced in the query.
     #[prost(message, optional, tag = "70")]
     pub customer_client: ::core::option::Option<super::resources::CustomerClient>,
+    /// The dynamic search ads search term view referenced in the query.
+    #[prost(message, optional, tag = "106")]
+    pub dynamic_search_ads_search_term_view:
+        ::core::option::Option<super::resources::DynamicSearchAdsSearchTermView>,
+    /// The gender view referenced in the query.
+    #[prost(message, optional, tag = "40")]
+    pub gender_view: ::core::option::Option<super::resources::GenderView>,
     /// The keyword view referenced in the query.
     #[prost(message, optional, tag = "21")]
     pub keyword_view: ::core::option::Option<super::resources::KeywordView>,
+    /// The label referenced in the query.
+    #[prost(message, optional, tag = "52")]
+    pub label: ::core::option::Option<super::resources::Label>,
+    /// The location view referenced in the query.
+    #[prost(message, optional, tag = "123")]
+    pub location_view: ::core::option::Option<super::resources::LocationView>,
     /// The product group view referenced in the query.
     #[prost(message, optional, tag = "54")]
     pub product_group_view: ::core::option::Option<super::resources::ProductGroupView>,
+    /// The user list referenced in the query.
+    #[prost(message, optional, tag = "38")]
+    pub user_list: ::core::option::Option<super::resources::UserList>,
+    /// The webpage view referenced in the query.
+    #[prost(message, optional, tag = "162")]
+    pub webpage_view: ::core::option::Option<super::resources::WebpageView>,
     /// The metrics.
     #[prost(message, optional, tag = "4")]
     pub metrics: ::core::option::Option<super::common::Metrics>,

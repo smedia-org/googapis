@@ -6,8 +6,10 @@
 /// any other HTTP response code is returned or no response is received, the
 /// task will be retried according to the following:
 ///
-/// * User-specified throttling: [retry configuration]\[google.cloud.tasks.v2.Queue.retry_config\],
-///   [rate limits]\[google.cloud.tasks.v2.Queue.rate_limits\], and the [queue's state]\[google.cloud.tasks.v2.Queue.state\].
+/// * User-specified throttling: [retry
+/// configuration]\[google.cloud.tasks.v2.Queue.retry_config\],
+///   [rate limits]\[google.cloud.tasks.v2.Queue.rate_limits\], and the [queue's
+///   state]\[google.cloud.tasks.v2.Queue.state\].
 ///
 /// * System throttling: To prevent the worker from overloading, Cloud Tasks may
 ///   temporarily reduce the queue's effective rate. User-specified settings
@@ -16,10 +18,11 @@
 ///  System throttling happens because:
 ///
 ///   * Cloud Tasks backs off on all errors. Normally the backoff specified in
-///     [rate limits]\[google.cloud.tasks.v2.Queue.rate_limits\] will be used. But if the worker returns
-///     `429` (Too Many Requests), `503` (Service Unavailable), or the rate of
-///     errors is high, Cloud Tasks will use a higher backoff rate. The retry
-///     specified in the `Retry-After` HTTP response header is considered.
+///     [rate limits]\[google.cloud.tasks.v2.Queue.rate_limits\] will be used. But
+///     if the worker returns `429` (Too Many Requests), `503` (Service
+///     Unavailable), or the rate of errors is high, Cloud Tasks will use a
+///     higher backoff rate. The retry specified in the `Retry-After` HTTP
+///     response header is considered.
 ///
 ///   * To prevent traffic spikes and to smooth sudden increases in traffic,
 ///     dispatches ramp up slowly when the queue is newly created or idle and
@@ -76,14 +79,16 @@ pub struct HttpRequest {
     /// HTTP request body.
     ///
     /// A request body is allowed only if the
-    /// [HTTP method]\[google.cloud.tasks.v2.HttpRequest.http_method\] is POST, PUT, or PATCH. It is an
-    /// error to set body on a task with an incompatible \[HttpMethod][google.cloud.tasks.v2.HttpMethod\].
+    /// [HTTP method]\[google.cloud.tasks.v2.HttpRequest.http_method\] is POST, PUT,
+    /// or PATCH. It is an error to set body on a task with an incompatible
+    /// \[HttpMethod][google.cloud.tasks.v2.HttpMethod\].
     #[prost(bytes = "vec", tag = "4")]
     pub body: ::prost::alloc::vec::Vec<u8>,
     /// The mode for generating an `Authorization` header for HTTP requests.
     ///
-    /// If specified, all `Authorization` headers in the \[HttpRequest.headers][google.cloud.tasks.v2.HttpRequest.headers\]
-    /// field will be overridden.
+    /// If specified, all `Authorization` headers in the
+    /// \[HttpRequest.headers][google.cloud.tasks.v2.HttpRequest.headers\] field will
+    /// be overridden.
     #[prost(oneof = "http_request::AuthorizationHeader", tags = "5, 6")]
     pub authorization_header: ::core::option::Option<http_request::AuthorizationHeader>,
 }
@@ -91,8 +96,9 @@ pub struct HttpRequest {
 pub mod http_request {
     /// The mode for generating an `Authorization` header for HTTP requests.
     ///
-    /// If specified, all `Authorization` headers in the \[HttpRequest.headers][google.cloud.tasks.v2.HttpRequest.headers\]
-    /// field will be overridden.
+    /// If specified, all `Authorization` headers in the
+    /// \[HttpRequest.headers][google.cloud.tasks.v2.HttpRequest.headers\] field will
+    /// be overridden.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum AuthorizationHeader {
         /// If specified, an
@@ -121,7 +127,8 @@ pub mod http_request {
 /// The message defines the HTTP request that is sent to an App Engine app when
 /// the task is dispatched.
 ///
-/// Using \[AppEngineHttpRequest][google.cloud.tasks.v2.AppEngineHttpRequest\] requires
+/// Using \[AppEngineHttpRequest][google.cloud.tasks.v2.AppEngineHttpRequest\]
+/// requires
 /// \[`appengine.applications.get`\](<https://cloud.google.com/appengine/docs/admin-api/access-control>)
 /// Google IAM permission for the project
 /// and the following scope:
@@ -141,8 +148,9 @@ pub mod http_request {
 /// The request to the handler, however, will appear to have used the HTTP
 /// protocol.
 ///
-/// The \[AppEngineRouting][google.cloud.tasks.v2.AppEngineRouting\] used to construct the URL that the task is
-/// delivered to can be set at the queue-level or task-level:
+/// The \[AppEngineRouting][google.cloud.tasks.v2.AppEngineRouting\] used to
+/// construct the URL that the task is delivered to can be set at the queue-level
+/// or task-level:
 ///
 /// * If [app_engine_routing_override is set on the
 ///    queue]\[Queue.app_engine_routing_override\], this value is used for all
@@ -168,14 +176,15 @@ pub mod http_request {
 /// The task attempt has succeeded if the app's request handler returns an HTTP
 /// response code in the range [`200` - `299`]. The task attempt has failed if
 /// the app's handler returns a non-2xx response code or Cloud Tasks does
-/// not receive response before the \[deadline][google.cloud.tasks.v2.Task.dispatch_deadline\]. Failed
-/// tasks will be retried according to the
-/// [retry configuration]\[google.cloud.tasks.v2.Queue.retry_config\]. `503` (Service Unavailable) is
-/// considered an App Engine system error instead of an application error and
-/// will cause Cloud Tasks' traffic congestion control to temporarily throttle
-/// the queue's dispatches. Unlike other types of task targets, a `429` (Too Many
-/// Requests) response from an app handler does not cause traffic congestion
-/// control to throttle the queue.
+/// not receive response before the
+/// \[deadline][google.cloud.tasks.v2.Task.dispatch_deadline\]. Failed tasks will
+/// be retried according to the [retry
+/// configuration]\[google.cloud.tasks.v2.Queue.retry_config\]. `503` (Service
+/// Unavailable) is considered an App Engine system error instead of an
+/// application error and will cause Cloud Tasks' traffic congestion control to
+/// temporarily throttle the queue's dispatches. Unlike other types of task
+/// targets, a `429` (Too Many Requests) response from an app handler does not
+/// cause traffic congestion control to throttle the queue.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AppEngineHttpRequest {
     /// The HTTP method to use for the request. The default is POST.
@@ -222,8 +231,8 @@ pub struct AppEngineHttpRequest {
     ///   `"AppEngine-Google; (+<http://code.google.com/appengine>)"` to the
     ///   modified `User-Agent`.
     ///
-    /// If the task has a \[body][google.cloud.tasks.v2.AppEngineHttpRequest.body\], Cloud
-    /// Tasks sets the following headers:
+    /// If the task has a \[body][google.cloud.tasks.v2.AppEngineHttpRequest.body\],
+    /// Cloud Tasks sets the following headers:
     ///
     /// * `Content-Type`: By default, the `Content-Type` header is set to
     ///   `"application/octet-stream"`. The default can be overridden by explicitly
@@ -247,15 +256,17 @@ pub struct AppEngineHttpRequest {
     /// visible when the task is returned in a Cloud Tasks response.
     ///
     /// Although there is no specific limit for the maximum number of headers or
-    /// the size, there is a limit on the maximum size of the \[Task][google.cloud.tasks.v2.Task\]. For more
-    /// information, see the \[CreateTask][google.cloud.tasks.v2.CloudTasks.CreateTask\] documentation.
+    /// the size, there is a limit on the maximum size of the
+    /// \[Task][google.cloud.tasks.v2.Task\]. For more information, see the
+    /// \[CreateTask][google.cloud.tasks.v2.CloudTasks.CreateTask\] documentation.
     #[prost(map = "string, string", tag = "4")]
     pub headers:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     /// HTTP request body.
     ///
     /// A request body is allowed only if the HTTP method is POST or PUT. It is
-    /// an error to set a body on a task with an incompatible \[HttpMethod][google.cloud.tasks.v2.HttpMethod\].
+    /// an error to set a body on a task with an incompatible
+    /// \[HttpMethod][google.cloud.tasks.v2.HttpMethod\].
     #[prost(bytes = "vec", tag = "5")]
     pub body: ::prost::alloc::vec::Vec<u8>,
 }
@@ -288,16 +299,17 @@ pub struct AppEngineRouting {
     /// service when the task is attempted.
     ///
     /// For some queues or tasks which were created using the App Engine
-    /// Task Queue API, \[host][google.cloud.tasks.v2.AppEngineRouting.host\] is not parsable
-    /// into \[service][google.cloud.tasks.v2.AppEngineRouting.service\],
+    /// Task Queue API, \[host][google.cloud.tasks.v2.AppEngineRouting.host\] is not
+    /// parsable into \[service][google.cloud.tasks.v2.AppEngineRouting.service\],
     /// \[version][google.cloud.tasks.v2.AppEngineRouting.version\], and
-    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\]. For example, some tasks
-    /// which were created using the App Engine SDK use a custom domain
+    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\]. For example,
+    /// some tasks which were created using the App Engine SDK use a custom domain
     /// name; custom domains are not parsed by Cloud Tasks. If
     /// \[host][google.cloud.tasks.v2.AppEngineRouting.host\] is not parsable, then
     /// \[service][google.cloud.tasks.v2.AppEngineRouting.service\],
     /// \[version][google.cloud.tasks.v2.AppEngineRouting.version\], and
-    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\] are the empty string.
+    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\] are the empty
+    /// string.
     #[prost(string, tag = "1")]
     pub service: ::prost::alloc::string::String,
     /// App version.
@@ -306,16 +318,17 @@ pub struct AppEngineRouting {
     /// version when the task is attempted.
     ///
     /// For some queues or tasks which were created using the App Engine
-    /// Task Queue API, \[host][google.cloud.tasks.v2.AppEngineRouting.host\] is not parsable
-    /// into \[service][google.cloud.tasks.v2.AppEngineRouting.service\],
+    /// Task Queue API, \[host][google.cloud.tasks.v2.AppEngineRouting.host\] is not
+    /// parsable into \[service][google.cloud.tasks.v2.AppEngineRouting.service\],
     /// \[version][google.cloud.tasks.v2.AppEngineRouting.version\], and
-    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\]. For example, some tasks
-    /// which were created using the App Engine SDK use a custom domain
+    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\]. For example,
+    /// some tasks which were created using the App Engine SDK use a custom domain
     /// name; custom domains are not parsed by Cloud Tasks. If
     /// \[host][google.cloud.tasks.v2.AppEngineRouting.host\] is not parsable, then
     /// \[service][google.cloud.tasks.v2.AppEngineRouting.service\],
     /// \[version][google.cloud.tasks.v2.AppEngineRouting.version\], and
-    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\] are the empty string.
+    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\] are the empty
+    /// string.
     #[prost(string, tag = "2")]
     pub version: ::prost::alloc::string::String,
     /// App instance.
@@ -337,9 +350,10 @@ pub struct AppEngineRouting {
     ///
     /// The host is constructed from the domain name of the app associated with
     /// the queue's project ID (for example <app-id>.appspot.com), and the
-    /// \[service][google.cloud.tasks.v2.AppEngineRouting.service\], \[version][google.cloud.tasks.v2.AppEngineRouting.version\],
-    /// and \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\]. Tasks which were created using
-    /// the App Engine SDK might have a custom domain name.
+    /// \[service][google.cloud.tasks.v2.AppEngineRouting.service\],
+    /// \[version][google.cloud.tasks.v2.AppEngineRouting.version\], and
+    /// \[instance][google.cloud.tasks.v2.AppEngineRouting.instance\]. Tasks which
+    /// were created using the App Engine SDK might have a custom domain name.
     ///
     /// For more information, see
     /// [How Requests are
@@ -412,8 +426,9 @@ pub enum HttpMethod {
 /// retry options, queue types, and others.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Queue {
-    /// Caller-specified and required in \[CreateQueue][google.cloud.tasks.v2.CloudTasks.CreateQueue\],
-    /// after which it becomes output only.
+    /// Caller-specified and required in
+    /// \[CreateQueue][google.cloud.tasks.v2.CloudTasks.CreateQueue\], after which it
+    /// becomes output only.
     ///
     /// The queue name.
     ///
@@ -434,36 +449,41 @@ pub struct Queue {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Overrides for
-    /// [task-level app_engine_routing]\[google.cloud.tasks.v2.AppEngineHttpRequest.app_engine_routing\].
+    /// [task-level
+    /// app_engine_routing]\[google.cloud.tasks.v2.AppEngineHttpRequest.app_engine_routing\].
     /// These settings apply only to
-    /// [App Engine tasks]\[google.cloud.tasks.v2.AppEngineHttpRequest\] in this queue.
-    /// [Http tasks]\[google.cloud.tasks.v2.HttpRequest\] are not affected.
+    /// [App Engine tasks]\[google.cloud.tasks.v2.AppEngineHttpRequest\] in this
+    /// queue. [Http tasks]\[google.cloud.tasks.v2.HttpRequest\] are not affected.
     ///
     /// If set, `app_engine_routing_override` is used for all
-    /// [App Engine tasks]\[google.cloud.tasks.v2.AppEngineHttpRequest\] in the queue, no matter what the
-    /// setting is for the
-    /// [task-level app_engine_routing]\[google.cloud.tasks.v2.AppEngineHttpRequest.app_engine_routing\].
+    /// [App Engine tasks]\[google.cloud.tasks.v2.AppEngineHttpRequest\] in the
+    /// queue, no matter what the setting is for the [task-level
+    /// app_engine_routing]\[google.cloud.tasks.v2.AppEngineHttpRequest.app_engine_routing\].
     #[prost(message, optional, tag = "2")]
     pub app_engine_routing_override: ::core::option::Option<AppEngineRouting>,
     /// Rate limits for task dispatches.
     ///
-    /// \[rate_limits][google.cloud.tasks.v2.Queue.rate_limits\] and \[retry_config][google.cloud.tasks.v2.Queue.retry_config\] are
-    /// related because they both control task attempts. However they control task
-    /// attempts in different ways:
+    /// \[rate_limits][google.cloud.tasks.v2.Queue.rate_limits\] and
+    /// \[retry_config][google.cloud.tasks.v2.Queue.retry_config\] are related
+    /// because they both control task attempts. However they control task attempts
+    /// in different ways:
     ///
-    /// * \[rate_limits][google.cloud.tasks.v2.Queue.rate_limits\] controls the total rate of
+    /// * \[rate_limits][google.cloud.tasks.v2.Queue.rate_limits\] controls the total
+    /// rate of
     ///   dispatches from a queue (i.e. all traffic dispatched from the
     ///   queue, regardless of whether the dispatch is from a first
     ///   attempt or a retry).
-    /// * \[retry_config][google.cloud.tasks.v2.Queue.retry_config\] controls what happens to
+    /// * \[retry_config][google.cloud.tasks.v2.Queue.retry_config\] controls what
+    /// happens to
     ///   particular a task after its first attempt fails. That is,
-    ///   \[retry_config][google.cloud.tasks.v2.Queue.retry_config\] controls task retries (the
-    ///   second attempt, third attempt, etc).
+    ///   \[retry_config][google.cloud.tasks.v2.Queue.retry_config\] controls task
+    ///   retries (the second attempt, third attempt, etc).
     ///
     /// The queue's actual dispatch rate is the result of:
     ///
     /// * Number of tasks in the queue
-    /// * User-specified throttling: \[rate_limits][google.cloud.tasks.v2.Queue.rate_limits\],
+    /// * User-specified throttling:
+    /// \[rate_limits][google.cloud.tasks.v2.Queue.rate_limits\],
     ///   \[retry_config][google.cloud.tasks.v2.Queue.retry_config\], and the
     ///   [queue's state]\[google.cloud.tasks.v2.Queue.state\].
     /// * System throttling due to `429` (Too Many Requests) or `503` (Service
@@ -489,16 +509,18 @@ pub struct Queue {
     /// \[PauseQueue][google.cloud.tasks.v2.CloudTasks.PauseQueue\],
     /// \[ResumeQueue][google.cloud.tasks.v2.CloudTasks.ResumeQueue\], or uploading
     /// \[queue.yaml/xml\](<https://cloud.google.com/appengine/docs/python/config/queueref>).
-    /// \[UpdateQueue][google.cloud.tasks.v2.CloudTasks.UpdateQueue\] cannot be used to change `state`.
+    /// \[UpdateQueue][google.cloud.tasks.v2.CloudTasks.UpdateQueue\] cannot be used
+    /// to change `state`.
     #[prost(enumeration = "queue::State", tag = "5")]
     pub state: i32,
     /// Output only. The last time this queue was purged.
     ///
-    /// All tasks that were \[created][google.cloud.tasks.v2.Task.create_time\] before this time
-    /// were purged.
+    /// All tasks that were \[created][google.cloud.tasks.v2.Task.create_time\]
+    /// before this time were purged.
     ///
-    /// A queue can be purged using \[PurgeQueue][google.cloud.tasks.v2.CloudTasks.PurgeQueue\], the
-    /// [App Engine Task Queue SDK, or the Cloud
+    /// A queue can be purged using
+    /// \[PurgeQueue][google.cloud.tasks.v2.CloudTasks.PurgeQueue\], the [App Engine
+    /// Task Queue SDK, or the Cloud
     /// Console](<https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/deleting-tasks-and-queues#purging_all_tasks_from_a_queue>).
     ///
     /// Purge time will be truncated to the nearest microsecond. Purge
@@ -554,8 +576,9 @@ pub mod queue {
 /// This message determines the maximum rate that tasks can be dispatched by a
 /// queue, regardless of whether the dispatch is a first task attempt or a retry.
 ///
-/// Note: The debugging command, \[RunTask][google.cloud.tasks.v2.CloudTasks.RunTask\], will run a task
-/// even if the queue has reached its \[RateLimits][google.cloud.tasks.v2.RateLimits\].
+/// Note: The debugging command,
+/// \[RunTask][google.cloud.tasks.v2.CloudTasks.RunTask\], will run a task even if
+/// the queue has reached its \[RateLimits][google.cloud.tasks.v2.RateLimits\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RateLimits {
     /// The maximum rate at which tasks are dispatched from this queue.
@@ -596,9 +619,9 @@ pub struct RateLimits {
     /// `queue.yaml/xml`, `max_burst_size` is equal to
     /// \[bucket_size\](<https://cloud.google.com/appengine/docs/standard/python/config/queueref#bucket_size>).
     /// Since `max_burst_size` is output only, if
-    /// \[UpdateQueue][google.cloud.tasks.v2.CloudTasks.UpdateQueue\] is called on a queue
-    /// created by `queue.yaml/xml`, `max_burst_size` will be reset based
-    /// on the value of
+    /// \[UpdateQueue][google.cloud.tasks.v2.CloudTasks.UpdateQueue\] is called on a
+    /// queue created by `queue.yaml/xml`, `max_burst_size` will be reset based on
+    /// the value of
     /// \[max_dispatches_per_second][google.cloud.tasks.v2.RateLimits.max_dispatches_per_second\],
     /// regardless of whether
     /// \[max_dispatches_per_second][google.cloud.tasks.v2.RateLimits.max_dispatches_per_second\]
@@ -648,9 +671,9 @@ pub struct RetryConfig {
     /// If positive, `max_retry_duration` specifies the time limit for
     /// retrying a failed task, measured from when the task was first
     /// attempted. Once `max_retry_duration` time has passed *and* the
-    /// task has been attempted \[max_attempts][google.cloud.tasks.v2.RetryConfig.max_attempts\]
-    /// times, no further attempts will be made and the task will be
-    /// deleted.
+    /// task has been attempted
+    /// \[max_attempts][google.cloud.tasks.v2.RetryConfig.max_attempts\] times, no
+    /// further attempts will be made and the task will be deleted.
     ///
     /// If zero, then the task age is unlimited.
     ///
@@ -665,11 +688,12 @@ pub struct RetryConfig {
     /// queue.yaml/xml](<https://cloud.google.com/appengine/docs/standard/python/config/queueref#retry_parameters>).
     #[prost(message, optional, tag = "2")]
     pub max_retry_duration: ::core::option::Option<::prost_types::Duration>,
-    /// A task will be \[scheduled][google.cloud.tasks.v2.Task.schedule_time\] for retry between
-    /// \[min_backoff][google.cloud.tasks.v2.RetryConfig.min_backoff\] and
-    /// \[max_backoff][google.cloud.tasks.v2.RetryConfig.max_backoff\] duration after it fails,
-    /// if the queue's \[RetryConfig][google.cloud.tasks.v2.RetryConfig\] specifies that the task should be
-    /// retried.
+    /// A task will be \[scheduled][google.cloud.tasks.v2.Task.schedule_time\] for
+    /// retry between \[min_backoff][google.cloud.tasks.v2.RetryConfig.min_backoff\]
+    /// and \[max_backoff][google.cloud.tasks.v2.RetryConfig.max_backoff\] duration
+    /// after it fails, if the queue's
+    /// \[RetryConfig][google.cloud.tasks.v2.RetryConfig\] specifies that the task
+    /// should be retried.
     ///
     /// If unspecified when the queue is created, Cloud Tasks will pick the
     /// default.
@@ -682,11 +706,12 @@ pub struct RetryConfig {
     /// queue.yaml/xml](<https://cloud.google.com/appengine/docs/standard/python/config/queueref#retry_parameters>).
     #[prost(message, optional, tag = "3")]
     pub min_backoff: ::core::option::Option<::prost_types::Duration>,
-    /// A task will be \[scheduled][google.cloud.tasks.v2.Task.schedule_time\] for retry between
-    /// \[min_backoff][google.cloud.tasks.v2.RetryConfig.min_backoff\] and
-    /// \[max_backoff][google.cloud.tasks.v2.RetryConfig.max_backoff\] duration after it fails,
-    /// if the queue's \[RetryConfig][google.cloud.tasks.v2.RetryConfig\] specifies that the task should be
-    /// retried.
+    /// A task will be \[scheduled][google.cloud.tasks.v2.Task.schedule_time\] for
+    /// retry between \[min_backoff][google.cloud.tasks.v2.RetryConfig.min_backoff\]
+    /// and \[max_backoff][google.cloud.tasks.v2.RetryConfig.max_backoff\] duration
+    /// after it fails, if the queue's
+    /// \[RetryConfig][google.cloud.tasks.v2.RetryConfig\] specifies that the task
+    /// should be retried.
     ///
     /// If unspecified when the queue is created, Cloud Tasks will pick the
     /// default.
@@ -708,15 +733,16 @@ pub struct RetryConfig {
     /// \[max_backoff][google.cloud.tasks.v2.RetryConfig.max_backoff\] up to
     /// \[max_attempts][google.cloud.tasks.v2.RetryConfig.max_attempts\] times.
     ///
-    /// For example, if \[min_backoff][google.cloud.tasks.v2.RetryConfig.min_backoff\] is 10s,
+    /// For example, if
+    /// \[min_backoff][google.cloud.tasks.v2.RetryConfig.min_backoff\] is 10s,
     /// \[max_backoff][google.cloud.tasks.v2.RetryConfig.max_backoff\] is 300s, and
     /// `max_doublings` is 3, then the a task will first be retried in
     /// 10s. The retry interval will double three times, and then
     /// increase linearly by 2^3 * 10s.  Finally, the task will retry at
-    /// intervals of \[max_backoff][google.cloud.tasks.v2.RetryConfig.max_backoff\] until the
-    /// task has been attempted \[max_attempts][google.cloud.tasks.v2.RetryConfig.max_attempts\]
-    /// times. Thus, the requests will retry at 10s, 20s, 40s, 80s, 160s,
-    /// 240s, 300s, 300s, ....
+    /// intervals of \[max_backoff][google.cloud.tasks.v2.RetryConfig.max_backoff\]
+    /// until the task has been attempted
+    /// \[max_attempts][google.cloud.tasks.v2.RetryConfig.max_attempts\] times. Thus,
+    /// the requests will retry at 10s, 20s, 40s, 80s, 160s, 240s, 300s, 300s, ....
     ///
     /// If unspecified when the queue is created, Cloud Tasks will pick the
     /// default.
@@ -742,7 +768,8 @@ pub struct StackdriverLoggingConfig {
 /// A unit of scheduled work.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Task {
-    /// Optionally caller-specified in \[CreateTask][google.cloud.tasks.v2.CloudTasks.CreateTask\].
+    /// Optionally caller-specified in
+    /// \[CreateTask][google.cloud.tasks.v2.CloudTasks.CreateTask\].
     ///
     /// The task name.
     ///
@@ -786,10 +813,12 @@ pub struct Task {
     ///
     /// The default and maximum values depend on the type of request:
     ///
-    /// * For [HTTP tasks]\[google.cloud.tasks.v2.HttpRequest\], the default is 10 minutes. The deadline
+    /// * For [HTTP tasks]\[google.cloud.tasks.v2.HttpRequest\], the default is 10
+    /// minutes. The deadline
     ///   must be in the interval [15 seconds, 30 minutes].
     ///
-    /// * For [App Engine tasks]\[google.cloud.tasks.v2.AppEngineHttpRequest\], 0 indicates that the
+    /// * For [App Engine tasks]\[google.cloud.tasks.v2.AppEngineHttpRequest\], 0
+    /// indicates that the
     ///   request has the default deadline. The default deadline depends on the
     ///   [scaling
     ///   type](<https://cloud.google.com/appengine/docs/standard/go/how-instances-are-managed#instance_scaling>)
@@ -818,15 +847,16 @@ pub struct Task {
     pub response_count: i32,
     /// Output only. The status of the task's first attempt.
     ///
-    /// Only \[dispatch_time][google.cloud.tasks.v2.Attempt.dispatch_time\] will be set.
-    /// The other \[Attempt][google.cloud.tasks.v2.Attempt\] information is not retained by Cloud Tasks.
+    /// Only \[dispatch_time][google.cloud.tasks.v2.Attempt.dispatch_time\] will be
+    /// set. The other \[Attempt][google.cloud.tasks.v2.Attempt\] information is not
+    /// retained by Cloud Tasks.
     #[prost(message, optional, tag = "9")]
     pub first_attempt: ::core::option::Option<Attempt>,
     /// Output only. The status of the task's last attempt.
     #[prost(message, optional, tag = "10")]
     pub last_attempt: ::core::option::Option<Attempt>,
-    /// Output only. The view specifies which subset of the \[Task][google.cloud.tasks.v2.Task\] has
-    /// been returned.
+    /// Output only. The view specifies which subset of the
+    /// \[Task][google.cloud.tasks.v2.Task\] has been returned.
     #[prost(enumeration = "task::View", tag = "11")]
     pub view: i32,
     /// Required. The message to send to the worker.
@@ -851,7 +881,8 @@ pub mod task {
         /// sensitive data.
         ///
         /// This view does not include the
-        /// [body in AppEngineHttpRequest]\[google.cloud.tasks.v2.AppEngineHttpRequest.body\].
+        /// [body in
+        /// AppEngineHttpRequest]\[google.cloud.tasks.v2.AppEngineHttpRequest.body\].
         /// Bodies are desirable to return only when needed, because they
         /// can be large and because of the sensitivity of the data that you
         /// choose to store in it.
@@ -868,12 +899,14 @@ pub mod task {
     pub enum MessageType {
         /// HTTP request that is sent to the App Engine app handler.
         ///
-        /// An App Engine task is a task that has \[AppEngineHttpRequest][google.cloud.tasks.v2.AppEngineHttpRequest\] set.
+        /// An App Engine task is a task that has
+        /// \[AppEngineHttpRequest][google.cloud.tasks.v2.AppEngineHttpRequest\] set.
         #[prost(message, tag = "2")]
         AppEngineHttpRequest(super::AppEngineHttpRequest),
         /// HTTP request that is sent to the worker.
         ///
-        /// An HTTP task is a task that has \[HttpRequest][google.cloud.tasks.v2.HttpRequest\] set.
+        /// An HTTP task is a task that has
+        /// \[HttpRequest][google.cloud.tasks.v2.HttpRequest\] set.
         #[prost(message, tag = "3")]
         HttpRequest(super::HttpRequest),
     }

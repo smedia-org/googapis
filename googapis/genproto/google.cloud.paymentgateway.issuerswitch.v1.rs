@@ -2,10 +2,10 @@
 /// standards.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AccountReference {
-    /// IFSC code of a bank's branch.
+    /// IFSC of the account's bank branch.
     #[prost(string, tag = "1")]
-    pub ifsc_code: ::prost::alloc::string::String,
-    /// Type of account. Examples include SAVINGS, CURRENT, etc.
+    pub ifsc: ::prost::alloc::string::String,
+    /// Output only. Type of account. Examples include SAVINGS, CURRENT, etc.
     #[prost(string, tag = "2")]
     pub account_type: ::prost::alloc::string::String,
     /// Unique number for an account in a bank and branch.
@@ -20,32 +20,95 @@ pub struct SettlementParticipant {
     /// The participant information.
     #[prost(message, optional, tag = "1")]
     pub participant: ::core::option::Option<Participant>,
-    /// Unique identification of an account according to India's UPI standards.
-    #[prost(message, optional, tag = "2")]
-    pub account: ::core::option::Option<AccountReference>,
     /// Information about a merchant who is a participant in the payment. This
     /// field will be specified only if the participant is a merchant.
-    #[prost(message, optional, tag = "3")]
+    #[prost(message, optional, tag = "2")]
     pub merchant_info: ::core::option::Option<MerchantInfo>,
     /// Output only. The mobile number of the participant.
-    #[prost(string, tag = "4")]
+    #[prost(string, tag = "3")]
     pub mobile: ::prost::alloc::string::String,
-    /// Output only. The device id of the participant.
+    /// Output only. Additional details about the payment settlement. Values will
+    /// be populated depending on whether the settlement transaction succeeded or
+    /// failed.
+    #[prost(message, optional, tag = "4")]
+    pub details: ::core::option::Option<settlement_participant::SettlementDetails>,
+}
+/// Nested message and enum types in `SettlementParticipant`.
+pub mod settlement_participant {
+    /// Details about a payment settlement.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SettlementDetails {
+        /// Output only. The id for the settlement in the bank's backend system. In
+        /// UPI, this maps to the approval reference number. This value will be
+        /// present only if this API transaction's state is SUCCEEDED.
+        #[prost(string, tag = "1")]
+        pub backend_settlement_id: ::prost::alloc::string::String,
+        /// Output only. A code indicating additional details about the settlement.
+        /// In UPI, this maps to the response code.
+        #[prost(string, tag = "2")]
+        pub code: ::prost::alloc::string::String,
+        /// Output only. A code indicating additional details about the reversal of a
+        /// settlement. In UPI, this maps to the reversal response code.
+        #[prost(string, tag = "3")]
+        pub reversal_code: ::prost::alloc::string::String,
+        /// Output only. The amount settled as part of this API transaction. If the
+        /// settlement had failed, then this value will be 0.00.
+        #[prost(message, optional, tag = "4")]
+        pub settled_amount:
+            ::core::option::Option<super::super::super::super::super::r#type::Money>,
+    }
+}
+/// A participant's device tags
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeviceDetails {
+    /// The payment application on the device.
+    #[prost(string, tag = "1")]
+    pub payment_app: ::prost::alloc::string::String,
+    /// The capability of the device.
+    #[prost(string, tag = "2")]
+    pub capability: ::prost::alloc::string::String,
+    /// The geo-code of the device.
+    #[prost(message, optional, tag = "3")]
+    pub geo_code: ::core::option::Option<super::super::super::super::r#type::LatLng>,
+    /// The device's ID.
+    #[prost(string, tag = "4")]
+    pub id: ::prost::alloc::string::String,
+    /// The device's IP address.
     #[prost(string, tag = "5")]
-    pub device_id: ::prost::alloc::string::String,
+    pub ip_address: ::prost::alloc::string::String,
+    /// The coarse location of the device.
+    #[prost(string, tag = "6")]
+    pub location: ::prost::alloc::string::String,
+    /// The operating system on the device.
+    #[prost(string, tag = "7")]
+    pub operating_system: ::prost::alloc::string::String,
+    /// The device's telecom provider.
+    #[prost(string, tag = "8")]
+    pub telecom_provider: ::prost::alloc::string::String,
+    /// The type of device.
+    #[prost(string, tag = "9")]
+    pub r#type: ::prost::alloc::string::String,
 }
 /// A participant in a transaction processed by the issuer switch.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Participant {
-    /// The virtual payment address (VPA) of the participant.
+    /// The payment address of the participant. In the UPI system, this will be the
+    /// virtual payment address (VPA) of the participant.
     #[prost(string, tag = "1")]
-    pub virtual_payment_address: ::prost::alloc::string::String,
+    pub payment_address: ::prost::alloc::string::String,
     /// The persona of the participant.
     #[prost(enumeration = "participant::Persona", tag = "2")]
     pub persona: i32,
     /// The name of the participant.
     #[prost(string, tag = "3")]
     pub user: ::prost::alloc::string::String,
+    /// Output only. Unique identification of an account according to India's UPI
+    /// standards.
+    #[prost(message, optional, tag = "4")]
+    pub account: ::core::option::Option<AccountReference>,
+    /// Output only. The device info of the participant.
+    #[prost(message, optional, tag = "5")]
+    pub device_details: ::core::option::Option<DeviceDetails>,
 }
 /// Nested message and enum types in `Participant`.
 pub mod participant {
@@ -222,6 +285,8 @@ pub enum ApiType {
     Voucher = 13,
     /// Voucher confirmation API. Maps to UPI's `VoucherConfirmation` API.
     VoucherConfirmation = 14,
+    /// Activation API. Maps to UPI's `Activation` API.
+    Activation = 15,
 }
 /// The type of a transaction. Every transaction processed by the issuer switch
 /// will be one of these transaction types. Transaction types are associated with
@@ -306,6 +371,12 @@ pub enum TransactionType {
     /// Validate customer transaction type. This is associated with
     /// `VALIDATE_CUSTOMER` API type. Maps to UPI's `ValCust` type.
     ValidateCustomer = 25,
+    /// Activation international transaction type. This is associated with
+    /// 'ACTIVATION' API type. Maps to UPI's `International` type.
+    ActivationInternational = 26,
+    /// Activation UPI services transaction type. This is associated with
+    /// 'ACTIVATION' API type. Maps to UPI's `UPI Services` type.
+    ActivationUpiServices = 27,
 }
 /// XmlApiType specifies the API type of the request or response as specified in
 /// the XML payload.
@@ -380,6 +451,10 @@ pub enum XmlApiType {
     /// Transaction confirmation response API type. Maps to UPI's
     /// `RespTxnConfirmation` API.
     RespTxnConfirmation = 30,
+    /// Activation request API type. Maps to UPI's `ReqActivation` API.
+    ReqActivation = 31,
+    /// Activation response API type. Maps to UPI's `RespActivation` API.
+    RespActivation = 32,
 }
 /// A complaint processed by the issuer switch.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -475,8 +550,8 @@ pub struct ResolveDisputeRequest {
 /// Details of original transaction.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct OriginalTransaction {
-    /// Required. Uniquely identifies the original transaction. This maps to the `Txn.Id`
-    /// value of the original transaction in India's UPI system.
+    /// Required. Uniquely identifies the original transaction. This maps to the
+    /// `Txn.Id` value of the original transaction in India's UPI system.
     #[prost(string, tag = "1")]
     pub transaction_id: ::prost::alloc::string::String,
     /// Required. Retrieval Reference Number (RRN) of the original transaction.
@@ -504,8 +579,8 @@ pub struct CaseDetails {
     /// in URCS system.
     #[prost(string, tag = "4")]
     pub original_settlement_response_code: ::prost::alloc::string::String,
-    /// Required. Set to true if the complaint / dispute belongs to current settlement cycle,
-    /// false otherwise.
+    /// Required. Set to true if the complaint / dispute belongs to current
+    /// settlement cycle, false otherwise.
     #[prost(bool, tag = "5")]
     pub current_cycle: bool,
 }
@@ -549,32 +624,48 @@ pub struct CaseResponse {
     /// complaint request. This maps to `adjTs` in complaint response.
     #[prost(message, optional, tag = "9")]
     pub adjustment_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The result of the transaction.
+    #[prost(enumeration = "case_response::Result", tag = "12")]
+    pub result: i32,
     /// The details of the participant of the original financial transaction.
     #[prost(oneof = "case_response::Participant", tags = "10, 11")]
     pub participant: ::core::option::Option<case_response::Participant>,
 }
 /// Nested message and enum types in `CaseResponse`.
 pub mod case_response {
+    /// The status of the complaint or dispute transaction. This maps to `result`
+    /// in complaint transaction response.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Result {
+        /// Unspecified status.
+        Unspecified = 0,
+        /// The transaction has successfully completed.
+        Success = 1,
+        /// The transaction has failed.
+        Failure = 2,
+    }
     /// The details of the participant of the original financial transaction.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Participant {
         /// The payer in the original financial transaction.
         #[prost(message, tag = "10")]
-        Payer(super::SettlementParticipant),
+        Payer(super::Participant),
         /// The payee in the original financial transaction.
         #[prost(message, tag = "11")]
-        Payee(super::SettlementParticipant),
+        Payee(super::Participant),
     }
 }
 /// The adjusment flag and reason code for raising complaint.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RaiseComplaintAdjustment {
-    /// Required. The adjustment flag in URCS for the complaint transaction. This maps to
-    /// `reqAdjFlag` in complaint request and `respAdjFlag` in complaint response.
+    /// Required. The adjustment flag in URCS for the complaint transaction. This
+    /// maps to `reqAdjFlag` in complaint request and `respAdjFlag` in complaint
+    /// response.
     #[prost(enumeration = "raise_complaint_adjustment::AdjustmentFlag", tag = "1")]
     pub adjustment_flag: i32,
-    /// Required. The adjustment code in URCS for the complaint transaction. This maps to
-    /// `reqAdjCode` in complaint request.
+    /// Required. The adjustment code in URCS for the complaint transaction. This
+    /// maps to `reqAdjCode` in complaint request.
     #[prost(enumeration = "raise_complaint_adjustment::ReasonCode", tag = "2")]
     pub adjustment_code: i32,
 }
@@ -628,15 +719,16 @@ pub mod raise_complaint_adjustment {
 /// The adjusment flag and reason code for resolving the complaint.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ResolveComplaintAdjustment {
-    /// Required. The adjustment flag in URCS for the complaint transaction. This maps to
-    /// `reqAdjFlag` in complaint request and `respAdjFlag` in complaint response.
+    /// Required. The adjustment flag in URCS for the complaint transaction. This
+    /// maps to `reqAdjFlag` in complaint request and `respAdjFlag` in complaint
+    /// response.
     #[prost(
         enumeration = "resolve_complaint_adjustment::AdjustmentFlag",
         tag = "1"
     )]
     pub adjustment_flag: i32,
-    /// Required. The adjustment code in URCS for the complaint transaction. This maps to
-    /// `reqAdjCode` in complaint request.
+    /// Required. The adjustment code in URCS for the complaint transaction. This
+    /// maps to `reqAdjCode` in complaint request.
     #[prost(enumeration = "resolve_complaint_adjustment::ReasonCode", tag = "2")]
     pub adjustment_code: i32,
 }
@@ -717,12 +809,13 @@ pub mod resolve_complaint_adjustment {
 /// The adjusment flag and reason code for raising dispute.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RaiseDisputeAdjustment {
-    /// Required. The adjustment flag in URCS for the complaint transaction. This maps to
-    /// `reqAdjFlag` in dispute request and `respAdjFlag` in dispute response.
+    /// Required. The adjustment flag in URCS for the complaint transaction. This
+    /// maps to `reqAdjFlag` in dispute request and `respAdjFlag` in dispute
+    /// response.
     #[prost(enumeration = "raise_dispute_adjustment::AdjustmentFlag", tag = "1")]
     pub adjustment_flag: i32,
-    /// Required. The adjustment code in URCS for the complaint transaction. This maps to
-    /// `reqAdjCode` in dispute request.
+    /// Required. The adjustment code in URCS for the complaint transaction. This
+    /// maps to `reqAdjCode` in dispute request.
     #[prost(enumeration = "raise_dispute_adjustment::ReasonCode", tag = "2")]
     pub adjustment_code: i32,
 }
@@ -833,12 +926,13 @@ pub mod raise_dispute_adjustment {
 /// The adjusment flag and reason code for resolving the dispute.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ResolveDisputeAdjustment {
-    /// Required. The adjustment flag in URCS for the complaint transaction. This maps to
-    /// `reqAdjFlag` in dispute request and `respAdjFlag` in dispute response.
+    /// Required. The adjustment flag in URCS for the complaint transaction. This
+    /// maps to `reqAdjFlag` in dispute request and `respAdjFlag` in dispute
+    /// response.
     #[prost(enumeration = "resolve_dispute_adjustment::AdjustmentFlag", tag = "1")]
     pub adjustment_flag: i32,
-    /// Required. The adjustment code in URCS for the complaint transaction. This maps to
-    /// `reqAdjCode` in dispute request.
+    /// Required. The adjustment code in URCS for the complaint transaction. This
+    /// maps to `reqAdjCode` in dispute request.
     #[prost(enumeration = "resolve_dispute_adjustment::ReasonCode", tag = "2")]
     pub adjustment_code: i32,
 }
@@ -1128,8 +1222,10 @@ pub mod issuer_switch_resolutions_client {
         #[doc = " Create a complaint. The returned `Operation` type has"]
         #[doc = " the following method-specific fields:"]
         #[doc = ""]
-        #[doc = " - `metadata`: [CreateComplaintMetadata][google.cloud.paymentgateway.issuerswitch.v1.CreateComplaintMetadata]"]
-        #[doc = " - `response`: [Complaint][google.cloud.paymentgateway.issuerswitch.v1.Complaint]"]
+        #[doc = " - `metadata`:"]
+        #[doc = " [CreateComplaintMetadata][google.cloud.paymentgateway.issuerswitch.v1.CreateComplaintMetadata]"]
+        #[doc = " - `response`:"]
+        #[doc = " [Complaint][google.cloud.paymentgateway.issuerswitch.v1.Complaint]"]
         pub async fn create_complaint(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateComplaintRequest>,
@@ -1150,8 +1246,10 @@ pub mod issuer_switch_resolutions_client {
         #[doc = " Resolve a complaint. The returned `Operation` type has"]
         #[doc = " the following method-specific fields:"]
         #[doc = ""]
-        #[doc = " - `metadata`: [ResolveComplaintMetadata][google.cloud.paymentgateway.issuerswitch.v1.ResolveComplaintMetadata]"]
-        #[doc = " - `response`: [Complaint][google.cloud.paymentgateway.issuerswitch.v1.Complaint]"]
+        #[doc = " - `metadata`:"]
+        #[doc = " [ResolveComplaintMetadata][google.cloud.paymentgateway.issuerswitch.v1.ResolveComplaintMetadata]"]
+        #[doc = " - `response`:"]
+        #[doc = " [Complaint][google.cloud.paymentgateway.issuerswitch.v1.Complaint]"]
         pub async fn resolve_complaint(
             &mut self,
             request: impl tonic::IntoRequest<super::ResolveComplaintRequest>,
@@ -1172,8 +1270,10 @@ pub mod issuer_switch_resolutions_client {
         #[doc = " Create a dispute. The returned `Operation` type has"]
         #[doc = " the following method-specific fields:"]
         #[doc = ""]
-        #[doc = " - `metadata`: [CreateDisputeMetadata][google.cloud.paymentgateway.issuerswitch.v1.CreateDisputeMetadata]"]
-        #[doc = " - `response`: [Dispute][google.cloud.paymentgateway.issuerswitch.v1.Dispute]"]
+        #[doc = " - `metadata`:"]
+        #[doc = " [CreateDisputeMetadata][google.cloud.paymentgateway.issuerswitch.v1.CreateDisputeMetadata]"]
+        #[doc = " - `response`:"]
+        #[doc = " [Dispute][google.cloud.paymentgateway.issuerswitch.v1.Dispute]"]
         pub async fn create_dispute(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateDisputeRequest>,
@@ -1194,8 +1294,10 @@ pub mod issuer_switch_resolutions_client {
         #[doc = " Resolve a dispute. The returned `Operation` type has"]
         #[doc = " the following method-specific fields:"]
         #[doc = ""]
-        #[doc = " - `metadata`: [ResolveDisputeMetadata][google.cloud.paymentgateway.issuerswitch.v1.ResolveDisputeMetadata]"]
-        #[doc = " - `response`: [Dispute][google.cloud.paymentgateway.issuerswitch.v1.Dispute]"]
+        #[doc = " - `metadata`:"]
+        #[doc = " [ResolveDisputeMetadata][google.cloud.paymentgateway.issuerswitch.v1.ResolveDisputeMetadata]"]
+        #[doc = " - `response`:"]
+        #[doc = " [Dispute][google.cloud.paymentgateway.issuerswitch.v1.Dispute]"]
         pub async fn resolve_dispute(
             &mut self,
             request: impl tonic::IntoRequest<super::ResolveDisputeRequest>,
@@ -1220,8 +1322,8 @@ pub mod issuer_switch_resolutions_client {
 /// transactions.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransactionInfo {
-    /// Output only. An identifier that is mandatorily present in every transaction processed
-    /// via UPI. This maps to UPI's transaction ID.
+    /// Output only. An identifier that is mandatorily present in every transaction
+    /// processed via UPI. This maps to UPI's transaction ID.
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
     /// Output only. The API type of the transaction.
@@ -1230,38 +1332,119 @@ pub struct TransactionInfo {
     /// Output only. The transaction type.
     #[prost(enumeration = "TransactionType", tag = "3")]
     pub transaction_type: i32,
-    /// Output only. The transaction sub-type.
+    /// Output only. The transaction subtype.
     #[prost(enumeration = "transaction_info::TransactionSubType", tag = "4")]
     pub transaction_sub_type: i32,
     /// Output only. The transaction's state.
     #[prost(enumeration = "transaction_info::State", tag = "5")]
     pub state: i32,
-    /// Output only. Error code of the failed transaction.
-    #[prost(string, tag = "6")]
-    pub error_code: ::prost::alloc::string::String,
-    /// Output only. Error description for the failed transaction.
-    #[prost(string, tag = "7")]
-    pub error_message: ::prost::alloc::string::String,
-    /// Output only. The time at which the transaction resource was created by the
-    /// issuer switch.
+    /// Metadata about the API transaction.
+    #[prost(message, optional, tag = "6")]
+    pub metadata: ::core::option::Option<transaction_info::TransactionMetadata>,
+    /// Output only. Any error details for the current API transaction, if the
+    /// state is `FAILED`.
+    #[prost(message, optional, tag = "7")]
+    pub error_details: ::core::option::Option<transaction_info::TransactionErrorDetails>,
+    /// Output only. Information about the adapter invocation from the issuer
+    /// switch for processing this API transaction.
     #[prost(message, optional, tag = "8")]
-    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. The time at which the transaction resource was last updated by the
-    /// issuer switch.
-    #[prost(message, optional, tag = "9")]
-    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. List of Request IDs (colon separated) used when
-    /// invoking the Bank Adapter APIs for fulfilling a transaction request.
-    #[prost(string, tag = "10")]
-    pub bank_adapter_request_ids: ::prost::alloc::string::String,
-    /// Output only. Error code as per the UPI specification. The issuer switch maps the
-    /// ErrorCode to an appropriate error code that complies with the UPI
-    /// specification.
-    #[prost(string, tag = "11")]
-    pub upi_error_code: ::prost::alloc::string::String,
+    pub adapter_info: ::core::option::Option<transaction_info::AdapterInfo>,
+    /// Risk information as provided by the payments orchestrator.
+    #[prost(message, repeated, tag = "9")]
+    pub risk_info: ::prost::alloc::vec::Vec<transaction_info::TransactionRiskInfo>,
 }
 /// Nested message and enum types in `TransactionInfo`.
 pub mod transaction_info {
+    /// Common metadata about an API transaction.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct TransactionMetadata {
+        /// Output only. The time at which the transaction resource was created by
+        /// the issuer switch.
+        #[prost(message, optional, tag = "1")]
+        pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+        /// Output only. The time at which the transaction resource was last updated
+        /// by the issuer switch.
+        #[prost(message, optional, tag = "2")]
+        pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+        /// Output only. A reference id for the API transaction.
+        #[prost(string, tag = "3")]
+        pub reference_id: ::prost::alloc::string::String,
+        /// Output only. A reference URI to this API transaction.
+        #[prost(string, tag = "4")]
+        pub reference_uri: ::prost::alloc::string::String,
+        /// Output only. A descriptive note about this API transaction.
+        #[prost(string, tag = "5")]
+        pub description: ::prost::alloc::string::String,
+        /// Output only. The initiation mode of this API transaction. In UPI, the
+        /// values are as defined by the UPI API specification.
+        #[prost(string, tag = "6")]
+        pub initiation_mode: ::prost::alloc::string::String,
+        /// Output only. The purpose code of this API transaction. In UPI, the values
+        /// are as defined by the UPI API specification.
+        #[prost(string, tag = "7")]
+        pub purpose_code: ::prost::alloc::string::String,
+        /// Output only. The reference category of this API transaction.
+        #[prost(string, tag = "8")]
+        pub reference_category: ::prost::alloc::string::String,
+    }
+    /// All details about any error in the processing of an API transaction.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct TransactionErrorDetails {
+        /// Output only. Error code of the failed transaction.
+        #[prost(string, tag = "1")]
+        pub error_code: ::prost::alloc::string::String,
+        /// Output only. Error description for the failed transaction.
+        #[prost(string, tag = "2")]
+        pub error_message: ::prost::alloc::string::String,
+        /// Output only. Error code as per the UPI specification. The issuer switch
+        /// maps the ErrorCode to an appropriate error code that complies with the
+        /// UPI specification.
+        #[prost(string, tag = "3")]
+        pub upi_error_code: ::prost::alloc::string::String,
+    }
+    /// Information about an adapter invocation triggered as part of the
+    /// processing of an API transaction.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AdapterInfo {
+        /// Output only. List of adapter request IDs (colon separated) used when
+        /// invoking the Adapter APIs for fulfilling a transaction request.
+        #[prost(string, tag = "1")]
+        pub request_ids: ::prost::alloc::string::String,
+        /// Output only. Response metadata included by the adapter in its response to
+        /// an API invocation from the issuer switch.
+        #[prost(message, optional, tag = "2")]
+        pub response_metadata: ::core::option::Option<adapter_info::ResponseMetadata>,
+    }
+    /// Nested message and enum types in `AdapterInfo`.
+    pub mod adapter_info {
+        /// Metadata about a response that the adapter includes in its response
+        /// to the issuer switch.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct ResponseMetadata {
+            /// A map of name-value pairs.
+            #[prost(map = "string, string", tag = "1")]
+            pub values: ::std::collections::HashMap<
+                ::prost::alloc::string::String,
+                ::prost::alloc::string::String,
+            >,
+        }
+    }
+    /// Information about the transaction's risk evaluation as provided by the
+    /// payments orchestrator.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct TransactionRiskInfo {
+        /// Entity providing the risk score. This could either be the payment service
+        /// provider or the payment orchestrator (UPI, etc).
+        #[prost(string, tag = "1")]
+        pub provider: ::prost::alloc::string::String,
+        /// Type of risk. Examples include `TXNRISK`.
+        #[prost(string, tag = "2")]
+        pub r#type: ::prost::alloc::string::String,
+        /// Numeric value of risk evaluation ranging from 0 (No Risk) to 100 (Maximum
+        /// Risk).
+        #[prost(string, tag = "3")]
+        pub value: ::prost::alloc::string::String,
+    }
     /// Specifies the current state of the transaction.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -1272,25 +1455,28 @@ pub mod transaction_info {
         Succeeded = 1,
         /// The transaction has failed.
         Failed = 2,
+        /// The transaction has timed out.
+        TimedOut = 3,
     }
-    /// The sub-type of a transaction. This value is used only for certain API type
+    /// The subtype of a transaction. This value is used only for certain API type
     /// and transaction type combinations.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum TransactionSubType {
-        /// Unspecified transaction sub-type.
+        /// Unspecified transaction subtype.
         Unspecified = 0,
-        /// Collect sub type. This is used in a `SETTLE_PAYMENT` API type
-        /// transaction, with transaction type as either `CREDIT` or `DEBIT` when the
-        /// payment was initiated by a collect request.
+        /// Collect subtype. This is used in a `SETTLE_PAYMENT` API type
+        /// transaction, with the transaction type as either
+        /// `TRANSACTION_TYPE_CREDIT` or `TRANSACTION_TYPE_DEBIT` when the payment
+        /// was initiated by a collect request.
         Collect = 1,
-        /// Debit sub type. This is used in a `SETTLE_PAYMENT` API type transaction,
-        /// with transaction type as `REVERSAL` when the original payment was a
-        /// debit request.
+        /// Debit subtype. This is used in a `SETTLE_PAYMENT` API type transaction,
+        /// with the transaction type as `TRANSACTION_TYPE_REVERSAL` when the
+        /// original payment was a debit request.
         Debit = 2,
-        /// Pay sub type. This is used in a `SETTLE_PAYMENT` API type transaction,
-        /// with transaction type as either `CREDIT` or `DEBIT` when the payment was
-        /// initiated by a pay request.
+        /// Pay subtype. This is used in a `SETTLE_PAYMENT` API type transaction,
+        /// with the transaction type as either `TRANSACTION_TYPE_CREDIT` or
+        /// `TRANSACTION_TYPE_DEBIT` when the payment was initiated by a pay request.
         Pay = 3,
         /// Beneficiary subtype. This is used in a `COMPLAINT` API type transaction,
         /// when the complaint / dispute request is initiated / received by the
@@ -1300,6 +1486,14 @@ pub mod transaction_info {
         /// when the complaint / dispute request is initiated / received by the
         /// remitter bank.
         Remitter = 5,
+        /// Refund subtype. This is used in a `SETTLE_PAYMENT` API type transaction,
+        /// with the transaction type as `TRANSACTION_TYPE_CREDIT` when the payment
+        /// was initiated in response to a refund.
+        Refund = 6,
+        /// Credit subtype. This is used in a `SETTLE_PAYMENT` API type transaction,
+        /// with the transaction type as `TRANSACTION_TYPE_REVERSAL` when the
+        /// original payment was a credit request.
+        Credit = 7,
     }
 }
 /// A metadata API transaction processed by the issuer switch. This
@@ -1314,9 +1508,9 @@ pub struct MetadataTransaction {
     /// Information about the transaction.
     #[prost(message, optional, tag = "2")]
     pub info: ::core::option::Option<TransactionInfo>,
-    /// Output only. Virtual Payment Address (VPA) which originated the request.
-    #[prost(string, tag = "3")]
-    pub origin_vpa: ::prost::alloc::string::String,
+    /// Output only. The initiator of the metadata transaction.
+    #[prost(message, optional, tag = "3")]
+    pub initiator: ::core::option::Option<Participant>,
 }
 /// A financial API transaction processed by the issuer switch. In UPI, this maps
 /// to the Pay API.
@@ -1330,9 +1524,9 @@ pub struct FinancialTransaction {
     /// Information about the transaction.
     #[prost(message, optional, tag = "2")]
     pub info: ::core::option::Option<TransactionInfo>,
-    /// Output only. A 12 digit numeric code associated with the request. It could contain
-    /// leading 0s. In UPI, this is also known as as the customer reference or the
-    /// UPI transaction ID.
+    /// Output only. A 12 digit numeric code associated with the request. It could
+    /// contain leading 0s. In UPI, this is also known as as the customer reference
+    /// or the UPI transaction ID.
     #[prost(string, tag = "3")]
     pub retrieval_reference_number: ::prost::alloc::string::String,
     /// Output only. The payer in the transaction.
@@ -1344,6 +1538,39 @@ pub struct FinancialTransaction {
     /// Output only. The amount for payment settlement in the transaction.
     #[prost(message, optional, tag = "6")]
     pub amount: ::core::option::Option<super::super::super::super::r#type::Money>,
+    /// A list of rules specified by the payments orchestrator for this API
+    /// transaction.
+    #[prost(message, repeated, tag = "7")]
+    pub payment_rules: ::prost::alloc::vec::Vec<financial_transaction::PaymentRule>,
+}
+/// Nested message and enum types in `FinancialTransaction`.
+pub mod financial_transaction {
+    /// A payment rule as provided by the payments orchestrator.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PaymentRule {
+        /// The rule's name.
+        #[prost(enumeration = "payment_rule::PaymentRuleName", tag = "1")]
+        pub payment_rule: i32,
+        /// The rule's value.
+        #[prost(string, tag = "2")]
+        pub value: ::prost::alloc::string::String,
+    }
+    /// Nested message and enum types in `PaymentRule`.
+    pub mod payment_rule {
+        /// An enum of the possible rule names.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum PaymentRuleName {
+            /// Rule name unspecified.
+            Unspecified = 0,
+            /// The `expire after` rule.
+            ExpireAfter = 1,
+            /// The `min amount` rule.
+            MinAmount = 2,
+        }
+    }
 }
 /// A mandate processed by the issuer switch. In UPI, this maps to the Mandate
 /// API.
@@ -1360,60 +1587,45 @@ pub struct MandateTransaction {
     /// Output only. This maps to Unique Mandate Number (UMN) in UPI specification.
     #[prost(string, tag = "3")]
     pub unique_mandate_number: ::prost::alloc::string::String,
-    /// Output only. The virtual payment address (VPA) of the payer.
-    #[prost(string, tag = "4")]
-    pub payer_vpa: ::prost::alloc::string::String,
-    /// Output only. The virtual payment address (VPA) of the payee.
-    #[prost(string, tag = "5")]
-    pub payee_vpa: ::prost::alloc::string::String,
-    /// Output only. A unique identifier for merchant.
-    #[prost(string, tag = "6")]
-    pub payee_merchant_id: ::prost::alloc::string::String,
-    /// Output only. The mobile number of the payer consisting of total twelve digits where
-    /// first two digits of country code (for eg. 91 for India) and then ten
-    /// digits mobile number. For eg. 911234567890
-    #[prost(string, tag = "7")]
-    pub payer_mobile_number: ::prost::alloc::string::String,
-    /// Output only. The mobile number of the payer consisting of total twelve digits where
-    /// first two digits of country code (for eg. 91 for India) and then ten
-    /// digits mobile number. For eg. 911234567890
-    #[prost(string, tag = "8")]
-    pub payee_mobile_number: ::prost::alloc::string::String,
+    /// Output only. The payer in the transaction.
+    #[prost(message, optional, tag = "4")]
+    pub payer: ::core::option::Option<SettlementParticipant>,
+    /// Output only. The payee in the transaction.
+    #[prost(message, optional, tag = "5")]
+    pub payee: ::core::option::Option<SettlementParticipant>,
     /// Output only. The type of recurrence pattern of the mandate.
-    #[prost(enumeration = "mandate_transaction::RecurrencePatternType", tag = "9")]
+    #[prost(enumeration = "mandate_transaction::RecurrencePatternType", tag = "6")]
     pub recurrence_pattern: i32,
     /// Output only. The type of recurrence rule of the mandate.
-    #[prost(enumeration = "mandate_transaction::RecurrenceRuleType", tag = "10")]
+    #[prost(enumeration = "mandate_transaction::RecurrenceRuleType", tag = "7")]
     pub recurrence_rule_type: i32,
-    /// Output only. The recurrence rule value of the mandate. This is a value from 1 to 31.
-    #[prost(int32, tag = "11")]
+    /// Output only. The recurrence rule value of the mandate. This is a value from
+    /// 1 to 31.
+    #[prost(int32, tag = "8")]
     pub recurrence_rule_value: i32,
     /// Output only. The start date of the mandate.
-    #[prost(message, optional, tag = "12")]
+    #[prost(message, optional, tag = "9")]
     pub start_date: ::core::option::Option<super::super::super::super::r#type::Date>,
     /// Output only. The end date of the mandate.
-    #[prost(message, optional, tag = "13")]
+    #[prost(message, optional, tag = "10")]
     pub end_date: ::core::option::Option<super::super::super::super::r#type::Date>,
     /// Output only. If true, this specifies mandate can be revoked.
-    #[prost(bool, tag = "14")]
+    #[prost(bool, tag = "11")]
     pub revokable: bool,
     /// Output only. The amount of the mandate.
-    #[prost(double, tag = "15")]
+    #[prost(double, tag = "12")]
     pub amount: f64,
     /// Output only. The amount rule type of the mandate.
-    #[prost(enumeration = "mandate_transaction::AmountRuleType", tag = "16")]
+    #[prost(enumeration = "mandate_transaction::AmountRuleType", tag = "13")]
     pub amount_rule: i32,
-    /// Output only. The Block funds reference generated by the bank, this will be available
-    /// only when Recurrence is ONETIME.
-    #[prost(string, tag = "17")]
+    /// Output only. The Block funds reference generated by the bank, this will be
+    /// available only when Recurrence is ONETIME.
+    #[prost(string, tag = "14")]
     pub approval_reference: ::prost::alloc::string::String,
-    /// Output only. If true, this specifies the mandate transaction requested funds to be
-    /// blocked.
-    #[prost(bool, tag = "18")]
+    /// Output only. If true, this specifies the mandate transaction requested
+    /// funds to be blocked.
+    #[prost(bool, tag = "15")]
     pub block_funds: bool,
-    /// Output only.
-    #[prost(message, optional, tag = "19")]
-    pub last_update_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Nested message and enum types in `MandateTransaction`.
 pub mod mandate_transaction {
@@ -1495,10 +1707,12 @@ pub mod complaint_transaction {
     /// Dispute.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Case {
-        /// Output only. Information about the complaint transaction when it is of type complaint.
+        /// Output only. Information about the complaint transaction when it is of
+        /// type complaint.
         #[prost(message, tag = "3")]
         Complaint(super::Complaint),
-        /// Output only. Information about the complaint transaction when it is of type dispute.
+        /// Output only. Information about the complaint transaction when it is of
+        /// type dispute.
         #[prost(message, tag = "4")]
         Dispute(super::Dispute),
     }
@@ -1538,26 +1752,18 @@ pub struct ListMetadataTransactionsRequest {
     /// filtering:
     ///
     ///   * `apiType` - The API type of the metadata transaction. Must be one of
-    ///   \[ApiType][google.cloud.paymentgateway.issuerswitch.v1.ApiType\] values. Allowed comparison operators: `=`.
-    ///   * `transactionType` - The transaction type of the metadata transaction.
-    ///   Must be one of \[TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType\] values. Allowed comparison
-    ///   operators: `=`.
-    ///   * `transactionID` - The UPI transaction ID of the metadata transaction.
+    ///   \[ApiType][google.cloud.paymentgateway.issuerswitch.v1.ApiType\] values.
     ///   Allowed comparison operators: `=`.
-    ///   * `originVPA` - The VPA of the orignitator of a metadata transaction.
+    ///   * `transactionType` - The transaction type of the metadata transaction.
+    ///   Must be one of
+    ///   \[TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType\]
+    ///   values. Allowed comparison operators: `=`.
+    ///   * `transactionID` - The UPI transaction ID of the metadata transaction.
     ///   Allowed comparison operators: `=`.
     ///   * `createTime` - The time at which the transaction was created
     ///   (received) by the issuer switch. The value should be in
     ///   the format `YYYY-MM-DDTHH:MM:SSZ`. Allowed comparison operators: `>`,
     ///   `<`.
-    ///   * `state` - The state of the transaction. Must be one of
-    ///   \[TransactionInfo.State][google.cloud.paymentgateway.issuerswitch.v1.TransactionInfo.State\] values. Allowed comparison operators: `=`.
-    ///   * `errorCode` - Use this filter to list financial transactions which
-    ///   have failed a particular error code. Allowed comparison operators:
-    ///   `=`.
-    ///   * `bankAdapterRequestID` - Request ID used when invoking the Bank
-    ///   Adapter API for fulfilling a transaction request. Allowed comparison
-    ///   operators: `=`.
     ///
     /// You can combine multiple expressions by enclosing each expression in
     /// parentheses. Expressions are combined with AND logic. No other logical
@@ -1607,11 +1813,6 @@ pub struct ListFinancialTransactionsRequest {
     /// The following fields in the `FinancialTransaction` are eligible for
     /// filtering:
     ///
-    ///   * `transactionType` - The transaction type of the financial
-    ///   transaction. Must be one of \[TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType\] values. For financial
-    ///   transactions, only valid transaction types are `TRANSACTION_TYPE_CREDIT`,
-    ///   `TRANSACTION_TYPE_DEBIT` and `TRANSACTION_TYPE_REVERSAL`. Allowed
-    ///   comparison operators: `=`.
     ///   * `transactionID` - The UPI transaction ID of the financial
     ///   transaction. Allowed comparison operators: `=`.
     ///   * `RRN` - The retrieval reference number of the transaction. Allowed
@@ -1624,19 +1825,10 @@ pub struct ListFinancialTransactionsRequest {
     ///      transaction. Allowed comparison operators: `=`.
     ///   * `payeeMobileNumber` - The mobile number of the payee in a financial
     ///      transaction. Allowed comparison operators: `=`.
-    ///   * `payeeMerchantId` - The merchant id of the payee in a financial
-    ///      transaction. Allowed comparison operators: `=`.
     ///   * `createTime` - The time at which the transaction was created
     ///   (received) by the issuer switch. The value should be in
     ///   the format `YYYY-MM-DDTHH:MM:SSZ`. Allowed comparison operators: `>`,
     ///   `<`.
-    ///   * `state` - The state of the transaction. Must be one of
-    ///   \[TransactionInfo.State][google.cloud.paymentgateway.issuerswitch.v1.TransactionInfo.State\] values. Allowed comparison operators: `=`.
-    ///   * `errorCode` - Use this filter to list financial transactions which
-    ///   have failed a particular error code. Allowed comparison operators: `=`.
-    ///   * `bankAdapterRequestID` - Request ID used when invoking the Bank
-    ///   Adapter API for fulfilling a transaction request. Allowed comparison
-    ///   operators: `=`.
     ///
     /// You can combine multiple expressions by enclosing each expression in
     /// parentheses. Expressions are combined with AND logic. No other logical
@@ -1644,12 +1836,11 @@ pub struct ListFinancialTransactionsRequest {
     ///
     /// Here are a few examples:
     ///
-    ///   * `transactionType = CREDIT` - The transaction type is _CREDIT_.
-    ///   * `state = SUCCEEDED` - The transaction's state is _SUCCEEDED_.
-    ///   * `payerVpa = example@okbank` - The VPA of the payer is the string
-    ///   _example@okbank_.
-    ///   * `(transactionType = DEBIT) AND (createTime < "2021-08-15T14:50:00Z")`
-    ///   - The transaction type is _DEBIT_ and the transaction was received
+    ///   * `rrn = 123456789123` - The RRN is _123456789123_.
+    ///   * `payerVpa = example@goog` - The VPA of the payer is the string
+    ///   _example@goog_.
+    ///   * `(payeeVpa = example@goog) AND (createTime < "2021-08-15T14:50:00Z")`
+    ///   - The VPA of the payee is _example@goog_ and the transaction was received
     ///   before _2021-08-15 14:50:00 UTC_.
     ///   * `createTime > "2021-08-15T14:50:00Z" AND createTime <
     ///   "2021-08-16T14:50:00Z"` - The transaction was received between
@@ -1696,39 +1887,15 @@ pub struct ListMandateTransactionsRequest {
     ///   * `transactionID` - The transaction ID of the mandate transaction.
     ///   Allowed comparison operators: `=`.
     ///   * `transactionType` - The transaction type of the mandate
-    ///   transaction. Must be one of \[TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType\] values. For mandate
-    ///   transactions, only valid transaction types are
+    ///   transaction. Must be one of
+    ///   \[TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType\]
+    ///   values. For mandate transactions, only valid transaction types are
     ///   `TRANSACTION_TYPE_CREATE`, `TRANSACTION_TYPE_REVOKE` and
     ///   `TRANSACTION_TYPE_UPDATE`. Allowed comparison operators: `=`.
-    ///   * `payerVPA` - The VPA of the payer in a mandate transaction. Allowed
-    ///   comparison operators: `=`.
-    ///   * `payeeVPA` - The VPA of the payee in a mandate transaction. Allowed
-    ///   comparison operators: `=`.
-    ///   * `payeeMerchantID` - The merchant ID of the payee in a mandate
-    ///   transaction. Allowed comparison operators: `=`.
-    ///   * `payerMobileNumber` - The mobile number of the payer in a mandate
-    ///   transaction. Allowed comparison operators: `=`.
-    ///   * `payeeMobileNumber` - The mobile number of the payee in a mandate
-    ///   transaction. Allowed comparison operators: `=`.
     ///   * `createTime` - The time at which the transaction was created
     ///   (received) by the issuer switch. The value should be in
     ///   the format `YYYY-MM-DDTHH:MM:SSZ`. Allowed comparison
     ///   operators: `>`, `<`.
-    ///   * `state` - The state of the transaction. Must be one of
-    ///   \[TransactionInfo.State][google.cloud.paymentgateway.issuerswitch.v1.TransactionInfo.State\] values. Allowed comparison operators: `=`.
-    ///   * `recurrencePattern` - The recurrence pattern of the mandate. Must be
-    ///   one of \[MandateTransaction.RecurrencePatternType][google.cloud.paymentgateway.issuerswitch.v1.MandateTransaction.RecurrencePatternType\] values. Allowed
-    ///   comparison operators: `=`.
-    ///   * `startDate` - The start date of the mandate. The value should be in
-    ///   the format `YYYY-MM-DD`. Allowed comparison operators: `<` and `>`.
-    ///   * `endDate` - The end date of the mandate. The value should be in
-    ///   the format `YYYY-MM-DD`. Allowed comparison operators: `<` and `>`.
-    ///   * `errorCode` - Use this filter to list mandate transactions which
-    ///   have failed a particular error code. Allowed comparison
-    ///   operators: `=`.
-    ///   * `bankAdapterRequestID` - Request ID used when invoking the Bank
-    ///   Adapter API for fulfilling a transaction request. Allowed comparison
-    ///   operators: `=`.
     /// You can combine multiple expressions by enclosing each expression in
     /// parentheses. Expressions are combined with AND logic. No other logical
     /// operators are supported.
@@ -1788,8 +1955,9 @@ pub struct ListComplaintTransactionsRequest {
     ///   * `transactionID` - The transaction ID of the complaint transaction.
     ///   Allowed comparison operators: `=`.
     ///   * `transactionType` - The transaction type of the complaint
-    ///   transaction. Must be one of \[TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType\] values. For complaint
-    ///   transactions, only valid transaction types are
+    ///   transaction. Must be one of
+    ///   \[TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType\]
+    ///   values. For complaint transactions, only valid transaction types are
     ///  `TRANSACTION_TYPE_CHECK_STATUS`, `TRANSACTION_TYPE_COMPLAINT`,
     ///  `TRANSACTION_TYPE_REVERSAL`, `TRANSACTION_TYPE_DISPUTE`,
     ///  `TRANSACTION_TYPE_REFUND` or `TRANSACTION_TYPE_STATUS_UPDATE`. Allowed
@@ -1802,7 +1970,8 @@ pub struct ListComplaintTransactionsRequest {
     ///   the format `YYYY-MM-DDTHH:MM:SSZ`. Allowed comparison
     ///   operators: `>`, `<`.
     ///   * `state` - The state of the transaction. Must be one of
-    ///   \[TransactionInfo.State][google.cloud.paymentgateway.issuerswitch.v1.TransactionInfo.State\] values. Allowed comparison operators: `=`.
+    ///   \[TransactionInfo.State][google.cloud.paymentgateway.issuerswitch.v1.TransactionInfo.State\]
+    ///   values. Allowed comparison operators: `=`.
     ///   * `errorCode` - Use this filter to list complaint transactions which
     ///   have failed a particular error code. Allowed comparison
     ///   operators: `=`.
@@ -2037,6 +2206,7 @@ pub struct ExportComplaintTransactionsMetadata {
 pub mod issuer_switch_transactions_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
+    #[doc = " Fetch the issuer switch participant."]
     #[doc = " Lists and exports transactions processed by the issuer switch."]
     #[derive(Debug, Clone)]
     pub struct IssuerSwitchTransactionsClient<T> {
@@ -2151,8 +2321,10 @@ pub mod issuer_switch_transactions_client {
         #[doc = " file into a configured target location. The returned `Operation` type has"]
         #[doc = " the following method-specific fields:"]
         #[doc = ""]
-        #[doc = " - `metadata`: [ExportFinancialTransactionsMetadata][google.cloud.paymentgateway.issuerswitch.v1.ExportFinancialTransactionsMetadata]"]
-        #[doc = " - `response`: [ExportFinancialTransactionsResponse][google.cloud.paymentgateway.issuerswitch.v1.ExportFinancialTransactionsResponse]"]
+        #[doc = " - `metadata`:"]
+        #[doc = " [ExportFinancialTransactionsMetadata][google.cloud.paymentgateway.issuerswitch.v1.ExportFinancialTransactionsMetadata]"]
+        #[doc = " - `response`:"]
+        #[doc = " [ExportFinancialTransactionsResponse][google.cloud.paymentgateway.issuerswitch.v1.ExportFinancialTransactionsResponse]"]
         #[doc = ""]
         #[doc = " The exported file will be in the standard CSV format where each row in the"]
         #[doc = " file represents a transaction. The file has the following fields in order:"]
@@ -2172,12 +2344,6 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Max Length** - 7 characters"]
         #[doc = "     * **Description** - Subtype of the transaction. This will be one of"]
         #[doc = "     `COLLECT`, or `PAY`."]
-        #[doc = " 1. `RequestReceivedTimestamp`"]
-        #[doc = "     * **Min Length** - 20 characters"]
-        #[doc = "     * **Max Length** - 20 characters"]
-        #[doc = "     * **Description** - Timestamp (in UTC) indicating when the transaction"]
-        #[doc = "     API request was received by the issuer switch. The format will be as"]
-        #[doc = "     per RFC-3339. Example : 2022-11-22T23:00:05Z"]
         #[doc = " 1. `CreationTime`"]
         #[doc = "     * **Min Length** - 20 characters"]
         #[doc = "     * **Max Length** - 20 characters"]
@@ -2232,7 +2398,7 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Min Length** - 1 characters"]
         #[doc = "     * **Max Length** - 30 characters"]
         #[doc = "     * **Description** - Payee's bank account number."]
-        #[doc = " 1 `PayeeAccountType`"]
+        #[doc = " 1. `PayeeAccountType`"]
         #[doc = "     * **Min Length** - 3 characters"]
         #[doc = "     * **Max Length** - 10 characters"]
         #[doc = "     * **Description** - Payee's bank account type. This will be one of"]
@@ -2260,11 +2426,11 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     The currency codes are defined in ISO 4217."]
         #[doc = " 1. `Amount`"]
         #[doc = "     * **Description** - Amount involved in the transaction."]
-        #[doc = " 1. `BankAdapterRequestIDs`"]
+        #[doc = " 1. `AdapterRequestIDs`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 2,000 characters"]
-        #[doc = "     * **Description** - List of Request IDs (colon separated) used when"]
-        #[doc = "     invoking the Bank Adapter APIs for fulfilling a transaction request."]
+        #[doc = "     * **Description** - List of adapter request IDs (colon separated) used"]
+        #[doc = "     when invoking the Adapter APIs for fulfilling a transaction request."]
         #[doc = " 1. `ErrorCode`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 255 characters"]
@@ -2279,6 +2445,95 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Description** - Error code as per the UPI specification. The issuer"]
         #[doc = "     switch maps the ErrorCode to an appropriate error code that complies"]
         #[doc = "     with the UPI specification."]
+        #[doc = " 1. `PayerDeviceInfoTypeAppName`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 20 characters"]
+        #[doc = "     * **Description** - Payment application name on the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeCapability`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Capability of the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeGeoCode`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 15 characters"]
+        #[doc = "     * **Description** - Geo code of the payer's device. This will include"]
+        #[doc = "     floating point values for latitude and longitude (separated by colon)."]
+        #[doc = " 1. `PayerDeviceInfoTypeID`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 35 characters"]
+        #[doc = "     * **Description** - Device ID of the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeIP`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 39 characters"]
+        #[doc = "     * **Description** - IP address of the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeLocation`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 40 characters"]
+        #[doc = "     * **Description** - Coarse location of the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeOS`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 20 characters"]
+        #[doc = "     * **Description** - Operating system on the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeTelecomProvider`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Telecom provider for the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeDeviceType`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 9 characters"]
+        #[doc = "     * **Description** - Type of the payer's device. This will be one of"]
+        #[doc = "     'MOB', 'INET', 'USDC/USDB', 'POS'."]
+        #[doc = " 1. `PayeeDeviceInfoTypeAppName`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 20 characters"]
+        #[doc = "     * **Description** - Payment application name on the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeCapability`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Capability of the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeGeoCode`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 15 characters"]
+        #[doc = "     * **Description** - Geo code of the payee's device. This will include"]
+        #[doc = "     floating point values for latitude and longitude (separated by colon)."]
+        #[doc = " 1. `PayeeDeviceInfoTypeID`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 35 characters"]
+        #[doc = "     * **Description** - Device ID of the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeIP`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 39 characters"]
+        #[doc = "     * **Description** - IP address of the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeLocation`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 40 characters"]
+        #[doc = "     * **Description** - Coarse location of the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeOS`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 20 characters"]
+        #[doc = "     * **Description** - Operating system on the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeTelecomProvider`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Telecom provider for the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeDeviceType`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 9 characters"]
+        #[doc = "     * **Description** - Type of the payee's device. This will be one of"]
+        #[doc = "     'MOB', 'INET', 'USDC/USDB', 'POS'."]
+        #[doc = " 1. `ReferenceID`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 35 characters"]
+        #[doc = "     * **Description** - Consumer reference number to identify loan number,"]
+        #[doc = "     order id etc."]
+        #[doc = " 1. `ReferenceURI`"]
+        #[doc = "     * **Min Length** - 1 characters"]
+        #[doc = "     * **Max Length** - 35 characters"]
+        #[doc = "     * **Description** - URL for the  transaction."]
+        #[doc = " 1. `ReferenceCategory`"]
+        #[doc = "     * **Min Length** - 2 characters"]
+        #[doc = "     * **Max Length** - 2 characters"]
+        #[doc = "     * **Description** - Reference category."]
         pub async fn export_financial_transactions(
             &mut self,
             request: impl tonic::IntoRequest<super::ExportFinancialTransactionsRequest>,
@@ -2300,8 +2555,10 @@ pub mod issuer_switch_transactions_client {
         #[doc = " file into a configured target location. The returned `Operation` type has"]
         #[doc = " the following method-specific fields:"]
         #[doc = ""]
-        #[doc = " - `metadata`: [ExportMetadataTransactionsMetadata][google.cloud.paymentgateway.issuerswitch.v1.ExportMetadataTransactionsMetadata]"]
-        #[doc = " - `response`: [ExportMetadataTransactionsResponse][google.cloud.paymentgateway.issuerswitch.v1.ExportMetadataTransactionsResponse]"]
+        #[doc = " - `metadata`:"]
+        #[doc = " [ExportMetadataTransactionsMetadata][google.cloud.paymentgateway.issuerswitch.v1.ExportMetadataTransactionsMetadata]"]
+        #[doc = " - `response`:"]
+        #[doc = " [ExportMetadataTransactionsResponse][google.cloud.paymentgateway.issuerswitch.v1.ExportMetadataTransactionsResponse]"]
         #[doc = ""]
         #[doc = " The exported file will be in the standard CSV format where each row in the"]
         #[doc = " file represents a transaction. The file has the following fields in order:"]
@@ -2312,16 +2569,12 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Description** - UPI transaction ID."]
         #[doc = " 1. `APIType`"]
         #[doc = "     * **Description** - The transaction's API type. The value will be of"]
-        #[doc = "     the [ApiType][google.cloud.paymentgateway.issuerswitch.v1.ApiType] enum."]
+        #[doc = "     the [ApiType][google.cloud.paymentgateway.issuerswitch.v1.ApiType]"]
+        #[doc = "     enum."]
         #[doc = " 1. `TransactionType`"]
         #[doc = "     * **Description** - Type of the transaction. The value will be of the"]
-        #[doc = "     [TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType] enum."]
-        #[doc = " 1. `RequestReceivedTimestamp`"]
-        #[doc = "     * **Min Length** - 20 characters"]
-        #[doc = "     * **Max Length** - 20 characters"]
-        #[doc = "     * **Description** - Timestamp (in UTC) indicating when the transaction"]
-        #[doc = "     API request was received by the issuer switch. The format will be as"]
-        #[doc = "     per RFC-3339. Example : 2022-11-22T23:00:05Z"]
+        #[doc = "     [TransactionType][google.cloud.paymentgateway.issuerswitch.v1.TransactionType]"]
+        #[doc = "     enum."]
         #[doc = " 1. `CreationTime`"]
         #[doc = "     * **Min Length** - 20 characters"]
         #[doc = "     * **Max Length** - 20 characters"]
@@ -2338,11 +2591,11 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Max Length** - 255 characters"]
         #[doc = "     * **Description** - Virtual Payment Address (VPA) of the originator of"]
         #[doc = "     the transaction."]
-        #[doc = " 1. `BankAdapterRequestIDs`"]
+        #[doc = " 1. `AdapterRequestIDs`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 2,000 characters"]
-        #[doc = "     * **Description** - List of Request IDs (colon separated) used when"]
-        #[doc = "     invoking the Bank Adapter APIs for fulfilling a transaction request."]
+        #[doc = "     * **Description** - List of adapter request IDs (colon separated) used"]
+        #[doc = "     when invoking the Adapter APIs for fulfilling a transaction request."]
         #[doc = " 1. `ErrorCode`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 255 characters"]
@@ -2378,8 +2631,10 @@ pub mod issuer_switch_transactions_client {
         #[doc = " file into a configured target location. The returned `Operation` type has"]
         #[doc = " the following method-specific fields:"]
         #[doc = ""]
-        #[doc = " - `metadata`: [ExportMandateTransactionsMetadata][google.cloud.paymentgateway.issuerswitch.v1.ExportMandateTransactionsMetadata]"]
-        #[doc = " - `response`: [ExportMandateTransactionsResponse][google.cloud.paymentgateway.issuerswitch.v1.ExportMandateTransactionsResponse]"]
+        #[doc = " - `metadata`:"]
+        #[doc = " [ExportMandateTransactionsMetadata][google.cloud.paymentgateway.issuerswitch.v1.ExportMandateTransactionsMetadata]"]
+        #[doc = " - `response`:"]
+        #[doc = " [ExportMandateTransactionsResponse][google.cloud.paymentgateway.issuerswitch.v1.ExportMandateTransactionsResponse]"]
         #[doc = ""]
         #[doc = " The exported file will be in the standard CSV format where each row in the"]
         #[doc = " file represents a transaction. The file has the following fields in order:"]
@@ -2396,14 +2651,9 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Min Length** - 23 characters"]
         #[doc = "     * **Max Length** - 23 characters"]
         #[doc = "     * **Description** - Type of the transaction. This will be one of"]
-        #[doc = "     `TRANSACTION_TYPE_CREATE`, `TRANSACTION_TYPE_REVOKE` or"]
-        #[doc = "     `TRANSACTION_TYPE_UPDATE`."]
-        #[doc = " 1. `RequestReceivedTimestamp`"]
-        #[doc = "     * **Min Length** - 20 characters"]
-        #[doc = "     * **Max Length** - 20 characters"]
-        #[doc = "     * **Description** - Timestamp (in UTC) indicating when the mandate"]
-        #[doc = "     API request was received by the issuer switch. The format will be as"]
-        #[doc = "     per RFC-3339. Example : 2022-11-22T23:00:05Z"]
+        #[doc = "     `TRANSACTION_TYPE_CREATE`, `TRANSACTION_TYPE_REVOKE`,"]
+        #[doc = "     `TRANSACTION_TYPE_UPDATE`, `TRANSACTION_TYPE_PAUSE` or"]
+        #[doc = "     `TRANSACTION_TYPE_UNPAUSE`."]
         #[doc = " 1. `CreationTime`"]
         #[doc = "     * **Min Length** - 20 characters"]
         #[doc = "     * **Max Length** - 20 characters"]
@@ -2423,6 +2673,20 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Min Length** - 12 characters"]
         #[doc = "     * **Max Length** - 12 characters"]
         #[doc = "     * **Description** - Mobile number of the payer."]
+        #[doc = " 1. `PayerIFSC`"]
+        #[doc = "     * **Min Length** - 11 characters"]
+        #[doc = "     * **Max Length** - 11 characters"]
+        #[doc = "     * **Description** - IFSC of the payer's bank account."]
+        #[doc = " 1. `PayerAccountNumber`"]
+        #[doc = "     * **Min Length** - 1 characters"]
+        #[doc = "     * **Max Length** - 30 characters"]
+        #[doc = "     * **Description** - Payer's bank account number."]
+        #[doc = " 1. `PayerAccountType`"]
+        #[doc = "     * **Min Length** - 3 characters"]
+        #[doc = "     * **Max Length** - 7 characters"]
+        #[doc = "     * **Description** - Payer's bank account type. This will be one of"]
+        #[doc = "     `SAVINGS`, `DEFAULT`, `CURRENT`, `NRE`, `NRO`, `PPIWALLET`,"]
+        #[doc = "     `BANKWALLET`, `CREDIT`, `SOD`, or `UOD`."]
         #[doc = " 1. `PayeeVPA`"]
         #[doc = "     * **Min Length** - 3 characters"]
         #[doc = "     * **Max Length** - 255 characters"]
@@ -2431,19 +2695,47 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Min Length** - 12 characters"]
         #[doc = "     * **Max Length** - 12 characters"]
         #[doc = "     * **Description** - Mobile number of the payee."]
+        #[doc = " 1. `PayeeIFSC`"]
+        #[doc = "     * **Min Length** - 11 characters"]
+        #[doc = "     * **Max Length** - 11 characters"]
+        #[doc = "     * **Description** - IFSC of the payee's bank account."]
+        #[doc = " 1. `PayeeAccountNumber`"]
+        #[doc = "     * **Min Length** - 1 characters"]
+        #[doc = "     * **Max Length** - 30 characters"]
+        #[doc = "     * **Description** - Payee's bank account number."]
+        #[doc = " 1. `PayeeAccountType`"]
+        #[doc = "     * **Min Length** - 3 characters"]
+        #[doc = "     * **Max Length** - 10 characters"]
+        #[doc = "     * **Description** - Payee's bank account type. This will be one of"]
+        #[doc = "     `SAVINGS`, `DEFAULT`, `CURRENT`, `NRE`, `NRO`, `PPIWALLET`,"]
+        #[doc = "     `BANKWALLET`, `CREDIT`, `SOD`, or `UOD`."]
         #[doc = " 1. `PayeeMerchantID`"]
         #[doc = "     * **Min Length** - 1 characters"]
         #[doc = "     * **Max Length** - 30 characters"]
         #[doc = "     * **Description** - Payee's merchant ID, only if the payee is a"]
         #[doc = "     merchant"]
+        #[doc = " 1. `PayeeMerchantName`"]
+        #[doc = "     * **Min Length** - 1 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Payee's merchant name, only if the payee is a"]
+        #[doc = "     merchant."]
+        #[doc = " 1. `PayeeMCC`"]
+        #[doc = "     * **Min Length** - 4 characters"]
+        #[doc = "     * **Max Length** - 4 characters"]
+        #[doc = "     * **Description** - Payee's Merchant Category Code (MCC), only if the"]
+        #[doc = "     payee is a merchant."]
         #[doc = " 1. `Amount`"]
         #[doc = "     * **Description** - Amount specified in the mandate."]
         #[doc = " 1. `RecurrencePattern`"]
         #[doc = "     * **Description** - Reccurence pattern of the mandate. The value will"]
-        #[doc = "     be of the [MandateTransaction.RecurrencePatternType][google.cloud.paymentgateway.issuerswitch.v1.MandateTransaction.RecurrencePatternType] enum."]
+        #[doc = "     be of the"]
+        #[doc = "     [MandateTransaction.RecurrencePatternType][google.cloud.paymentgateway.issuerswitch.v1.MandateTransaction.RecurrencePatternType]"]
+        #[doc = "     enum."]
         #[doc = " 1. `RecurrenceRuleType`"]
         #[doc = "     * **Description** - Reccurrence rule type of the mandate. The value"]
-        #[doc = "     will be of the [MandateTransaction.RecurrenceRuleType][google.cloud.paymentgateway.issuerswitch.v1.MandateTransaction.RecurrenceRuleType] enum."]
+        #[doc = "     will be of the"]
+        #[doc = "     [MandateTransaction.RecurrenceRuleType][google.cloud.paymentgateway.issuerswitch.v1.MandateTransaction.RecurrenceRuleType]"]
+        #[doc = "     enum."]
         #[doc = " 1. `RecurrenceRuleValue`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 2 characters"]
@@ -2457,15 +2749,17 @@ pub mod issuer_switch_transactions_client {
         #[doc = " 1. `StartDate`"]
         #[doc = "     * **Min Length** - 10 characters"]
         #[doc = "     * **Max Length** - 10 characters"]
-        #[doc = "     * **Description** - The start date of the mandate in `YYYY-MM-DD`"]
+        #[doc = "     * **Description** - The start date of the mandate in `DD-MM-YYYY`"]
         #[doc = "     format."]
         #[doc = " 1. `EndDate`"]
         #[doc = "     * **Min Length** - 10 characters"]
         #[doc = "     * **Max Length** - 10 characters"]
-        #[doc = "     * **Description** - The end date of the mandate in `YYYY-MM-DD` format."]
+        #[doc = "     * **Description** - The end date of the mandate in `DD-MM-YYYY` format."]
         #[doc = " 1. `AmountRuleType`"]
         #[doc = "     * **Description** - The amount rule of the mandate. The value will be"]
-        #[doc = "     of the [MandateTransaction.AmountRuleType][google.cloud.paymentgateway.issuerswitch.v1.MandateTransaction.AmountRuleType] enum."]
+        #[doc = "     of the"]
+        #[doc = "     [MandateTransaction.AmountRuleType][google.cloud.paymentgateway.issuerswitch.v1.MandateTransaction.AmountRuleType]"]
+        #[doc = "     enum."]
         #[doc = " 1. `ApprovalReference`"]
         #[doc = "     * **Min Length** - 6 characters"]
         #[doc = "     * **Max Length** - 9 characters"]
@@ -2483,11 +2777,11 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Description** - Timestamp (in UTC) indicating when was the last"]
         #[doc = "     modification made to the mandate. The format will be as per RFC-3339."]
         #[doc = "     Example : 2022-11-22T23:00:05Z"]
-        #[doc = " 1. `BankAdapterRequestIDs`"]
+        #[doc = " 1. `AdapterRequestIDs`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 2,000 characters"]
-        #[doc = "     * **Description** - List of Request IDs (colon separated) used when"]
-        #[doc = "     invoking the Bank Adapter APIs for fulfilling a transaction request."]
+        #[doc = "     * **Description** - List of adapter request IDs (colon separated) used"]
+        #[doc = "     when invoking the Adapter APIs for fulfilling a transaction request."]
         #[doc = " 1. `ErrorCode`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 255 characters"]
@@ -2502,6 +2796,95 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Description** - Error code as per the UPI specification. The issuer"]
         #[doc = "     switch maps the ErrorCode to an appropriate error code that complies"]
         #[doc = "     with the UPI specification."]
+        #[doc = " 1. `PayerDeviceInfoTypeAppName`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 20 characters"]
+        #[doc = "     * **Description** - Payment application name on the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeCapability`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Capability of the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeGeoCode`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 15 characters"]
+        #[doc = "     * **Description** - Geo code of the payer's device. This will include"]
+        #[doc = "     floating point values for latitude and longitude (separated by colon)."]
+        #[doc = " 1. `PayerDeviceInfoTypeID`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 35 characters"]
+        #[doc = "     * **Description** - Device ID of the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeIP`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 39 characters"]
+        #[doc = "     * **Description** - IP address of the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeLocation`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 40 characters"]
+        #[doc = "     * **Description** - Coarse location of the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeOS`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 20 characters"]
+        #[doc = "     * **Description** - Operating system on the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeTelecomProvider`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Telecom provider for the payer's device."]
+        #[doc = " 1. `PayerDeviceInfoTypeDeviceType`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 9 characters"]
+        #[doc = "     * **Description** - Type of the payer's device. This will be one of"]
+        #[doc = "     'MOB', 'INET', 'USDC/USDB', 'POS'."]
+        #[doc = " 1. `PayeeDeviceInfoTypeAppName`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 20 characters"]
+        #[doc = "     * **Description** - Payment application name on the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeCapability`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Capability of the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeGeoCode`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 15 characters"]
+        #[doc = "     * **Description** - Geo code of the payee's device. This will include"]
+        #[doc = "     floating point values for latitude and longitude (separated by colon)."]
+        #[doc = " 1. `PayeeDeviceInfoTypeID`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 35 characters"]
+        #[doc = "     * **Description** - Device ID of the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeIP`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 39 characters"]
+        #[doc = "     * **Description** - IP address of the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeLocation`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 40 characters"]
+        #[doc = "     * **Description** - Coarse location of the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeOS`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 20 characters"]
+        #[doc = "     * **Description** - Operating system on the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeTelecomProvider`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 99 characters"]
+        #[doc = "     * **Description** - Telecom provider for the payee's device."]
+        #[doc = " 1. `PayeeDeviceInfoTypeDeviceType`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 9 characters"]
+        #[doc = "     * **Description** - Type of the payee's device. This will be one of"]
+        #[doc = "     `MOB`, `INET`, `USDC/USDB`, `POS`."]
+        #[doc = " 1. `ReferenceID`"]
+        #[doc = "     * **Min Length** - 0 characters"]
+        #[doc = "     * **Max Length** - 35 characters"]
+        #[doc = "     * **Description** - Consumer reference number to identify loan number,"]
+        #[doc = "     order id etc."]
+        #[doc = " 1. `ReferenceURI`"]
+        #[doc = "     * **Min Length** - 1 characters"]
+        #[doc = "     * **Max Length** - 35 characters"]
+        #[doc = "     * **Description** - URL for the  transaction."]
+        #[doc = " 1. `ReferenceCategory`"]
+        #[doc = "     * **Min Length** - 2 characters"]
+        #[doc = "     * **Max Length** - 2 characters"]
+        #[doc = "     * **Description** - Reference category."]
         pub async fn export_mandate_transactions(
             &mut self,
             request: impl tonic::IntoRequest<super::ExportMandateTransactionsRequest>,
@@ -2523,8 +2906,10 @@ pub mod issuer_switch_transactions_client {
         #[doc = " file into a configured target location. The returned `Operation` type has"]
         #[doc = " the following method-specific fields:"]
         #[doc = ""]
-        #[doc = " - `metadata`: [ExportComplaintTransactionsMetadata][google.cloud.paymentgateway.issuerswitch.v1.ExportComplaintTransactionsMetadata]"]
-        #[doc = " - `response`: [ExportComplaintTransactionsResponse][google.cloud.paymentgateway.issuerswitch.v1.ExportComplaintTransactionsResponse]"]
+        #[doc = " - `metadata`:"]
+        #[doc = " [ExportComplaintTransactionsMetadata][google.cloud.paymentgateway.issuerswitch.v1.ExportComplaintTransactionsMetadata]"]
+        #[doc = " - `response`:"]
+        #[doc = " [ExportComplaintTransactionsResponse][google.cloud.paymentgateway.issuerswitch.v1.ExportComplaintTransactionsResponse]"]
         #[doc = ""]
         #[doc = " The exported file will be in the standard CSV format where each row in the"]
         #[doc = " file represents a transaction. The file has the following fields in order:"]
@@ -2633,11 +3018,11 @@ pub mod issuer_switch_transactions_client {
         #[doc = "     * **Max Length** - 255 characters"]
         #[doc = "     * **Description** - Indicates the additional remarks for the complaint"]
         #[doc = "     / dispute."]
-        #[doc = " 1. `BankAdapterRequestIDs`"]
+        #[doc = " 1. `AdapterRequestIDs`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 2,000 characters"]
-        #[doc = "     * **Description** - List of Request IDs (colon separated) used when"]
-        #[doc = "     invoking the Bank Adapter APIs for fulfilling a transaction request."]
+        #[doc = "     * **Description** - List of adapter request IDs (colon separated) used"]
+        #[doc = "     when invoking the Adapter APIs for fulfilling a transaction request."]
         #[doc = " 1. `ErrorCode`"]
         #[doc = "     * **Min Length** - 0 characters"]
         #[doc = "     * **Max Length** - 255 characters"]
@@ -2676,7 +3061,7 @@ pub mod issuer_switch_transactions_client {
 pub struct UpiTransaction {
     /// A human readable message about the log entry.
     #[prost(string, tag = "1")]
-    pub description: ::prost::alloc::string::String,
+    pub message: ::prost::alloc::string::String,
     /// The severity of the log entry.
     #[prost(
         enumeration = "super::super::super::super::logging::r#type::LogSeverity",
@@ -2739,6 +3124,288 @@ pub mod upi_transaction {
         /// The payload in XML format received by the issuer switch.
         #[prost(string, tag = "16")]
         Received(::prost::alloc::string::String),
+    }
+}
+/// Request for the `FetchParticipant` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FetchParticipantRequest {
+    /// Required. The parent resource for the participants. The format is
+    /// `projects/{project}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The account details of the issuer participant.
+    #[prost(message, optional, tag = "2")]
+    pub account_reference: ::core::option::Option<AccountReference>,
+}
+/// A customer of the bank who participates in transactions processed by the
+/// issuer switch.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IssuerParticipant {
+    /// Required. The account details of the issuer participant. Only the
+    /// account_number and ifsc fields will be used.
+    #[prost(message, optional, tag = "1")]
+    pub account_reference: ::core::option::Option<AccountReference>,
+    /// Output only. The mobile number of the participant.
+    #[prost(string, tag = "2")]
+    pub mobile_number: ::prost::alloc::string::String,
+    /// Output only. The current state of the participant.
+    #[prost(enumeration = "issuer_participant::State", tag = "3")]
+    pub state: i32,
+    /// Optional. Additional metadata about the participant.
+    #[prost(message, optional, tag = "4")]
+    pub metadata: ::core::option::Option<issuer_participant::Metadata>,
+    /// Output only. The current count of consecutive incorrect MPIN attempts.
+    #[prost(int32, tag = "5")]
+    pub mpin_failure_count: i32,
+    /// Output only. The time when participant's MPIN got locked due to too many
+    /// incorrect attempts.
+    #[prost(message, optional, tag = "6")]
+    pub mpin_locked_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The time when the participant's account was onboarded to PGIS.
+    #[prost(message, optional, tag = "7")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The time when the participant was last updated.
+    #[prost(message, optional, tag = "8")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `IssuerParticipant`.
+pub mod issuer_participant {
+    /// The metadata of the participant.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Metadata {
+        /// Optional. Additional metadata about a particular participant as key-value
+        /// pairs. These values are returned by the bank adapter/card adapter in
+        /// response to the SearchAccounts/InitiateRegistration APIs.
+        #[prost(map = "string, string", tag = "1")]
+        pub values: ::std::collections::HashMap<
+            ::prost::alloc::string::String,
+            ::prost::alloc::string::String,
+        >,
+    }
+    /// The state of the participant.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unspecified state.
+        Unspecified = 0,
+        /// The participant is inactive for all UPI transactions.
+        /// They need to register again and provide a new MPIN.
+        Inactive = 1,
+        /// The participant is active for all UPI transactions.
+        Active = 2,
+        /// The participants MPIN has been locked and no UPI transactions will be
+        /// permitted until MPIN has been reset.
+        MpinLocked = 3,
+        /// The participants mobile number has been changed in the issuer bank.
+        MobileNumberChanged = 4,
+    }
+}
+/// Request for the `UpdateIssuerParticipant` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateIssuerParticipantRequest {
+    /// Required. The parent resource for the participants. The format is
+    /// `projects/{project}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The participant to update.
+    #[prost(message, optional, tag = "2")]
+    pub issuer_participant: ::core::option::Option<IssuerParticipant>,
+    /// Required. The list of fields to update.
+    #[prost(message, optional, tag = "3")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request for the `ActivateParticipant`, `DeactivateParticipant` and
+/// `MobileNumberUpdated` methods.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ParticipantStateChangeRequest {
+    /// Required. The parent resource for the participant. The format is
+    /// `projects/{project}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The identifier for the issuer participant. One of the two values must be
+    /// specified.
+    #[prost(oneof = "participant_state_change_request::Id", tags = "2, 3")]
+    pub id: ::core::option::Option<participant_state_change_request::Id>,
+}
+/// Nested message and enum types in `ParticipantStateChangeRequest`.
+pub mod participant_state_change_request {
+    /// The identifier for the issuer participant. One of the two values must be
+    /// specified.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Id {
+        /// Required. The account details of the issuer participant.
+        #[prost(message, tag = "2")]
+        AccountReference(super::AccountReference),
+        /// Required. The mobile number of the issuer participant.
+        #[prost(string, tag = "3")]
+        MobileNumber(::prost::alloc::string::String),
+    }
+}
+/// Response for the \[ActivateParticipant][\],
+/// \[DeactivateParticipant][\] and \[MobileNumberUpdated][\] methods.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Participants {
+    /// Output only. The list of updated participants.
+    #[prost(message, repeated, tag = "1")]
+    pub participants: ::prost::alloc::vec::Vec<IssuerParticipant>,
+}
+#[doc = r" Generated client implementations."]
+pub mod issuer_switch_participants_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " A service that allows for the management of participants in the issuer"]
+    #[doc = " switch."]
+    #[derive(Debug, Clone)]
+    pub struct IssuerSwitchParticipantsClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> IssuerSwitchParticipantsClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> IssuerSwitchParticipantsClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            IssuerSwitchParticipantsClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Fetch the issuer switch participant. This method can be used to retrieve"]
+        #[doc = " all details of a participant in the issuer switch."]
+        #[doc = ""]
+        #[doc = " In UPI, the participant is identified by their account's IFSC and"]
+        #[doc = " account number."]
+        pub async fn fetch_participant(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FetchParticipantRequest>,
+        ) -> Result<tonic::Response<super::IssuerParticipant>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.paymentgateway.issuerswitch.v1.IssuerSwitchParticipants/FetchParticipant") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Update the issuer switch participant. Currently, this API only allows for"]
+        #[doc = " the"]
+        #[doc = " [metadata][google.cloud.paymentgateway.issuerswitch.v1.IssuerParticipant.metadata]"]
+        #[doc = " field to be updated."]
+        #[doc = ""]
+        #[doc = " **Note** that this method replaces any existing `metadata` field value in"]
+        #[doc = " the participant with the new value. Specifically, it does not do a merge."]
+        #[doc = " If new name-value pairs are to be added to/removed from the metadata, then"]
+        #[doc = " callers must first invoke the"]
+        #[doc = " [FetchParticipant][google.cloud.paymentgateway.issuerswitch.v1.IssuerSwitchParticipants.FetchParticipant]"]
+        #[doc = " API to get the current value of the `metadata` field, make updates to it"]
+        #[doc = " and then update it back to the issuer switch using this method."]
+        pub async fn update_issuer_participant(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateIssuerParticipantRequest>,
+        ) -> Result<tonic::Response<super::IssuerParticipant>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.paymentgateway.issuerswitch.v1.IssuerSwitchParticipants/UpdateIssuerParticipant") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Activate the issuer switch participant for UPI transactions. If the"]
+        #[doc = " participant is already in an `ACTIVE` state, then this API will make no"]
+        #[doc = " change to the participant's state and return a successful response."]
+        #[doc = ""]
+        #[doc = " An `ACTIVE` participant can perform all UPI operations normally."]
+        pub async fn activate_participant(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ParticipantStateChangeRequest>,
+        ) -> Result<tonic::Response<super::Participants>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.paymentgateway.issuerswitch.v1.IssuerSwitchParticipants/ActivateParticipant") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deactivate the issuer switch participant for UPI transactions. If the"]
+        #[doc = " participant is already in an `INACTIVE` state, then this API will make no"]
+        #[doc = " change to the participant's state and return a successful response."]
+        #[doc = ""]
+        #[doc = " An `INACTIVE` participant cannot perform any UPI operations which involve"]
+        #[doc = " MPIN verification."]
+        pub async fn deactivate_participant(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ParticipantStateChangeRequest>,
+        ) -> Result<tonic::Response<super::Participants>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.paymentgateway.issuerswitch.v1.IssuerSwitchParticipants/DeactivateParticipant") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Mark the mobile number of the issuer switch participant as changed to"]
+        #[doc = " prevent UPI transactions. If the participant is already in a"]
+        #[doc = " `MOBILE_NUMBER_CHANGED` state, then this API will make no change to the"]
+        #[doc = " participant's state and return a successful response."]
+        #[doc = ""]
+        #[doc = " Any UPI operation for a participant in the `MOBILE_NUMBER_CHANGED` state"]
+        #[doc = " will cause the issuer switch to return a `B1` error to the UPI payments"]
+        #[doc = " orchestrator which would force the user to re-register with UPI."]
+        pub async fn mobile_number_changed(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ParticipantStateChangeRequest>,
+        ) -> Result<tonic::Response<super::Participants>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.paymentgateway.issuerswitch.v1.IssuerSwitchParticipants/MobileNumberChanged") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 /// A rule that is executed by the issuer switch while processing an
@@ -2884,7 +3551,8 @@ pub struct ListRulesResponse {
 /// Request body for the `ListRuleMetadata` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListRuleMetadataRequest {
-    /// Required. The parent resource. The format is `projects/{project}/rules/{rule}`.
+    /// Required. The parent resource. The format is
+    /// `projects/{project}/rules/{rule}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of rule metadata to return. The service may return fewer
@@ -2950,9 +3618,10 @@ pub struct ListRuleMetadataValuesResponse {
 pub struct BatchCreateRuleMetadataValuesRequest {
     /// The parent resource shared by all ruleMetadataValue being created. The
     /// format is `projects/{project}/rules/{rule}/metadata/{metadata}`. The
-    /// \[CreateRuleMetadataValueRequest.parent][google.cloud.paymentgateway.issuerswitch.v1.CreateRuleMetadataValueRequest.parent\] field in the
-    /// \[CreateRuleMetadataValueRequest][google.cloud.paymentgateway.issuerswitch.v1.CreateRuleMetadataValueRequest\] messages contained in this request must
-    /// match this field.
+    /// \[CreateRuleMetadataValueRequest.parent][google.cloud.paymentgateway.issuerswitch.v1.CreateRuleMetadataValueRequest.parent\]
+    /// field in the
+    /// \[CreateRuleMetadataValueRequest][google.cloud.paymentgateway.issuerswitch.v1.CreateRuleMetadataValueRequest\]
+    /// messages contained in this request must match this field.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The request message specifying the resources to create.
@@ -2970,8 +3639,8 @@ pub struct BatchCreateRuleMetadataValuesResponse {
 /// Request for creating a single `RuleMetadataValue`.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateRuleMetadataValueRequest {
-    /// Required. The parent resource where this RuleMetadataValue will be created. The
-    /// format is `projects/{project}/rules/{rule}/metadata/{metadata}`.
+    /// Required. The parent resource where this RuleMetadataValue will be created.
+    /// The format is `projects/{project}/rules/{rule}/metadata/{metadata}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The rule metadata value to create or add to a list.

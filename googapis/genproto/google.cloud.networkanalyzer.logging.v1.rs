@@ -121,6 +121,8 @@ pub enum ReportCauseCode {
     RouteInvalidNextHopVpnTunnelDeleted = 5,
     RouteInvalidNextHopIlbBackendIpForwardingDisabled = 6,
     IpUtilizationIpAllocationRatioHigh = 20,
+    /// Summary of ip utilization of all subnet ranges in the project.
+    IpUtilizationIpAllocationSummary = 21,
     /// Kubernetes Engine
     GkeNodeToControlPlaneBlockedByRoutingIssue = 201,
     GkeNodeToControlPlanePublicEndpointBlockedByEgressFirewall = 202,

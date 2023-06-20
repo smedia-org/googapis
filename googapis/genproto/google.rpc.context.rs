@@ -72,7 +72,7 @@ pub mod attribute_context {
         >,
         /// The identity of this peer. Similar to `Request.auth.principal`, but
         /// relative to the peer instead of the request. For example, the
-        /// idenity associated with a load balancer that forwared the request.
+        /// identity associated with a load balancer that forwarded the request.
         #[prost(string, tag = "7")]
         pub principal: ::prost::alloc::string::String,
         /// The CLDR country/region code associated with the above IP address.
@@ -187,7 +187,7 @@ pub mod attribute_context {
             ::prost::alloc::string::String,
             ::prost::alloc::string::String,
         >,
-        /// The HTTP URL path.
+        /// The HTTP URL path, excluding the query parameters.
         #[prost(string, tag = "4")]
         pub path: ::prost::alloc::string::String,
         /// The HTTP request `Host` header value.
@@ -244,7 +244,7 @@ pub mod attribute_context {
         /// the response.
         #[prost(message, optional, tag = "4")]
         pub time: ::core::option::Option<::prost_types::Timestamp>,
-        /// The length of time it takes the backend service to fully respond to a
+        /// The amount of time it takes the backend service to fully respond to a
         /// request. Measured from when the destination service starts to send the
         /// request to the backend until when the destination service receives the
         /// complete response from the backend.
@@ -278,7 +278,8 @@ pub mod attribute_context {
         /// The type of the resource. The syntax is platform-specific because
         /// different platforms define their resources differently.
         ///
-        /// For Google APIs, the type format must be "{service}/{kind}".
+        /// For Google APIs, the type format must be "{service}/{kind}", such as
+        /// "pubsub.googleapis.com/Topic".
         #[prost(string, tag = "3")]
         pub r#type: ::prost::alloc::string::String,
         /// The labels or tags on the resource, such as AWS resource tags and
@@ -337,4 +338,29 @@ pub mod attribute_context {
         #[prost(string, tag = "12")]
         pub location: ::prost::alloc::string::String,
     }
+}
+/// `AuditContext` provides information that is needed for audit logging.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AuditContext {
+    /// Serialized audit log.
+    #[prost(bytes = "vec", tag = "1")]
+    pub audit_log: ::prost::alloc::vec::Vec<u8>,
+    /// An API request message that is scrubbed based on the method annotation.
+    /// This field should only be filled if audit_log field is present.
+    /// Service Control will use this to assemble a complete log for Cloud Audit
+    /// Logs and Google internal audit logs.
+    #[prost(message, optional, tag = "2")]
+    pub scrubbed_request: ::core::option::Option<::prost_types::Struct>,
+    /// An API response message that is scrubbed based on the method annotation.
+    /// This field should only be filled if audit_log field is present.
+    /// Service Control will use this to assemble a complete log for Cloud Audit
+    /// Logs and Google internal audit logs.
+    #[prost(message, optional, tag = "3")]
+    pub scrubbed_response: ::core::option::Option<::prost_types::Struct>,
+    /// Number of scrubbed response items.
+    #[prost(int32, tag = "4")]
+    pub scrubbed_response_item_count: i32,
+    /// Audit resource name which is scrubbed.
+    #[prost(string, tag = "5")]
+    pub target_resource: ::prost::alloc::string::String,
 }

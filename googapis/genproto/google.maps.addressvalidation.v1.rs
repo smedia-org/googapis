@@ -1,16 +1,18 @@
-/// Details of the address parsed from the input.
+/// Details of the post-processed address. Post-processing includes
+/// correcting misspelled parts of the address, replacing incorrect parts, and
+/// inferring missing parts.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Address {
-    /// The corrected address, formatted as a single-line address following the
-    /// address formatting rules of the region where the address is located.
+    /// The post-processed address, formatted as a single-line address following
+    /// the address formatting rules of the region where the address is located.
     #[prost(string, tag = "2")]
     pub formatted_address: ::prost::alloc::string::String,
-    /// The validated address represented as a postal address.
+    /// The post-processed address represented as a postal address.
     #[prost(message, optional, tag = "3")]
     pub postal_address: ::core::option::Option<super::super::super::r#type::PostalAddress>,
-    /// Unordered list. The individual address components of the formatted and corrected address,
-    /// along with validation information. This provides information on the
-    /// validation status of the individual components.
+    /// Unordered list. The individual address components of the formatted and
+    /// corrected address, along with validation information. This provides
+    /// information on the validation status of the individual components.
     ///
     /// Address components are not ordered in a particular way. Do not make any
     /// assumptions on the ordering of the address components in the list.
@@ -169,7 +171,8 @@ pub struct PlusCode {
     #[prost(string, tag = "2")]
     pub compound_code: ::prost::alloc::string::String,
 }
-/// The metadata for the address.
+/// The metadata for the address. `metadata` is not guaranteed to be fully
+/// populated for every address sent to the Address Validation API.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AddressMetadata {
     /// Indicates that this is the address of a business.
@@ -216,7 +219,10 @@ pub struct UspsAddress {
     #[prost(string, tag = "9")]
     pub zip_code_extension: ::prost::alloc::string::String,
 }
-/// The USPS data for the address.
+/// The USPS data for the address. `uspsData` is not guaranteed to be fully
+/// populated for every US or PR address sent to the Address Validation API. It's
+/// recommended to integrate the backup address fields in the response if you
+/// utilize uspsData as the primary part of the response.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UspsData {
     /// USPS standardized address.
@@ -448,7 +454,8 @@ pub struct ProvideValidationFeedbackRequest {
         tag = "1"
     )]
     pub conclusion: i32,
-    /// Required. The ID of the response that this feedback is for. This should be the
+    /// Required. The ID of the response that this feedback is for. This should be
+    /// the
     /// \[response_id][google.maps.addressvalidation.v1.ValidateAddressRequest.response_id\]
     /// from the first response in a series of address validation attempts.
     #[prost(string, tag = "2")]
@@ -496,7 +503,8 @@ pub struct ValidationResult {
     /// Information about the location and place that the address geocoded to.
     #[prost(message, optional, tag = "3")]
     pub geocode: ::core::option::Option<Geocode>,
-    /// Other information relevant to deliverability.
+    /// Other information relevant to deliverability. `metadata` is not guaranteed
+    /// to be fully populated for every address sent to the Address Validation API.
     #[prost(message, optional, tag = "4")]
     pub metadata: ::core::option::Option<AddressMetadata>,
     /// Extra deliverability flags provided by USPS. Only provided in region `US`
@@ -583,7 +591,7 @@ pub mod verdict {
         /// Building-level result.
         Premise = 2,
         /// A geocode that should be very close to the building-level location of
-        /// the address. Only used for geocodes and not for addresses.
+        /// the address.
         PremiseProximity = 3,
         /// The address or geocode indicates a block. Only used in regions which
         /// have block-level addressing, such as Japan.

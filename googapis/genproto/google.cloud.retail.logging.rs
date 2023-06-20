@@ -33,9 +33,9 @@ pub struct ErrorContext {
     #[prost(message, optional, tag = "2")]
     pub report_location: ::core::option::Option<SourceLocation>,
 }
-/// The error payload that is populated on LRO import APIs. Including:
-///   "google.cloud.retail.v2.ProductService.ImportProducts"
-///   "google.cloud.retail.v2.EventService.ImportUserEvents"
+/// The error payload that is populated on LRO import APIs, including
+///   "google.cloud.retail.v2.ProductService.ImportProducts" and
+///   "google.cloud.retail.v2.EventService.ImportUserEvents".
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ImportErrorContext {
     /// The operation resource name of the LRO.

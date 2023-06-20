@@ -26,18 +26,18 @@ pub struct CreateSshPublicKeyRequest {
 /// A request message for deleting a POSIX account entry.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeletePosixAccountRequest {
-    /// Required. A reference to the POSIX account to update. POSIX accounts are identified
-    /// by the project ID they are associated with. A reference to the POSIX
-    /// account is in format `users/{user}/projects/{project}`.
+    /// Required. A reference to the POSIX account to update. POSIX accounts are
+    /// identified by the project ID they are associated with. A reference to the
+    /// POSIX account is in format `users/{user}/projects/{project}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// A request message for deleting an SSH public key.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteSshPublicKeyRequest {
-    /// Required. The fingerprint of the public key to update. Public keys are identified by
-    /// their SHA-256 fingerprint. The fingerprint of the public key is in format
-    /// `users/{user}/sshPublicKeys/{fingerprint}`.
+    /// Required. The fingerprint of the public key to update. Public keys are
+    /// identified by their SHA-256 fingerprint. The fingerprint of the public key
+    /// is in format `users/{user}/sshPublicKeys/{fingerprint}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -57,9 +57,9 @@ pub struct GetLoginProfileRequest {
 /// A request message for retrieving an SSH public key.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSshPublicKeyRequest {
-    /// Required. The fingerprint of the public key to retrieve. Public keys are identified
-    /// by their SHA-256 fingerprint. The fingerprint of the public key is in
-    /// format `users/{user}/sshPublicKeys/{fingerprint}`.
+    /// Required. The fingerprint of the public key to retrieve. Public keys are
+    /// identified by their SHA-256 fingerprint. The fingerprint of the public key
+    /// is in format `users/{user}/sshPublicKeys/{fingerprint}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -89,9 +89,9 @@ pub struct ImportSshPublicKeyResponse {
 /// A request message for updating an SSH public key.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateSshPublicKeyRequest {
-    /// Required. The fingerprint of the public key to update. Public keys are identified by
-    /// their SHA-256 fingerprint. The fingerprint of the public key is in format
-    /// `users/{user}/sshPublicKeys/{fingerprint}`.
+    /// Required. The fingerprint of the public key to update. Public keys are
+    /// identified by their SHA-256 fingerprint. The fingerprint of the public key
+    /// is in format `users/{user}/sshPublicKeys/{fingerprint}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Required. The SSH public key and expiration time.

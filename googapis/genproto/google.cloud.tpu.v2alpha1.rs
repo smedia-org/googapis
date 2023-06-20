@@ -107,6 +107,11 @@ pub struct NetworkConfig {
     /// Private Google Access enabled.
     #[prost(bool, tag = "3")]
     pub enable_external_ips: bool,
+    /// Allows the TPU node to send and receive packets with non-matching
+    /// destination or source IPs. This is required if you plan to use the TPU
+    /// workers to forward routes.
+    #[prost(bool, tag = "4")]
+    pub can_ip_forward: bool,
 }
 /// A service account.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -129,7 +134,7 @@ pub struct Node {
     /// The user-supplied description of the TPU. Maximum of 512 characters.
     #[prost(string, tag = "3")]
     pub description: ::prost::alloc::string::String,
-    /// Required. The type of hardware accelerators associated with this node.
+    /// The type of hardware accelerators associated with this node.
     #[prost(string, tag = "5")]
     pub accelerator_type: ::prost::alloc::string::String,
     /// Output only. The current state for the TPU Node.
@@ -198,9 +203,19 @@ pub struct Node {
     /// Output only. The Symptoms that have occurred to the TPU Node.
     #[prost(message, repeated, tag = "39")]
     pub symptoms: ::prost::alloc::vec::Vec<Symptom>,
+    /// Output only. The qualified name of the QueuedResource that requested this
+    /// Node.
+    #[prost(string, tag = "43")]
+    pub queued_resource: ::prost::alloc::string::String,
+    /// The AccleratorConfig for the TPU Node.
+    #[prost(message, optional, tag = "44")]
+    pub accelerator_config: ::core::option::Option<AcceleratorConfig>,
     /// Shielded Instance options.
     #[prost(message, optional, tag = "45")]
     pub shielded_instance_config: ::core::option::Option<ShieldedInstanceConfig>,
+    /// Output only. Whether the Node belongs to a Multislice group.
+    #[prost(bool, tag = "47")]
+    pub multislice_node: bool,
 }
 /// Nested message and enum types in `Node`.
 pub mod node {
@@ -221,7 +236,7 @@ pub mod node {
         /// TPU node is being deleted.
         Deleting = 5,
         /// TPU node is being repaired and may be unusable. Details can be
-        /// found in the `help_description` field.
+        /// found in the 'help_description' field.
         Repairing = 6,
         /// TPU node is stopped.
         Stopped = 8,
@@ -272,6 +287,236 @@ pub mod node {
         V2Alpha1 = 3,
     }
 }
+/// A QueuedResource represents a request for resources that will be placed
+/// in a queue and fulfilled when the necessary resources are available.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueuedResource {
+    /// Output only. Immutable. The name of the QueuedResource.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The queueing policy of the QueuedRequest.
+    #[prost(message, optional, tag = "5")]
+    pub queueing_policy: ::core::option::Option<queued_resource::QueueingPolicy>,
+    /// Output only. State of the QueuedResource request.
+    #[prost(message, optional, tag = "6")]
+    pub state: ::core::option::Option<QueuedResourceState>,
+    /// Name of the reservation in which the resource should be provisioned.
+    /// Format: projects/{project}/locations/{zone}/reservations/{reservation}
+    #[prost(string, tag = "8")]
+    pub reservation_name: ::prost::alloc::string::String,
+    /// Resource specification.
+    #[prost(oneof = "queued_resource::Resource", tags = "2")]
+    pub resource: ::core::option::Option<queued_resource::Resource>,
+    /// Tier specifies the required tier.
+    #[prost(oneof = "queued_resource::Tier", tags = "3, 4")]
+    pub tier: ::core::option::Option<queued_resource::Tier>,
+}
+/// Nested message and enum types in `QueuedResource`.
+pub mod queued_resource {
+    /// Details of the TPU resource(s) being requested.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Tpu {
+        /// The TPU node(s) being requested.
+        #[prost(message, repeated, tag = "1")]
+        pub node_spec: ::prost::alloc::vec::Vec<tpu::NodeSpec>,
+    }
+    /// Nested message and enum types in `Tpu`.
+    pub mod tpu {
+        /// Details of the TPU node(s) being requested. Users can request either a
+        /// single node or multiple nodes.
+        /// NodeSpec provides the specification for node(s) to be created.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct NodeSpec {
+            /// Required. The parent resource name.
+            #[prost(string, tag = "1")]
+            pub parent: ::prost::alloc::string::String,
+            /// The unqualified resource name. Should follow the `^\[A-Za-z0-9_.~+%-\]+$`
+            /// regex format. This is only specified when requesting a single node.
+            /// In case of multi-node requests, multi_node_params must be populated
+            /// instead. It's an error to specify both node_id and multi_node_params.
+            #[prost(string, tag = "2")]
+            pub node_id: ::prost::alloc::string::String,
+            /// Required. The node.
+            #[prost(message, optional, tag = "3")]
+            pub node: ::core::option::Option<super::super::Node>,
+        }
+    }
+    /// BestEffort tier definition.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BestEffort {}
+    /// Guaranteed tier definition.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Guaranteed {
+        /// Optional. Defines the minimum duration of the guarantee. If specified,
+        /// the requested resources will only be provisioned if they can be
+        /// allocated for at least the given duration.
+        #[prost(message, optional, tag = "1")]
+        pub min_duration: ::core::option::Option<::prost_types::Duration>,
+        /// Optional. Specifies the request should be scheduled on reserved capacity.
+        #[prost(bool, tag = "2")]
+        pub reserved: bool,
+    }
+    /// Defines the policy of the QueuedRequest.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QueueingPolicy {
+        /// Time flexibility specification.
+        #[prost(
+            oneof = "queueing_policy::StartTimingConstraints",
+            tags = "1, 2, 3, 4, 5"
+        )]
+        pub start_timing_constraints:
+            ::core::option::Option<queueing_policy::StartTimingConstraints>,
+    }
+    /// Nested message and enum types in `QueueingPolicy`.
+    pub mod queueing_policy {
+        /// Time flexibility specification.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum StartTimingConstraints {
+            /// A relative time after which resources should not be created.
+            /// If the request cannot be fulfilled by this time the request will be
+            /// failed.
+            #[prost(message, tag = "1")]
+            ValidUntilDuration(::prost_types::Duration),
+            /// An absolute time after which resources should not be created.
+            /// If the request cannot be fulfilled by this time the request will be
+            /// failed.
+            #[prost(message, tag = "2")]
+            ValidUntilTime(::prost_types::Timestamp),
+            /// A relative time after which resources may be created.
+            #[prost(message, tag = "3")]
+            ValidAfterDuration(::prost_types::Duration),
+            /// An absolute time at which resources may be created.
+            #[prost(message, tag = "4")]
+            ValidAfterTime(::prost_types::Timestamp),
+            /// An absolute time interval within which resources may be created.
+            #[prost(message, tag = "5")]
+            ValidInterval(super::super::super::super::super::r#type::Interval),
+        }
+    }
+    /// Resource specification.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Resource {
+        /// Defines a TPU resource.
+        #[prost(message, tag = "2")]
+        Tpu(Tpu),
+    }
+    /// Tier specifies the required tier.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Tier {
+        /// The BestEffort tier.
+        #[prost(message, tag = "3")]
+        BestEffort(BestEffort),
+        /// The Guaranteed tier
+        #[prost(message, tag = "4")]
+        Guaranteed(Guaranteed),
+    }
+}
+/// QueuedResourceState defines the details of the QueuedResource request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueuedResourceState {
+    /// State of the QueuedResource request.
+    #[prost(enumeration = "queued_resource_state::State", tag = "1")]
+    pub state: i32,
+    /// Further data for the state.
+    #[prost(
+        oneof = "queued_resource_state::StateData",
+        tags = "2, 3, 4, 5, 6, 7, 8, 9"
+    )]
+    pub state_data: ::core::option::Option<queued_resource_state::StateData>,
+}
+/// Nested message and enum types in `QueuedResourceState`.
+pub mod queued_resource_state {
+    /// Further data for the creating state.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CreatingData {}
+    /// Further data for the accepted state.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AcceptedData {}
+    /// Further data for the provisioning state.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ProvisioningData {}
+    /// Further data for the failed state.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FailedData {
+        /// The error that caused the queued resource to enter the FAILED state.
+        #[prost(message, optional, tag = "1")]
+        pub error: ::core::option::Option<super::super::super::super::rpc::Status>,
+    }
+    /// Further data for the deleting state.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DeletingData {}
+    /// Further data for the active state.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ActiveData {}
+    /// Further data for the suspending state.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SuspendingData {}
+    /// Further data for the suspended state.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SuspendedData {}
+    /// Output only state of the request
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// State of the QueuedResource request is not known/set.
+        Unspecified = 0,
+        /// The QueuedResource request has been received. We're still working on
+        /// determining if we will be able to honor this request.
+        Creating = 1,
+        /// The QueuedResource request has passed initial validation/admission
+        /// control and has been persisted in the queue.
+        Accepted = 2,
+        /// The QueuedResource request has been selected. The
+        /// associated resources are currently being provisioned (or very soon
+        /// will begin provisioning).
+        Provisioning = 3,
+        /// The request could not be completed. This may be due to some
+        /// late-discovered problem with the request itself, or due to
+        /// unavailability of resources within the constraints of the request
+        /// (e.g., the 'valid until' start timing constraint expired).
+        Failed = 4,
+        /// The QueuedResource is being deleted.
+        Deleting = 5,
+        /// The resources specified in the QueuedResource request have been
+        /// provisioned and are ready for use by the end-user/consumer.
+        Active = 6,
+        /// The resources specified in the QueuedResource request are being
+        /// deleted. This may have been initiated by the user, or
+        /// the Cloud TPU service. Inspect the state data for more details.
+        Suspending = 7,
+        /// The resources specified in the QueuedResource request have been
+        /// deleted.
+        Suspended = 8,
+    }
+    /// Further data for the state.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum StateData {
+        /// Further data for the creating state.
+        #[prost(message, tag = "2")]
+        CreatingData(CreatingData),
+        /// Further data for the accepted state.
+        #[prost(message, tag = "3")]
+        AcceptedData(AcceptedData),
+        /// Further data for the provisioning state.
+        #[prost(message, tag = "4")]
+        ProvisioningData(ProvisioningData),
+        /// Further data for the failed state.
+        #[prost(message, tag = "5")]
+        FailedData(FailedData),
+        /// Further data for the deleting state.
+        #[prost(message, tag = "6")]
+        DeletingData(DeletingData),
+        /// Further data for the active state.
+        #[prost(message, tag = "7")]
+        ActiveData(ActiveData),
+        /// Further data for the suspending state.
+        #[prost(message, tag = "8")]
+        SuspendingData(SuspendingData),
+        /// Further data for the suspended state.
+        #[prost(message, tag = "9")]
+        SuspendedData(SuspendedData),
+    }
+}
 /// Request for \[ListNodes][google.cloud.tpu.v2alpha1.Tpu.ListNodes\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListNodesRequest {
@@ -317,6 +562,9 @@ pub struct CreateNodeRequest {
     /// Required. The node.
     #[prost(message, optional, tag = "3")]
     pub node: ::core::option::Option<Node>,
+    /// Idempotent request UUID.
+    #[prost(string, tag = "6")]
+    pub request_id: ::prost::alloc::string::String,
 }
 /// Request for \[DeleteNode][google.cloud.tpu.v2alpha1.Tpu.DeleteNode\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -324,18 +572,21 @@ pub struct DeleteNodeRequest {
     /// Required. The resource name.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// Idempotent request UUID.
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
 }
 /// Request for \[StopNode][google.cloud.tpu.v2alpha1.Tpu.StopNode\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StopNodeRequest {
-    /// The resource name.
+    /// Required. The resource name.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request for \[StartNode][google.cloud.tpu.v2alpha1.Tpu.StartNode\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StartNodeRequest {
-    /// The resource name.
+    /// Required. The resource name.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -343,12 +594,85 @@ pub struct StartNodeRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateNodeRequest {
     /// Required. Mask of fields from \[Node][Tpu.Node\] to update.
-    /// Supported fields: None.
+    /// Supported fields: [description, tags, labels, metadata,
+    /// network_config.enable_external_ips].
     #[prost(message, optional, tag = "1")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
     /// Required. The node. Only fields specified in update_mask are updated.
     #[prost(message, optional, tag = "2")]
     pub node: ::core::option::Option<Node>,
+}
+/// Request for
+/// \[ListQueuedResources][google.cloud.tpu.v2alpha1.Tpu.ListQueuedResources\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListQueuedResourcesRequest {
+    /// Required. The parent resource name.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of items to return.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// The next_page_token value returned from a previous List request, if any.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response for
+/// \[ListQueuedResources][google.cloud.tpu.v2alpha1.Tpu.ListQueuedResources\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListQueuedResourcesResponse {
+    /// The listed queued resources.
+    #[prost(message, repeated, tag = "1")]
+    pub queued_resources: ::prost::alloc::vec::Vec<QueuedResource>,
+    /// The next page token or empty if none.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request for
+/// \[GetQueuedResource][google.cloud.tpu.v2alpha1.Tpu.GetQueuedResource\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetQueuedResourceRequest {
+    /// Required. The resource name.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for
+/// \[CreateQueuedResource][google.cloud.tpu.v2alpha1.Tpu.CreateQueuedResource\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateQueuedResourceRequest {
+    /// Required. The parent resource name.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The unqualified resource name. Should follow the `^\[A-Za-z0-9_.~+%-\]+$`
+    /// regex format.
+    #[prost(string, tag = "2")]
+    pub queued_resource_id: ::prost::alloc::string::String,
+    /// Required. The queued resource.
+    #[prost(message, optional, tag = "3")]
+    pub queued_resource: ::core::option::Option<QueuedResource>,
+    /// Idempotent request UUID.
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request for
+/// \[DeleteQueuedResource][google.cloud.tpu.v2alpha1.Tpu.DeleteQueuedResource\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteQueuedResourceRequest {
+    /// Required. The resource name.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Idempotent request UUID.
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+    /// If set to true, all running nodes belonging to this queued resource will
+    /// be deleted first and then the queued resource will be deleted.
+    /// Otherwise (i.e. force=false), the queued resource will only be deleted if
+    /// its nodes have already been deleted or the queued resource is in the
+    /// ACCEPTED, FAILED, or SUSPENDED state.
+    #[prost(bool, tag = "3")]
+    pub force: bool,
 }
 /// The per-product per-project service identity for Cloud TPU service.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -379,9 +703,12 @@ pub struct AcceleratorType {
     /// The resource name.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// the accelerator type.
+    /// The accelerator type.
     #[prost(string, tag = "2")]
     pub r#type: ::prost::alloc::string::String,
+    /// The accelerator config.
+    #[prost(message, repeated, tag = "3")]
+    pub accelerator_configs: ::prost::alloc::vec::Vec<AcceleratorConfig>,
 }
 /// Request for
 /// \[GetAcceleratorType][google.cloud.tpu.v2alpha1.Tpu.GetAcceleratorType\].
@@ -424,37 +751,6 @@ pub struct ListAcceleratorTypesResponse {
     /// Locations that could not be reached.
     #[prost(string, repeated, tag = "3")]
     pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-// Note: the following OperationMetadata message was added manually.
-// This is caused by a conflict with some other message and will
-// be resolved separately. Please make sure to add this message back
-// if it's removed during public proto regeneration.
-
-/// Metadata describing an \[Operation][google.longrunning.Operation\]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct OperationMetadata {
-    /// The time the operation was created.
-    #[prost(message, optional, tag = "1")]
-    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The time the operation finished running.
-    #[prost(message, optional, tag = "2")]
-    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Target of the operation - for example
-    /// projects/project-1/connectivityTests/test-1
-    #[prost(string, tag = "3")]
-    pub target: ::prost::alloc::string::String,
-    /// Name of the verb executed by the operation.
-    #[prost(string, tag = "4")]
-    pub verb: ::prost::alloc::string::String,
-    /// Human-readable status of the operation, if any.
-    #[prost(string, tag = "5")]
-    pub status_detail: ::prost::alloc::string::String,
-    /// Specifies if cancellation was requested for the operation.
-    #[prost(bool, tag = "6")]
-    pub cancel_requested: bool,
-    /// API version.
-    #[prost(string, tag = "7")]
-    pub api_version: ::prost::alloc::string::String,
 }
 /// A runtime version that a Node can be configured with.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -507,6 +803,32 @@ pub struct ListRuntimeVersionsResponse {
     /// Locations that could not be reached.
     #[prost(string, repeated, tag = "3")]
     pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Metadata describing an \[Operation][google.longrunning.Operation\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OperationMetadata {
+    /// The time the operation was created.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time the operation finished running.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Target of the operation - for example
+    /// projects/project-1/connectivityTests/test-1
+    #[prost(string, tag = "3")]
+    pub target: ::prost::alloc::string::String,
+    /// Name of the verb executed by the operation.
+    #[prost(string, tag = "4")]
+    pub verb: ::prost::alloc::string::String,
+    /// Human-readable status of the operation, if any.
+    #[prost(string, tag = "5")]
+    pub status_detail: ::prost::alloc::string::String,
+    /// Specifies if cancellation was requested for the operation.
+    #[prost(bool, tag = "6")]
+    pub cancel_requested: bool,
+    /// API version.
+    #[prost(string, tag = "7")]
+    pub api_version: ::prost::alloc::string::String,
 }
 /// A Symptom instance.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -570,6 +892,46 @@ pub struct GetGuestAttributesResponse {
     /// The guest attributes for the TPU workers.
     #[prost(message, repeated, tag = "1")]
     pub guest_attributes: ::prost::alloc::vec::Vec<GuestAttributes>,
+}
+/// Request for
+/// \[SimulateMaintenanceEvent][google.cloud.tpu.v2alpha1.Tpu.SimulateMaintenanceEvent\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SimulateMaintenanceEventRequest {
+    /// Required. The resource name.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The 0-based worker ID. If it is empty, worker ID 0 will be selected for
+    /// maintenance event simulation. A maintenance event will only be fired on the
+    /// first specified worker ID. Future implementations may support firing on
+    /// multiple workers.
+    #[prost(string, repeated, tag = "2")]
+    pub worker_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// A TPU accelerator configuration.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AcceleratorConfig {
+    /// Required. Type of TPU.
+    #[prost(enumeration = "accelerator_config::Type", tag = "1")]
+    pub r#type: i32,
+    /// Required. Topology of TPU in chips.
+    #[prost(string, tag = "2")]
+    pub topology: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `AcceleratorConfig`.
+pub mod accelerator_config {
+    /// TPU type.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Type {
+        /// Unspecified version.
+        Unspecified = 0,
+        /// TPU v2.
+        V2 = 2,
+        /// TPU v3.
+        V3 = 4,
+        /// TPU v4.
+        V4 = 7,
+    }
 }
 /// A set of Shielded Instance options.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -754,6 +1116,80 @@ pub mod tpu_client {
                 http::uri::PathAndQuery::from_static("/google.cloud.tpu.v2alpha1.Tpu/UpdateNode");
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Lists queued resources."]
+        pub async fn list_queued_resources(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListQueuedResourcesRequest>,
+        ) -> Result<tonic::Response<super::ListQueuedResourcesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.tpu.v2alpha1.Tpu/ListQueuedResources",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details of a queued resource."]
+        pub async fn get_queued_resource(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetQueuedResourceRequest>,
+        ) -> Result<tonic::Response<super::QueuedResource>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.tpu.v2alpha1.Tpu/GetQueuedResource",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a QueuedResource TPU instance."]
+        pub async fn create_queued_resource(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateQueuedResourceRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.tpu.v2alpha1.Tpu/CreateQueuedResource",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a QueuedResource TPU instance."]
+        pub async fn delete_queued_resource(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteQueuedResourceRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.tpu.v2alpha1.Tpu/DeleteQueuedResource",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Generates the Cloud TPU service identity for the project."]
         pub async fn generate_service_identity(
             &mut self,
@@ -854,6 +1290,26 @@ pub mod tpu_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.tpu.v2alpha1.Tpu/GetGuestAttributes",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Simulates a maintenance event."]
+        pub async fn simulate_maintenance_event(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SimulateMaintenanceEventRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.tpu.v2alpha1.Tpu/SimulateMaintenanceEvent",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

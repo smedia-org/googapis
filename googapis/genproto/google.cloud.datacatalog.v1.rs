@@ -90,6 +90,26 @@ pub enum IntegratedSystem {
     DataprocMetastore = 3,
     /// Dataplex.
     Dataplex = 4,
+    /// Cloud Spanner
+    CloudSpanner = 6,
+    /// Cloud Bigtable
+    CloudBigtable = 7,
+    /// Cloud Sql
+    CloudSql = 8,
+    /// Looker
+    Looker = 9,
+}
+/// This enum describes all the systems that manage
+/// Taxonomy and PolicyTag resources in DataCatalog.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ManagingSystem {
+    /// Default value
+    Unspecified = 0,
+    /// Dataplex.
+    Dataplex = 1,
+    /// Other
+    Other = 2,
 }
 /// Physical location of an entry.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -349,7 +369,8 @@ pub struct GcsFileSpec {
     /// Required. Full file path. Example: `gs://bucket_name/a/b.txt`.
     #[prost(string, tag = "1")]
     pub file_path: ::prost::alloc::string::String,
-    /// Output only. Creation, modification, and expiration timestamps of a Cloud Storage file.
+    /// Output only. Creation, modification, and expiration timestamps of a Cloud
+    /// Storage file.
     #[prost(message, optional, tag = "2")]
     pub gcs_timestamps: ::core::option::Option<SystemTimestamps>,
     /// Output only. File size in bytes.
@@ -387,16 +408,87 @@ pub struct ColumnSchema {
     /// bytes.
     #[prost(string, tag = "2")]
     pub description: ::prost::alloc::string::String,
-    /// Optional. A column's mode indicates whether values in this column are required,
-    /// nullable, or repeated.
+    /// Optional. A column's mode indicates whether values in this column are
+    /// required, nullable, or repeated.
     ///
     /// Only `NULLABLE`, `REQUIRED`, and `REPEATED` values are supported.
     /// Default mode is `NULLABLE`.
     #[prost(string, tag = "3")]
     pub mode: ::prost::alloc::string::String,
-    /// Optional. Schema of sub-columns. A column can have zero or more sub-columns.
+    /// Optional. Default value for the column.
+    #[prost(string, tag = "8")]
+    pub default_value: ::prost::alloc::string::String,
+    /// Optional. Ordinal position
+    #[prost(int32, tag = "9")]
+    pub ordinal_position: i32,
+    /// Optional. Most important inclusion of this column.
+    #[prost(enumeration = "column_schema::IndexingType", tag = "10")]
+    pub highest_indexing_type: i32,
+    /// Optional. Schema of sub-columns. A column can have zero or more
+    /// sub-columns.
     #[prost(message, repeated, tag = "7")]
     pub subcolumns: ::prost::alloc::vec::Vec<ColumnSchema>,
+    /// Optional. Garbage collection policy for the column or column family.
+    /// Applies to systems like Cloud Bigtable.
+    #[prost(string, tag = "11")]
+    pub gc_rule: ::prost::alloc::string::String,
+    /// Information only applying for columns in Entries from a specific system.
+    #[prost(oneof = "column_schema::SystemSpec", tags = "18")]
+    pub system_spec: ::core::option::Option<column_schema::SystemSpec>,
+}
+/// Nested message and enum types in `ColumnSchema`.
+pub mod column_schema {
+    /// Column info specific to Looker System.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct LookerColumnSpec {
+        /// Looker specific column type of this column.
+        #[prost(enumeration = "looker_column_spec::LookerColumnType", tag = "1")]
+        pub r#type: i32,
+    }
+    /// Nested message and enum types in `LookerColumnSpec`.
+    pub mod looker_column_spec {
+        /// Column type in Looker.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum LookerColumnType {
+            /// Unspecified.
+            Unspecified = 0,
+            /// Dimension.
+            Dimension = 1,
+            /// Dimension group - parent for Dimension.
+            DimensionGroup = 2,
+            /// Filter.
+            Filter = 3,
+            /// Measure.
+            Measure = 4,
+            /// Parameter.
+            Parameter = 5,
+        }
+    }
+    /// Specifies inclusion of the column in an index
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum IndexingType {
+        /// Unspecified.
+        Unspecified = 0,
+        /// Column not a part of an index.
+        None = 1,
+        /// Column Part of non unique index.
+        NonUnique = 2,
+        /// Column part of unique index.
+        Unique = 3,
+        /// Column part of the primary key.
+        PrimaryKey = 4,
+    }
+    /// Information only applying for columns in Entries from a specific system.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SystemSpec {
+        /// Looker specific column info of this column.
+        #[prost(message, tag = "18")]
+        LookerColumnSpec(LookerColumnSpec),
+    }
 }
 /// Result in the response to a search request.
 ///
@@ -473,8 +565,8 @@ pub mod search_catalog_result {
     /// `search_result_type` is `ENTRY`.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum System {
-        /// Output only. The source system that Data Catalog automatically integrates  with, such
-        /// as BigQuery, Cloud Pub/Sub, or Dataproc Metastore.
+        /// Output only. The source system that Data Catalog automatically integrates
+        /// with, such as BigQuery, Cloud Pub/Sub, or Dataproc Metastore.
         #[prost(enumeration = "super::IntegratedSystem", tag = "8")]
         IntegratedSystem(i32),
         /// Custom source system that you can manually integrate Data Catalog with.
@@ -530,9 +622,9 @@ pub struct ViewSpec {
 /// Normal BigQuery table specification.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TableSpec {
-    /// Output only. If the table is date-sharded, that is, it matches the `\[prefix\]YYYYMMDD`
-    /// name pattern, this field is the Data Catalog resource name of the
-    /// date-sharded grouped entry. For example:
+    /// Output only. If the table is date-sharded, that is, it matches the
+    /// `\[prefix\]YYYYMMDD` name pattern, this field is the Data Catalog resource
+    /// name of the date-sharded grouped entry. For example:
     ///
     /// `projects/{PROJECT_ID}/locations/{LOCATION}/entrygroups/{ENTRY_GROUP_ID}/entries/{ENTRY_ID}`.
     ///
@@ -547,8 +639,8 @@ pub struct TableSpec {
 /// (<https://cloud.google.com/bigquery/docs/partitioned-tables#partitioning_versus_sharding>).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BigQueryDateShardedSpec {
-    /// Output only. The Data Catalog resource name of the dataset entry the current table
-    /// belongs to. For example:
+    /// Output only. The Data Catalog resource name of the dataset entry the
+    /// current table belongs to. For example:
     ///
     /// `projects/{PROJECT_ID}/locations/{LOCATION}/entrygroups/{ENTRY_GROUP_ID}/entries/{ENTRY_ID}`.
     #[prost(string, tag = "1")]
@@ -605,8 +697,8 @@ pub struct Tag {
     /// Output only. The display name of the tag template.
     #[prost(string, tag = "5")]
     pub template_display_name: ::prost::alloc::string::String,
-    /// Required. Maps the ID of a tag field to its value and additional information
-    /// about that field.
+    /// Required. Maps the ID of a tag field to its value and additional
+    /// information about that field.
     ///
     /// Tag template defines valid field IDs. A tag
     /// must have at least 1 field and at most 500 fields.
@@ -649,8 +741,9 @@ pub struct TagField {
     /// Output only. The display name of this field.
     #[prost(string, tag = "1")]
     pub display_name: ::prost::alloc::string::String,
-    /// Output only. The order of this field with respect to other fields in this tag. Can be
-    /// set by \[Tag][google.cloud.datacatalog.v1.TagTemplateField.order\].
+    /// Output only. The order of this field with respect to other fields in this
+    /// tag. Can be set by
+    /// \[Tag][google.cloud.datacatalog.v1.TagTemplateField.order\].
     ///
     /// For example, a higher value can indicate a more important field.
     /// The value can be negative. Multiple fields can have the same order, and
@@ -703,8 +796,8 @@ pub mod tag_field {
 }
 /// A tag template defines a tag that can have one or more typed fields.
 ///
-/// The template is used to create tags that are attached to GCP resources.
-/// [Tag template roles]
+/// The template is used to create tags that are attached to Google Cloud
+///  resources. [Tag template roles]
 /// (<https://cloud.google.com/iam/docs/understanding-roles#data-catalog-roles>)
 /// provide permissions to create, edit, and use the template. For example,
 /// see the [TagTemplate User]
@@ -750,7 +843,8 @@ pub struct TagTemplate {
 /// The template for an individual field within a tag template.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TagTemplateField {
-    /// Output only. The resource name of the tag template field in URL format. Example:
+    /// Output only. The resource name of the tag template field in URL format.
+    /// Example:
     ///
     /// `projects/{PROJECT_ID}/locations/{LOCATION}/tagTemplates/{TAG_TEMPLATE}/fields/{FIELD}`
     ///
@@ -813,7 +907,8 @@ pub mod field_type {
     pub mod enum_type {
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct EnumValue {
-            /// Required. The display name of the enum value. Must not be an empty string.
+            /// Required. The display name of the enum value. Must not be an empty
+            /// string.
             ///
             /// The name must contain only Unicode letters, numbers (0-9), underscores
             /// (_), dashes (-), spaces ( ), and can't start or end with spaces. The
@@ -874,6 +969,15 @@ pub struct UsageStats {
     #[prost(float, tag = "4")]
     pub total_execution_time_for_completions_millis: f32,
 }
+/// Common statistics on the entry's usage.
+///
+/// They can be set on any system.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CommonUsageStats {
+    /// View count in source system.
+    #[prost(int64, optional, tag = "1")]
+    pub view_count: ::core::option::Option<i64>,
+}
 /// The set of all usage signals that Data Catalog stores.
 ///
 /// Note: Usually, these signals are updated daily. In rare cases, an update may
@@ -883,12 +987,22 @@ pub struct UsageSignal {
     /// The end timestamp of the duration of usage statistics.
     #[prost(message, optional, tag = "1")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. BigQuery usage statistics over each of the predefined time ranges.
+    /// Output only. BigQuery usage statistics over each of the predefined time
+    /// ranges.
     ///
     /// Supported time ranges are `{"24H", "7D", "30D"}`.
     #[prost(map = "string, message", tag = "2")]
     pub usage_within_time_range:
         ::std::collections::HashMap<::prost::alloc::string::String, UsageStats>,
+    /// Common usage statistics over each of the predefined time ranges.
+    ///
+    /// Supported time ranges are `{"24H", "7D", "30D", "Lifetime"}`.
+    #[prost(map = "string, message", tag = "3")]
+    pub common_usage_within_time_range:
+        ::std::collections::HashMap<::prost::alloc::string::String, CommonUsageStats>,
+    /// Favorite count in the source system.
+    #[prost(int64, optional, tag = "4")]
+    pub favorite_count: ::core::option::Option<i64>,
 }
 /// Request message for
 /// \[SearchCatalog][google.cloud.datacatalog.v1.DataCatalog.SearchCatalog\].
@@ -901,9 +1015,8 @@ pub struct SearchCatalogRequest {
     /// the request returns an error.
     #[prost(message, optional, tag = "6")]
     pub scope: ::core::option::Option<search_catalog_request::Scope>,
-    /// Optional. The query string with a minimum of 3 characters and specific syntax.
-    /// For more information, see
-    /// [Data Catalog search
+    /// Optional. The query string with a minimum of 3 characters and specific
+    /// syntax. For more information, see [Data Catalog search
     /// syntax](<https://cloud.google.com/data-catalog/docs/how-to/search-reference>).
     ///
     /// An empty query string returns all data assets (in the specified scope)
@@ -923,10 +1036,11 @@ pub struct SearchCatalogRequest {
     /// exception.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
-    /// Optional. Pagination token that, if specified, returns the next page of search
-    /// results. If empty, returns the first page.
+    /// Optional. Pagination token that, if specified, returns the next page of
+    /// search results. If empty, returns the first page.
     ///
-    /// This token is returned in the \[SearchCatalogResponse.next_page_token][google.cloud.datacatalog.v1.SearchCatalogResponse.next_page_token\]
+    /// This token is returned in the
+    /// \[SearchCatalogResponse.next_page_token][google.cloud.datacatalog.v1.SearchCatalogResponse.next_page_token\]
     /// field of the response to a previous
     /// \[SearchCatalogRequest][google.cloud.datacatalog.v1.DataCatalog.SearchCatalog\]
     /// call.
@@ -962,15 +1076,15 @@ pub mod search_catalog_request {
         /// numbers, see \[Projects\](/docs/overview/#projects).
         #[prost(string, repeated, tag = "3")]
         pub include_project_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-        /// If `true`, include Google Cloud Platform (GCP) public datasets in
+        /// If `true`, include Google Cloud public datasets in
         /// search results. By default, they are excluded.
         ///
         /// See [Google Cloud Public Datasets](/public-datasets) for more
         /// information.
         #[prost(bool, tag = "7")]
         pub include_gcp_public_datasets: bool,
-        /// Optional. The list of locations to search within. If empty, all locations are
-        /// searched.
+        /// Optional. The list of locations to search within. If empty, all locations
+        /// are searched.
         ///
         /// Returns an error if any location in the list isn't one of the [Supported
         /// regions](<https://cloud.google.com/data-catalog/docs/concepts/regions#supported_regions>).
@@ -986,8 +1100,8 @@ pub mod search_catalog_request {
         /// By default, all results are returned, starred or not.
         #[prost(bool, tag = "18")]
         pub starred_only: bool,
-        /// Optional. This field is deprecated. The search mechanism for public and private tag
-        /// templates is the same.
+        /// Optional. This field is deprecated. The search mechanism for public and
+        /// private tag templates is the same.
         #[deprecated]
         #[prost(bool, tag = "19")]
         pub include_public_tag_templates: bool,
@@ -1000,6 +1114,9 @@ pub struct SearchCatalogResponse {
     /// Search results.
     #[prost(message, repeated, tag = "1")]
     pub results: ::prost::alloc::vec::Vec<SearchCatalogResult>,
+    /// The approximate total number of entries matched by the query.
+    #[prost(int32, tag = "2")]
+    pub total_size: i32,
     /// Pagination token that can be used in subsequent calls to retrieve the next
     /// page of results.
     #[prost(string, tag = "3")]
@@ -1017,7 +1134,8 @@ pub struct SearchCatalogResponse {
 /// \[CreateEntryGroup][google.cloud.datacatalog.v1.DataCatalog.CreateEntryGroup\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateEntryGroupRequest {
-    /// Required. The names of the project and location that the new entry group belongs to.
+    /// Required. The names of the project and location that the new entry group
+    /// belongs to.
     ///
     /// Note: The entry group itself and its child resources might not be
     /// stored in the location specified in its name.
@@ -1183,6 +1301,16 @@ pub struct GetEntryRequest {
 /// \[LookupEntry][google.cloud.datacatalog.v1.DataCatalog.LookupEntry\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LookupEntryRequest {
+    /// Project where the lookup should be performed. Required to lookup
+    /// entry that is not a part of `DPMS` or `DATAPLEX` `integrated_system`
+    /// using its `fully_qualified_name`. Ignored in other cases.
+    #[prost(string, tag = "6")]
+    pub project: ::prost::alloc::string::String,
+    /// Location where the lookup should be performed. Required to lookup
+    /// entry that is not a part of `DPMS` or `DATAPLEX` `integrated_system`
+    /// using its `fully_qualified_name`. Ignored in other cases.
+    #[prost(string, tag = "7")]
+    pub location: ::prost::alloc::string::String,
     /// Required. A full name, SQL name, or a fully qualified name of a
     /// Google Cloud Platform resource.
     #[prost(oneof = "lookup_entry_request::TargetName", tags = "1, 3, 5")]
@@ -1219,7 +1347,9 @@ pub mod lookup_entry_request {
         /// (<https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical>).
         #[prost(string, tag = "3")]
         SqlResource(::prost::alloc::string::String),
-        /// Fully qualified name (FQN) of the resource.
+        /// [Fully Qualified Name
+        /// (FQN)](<https://cloud.google.com//data-catalog/docs/fully-qualified-names>)
+        /// of the resource.
         ///
         /// FQNs take two forms:
         ///
@@ -1276,32 +1406,17 @@ pub struct Entry {
     /// The maximum size is 200 bytes when encoded in UTF-8.
     #[prost(string, tag = "9")]
     pub linked_resource: ::prost::alloc::string::String,
-    /// Fully qualified name (FQN) of the resource. Set automatically for entries
-    /// representing resources from synced systems. Settable only during creation
-    /// and read-only afterwards. Can be used for search and lookup of the entries.
+    /// [Fully Qualified Name
+    /// (FQN)](<https://cloud.google.com//data-catalog/docs/fully-qualified-names>)
+    /// of the resource. Set automatically for entries representing resources from
+    /// synced systems. Settable only during creation, and read-only later. Can
+    /// be used for search and lookup of the entries.
     ///
-    ///
-    ///
-    /// FQNs take two forms:
-    ///
-    /// * For non-regionalized resources:
-    ///
-    ///   `{SYSTEM}:{PROJECT}.{PATH_TO_RESOURCE_SEPARATED_WITH_DOTS}`
-    ///
-    /// * For regionalized resources:
-    ///
-    ///   `{SYSTEM}:{PROJECT}.{LOCATION_ID}.{PATH_TO_RESOURCE_SEPARATED_WITH_DOTS}`
-    ///
-    /// Example for a DPMS table:
-    ///
-    /// `dataproc_metastore:{PROJECT_ID}.{LOCATION_ID}.{INSTANCE_ID}.{DATABASE_ID}.{TABLE_ID}`
     #[prost(string, tag = "29")]
     pub fully_qualified_name: ::prost::alloc::string::String,
     /// Display name of an entry.
     ///
-    /// The name must contain only Unicode letters, numbers (0-9), underscores (_),
-    /// dashes (-), spaces ( ), and can't start or end with spaces.
-    /// The maximum size is 200 bytes when encoded in UTF-8.
+    /// The maximum size is 500 bytes when encoded in UTF-8.
     /// Default value is an empty string.
     #[prost(string, tag = "3")]
     pub display_name: ::prost::alloc::string::String,
@@ -1343,7 +1458,8 @@ pub struct Entry {
     /// Output only. Physical location of the entry.
     #[prost(message, optional, tag = "20")]
     pub data_source: ::core::option::Option<DataSource>,
-    /// Output only. Additional information related to the entry. Private to the current user.
+    /// Output only. Additional information related to the entry. Private to the
+    /// current user.
     #[prost(message, optional, tag = "26")]
     pub personal_details: ::core::option::Option<PersonalDetails>,
     /// Required. Entry type.
@@ -1352,6 +1468,11 @@ pub struct Entry {
     /// The source system of the entry.
     #[prost(oneof = "entry::System", tags = "17, 18")]
     pub system: ::core::option::Option<entry::System>,
+    /// System specification.
+    /// Can be used as a complement for `spec`, when some metadata is relevant for
+    /// all entries existing within given system
+    #[prost(oneof = "entry::SystemSpec", tags = "39, 40, 41")]
+    pub system_spec: ::core::option::Option<entry::SystemSpec>,
     /// Type specification.
     #[prost(oneof = "entry::TypeSpec", tags = "6, 12, 15")]
     pub type_spec: ::core::option::Option<entry::TypeSpec>,
@@ -1361,7 +1482,7 @@ pub struct Entry {
     ///
     /// When extending the API with new types and systems, use this field instead
     /// of the legacy `type_spec`.
-    #[prost(oneof = "entry::Spec", tags = "24, 27, 28, 33")]
+    #[prost(oneof = "entry::Spec", tags = "24, 27, 28, 33, 42")]
     pub spec: ::core::option::Option<entry::Spec>,
 }
 /// Nested message and enum types in `Entry`.
@@ -1411,6 +1532,24 @@ pub mod entry {
         #[prost(string, tag = "18")]
         UserSpecifiedSystem(::prost::alloc::string::String),
     }
+    /// System specification.
+    /// Can be used as a complement for `spec`, when some metadata is relevant for
+    /// all entries existing within given system
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SystemSpec {
+        /// Specification that applies to a relational database system. Only settable
+        /// when `user_specified_system` is equal to `SQL_DATABASE`
+        #[prost(message, tag = "39")]
+        SqlDatabaseSystemSpec(super::SqlDatabaseSystemSpec),
+        /// Specification that applies to Looker sysstem. Only settable when
+        /// `user_specified_system` is equal to `LOOKER`
+        #[prost(message, tag = "40")]
+        LookerSystemSpec(super::LookerSystemSpec),
+        /// Specification that applies to Cloud Bigtable system. Only settable when
+        /// `integrated_system` is equal to `CLOUD_BIGTABLE`
+        #[prost(message, tag = "41")]
+        CloudBigtableSystemSpec(super::CloudBigtableSystemSpec),
+    }
     /// Type specification.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum TypeSpec {
@@ -1439,7 +1578,7 @@ pub mod entry {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Spec {
         /// Specification that applies to a table resource. Valid only
-        /// for entries with the `TABLE` type.
+        /// for entries with the `TABLE` or `EXPLORE` type.
         #[prost(message, tag = "24")]
         DatabaseTableSpec(super::DatabaseTableSpec),
         /// Specification that applies to a data source connection. Valid only
@@ -1454,6 +1593,9 @@ pub mod entry {
         /// for entries with the `FILESET` type.
         #[prost(message, tag = "33")]
         FilesetSpec(super::FilesetSpec),
+        /// Specification that applies to a Service resource.
+        #[prost(message, tag = "42")]
+        ServiceSpec(super::ServiceSpec),
     }
 }
 /// Specification that applies to a table resource. Valid only
@@ -1467,9 +1609,49 @@ pub struct DatabaseTableSpec {
     /// Dataplex table entries.
     #[prost(message, optional, tag = "2")]
     pub dataplex_table: ::core::option::Option<DataplexTableSpec>,
+    /// Spec what aplies to tables that are actually views.
+    /// Not set for "real" tables.
+    #[prost(message, optional, tag = "3")]
+    pub database_view_spec: ::core::option::Option<database_table_spec::DatabaseViewSpec>,
 }
 /// Nested message and enum types in `DatabaseTableSpec`.
 pub mod database_table_spec {
+    /// Specification that applies to database view.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DatabaseViewSpec {
+        /// Type of this view.
+        #[prost(enumeration = "database_view_spec::ViewType", tag = "1")]
+        pub view_type: i32,
+        /// Definition of the view.
+        #[prost(oneof = "database_view_spec::SourceDefinition", tags = "2, 3")]
+        pub source_definition: ::core::option::Option<database_view_spec::SourceDefinition>,
+    }
+    /// Nested message and enum types in `DatabaseViewSpec`.
+    pub mod database_view_spec {
+        /// Concrete type of the view.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum ViewType {
+            /// Default unknown view type.
+            Unspecified = 0,
+            /// Standard view.
+            StandardView = 1,
+            /// Materialized view.
+            MaterializedView = 2,
+        }
+        /// Definition of the view.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum SourceDefinition {
+            /// Name of a singular table this view reflects one to one.
+            #[prost(string, tag = "2")]
+            BaseTable(::prost::alloc::string::String),
+            /// SQL query used to generate this view.
+            #[prost(string, tag = "3")]
+            SqlQuery(::prost::alloc::string::String),
+        }
+    }
     /// Type of the table.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -1581,6 +1763,119 @@ pub mod routine_spec {
         /// Fields specific for BigQuery routines.
         #[prost(message, tag = "6")]
         BigqueryRoutineSpec(super::BigQueryRoutineSpec),
+    }
+}
+/// Specification that applies to
+/// entries that are part `SQL_DATABASE` system
+/// (user_specified_type)
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SqlDatabaseSystemSpec {
+    /// SQL Database Engine.
+    /// enum SqlEngine {
+    ///  UNDEFINED = 0;
+    ///  MY_SQL = 1;
+    ///  POSTGRE_SQL = 2;
+    ///  SQL_SERVER = 3;
+    /// }
+    /// Engine of the enclosing database instance.
+    #[prost(string, tag = "1")]
+    pub sql_engine: ::prost::alloc::string::String,
+    /// Version of the database engine.
+    #[prost(string, tag = "2")]
+    pub database_version: ::prost::alloc::string::String,
+    /// Host of the SQL database
+    /// enum InstanceHost {
+    ///  UNDEFINED = 0;
+    ///  SELF_HOSTED = 1;
+    ///  CLOUD_SQL = 2;
+    ///  AMAZON_RDS = 3;
+    ///  AZURE_SQL = 4;
+    /// }
+    /// Host of the enclousing database instance.
+    #[prost(string, tag = "3")]
+    pub instance_host: ::prost::alloc::string::String,
+}
+/// Specification that applies to
+/// entries that are part `LOOKER` system
+/// (user_specified_type)
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LookerSystemSpec {
+    /// ID of the parent Looker Instance. Empty if it does not exist.
+    /// Example value: `someinstance.looker.com`
+    #[prost(string, tag = "1")]
+    pub parent_instance_id: ::prost::alloc::string::String,
+    /// Name of the parent Looker Instance. Empty if it does not exist.
+    #[prost(string, tag = "2")]
+    pub parent_instance_display_name: ::prost::alloc::string::String,
+    /// ID of the parent Model. Empty if it does not exist.
+    #[prost(string, tag = "3")]
+    pub parent_model_id: ::prost::alloc::string::String,
+    /// Name of the parent Model. Empty if it does not exist.
+    #[prost(string, tag = "4")]
+    pub parent_model_display_name: ::prost::alloc::string::String,
+    /// ID of the parent View. Empty if it does not exist.
+    #[prost(string, tag = "5")]
+    pub parent_view_id: ::prost::alloc::string::String,
+    /// Name of the parent View. Empty if it does not exist.
+    #[prost(string, tag = "6")]
+    pub parent_view_display_name: ::prost::alloc::string::String,
+}
+/// Specification that applies to
+/// all entries that are part of `CLOUD_BIGTABLE` system
+/// (user_specified_type)
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudBigtableSystemSpec {
+    /// Display name of the Instance. This is user specified and different from
+    /// the resource name.
+    #[prost(string, tag = "1")]
+    pub instance_display_name: ::prost::alloc::string::String,
+}
+/// Specification that applies to Instance
+/// entries that are part of `CLOUD_BIGTABLE` system.
+/// (user_specified_type)
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudBigtableInstanceSpec {
+    /// The list of clusters for the Instance.
+    #[prost(message, repeated, tag = "1")]
+    pub cloud_bigtable_cluster_specs:
+        ::prost::alloc::vec::Vec<cloud_bigtable_instance_spec::CloudBigtableClusterSpec>,
+}
+/// Nested message and enum types in `CloudBigtableInstanceSpec`.
+pub mod cloud_bigtable_instance_spec {
+    /// Spec that applies to clusters of an Instance of Cloud Bigtable.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CloudBigtableClusterSpec {
+        /// Name of the cluster.
+        #[prost(string, tag = "1")]
+        pub display_name: ::prost::alloc::string::String,
+        /// Location of the cluster, typically a Cloud zone.
+        #[prost(string, tag = "2")]
+        pub location: ::prost::alloc::string::String,
+        /// Type of the resource. For a cluster this would be "CLUSTER".
+        #[prost(string, tag = "3")]
+        pub r#type: ::prost::alloc::string::String,
+        /// A link back to the parent resource, in this case Instance.
+        #[prost(string, tag = "4")]
+        pub linked_resource: ::prost::alloc::string::String,
+    }
+}
+/// Specification that applies to a Service resource. Valid only
+/// for entries with the `SERVICE` type.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ServiceSpec {
+    /// System spec
+    #[prost(oneof = "service_spec::SystemSpec", tags = "1")]
+    pub system_spec: ::core::option::Option<service_spec::SystemSpec>,
+}
+/// Nested message and enum types in `ServiceSpec`.
+pub mod service_spec {
+    /// System spec
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SystemSpec {
+        /// Specification that applies to Instance entries of `CLOUD_BIGTABLE`
+        /// system.
+        #[prost(message, tag = "1")]
+        CloudBigtableInstanceSpec(super::CloudBigtableInstanceSpec),
     }
 }
 /// Business Context of the entry.
@@ -1784,8 +2079,8 @@ pub struct UpdateTagTemplateFieldRequest {
     /// Required. The template to update.
     #[prost(message, optional, tag = "2")]
     pub tag_template_field: ::core::option::Option<TagTemplateField>,
-    /// Optional. Names of fields whose values to overwrite on an individual field of a tag
-    /// template. The following fields are modifiable:
+    /// Optional. Names of fields whose values to overwrite on an individual field
+    /// of a tag template. The following fields are modifiable:
     ///
     /// * `display_name`
     /// * `type.enum_type`
@@ -1810,7 +2105,8 @@ pub struct RenameTagTemplateFieldRequest {
     /// Required. The name of the tag template field.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. The new ID of this tag template field. For example, `my_new_field`.
+    /// Required. The new ID of this tag template field. For example,
+    /// `my_new_field`.
     #[prost(string, tag = "2")]
     pub new_tag_template_field_id: ::prost::alloc::string::String,
 }
@@ -1821,7 +2117,8 @@ pub struct RenameTagTemplateFieldEnumValueRequest {
     /// Required. The name of the enum field value.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. The new display name of the enum value. For example, `my_new_enum_value`.
+    /// Required. The new display name of the enum value. For example,
+    /// `my_new_enum_value`.
     #[prost(string, tag = "2")]
     pub new_enum_value_display_name: ::prost::alloc::string::String,
 }
@@ -1868,6 +2165,78 @@ pub struct ListTagsResponse {
     /// no more items in results.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[ReconcileTags][google.cloud.datacatalog.v1.DataCatalog.ReconcileTags\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReconcileTagsRequest {
+    /// Required. Name of \[Entry][google.cloud.datacatalog.v1.Entry\] to be tagged.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The name of the tag template, which is used for reconciliation.
+    #[prost(string, tag = "2")]
+    pub tag_template: ::prost::alloc::string::String,
+    /// If set to `true`, deletes entry tags related to a tag template
+    /// not listed in the tags source from an entry. If set to `false`,
+    /// unlisted tags are retained.
+    #[prost(bool, tag = "3")]
+    pub force_delete_missing: bool,
+    /// A list of tags to apply to an entry. A tag can specify a
+    /// tag template, which must be the template specified in the
+    /// `ReconcileTagsRequest`.
+    /// The sole entry and each of its columns must be mentioned at most once.
+    #[prost(message, repeated, tag = "4")]
+    pub tags: ::prost::alloc::vec::Vec<Tag>,
+}
+/// [Long-running operation]\[google.longrunning.Operation\]
+/// response message returned by
+/// \[ReconcileTags][google.cloud.datacatalog.v1.DataCatalog.ReconcileTags\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReconcileTagsResponse {
+    /// Number of tags created in the request.
+    #[prost(int64, tag = "1")]
+    pub created_tags_count: i64,
+    /// Number of tags updated in the request.
+    #[prost(int64, tag = "2")]
+    pub updated_tags_count: i64,
+    /// Number of tags deleted in the request.
+    #[prost(int64, tag = "3")]
+    pub deleted_tags_count: i64,
+}
+/// [Long-running operation]\[google.longrunning.Operation\]
+/// metadata message returned by the
+/// \[ReconcileTags][google.cloud.datacatalog.v1.DataCatalog.ReconcileTags\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReconcileTagsMetadata {
+    /// State of the reconciliation operation.
+    #[prost(
+        enumeration = "reconcile_tags_metadata::ReconciliationState",
+        tag = "1"
+    )]
+    pub state: i32,
+    /// Maps the name of each tagged column (or empty string for a
+    /// sole entry) to tagging operation \[status][google.rpc.Status\].
+    #[prost(map = "string, message", tag = "2")]
+    pub errors: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        super::super::super::rpc::Status,
+    >,
+}
+/// Nested message and enum types in `ReconcileTagsMetadata`.
+pub mod reconcile_tags_metadata {
+    /// Enum holding possible states of the reconciliation operation.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ReconciliationState {
+        /// Default value. This value is unused.
+        Unspecified = 0,
+        /// The reconciliation has been queued and awaits for execution.
+        ReconciliationQueued = 1,
+        /// The reconciliation is in progress.
+        ReconciliationInProgress = 2,
+        /// The reconciliation has been finished.
+        ReconciliationDone = 3,
+    }
 }
 /// Request message for
 /// \[ListEntries][google.cloud.datacatalog.v1.DataCatalog.ListEntries\].
@@ -1933,6 +2302,78 @@ pub struct UnstarEntryRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UnstarEntryResponse {}
 /// Request message for
+/// \[ImportEntries][google.cloud.datacatalog.v1.DataCatalog.ImportEntries\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportEntriesRequest {
+    /// Required. Target entry group for ingested entries.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. (Optional) Dataplex task job id, if specified will be used as
+    /// part of ImportEntries LRO ID
+    #[prost(string, tag = "3")]
+    pub job_id: ::prost::alloc::string::String,
+    /// Source of imported entries, e.g. dump stored in a Cloud Storage
+    #[prost(oneof = "import_entries_request::Source", tags = "2")]
+    pub source: ::core::option::Option<import_entries_request::Source>,
+}
+/// Nested message and enum types in `ImportEntriesRequest`.
+pub mod import_entries_request {
+    /// Source of imported entries, e.g. dump stored in a Cloud Storage
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Source {
+        /// Path to a Cloud Storage bucket that contains a dump ready for ingestion.
+        #[prost(string, tag = "2")]
+        GcsBucketPath(::prost::alloc::string::String),
+    }
+}
+/// Response message for [long-running operation]\[google.longrunning.Operation\]
+/// returned by the
+/// \[ImportEntries][google.cloud.datacatalog.v1.DataCatalog.ImportEntries\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportEntriesResponse {
+    /// Cumulative number of entries created and entries updated as a result of
+    /// import operation.
+    #[prost(int64, optional, tag = "5")]
+    pub upserted_entries_count: ::core::option::Option<i64>,
+    /// Number of entries deleted as a result of import operation.
+    #[prost(int64, optional, tag = "6")]
+    pub deleted_entries_count: ::core::option::Option<i64>,
+}
+/// Metadata message for [long-running operation]\[google.longrunning.Operation\]
+/// returned by the
+/// \[ImportEntries][google.cloud.datacatalog.v1.DataCatalog.ImportEntries\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportEntriesMetadata {
+    /// State of the import operation.
+    #[prost(enumeration = "import_entries_metadata::ImportState", tag = "1")]
+    pub state: i32,
+    /// Partial errors that are encountered during the ImportEntries operation.
+    /// There is no guarantee that all the encountered errors are reported.
+    /// However, if no errors are reported, it means that no errors were
+    /// encountered.
+    #[prost(message, repeated, tag = "2")]
+    pub errors: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
+}
+/// Nested message and enum types in `ImportEntriesMetadata`.
+pub mod import_entries_metadata {
+    /// Enum holding possible states of the import operation.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ImportState {
+        /// Default value. This value is unused.
+        Unspecified = 0,
+        /// The dump with entries has been queued for import.
+        ImportQueued = 1,
+        /// The import of entries is in progress.
+        ImportInProgress = 2,
+        /// The import of entries has been finished.
+        ImportDone = 3,
+        /// The import of entries has been abandoned in favor of a newer request.
+        ImportObsolete = 4,
+    }
+}
+/// Request message for
 /// \[ModifyEntryOverview][google.cloud.datacatalog.v1.DataCatalog.ModifyEntryOverview\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ModifyEntryOverviewRequest {
@@ -1989,6 +2430,20 @@ pub enum EntryType {
     Zone = 11,
     /// A service, for example, a Dataproc Metastore service.
     Service = 14,
+    /// Schema within a relational database.
+    DatabaseSchema = 15,
+    /// A Dashboard, for example from Looker.
+    Dashboard = 16,
+    /// A Looker Explore.
+    ///
+    /// For more information, see [Looker Explore API]
+    /// (<https://developers.looker.com/api/explorer/4.0/methods/LookmlModel/lookml_model_explore>).
+    Explore = 17,
+    /// A Looker Look.
+    ///
+    /// For more information, see [Looker Look API]
+    /// (<https://developers.looker.com/api/explorer/4.0/methods/Look>).
+    Look = 18,
 }
 #[doc = r" Generated client implementations."]
 pub mod data_catalog_client {
@@ -2640,6 +3095,38 @@ pub mod data_catalog_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " `ReconcileTags` creates or updates a list of tags on the entry."]
+        #[doc = " If the"]
+        #[doc = " [ReconcileTagsRequest.force_delete_missing][google.cloud.datacatalog.v1.ReconcileTagsRequest.force_delete_missing]"]
+        #[doc = " parameter is set, the operation deletes tags not included in the input tag"]
+        #[doc = " list."]
+        #[doc = ""]
+        #[doc = " `ReconcileTags` returns a [long-running operation]"]
+        #[doc = " [google.longrunning.Operation] resource that can be queried with"]
+        #[doc = " [Operations.GetOperation][google.longrunning.Operations.GetOperation]"]
+        #[doc = " to return [ReconcileTagsMetadata]"]
+        #[doc = " [google.cloud.datacatalog.v1.ReconcileTagsMetadata] and"]
+        #[doc = " a [ReconcileTagsResponse]"]
+        #[doc = " [google.cloud.datacatalog.v1.ReconcileTagsResponse] message."]
+        pub async fn reconcile_tags(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ReconcileTagsRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.datacatalog.v1.DataCatalog/ReconcileTags",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Marks an [Entry][google.cloud.datacatalog.v1.Entry] as starred by"]
         #[doc = " the current user. Starring information is private to each user."]
         pub async fn star_entry(
@@ -2783,6 +3270,84 @@ pub mod data_catalog_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Imports entries from a source, such as data previously dumped into a"]
+        #[doc = " Cloud Storage bucket, into Data Catalog. Import of entries"]
+        #[doc = " is a sync operation that reconciles the state of the third-party system"]
+        #[doc = " with the Data Catalog."]
+        #[doc = ""]
+        #[doc = " `ImportEntries` accepts source data snapshots of a third-party system."]
+        #[doc = " Snapshot should be delivered as a .wire or base65-encoded .txt file"]
+        #[doc = " containing a sequence of Protocol Buffer messages of"]
+        #[doc = " [DumpItem][google.cloud.datacatalog.v1.DumpItem] type."]
+        #[doc = ""]
+        #[doc = " `ImportEntries` returns a [long-running operation]"]
+        #[doc = " [google.longrunning.Operation] resource that can be queried with"]
+        #[doc = " [Operations.GetOperation][google.longrunning.Operations.GetOperation]"]
+        #[doc = " to return"]
+        #[doc = " [ImportEntriesMetadata][google.cloud.datacatalog.v1.ImportEntriesMetadata]"]
+        #[doc = " and an"]
+        #[doc = " [ImportEntriesResponse][google.cloud.datacatalog.v1.ImportEntriesResponse]"]
+        #[doc = " message."]
+        pub async fn import_entries(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ImportEntriesRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.datacatalog.v1.DataCatalog/ImportEntries",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Wrapper containing Entry and information about Tags
+/// that should and should not be attached to it.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TaggedEntry {
+    /// Optional. Tags that should be ingested into the Data Catalog.
+    /// Caller should populate template name, column and fields.
+    #[prost(message, repeated, tag = "2")]
+    pub present_tags: ::prost::alloc::vec::Vec<Tag>,
+    /// Optional. Tags that should be deleted from the Data Catalog.
+    /// Caller should populate template name and column only.
+    #[prost(message, repeated, tag = "3")]
+    pub absent_tags: ::prost::alloc::vec::Vec<Tag>,
+    /// Required. Entry to be ingested.
+    #[prost(oneof = "tagged_entry::Entry", tags = "1")]
+    pub entry: ::core::option::Option<tagged_entry::Entry>,
+}
+/// Nested message and enum types in `TaggedEntry`.
+pub mod tagged_entry {
+    /// Required. Entry to be ingested.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Entry {
+        /// Non-encrypted Data Catalog v1 Entry.
+        #[prost(message, tag = "1")]
+        V1Entry(super::Entry),
+    }
+}
+/// Wrapper for any item that can be contained in the dump.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DumpItem {
+    #[prost(oneof = "dump_item::Item", tags = "1")]
+    pub item: ::core::option::Option<dump_item::Item>,
+}
+/// Nested message and enum types in `DumpItem`.
+pub mod dump_item {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Item {
+        /// Entry and its tags.
+        #[prost(message, tag = "1")]
+        TaggedEntry(super::TaggedEntry),
     }
 }
 /// A taxonomy is a collection of hierarchical policy tags that classify data
@@ -2838,8 +3403,8 @@ pub struct Taxonomy {
     /// Output only. Creation and modification timestamps of this taxonomy.
     #[prost(message, optional, tag = "5")]
     pub taxonomy_timestamps: ::core::option::Option<SystemTimestamps>,
-    /// Optional. A list of policy types that are activated for this taxonomy. If not set,
-    /// defaults to an empty list.
+    /// Optional. A list of policy types that are activated for this taxonomy. If
+    /// not set, defaults to an empty list.
     #[prost(
         enumeration = "taxonomy::PolicyType",
         repeated,
@@ -2847,9 +3412,24 @@ pub struct Taxonomy {
         tag = "6"
     )]
     pub activated_policy_types: ::prost::alloc::vec::Vec<i32>,
+    /// Output only. Identity of the service which owns the Taxonomy. This field is
+    /// only populated when the taxonomy is created by a Google Cloud service.
+    /// Currently only 'DATAPLEX' is supported.
+    #[prost(message, optional, tag = "7")]
+    pub service: ::core::option::Option<taxonomy::Service>,
 }
 /// Nested message and enum types in `Taxonomy`.
 pub mod taxonomy {
+    /// The source system of the Taxonomy.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Service {
+        /// The Google Cloud service name.
+        #[prost(enumeration = "super::ManagingSystem", tag = "1")]
+        pub name: i32,
+        /// The service agent for the service.
+        #[prost(string, tag = "2")]
+        pub identity: ::prost::alloc::string::String,
+    }
     /// Defines policy types where the policy tags can be used for.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -2960,6 +3540,10 @@ pub struct ListTaxonomiesRequest {
     /// The token is returned in the response to a previous list request.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
+    /// Supported field for filter is 'service' and value is 'dataplex'.
+    /// Eg: service=dataplex.
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
 }
 /// Response message for
 /// \[ListTaxonomies][google.cloud.datacatalog.v1.PolicyTagManager.ListTaxonomies\].
@@ -3361,7 +3945,8 @@ pub mod policy_tag_manager_client {
 /// export.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SerializedTaxonomy {
-    /// Required. Display name of the taxonomy. At most 200 bytes when encoded in UTF-8.
+    /// Required. Display name of the taxonomy. At most 200 bytes when encoded in
+    /// UTF-8.
     #[prost(string, tag = "1")]
     pub display_name: ::prost::alloc::string::String,
     /// Description of the serialized taxonomy. At most 2000 bytes when
@@ -3412,7 +3997,8 @@ pub struct ReplaceTaxonomyRequest {
 /// \[ImportTaxonomies][google.cloud.datacatalog.v1.PolicyTagManagerSerialization.ImportTaxonomies\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ImportTaxonomiesRequest {
-    /// Required. Resource name of project that the imported taxonomies will belong to.
+    /// Required. Resource name of project that the imported taxonomies will belong
+    /// to.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Source taxonomies to import.
@@ -3459,7 +4045,8 @@ pub struct ImportTaxonomiesResponse {
 /// \[ExportTaxonomies][google.cloud.datacatalog.v1.PolicyTagManagerSerialization.ExportTaxonomies\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExportTaxonomiesRequest {
-    /// Required. Resource name of the project that the exported taxonomies belong to.
+    /// Required. Resource name of the project that the exported taxonomies belong
+    /// to.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. Resource names of the taxonomies to export.

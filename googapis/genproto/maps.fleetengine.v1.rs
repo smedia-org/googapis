@@ -204,16 +204,17 @@ pub struct VehicleLocation {
     /// Whether `location` is snapped to a road.
     #[prost(message, optional, tag = "27")]
     pub is_road_snapped: ::core::option::Option<bool>,
-    /// Input only. Indicates whether the GPS sensor is enabled on the mobile device.
+    /// Input only. Indicates whether the GPS sensor is enabled on the mobile
+    /// device.
     #[prost(message, optional, tag = "12")]
     pub is_gps_sensor_enabled: ::core::option::Option<bool>,
-    /// Input only. Time (in seconds) since this location was first sent to the server.
-    /// This will be zero for the first update. If the time is unknown
-    /// (for example, when the app restarts), this value resets to zero.
+    /// Input only. Time (in seconds) since this location was first sent to the
+    /// server. This will be zero for the first update. If the time is unknown (for
+    /// example, when the app restarts), this value resets to zero.
     #[prost(message, optional, tag = "14")]
     pub time_since_update: ::core::option::Option<i32>,
-    /// Input only. Number of additional attempts to send this location to the server.
-    /// If this value is zero, then it is not stale.
+    /// Input only. Number of additional attempts to send this location to the
+    /// server. If this value is zero, then it is not stale.
     #[prost(message, optional, tag = "15")]
     pub num_stale_updates: ::core::option::Option<i32>,
     /// Raw vehicle location (unprocessed by road-snapper).
@@ -309,9 +310,20 @@ pub enum LocationSensor {
     Network = 2,
     /// Cell tower ID or WiFi access point.
     Passive = 3,
-    /// A location signal snapped to the best road position.
+    /// A location determined by the mobile device to be the most likely
+    /// road position.
     RoadSnappedLocationProvider = 4,
-    /// The fused location provider in Google Play services.
+    /// A customer-supplied location from an independent source.  Typically, this
+    /// value is used for a location provided from sources other than the mobile
+    /// device running Driver SDK.  If the original source is described by one of
+    /// the other enum values, use that value. Locations marked
+    /// CUSTOMER_SUPPLIED_LOCATION are typically provided via a Vehicle's
+    /// `last_location.supplemental_location_sensor`.
+    CustomerSuppliedLocation = 5,
+    /// A location calculated by Fleet Engine based on the signals available to it.
+    /// Output only. This value will be rejected if it is received in a request.
+    FleetEngineLocation = 6,
+    /// Android's Fused Location Provider.
     FusedLocationProvider = 100,
     /// The location provider on Apple operating systems.
     CoreLocation = 200,
@@ -477,9 +489,9 @@ pub struct Trip {
     /// This field supports manual ordering of the waypoints for the trip. It
     /// contains all of the remaining waypoints for the assigned vehicle, as well
     /// as the pickup and drop-off waypoints for this trip. If the trip hasn't been
-    /// assigned to a vehicle, then this field is ignored. For privacy reasons,
-    /// this field is only populated by the server on UpdateTrip and CreateTrip
-    /// calls, NOT on GetTrip calls.
+    /// assigned to a vehicle, then Fleet Engine ignores this field. For privacy
+    /// reasons, this field is only populated by the server on `UpdateTrip` and
+    /// `CreateTrip` calls, NOT on `GetTrip` calls.
     #[prost(message, repeated, tag = "20")]
     pub vehicle_waypoints: ::prost::alloc::vec::Vec<TripWaypoint>,
     /// Output only. Anticipated route for this trip to the first entry in
@@ -545,7 +557,7 @@ pub struct Trip {
     pub remaining_waypoints_route_version: ::core::option::Option<::prost_types::Timestamp>,
     /// Immutable. Indicates the number of passengers on this trip and does not
     /// include the driver. A vehicle must have available capacity to be returned
-    /// in SearchVehicles.
+    /// in a `SearchVehicles` response.
     #[prost(int32, tag = "10")]
     pub number_of_passengers: i32,
     /// Output only. Indicates the last reported location of the vehicle along the
@@ -755,8 +767,8 @@ pub struct ReportBillableTripRequest {
     /// member.
     #[prost(string, tag = "2")]
     pub name: ::prost::alloc::string::String,
-    /// Required. Two letter country code of the country where the trip takes place. Price is
-    /// defined according to country code.
+    /// Required. Two letter country code of the country where the trip takes
+    /// place. Price is defined according to country code.
     #[prost(string, tag = "3")]
     pub country_code: ::prost::alloc::string::String,
     /// The platform upon which the request was issued.
@@ -890,9 +902,9 @@ pub struct SearchTripsResponse {
     /// The list of trips for the requested vehicle.
     #[prost(message, repeated, tag = "1")]
     pub trips: ::prost::alloc::vec::Vec<Trip>,
-    /// Pass this token in the SearchTripsRequest to continue to
-    /// list results. If all results have been returned, this field is an empty
-    /// string or not present in the response.
+    /// Pass this token in the SearchTripsRequest to page through list results. The
+    /// API returns a trip list on each call, and when no more results remain the
+    /// trip list is empty.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
@@ -1043,7 +1055,8 @@ pub struct Vehicle {
     /// Trip types supported by this vehicle.
     #[prost(enumeration = "TripType", repeated, tag = "3")]
     pub supported_trip_types: ::prost::alloc::vec::Vec<i32>,
-    /// Output only. List of `trip_id`'s for trips currently assigned to this vehicle.
+    /// Output only. List of `trip_id`'s for trips currently assigned to this
+    /// vehicle.
     #[prost(string, repeated, tag = "4")]
     pub current_trips: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Last reported location of the vehicle.
@@ -1076,12 +1089,13 @@ pub struct Vehicle {
     /// not yet supported.
     #[prost(string, tag = "20")]
     pub current_route_segment: ::prost::alloc::string::String,
-    /// Input only. Fleet Engine uses this information to improve Journey Sharing.
+    /// Input only. Fleet Engine uses this information to improve journey sharing.
+    /// Note: This field is intended only for use by the Driver SDK.
     #[prost(message, optional, tag = "28")]
     pub current_route_segment_traffic: ::core::option::Option<TrafficPolylineData>,
-    /// Output only. Time when `current_route_segment` was set. It can be stored by the client
-    /// and passed in future `GetVehicle` requests to prevent returning routes that
-    /// haven't changed.
+    /// Output only. Time when `current_route_segment` was set. It can be stored by
+    /// the client and passed in future `GetVehicle` requests to prevent returning
+    /// routes that haven't changed.
     #[prost(message, optional, tag = "15")]
     pub current_route_segment_version: ::core::option::Option<::prost_types::Timestamp>,
     /// The waypoint where `current_route_segment` ends. This can be supplied by
@@ -1106,8 +1120,8 @@ pub struct Vehicle {
     /// `eta_to_first_waypoint` in the same request.
     #[prost(message, optional, tag = "19")]
     pub eta_to_first_waypoint: ::core::option::Option<::prost_types::Timestamp>,
-    /// Input only. The remaining driving time for the `current_route_segment`. The value is
-    /// unspecified if the `waypoints` field is empty or the
+    /// Input only. The remaining driving time for the `current_route_segment`. The
+    /// value is unspecified if the `waypoints` field is empty or the
     /// `Vehicle.current_route_segment` field is empty. This value should match
     /// `eta_to_first_waypoint` - `current_time` if all parties are using the same
     /// clock.
@@ -1119,9 +1133,9 @@ pub struct Vehicle {
     /// The remaining waypoints assigned to this Vehicle.
     #[prost(message, repeated, tag = "22")]
     pub waypoints: ::prost::alloc::vec::Vec<TripWaypoint>,
-    /// Output only. Last time the `waypoints` field was updated. Clients should cache this
-    /// value and pass it in `GetVehicleRequest` to ensure the `waypoints` field is
-    /// only returned if it is updated.
+    /// Output only. Last time the `waypoints` field was updated. Clients should
+    /// cache this value and pass it in `GetVehicleRequest` to ensure the
+    /// `waypoints` field is only returned if it is updated.
     #[prost(message, optional, tag = "16")]
     pub waypoints_version: ::core::option::Option<::prost_types::Timestamp>,
     /// Indicates if the driver accepts back-to-back trips. If `true`,
@@ -1132,7 +1146,8 @@ pub struct Vehicle {
     /// The vehicle's navigation status.
     #[prost(enumeration = "NavigationStatus", tag = "26")]
     pub navigation_status: i32,
-    /// Input only. Information about settings in the mobile device being used by the driver.
+    /// Input only. Information about settings in the mobile device being used by
+    /// the driver.
     #[prost(message, optional, tag = "27")]
     pub device_settings: ::core::option::Option<DeviceSettings>,
 }
@@ -1218,15 +1233,11 @@ pub struct LicensePlate {
 /// route.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VisualTrafficReportPolylineRendering {
-    /// Optional. Road stretches that should be rendered along the polyline. Stretches
-    /// <ul>
-    /// <li>are
-    /// guaranteed to not overlap, and</li>
-    /// <li>do not necessarily
-    /// span the full route.</li>
-    /// </ul>
+    /// Optional. Road stretches that should be rendered along the polyline.
+    /// Stretches are guaranteed to not overlap, and do not necessarily span the
+    /// full route.
     ///
-    /// <p>In the absence of a road stretch to style, the client should apply the
+    /// In the absence of a road stretch to style, the client should apply the
     /// default for the route.
     #[prost(message, repeated, tag = "1")]
     pub road_stretch:
@@ -1240,8 +1251,8 @@ pub mod visual_traffic_report_polyline_rendering {
         /// Required. The style to apply.
         #[prost(enumeration = "road_stretch::Style", tag = "1")]
         pub style: i32,
-        /// Required. The style should be applied between `[offset_meters, offset_meters +
-        /// length_meters)`.
+        /// Required. The style should be applied between `[offset_meters,
+        /// offset_meters + length_meters)`.
         #[prost(int32, tag = "2")]
         pub offset_meters: i32,
         /// Required. The length of the path where to apply the style.
@@ -1437,18 +1448,18 @@ pub struct UpdateVehicleRequest {
     /// the following fields may not be updated as they are managed by the
     /// server.
     ///
-    /// * `current_trips`
     /// * `available_capacity`
     /// * `current_route_segment_version`
+    /// * `current_trips`
+    /// * `name`
     /// * `waypoints_version`
-    ///
-    /// Furthermore, the vehicle `name` cannot be updated.
     ///
     /// If the `attributes` field is updated, **all** the vehicle's attributes are
     /// replaced with the attributes provided in the request. If you want to update
-    /// only some attributes, see the `UpdateVehicleAttributes` method. Likewise,
-    /// the `waypoints` field can be updated, but must contain all the waypoints.
-    /// currently on the vehicle, and no other waypoints.
+    /// only some attributes, see the `UpdateVehicleAttributes` method.
+    ///
+    /// Likewise, the `waypoints` field can be updated, but must contain all the
+    /// waypoints currently on the vehicle, and no other waypoints.
     #[prost(message, optional, tag = "4")]
     pub vehicle: ::core::option::Option<Vehicle>,
     /// Required. A field mask indicating which fields of the `Vehicle` to update.
@@ -1490,16 +1501,16 @@ pub struct UpdateVehicleAttributesRequest {
     /// this call is a member.
     #[prost(string, tag = "3")]
     pub name: ::prost::alloc::string::String,
-    /// Required. The vehicle attributes to update. Unmentioned attributes will not
-    /// be altered or removed.
+    /// Required. The vehicle attributes to update. Unmentioned attributes are not
+    /// altered or removed.
     #[prost(message, repeated, tag = "4")]
     pub attributes: ::prost::alloc::vec::Vec<VehicleAttribute>,
 }
 /// `UpdateVehicleAttributes` response message.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateVehicleAttributesResponse {
-    /// Required. The updated full list of vehicle attributes, including new, altered, and
-    /// untouched attributes.
+    /// Required. The updated full list of vehicle attributes, including new,
+    /// altered, and untouched attributes.
     #[prost(message, repeated, tag = "1")]
     pub attributes: ::prost::alloc::vec::Vec<VehicleAttribute>,
 }
@@ -1593,13 +1604,15 @@ pub struct SearchVehiclesRequest {
     /// ```
     /// (required_attributes\[0\] AND required_attributes\[1\] AND ...)
     /// AND
-    /// (required_one_of_attribute_sets\[0][0\] AND
-    /// required_one_of_attribute_sets\[0][1\] AND
-    /// ...)
-    /// OR
-    /// (required_one_of_attribute_sets\[1][0\] AND
-    /// required_one_of_attribute_sets\[1][1\] AND
-    /// ...)
+    /// (
+    ///   (required_one_of_attribute_sets\[0][0\] AND
+    ///   required_one_of_attribute_sets\[0][1\] AND
+    ///   ...)
+    ///   OR
+    ///   (required_one_of_attribute_sets\[1][0\] AND
+    ///   required_one_of_attribute_sets\[1][1\] AND
+    ///   ...)
+    /// )
     /// ```
     ///
     /// Restricts the search to only those vehicles with all the attributes in a
@@ -1655,7 +1668,10 @@ pub mod search_vehicles_request {
         /// Ascending order by straight-line distance from the vehicle's last
         /// reported location to the pickup point.
         PickupPointStraightDistance = 4,
-        /// Ascending order by the configured match cost.
+        /// Ascending order by the configured match cost. Match cost is defined as a
+        /// weighted calculation between straight-line distance and ETA. Weights are
+        /// set with default values and can be modified per customer. Please contact
+        /// Google support if these weights need to be modified for your project.
         Cost = 5,
     }
     /// Specifies the types of restrictions on a vehicle's current trips.
@@ -1747,9 +1763,9 @@ pub struct ListVehiclesRequest {
     /// ```
     ///
     /// Restricts the response to vehicles with the specified attributes. This
-    /// field is a conjunction/AND operation. Your app can specify up to 100
-    /// attributes; however, the combined key:value string length cannot exceed
-    /// 1024 characters.
+    /// field is a conjunction/AND operation. A max of 50 required_attributes is
+    /// allowed. This matches the maximum number of attributes allowed on a
+    /// vehicle. Each repeated string should be of the format "key:value".
     #[prost(string, repeated, tag = "10")]
     pub required_attributes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Restricts the response to vehicles with at least one of the specified
@@ -1757,7 +1773,8 @@ pub struct ListVehiclesRequest {
     /// match at least one of the attributes. This field is an inclusive
     /// disjunction/OR operation in each `VehicleAttributeList` and a
     /// conjunction/AND operation across the collection of `VehicleAttributeList`.
-    /// Format: key1:value1|key2:value2|key3:value3...
+    /// Each repeated string should be of the format
+    /// "key1:value1|key2:value2|key3:value3".
     #[prost(string, repeated, tag = "13")]
     pub required_one_of_attributes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// `required_one_of_attribute_sets` provides additional functionality.
@@ -1769,11 +1786,15 @@ pub struct ListVehiclesRequest {
     /// ```
     /// (required_attributes\[0\] AND required_attributes\[1\] AND ...)
     /// AND
-    /// (required_one_of_attributes\[0][0\] AND required_one_of_attributes\[0][1\] AND
-    /// ...)
-    /// OR
-    /// (required_one_of_attributes\[1][0\] AND required_one_of_attributes\[1][1\] AND
-    /// ...)
+    /// (
+    ///   (required_one_of_attribute_sets\[0][0\] AND
+    ///   required_one_of_attribute_sets\[0][1\] AND
+    ///   ...)
+    ///   OR
+    ///   (required_one_of_attribute_sets\[1][0\] AND
+    ///   required_one_of_attribute_sets\[1][1\] AND
+    ///   ...)
+    /// )
     /// ```
     ///
     /// Restricts the response to vehicles that match all the attributes in a

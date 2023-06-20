@@ -71,8 +71,8 @@ pub mod synthesize_speech_request {
 }
 /// Contains text input to be synthesized. Either `text` or `ssml` must be
 /// supplied. Supplying both or neither returns
-/// \[google.rpc.Code.INVALID_ARGUMENT][\]. The input size is limited to 5000
-/// characters.
+/// \[google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT\]. The input size is limited to 5000
+/// bytes.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SynthesisInput {
     /// The input source, which is either plain text or SSML.
@@ -89,7 +89,7 @@ pub mod synthesis_input {
         Text(::prost::alloc::string::String),
         /// The SSML document to be synthesized. The SSML document must be valid
         /// and well-formed. Otherwise the RPC will fail and return
-        /// \[google.rpc.Code.INVALID_ARGUMENT][\]. For more information, see
+        /// \[google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT\]. For more information, see
         /// \[SSML\](<https://cloud.google.com/text-to-speech/docs/ssml>).
         #[prost(string, tag = "2")]
         Ssml(::prost::alloc::string::String),
@@ -161,7 +161,7 @@ pub struct AudioConfig {
     /// converting to the desired sample rate (which might result in worse audio
     /// quality), unless the specified sample rate is not supported for the
     /// encoding chosen, in which case it will fail the request and return
-    /// \[google.rpc.Code.INVALID_ARGUMENT][\].
+    /// \[google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT\].
     #[prost(int32, tag = "5")]
     pub sample_rate_hertz: i32,
     /// Optional. Input only. An identifier which selects 'audio effects' profiles
@@ -254,7 +254,7 @@ pub enum SsmlVoiceGender {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum AudioEncoding {
-    /// Not specified. Will return result \[google.rpc.Code.INVALID_ARGUMENT][\].
+    /// Not specified. Will return result \[google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT\].
     Unspecified = 0,
     /// Uncompressed 16-bit signed little-endian samples (Linear PCM).
     /// Audio content returned as LINEAR16 also contains a WAV header.
@@ -358,6 +358,116 @@ pub mod text_to_speech_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.texttospeech.v1beta1.TextToSpeech/SynthesizeSpeech",
             );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// The top-level message sent by the client for the
+/// `SynthesizeLongAudio` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SynthesizeLongAudioRequest {
+    /// The resource states of the request in the form of
+    /// `projects/*/locations/*`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The Synthesizer requires either plain text or SSML as input.
+    /// While Long Audio is in preview, SSML is temporarily unsupported.
+    #[prost(message, optional, tag = "2")]
+    pub input: ::core::option::Option<SynthesisInput>,
+    /// Required. The configuration of the synthesized audio.
+    #[prost(message, optional, tag = "3")]
+    pub audio_config: ::core::option::Option<AudioConfig>,
+    /// Required. Specifies a Cloud Storage URI for the synthesis results. Must be
+    /// specified in the format: `gs://bucket_name/object_name`, and the bucket
+    /// must already exist.
+    #[prost(string, tag = "4")]
+    pub output_gcs_uri: ::prost::alloc::string::String,
+    /// Required. The desired voice of the synthesized audio.
+    #[prost(message, optional, tag = "5")]
+    pub voice: ::core::option::Option<VoiceSelectionParams>,
+}
+/// The message returned to the client by the `SynthesizeLongAudio` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SynthesizeLongAudioResponse {}
+/// Metadata for response returned by the `SynthesizeLongAudio` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SynthesizeLongAudioMetadata {
+    /// Time when the request was received.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Time of the most recent processing update.
+    #[prost(message, optional, tag = "2")]
+    pub last_update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The progress of the most recent processing update in percentage, ie. 70.0%.
+    #[prost(double, tag = "3")]
+    pub progress_percentage: f64,
+}
+#[doc = r" Generated client implementations."]
+pub mod text_to_speech_long_audio_synthesize_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service that implements Google Cloud Text-to-Speech API."]
+    #[derive(Debug, Clone)]
+    pub struct TextToSpeechLongAudioSynthesizeClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> TextToSpeechLongAudioSynthesizeClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> TextToSpeechLongAudioSynthesizeClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            TextToSpeechLongAudioSynthesizeClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Synthesizes long form text asynchronously."]
+        pub async fn synthesize_long_audio(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SynthesizeLongAudioRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.texttospeech.v1beta1.TextToSpeechLongAudioSynthesize/SynthesizeLongAudio") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }

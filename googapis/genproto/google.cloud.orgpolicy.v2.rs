@@ -123,6 +123,11 @@ pub struct Policy {
     #[deprecated]
     #[prost(message, optional, tag = "3")]
     pub alternate: ::core::option::Option<AlternatePolicySpec>,
+    /// dry-run policy.
+    /// Audit-only policy, can be used to monitor how the policy would have
+    /// impacted the existing and future resources if it's enforced.
+    #[prost(message, optional, tag = "4")]
+    pub dry_run_spec: ::core::option::Option<PolicySpec>,
 }
 /// Similar to PolicySpec but with an extra 'launch' field for launch reference.
 /// The PolicySpec here is specific for dry-run/darklaunch.
@@ -261,8 +266,8 @@ pub mod policy_spec {
 /// \[google.cloud.orgpolicy.v2.OrgPolicy.ListConstraints\] method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListConstraintsRequest {
-    /// Required. The Cloud resource that parents the constraint. Must be in one of the
-    /// following forms:
+    /// Required. The Cloud resource that parents the constraint. Must be in one of
+    /// the following forms:
     /// * `projects/{project_number}`
     /// * `projects/{project_id}`
     /// * `folders/{folder_id}`
@@ -294,9 +299,9 @@ pub struct ListConstraintsResponse {
 /// \[google.cloud.orgpolicy.v2.OrgPolicy.ListPolicies\] method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListPoliciesRequest {
-    /// Required. The target Cloud resource that parents the set of constraints and policies
-    /// that will be returned from this call. Must be in one of the following
-    /// forms:
+    /// Required. The target Cloud resource that parents the set of constraints and
+    /// policies that will be returned from this call. Must be in one of the
+    /// following forms:
     /// * `projects/{project_number}`
     /// * `projects/{project_id}`
     /// * `folders/{folder_id}`
@@ -331,7 +336,8 @@ pub struct ListPoliciesResponse {
 /// \[google.cloud.orgpolicy.v2.OrgPolicy.GetPolicy\] method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetPolicyRequest {
-    /// Required. Resource name of the policy. See `Policy` for naming requirements.
+    /// Required. Resource name of the policy. See `Policy` for naming
+    /// requirements.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -347,8 +353,8 @@ pub struct GetEffectivePolicyRequest {
 /// \[google.cloud.orgpolicy.v2.OrgPolicy.CreatePolicy\] method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreatePolicyRequest {
-    /// Required. The Cloud resource that will parent the new Policy. Must be in one of the
-    /// following forms:
+    /// Required. The Cloud resource that will parent the new Policy. Must be in
+    /// one of the following forms:
     /// * `projects/{project_number}`
     /// * `projects/{project_id}`
     /// * `folders/{folder_id}`
@@ -366,6 +372,11 @@ pub struct UpdatePolicyRequest {
     /// Required. `Policy` to update.
     #[prost(message, optional, tag = "1")]
     pub policy: ::core::option::Option<Policy>,
+    /// Field mask used to specify the fields to be overwritten in the policy
+    /// by the set. The fields specified in the update_mask are relative to the
+    /// policy, not the full request.
+    #[prost(message, optional, tag = "3")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// The request sent to the \[DeletePolicy\]
 /// \[google.cloud.orgpolicy.v2.OrgPolicy.DeletePolicy\] method.

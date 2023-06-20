@@ -427,15 +427,18 @@ pub struct Http {
 /// 1. Leaf request fields (recursive expansion nested messages in the request
 ///    message) are classified into three categories:
 ///    - Fields referred by the path template. They are passed via the URL path.
-///    - Fields referred by the \[HttpRule.body][google.api.HttpRule.body\]. They are passed via the HTTP
+///    - Fields referred by the \[HttpRule.body][google.api.HttpRule.body\]. They
+///    are passed via the HTTP
 ///      request body.
 ///    - All other fields are passed via the URL query parameters, and the
 ///      parameter name is the field path in the request message. A repeated
 ///      field can be represented as multiple query parameters under the same
 ///      name.
-///  2. If \[HttpRule.body][google.api.HttpRule.body\] is "*", there is no URL query parameter, all fields
+///  2. If \[HttpRule.body][google.api.HttpRule.body\] is "*", there is no URL
+///  query parameter, all fields
 ///     are passed via URL path and HTTP request body.
-///  3. If \[HttpRule.body][google.api.HttpRule.body\] is omitted, there is no HTTP request body, all
+///  3. If \[HttpRule.body][google.api.HttpRule.body\] is omitted, there is no HTTP
+///  request body, all
 ///     fields are passed via URL path and URL query parameters.
 ///
 /// ### Path template syntax
@@ -531,7 +534,8 @@ pub struct Http {
 pub struct HttpRule {
     /// Selects a method to which this rule applies.
     ///
-    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax details.
+    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax
+    /// details.
     #[prost(string, tag = "1")]
     pub selector: ::prost::alloc::string::String,
     /// The name of the request field whose value is mapped to the HTTP request
@@ -650,6 +654,7 @@ pub enum LaunchStage {
 pub struct CommonLanguageSettings {
     /// Link to automatically generated reference documentation.  Example:
     /// <https://cloud.google.com/nodejs/docs/reference/asset/latest>
+    #[deprecated]
     #[prost(string, tag = "1")]
     pub reference_docs_uri: ::prost::alloc::string::String,
     /// The destination where API teams want this client library to be published.
@@ -659,7 +664,9 @@ pub struct CommonLanguageSettings {
 /// Details about how and where to publish client libraries.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ClientLibrarySettings {
-    /// Version of the API to apply these settings to.
+    /// Version of the API to apply these settings to. This is the full protobuf
+    /// package for the API, ending in the version element.
+    /// Examples: "google.cloud.speech.v1" and "google.spanner.admin.database.v1".
     #[prost(string, tag = "1")]
     pub version: ::prost::alloc::string::String,
     /// Launch stage of this version of the API.
@@ -703,7 +710,7 @@ pub struct Publishing {
     /// long-running operation pattern.
     #[prost(message, repeated, tag = "2")]
     pub method_settings: ::prost::alloc::vec::Vec<MethodSettings>,
-    /// Link to a place that API users can report issues.  Example:
+    /// Link to a *public* URI where users can report issues.  Example:
     /// <https://issuetracker.google.com/issues/new?component=190865&template=1161103>
     #[prost(string, tag = "101")]
     pub new_issue_uri: ::prost::alloc::string::String,
@@ -735,6 +742,10 @@ pub struct Publishing {
     /// settings with the same version string are discarded.
     #[prost(message, repeated, tag = "109")]
     pub library_settings: ::prost::alloc::vec::Vec<ClientLibrarySettings>,
+    /// Optional link to proto reference documentation.  Example:
+    /// <https://cloud.google.com/pubsub/lite/docs/reference/rpc>
+    #[prost(string, tag = "110")]
+    pub proto_reference_documentation_uri: ::prost::alloc::string::String,
 }
 /// Settings for Java client libraries.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -807,6 +818,38 @@ pub struct DotnetSettings {
     /// Some settings.
     #[prost(message, optional, tag = "1")]
     pub common: ::core::option::Option<CommonLanguageSettings>,
+    /// Map from original service names to renamed versions.
+    /// This is used when the default generated types
+    /// would cause a naming conflict. (Neither name is
+    /// fully-qualified.)
+    /// Example: Subscriber to SubscriberServiceApi.
+    #[prost(map = "string, string", tag = "2")]
+    pub renamed_services:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Map from full resource types to the effective short name
+    /// for the resource. This is used when otherwise resource
+    /// named from different services would cause naming collisions.
+    /// Example entry:
+    /// "datalabeling.googleapis.com/Dataset": "DataLabelingDataset"
+    #[prost(map = "string, string", tag = "3")]
+    pub renamed_resources:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// List of full resource types to ignore during generation.
+    /// This is typically used for API-specific Location resources,
+    /// which should be handled by the generator as if they were actually
+    /// the common Location resources.
+    /// Example entry: "documentai.googleapis.com/Location"
+    #[prost(string, repeated, tag = "4")]
+    pub ignored_resources: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Namespaces which must be aliased in snippets due to
+    /// a known (but non-generator-predictable) naming collision
+    #[prost(string, repeated, tag = "5")]
+    pub forced_namespace_aliases: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Method signatures (in the form "service.method(signature)")
+    /// which are provided separately, so shouldn't be generated.
+    /// Snippets *calling* these methods are still generated, however.
+    #[prost(string, repeated, tag = "6")]
+    pub handwritten_signatures: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Settings for Ruby client libraries.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -836,8 +879,8 @@ pub struct MethodSettings {
     /// Example of a YAML configuration::
     ///
     ///  publishing:
-    ///    method_behavior:
-    ///      - selector: CreateAdDomain
+    ///    method_settings:
+    ///      - selector: google.cloud.speech.v2.Speech.BatchRecognize
     ///        long_running:
     ///          initial_poll_delay:
     ///            seconds: 60 # 1 minute
@@ -892,6 +935,12 @@ pub enum ClientLibraryOrganization {
     Photos = 3,
     /// Street View Org.
     StreetView = 4,
+    /// Shopping Org.
+    Shopping = 5,
+    /// Geo Org.
+    Geo = 6,
+    /// Generative AI - <https://developers.generativeai.google>
+    GenerativeAi = 7,
 }
 /// To where should client libraries be published?
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -948,7 +997,8 @@ pub struct Authentication {
 pub struct AuthenticationRule {
     /// Selects the methods to which this rule applies.
     ///
-    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax details.
+    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax
+    /// details.
     #[prost(string, tag = "1")]
     pub selector: ::prost::alloc::string::String,
     /// The requirements for OAuth credentials.
@@ -1145,7 +1195,8 @@ pub struct Backend {
 pub struct BackendRule {
     /// Selects the methods to which this rule applies.
     ///
-    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax details.
+    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax
+    /// details.
     #[prost(string, tag = "1")]
     pub selector: ::prost::alloc::string::String,
     /// The address of the API backend.
@@ -1207,6 +1258,10 @@ pub struct BackendRule {
     /// for more details on the supported values.
     #[prost(string, tag = "9")]
     pub protocol: ::prost::alloc::string::String,
+    /// The map between request protocol and the backend address.
+    #[prost(map = "string, message", tag = "10")]
+    pub overrides_by_request_protocol:
+        ::std::collections::HashMap<::prost::alloc::string::String, BackendRule>,
     /// Authentication settings used by the backend.
     ///
     /// These are typically used to provide service management functionality to
@@ -1359,11 +1414,13 @@ pub mod billing {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct BillingDestination {
         /// The monitored resource type. The type must be defined in
-        /// \[Service.monitored_resources][google.api.Service.monitored_resources\] section.
+        /// \[Service.monitored_resources][google.api.Service.monitored_resources\]
+        /// section.
         #[prost(string, tag = "1")]
         pub monitored_resource: ::prost::alloc::string::String,
         /// Names of the metrics to report to this billing destination.
-        /// Each name must be defined in \[Service.metrics][google.api.Service.metrics\] section.
+        /// Each name must be defined in
+        /// \[Service.metrics][google.api.Service.metrics\] section.
         #[prost(string, repeated, tag = "2")]
         pub metrics: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     }
@@ -1541,7 +1598,8 @@ pub struct Context {
 pub struct ContextRule {
     /// Selects the methods to which this rule applies.
     ///
-    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax details.
+    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax
+    /// details.
     #[prost(string, tag = "1")]
     pub selector: ::prost::alloc::string::String,
     /// A list of full type names of requested contexts.
@@ -1681,6 +1739,7 @@ pub mod distribution {
         /// following boundaries:
         ///
         ///    Upper bound (0 <= i < N-1):     offset + (width * i).
+        ///
         ///    Lower bound (1 <= i < N):       offset + (width * (i - 1)).
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct Linear {
@@ -1702,6 +1761,7 @@ pub mod distribution {
         /// following boundaries:
         ///
         ///    Upper bound (0 <= i < N-1):     scale * (growth_factor ^ i).
+        ///
         ///    Lower bound (1 <= i < N):       scale * (growth_factor ^ (i - 1)).
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct Exponential {
@@ -2460,6 +2520,39 @@ pub enum ErrorReason {
     ///   }
     /// }
     OrgRestrictionHeaderInvalid = 28,
+    /// Unimplemented. Do not use.
+    ///
+    /// The request is calling a service that is not visible to the consumer.
+    ///
+    /// Example of an ErrorInfo when the consumer "projects/123" contacting
+    ///  "pubsub.googleapis.com" service which is not visible to the consumer.
+    ///
+    ///     { "reason": "SERVICE_NOT_VISIBLE",
+    ///       "domain": "googleapis.com",
+    ///       "metadata": {
+    ///         "consumer": "projects/123",
+    ///         "service": "pubsub.googleapis.com"
+    ///       }
+    ///     }
+    ///
+    /// This response indicates the "pubsub.googleapis.com" is not visible to
+    /// "projects/123" (or it may not exist).
+    ServiceNotVisible = 29,
+    /// The request is related to a project for which GCP access is suspended.
+    ///
+    /// Example of an ErrorInfo when the consumer "projects/123" fails to contact
+    /// "pubsub.googleapis.com" service because GCP access is suspended:
+    ///
+    ///     { "reason": "GCP_SUSPENDED",
+    ///       "domain": "googleapis.com",
+    ///       "metadata": {
+    ///         "consumer": "projects/123",
+    ///         "service": "pubsub.googleapis.com"
+    ///       }
+    ///     }
+    ///
+    /// This response indicates the associated GCP account has been suspended.
+    GcpSuspended = 30,
 }
 /// Message that represents an arbitrary HTTP body. It should only be used for
 /// payload formats that can't be represented as JSON, such as raw binary or
@@ -2625,13 +2718,14 @@ pub mod logging {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct LoggingDestination {
         /// The monitored resource type. The type must be defined in the
-        /// \[Service.monitored_resources][google.api.Service.monitored_resources\] section.
+        /// \[Service.monitored_resources][google.api.Service.monitored_resources\]
+        /// section.
         #[prost(string, tag = "3")]
         pub monitored_resource: ::prost::alloc::string::String,
         /// Names of the logs to be sent to this destination. Each name must
-        /// be defined in the \[Service.logs][google.api.Service.logs\] section. If the log name is
-        /// not a domain scoped name, it will be automatically prefixed with
-        /// the service name followed by "/".
+        /// be defined in the \[Service.logs][google.api.Service.logs\] section. If the
+        /// log name is not a domain scoped name, it will be automatically prefixed
+        /// with the service name followed by "/".
         #[prost(string, repeated, tag = "1")]
         pub logs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     }
@@ -2792,9 +2886,10 @@ pub struct MetricDescriptor {
     pub launch_stage: i32,
     /// Read-only. If present, then a [time
     /// series]\[google.monitoring.v3.TimeSeries\], which is identified partially by
-    /// a metric type and a \[MonitoredResourceDescriptor][google.api.MonitoredResourceDescriptor\], that is associated
-    /// with this metric type can only be associated with one of the monitored
-    /// resource types listed here.
+    /// a metric type and a
+    /// \[MonitoredResourceDescriptor][google.api.MonitoredResourceDescriptor\], that
+    /// is associated with this metric type can only be associated with one of the
+    /// monitored resource types listed here.
     #[prost(string, repeated, tag = "13")]
     pub monitored_resource_types: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
@@ -2803,7 +2898,9 @@ pub mod metric_descriptor {
     /// Additional annotations that can be used to guide the usage of a metric.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct MetricDescriptorMetadata {
-        /// Deprecated. Must use the \[MetricDescriptor.launch_stage][google.api.MetricDescriptor.launch_stage\] instead.
+        /// Deprecated. Must use the
+        /// \[MetricDescriptor.launch_stage][google.api.MetricDescriptor.launch_stage\]
+        /// instead.
         #[deprecated]
         #[prost(enumeration = "super::LaunchStage", tag = "1")]
         pub launch_stage: i32,
@@ -2864,8 +2961,9 @@ pub mod metric_descriptor {
 /// labels of a \[`MetricDescriptor`][google.api.MetricDescriptor\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Metric {
-    /// An existing metric type, see \[google.api.MetricDescriptor][google.api.MetricDescriptor\].
-    /// For example, `custom.googleapis.com/invoice/paid/amount`.
+    /// An existing metric type, see
+    /// \[google.api.MetricDescriptor][google.api.MetricDescriptor\]. For example,
+    /// `custom.googleapis.com/invoice/paid/amount`.
     #[prost(string, tag = "3")]
     pub r#type: ::prost::alloc::string::String,
     /// The set of label values that uniquely identify this metric. All
@@ -2874,9 +2972,10 @@ pub struct Metric {
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
-/// An object that describes the schema of a \[MonitoredResource][google.api.MonitoredResource\] object using a
-/// type name and a set of labels.  For example, the monitored resource
-/// descriptor for Google Compute Engine VM instances has a type of
+/// An object that describes the schema of a
+/// \[MonitoredResource][google.api.MonitoredResource\] object using a type name
+/// and a set of labels.  For example, the monitored resource descriptor for
+/// Google Compute Engine VM instances has a type of
 /// `"gce_instance"` and specifies the use of the labels `"instance_id"` and
 /// `"zone"` to identify particular VM instances.
 ///
@@ -2924,11 +3023,13 @@ pub struct MonitoredResourceDescriptor {
 /// An object representing a resource that can be used for monitoring, logging,
 /// billing, or other purposes. Examples include virtual machine instances,
 /// databases, and storage devices such as disks. The `type` field identifies a
-/// \[MonitoredResourceDescriptor][google.api.MonitoredResourceDescriptor\] object that describes the resource's
-/// schema. Information in the `labels` field identifies the actual resource and
-/// its attributes according to the schema. For example, a particular Compute
-/// Engine VM instance could be represented by the following object, because the
-/// \[MonitoredResourceDescriptor][google.api.MonitoredResourceDescriptor\] for `"gce_instance"` has labels
+/// \[MonitoredResourceDescriptor][google.api.MonitoredResourceDescriptor\] object
+/// that describes the resource's schema. Information in the `labels` field
+/// identifies the actual resource and its attributes according to the schema.
+/// For example, a particular Compute Engine VM instance could be represented by
+/// the following object, because the
+/// \[MonitoredResourceDescriptor][google.api.MonitoredResourceDescriptor\] for
+/// `"gce_instance"` has labels
 /// `"project_id"`, `"instance_id"` and `"zone"`:
 ///
 ///     { "type": "gce_instance",
@@ -2938,10 +3039,12 @@ pub struct MonitoredResourceDescriptor {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MonitoredResource {
     /// Required. The monitored resource type. This field must match
-    /// the `type` field of a \[MonitoredResourceDescriptor][google.api.MonitoredResourceDescriptor\] object. For
-    /// example, the type of a Compute Engine VM instance is `gce_instance`.
-    /// Some descriptors include the service name in the type; for example,
-    /// the type of a Datastream stream is `datastream.googleapis.com/Stream`.
+    /// the `type` field of a
+    /// \[MonitoredResourceDescriptor][google.api.MonitoredResourceDescriptor\]
+    /// object. For example, the type of a Compute Engine VM instance is
+    /// `gce_instance`. Some descriptors include the service name in the type; for
+    /// example, the type of a Datastream stream is
+    /// `datastream.googleapis.com/Stream`.
     #[prost(string, tag = "1")]
     pub r#type: ::prost::alloc::string::String,
     /// Required. Values for all of the labels listed in the associated monitored
@@ -2951,12 +3054,12 @@ pub struct MonitoredResource {
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
-/// Auxiliary metadata for a \[MonitoredResource][google.api.MonitoredResource\] object.
-/// \[MonitoredResource][google.api.MonitoredResource\] objects contain the minimum set of information to
-/// uniquely identify a monitored resource instance. There is some other useful
-/// auxiliary metadata. Monitoring and Logging use an ingestion
-/// pipeline to extract metadata for cloud resources of all types, and store
-/// the metadata in this message.
+/// Auxiliary metadata for a \[MonitoredResource][google.api.MonitoredResource\]
+/// object. \[MonitoredResource][google.api.MonitoredResource\] objects contain the
+/// minimum set of information to uniquely identify a monitored resource
+/// instance. There is some other useful auxiliary metadata. Monitoring and
+/// Logging use an ingestion pipeline to extract metadata for cloud resources of
+/// all types, and store the metadata in this message.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MonitoredResourceMetadata {
     /// Output only. Values for predefined system metadata labels.
@@ -3054,11 +3157,13 @@ pub mod monitoring {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct MonitoringDestination {
         /// The monitored resource type. The type must be defined in
-        /// \[Service.monitored_resources][google.api.Service.monitored_resources\] section.
+        /// \[Service.monitored_resources][google.api.Service.monitored_resources\]
+        /// section.
         #[prost(string, tag = "1")]
         pub monitored_resource: ::prost::alloc::string::String,
         /// Types of the metrics to report to this monitoring destination.
-        /// Each type must be defined in \[Service.metrics][google.api.Service.metrics\] section.
+        /// Each type must be defined in
+        /// \[Service.metrics][google.api.Service.metrics\] section.
         #[prost(string, repeated, tag = "2")]
         pub metrics: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     }
@@ -3130,7 +3235,8 @@ pub struct Quota {
 pub struct MetricRule {
     /// Selects the methods to which this rule applies.
     ///
-    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax details.
+    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax
+    /// details.
     #[prost(string, tag = "1")]
     pub selector: ::prost::alloc::string::String,
     /// Metrics to update when the selected methods are called, and the associated
@@ -3713,7 +3819,8 @@ pub struct SystemParameterRule {
     /// Selects the methods to which this rule applies. Use '*' to indicate all
     /// methods in all APIs.
     ///
-    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax details.
+    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax
+    /// details.
     #[prost(string, tag = "1")]
     pub selector: ::prost::alloc::string::String,
     /// Define parameters. Multiple names may be defined for a parameter.
@@ -3801,7 +3908,8 @@ pub struct UsageRule {
     /// Selects the methods to which this rule applies. Use '*' to indicate all
     /// methods in all APIs.
     ///
-    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax details.
+    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax
+    /// details.
     #[prost(string, tag = "1")]
     pub selector: ::prost::alloc::string::String,
     /// If true, the selected method allows unregistered calls, e.g. calls
@@ -3870,10 +3978,10 @@ pub struct Service {
     #[prost(string, tag = "33")]
     pub id: ::prost::alloc::string::String,
     /// A list of API interfaces exported by this service. Only the `name` field
-    /// of the \[google.protobuf.Api][google.protobuf.Api\] needs to be provided by the configuration
-    /// author, as the remaining fields will be derived from the IDL during the
-    /// normalization process. It is an error to specify an API interface here
-    /// which cannot be resolved against the associated IDL files.
+    /// of the \[google.protobuf.Api][google.protobuf.Api\] needs to be provided by
+    /// the configuration author, as the remaining fields will be derived from the
+    /// IDL during the normalization process. It is an error to specify an API
+    /// interface here which cannot be resolved against the associated IDL files.
     #[prost(message, repeated, tag = "3")]
     pub apis: ::prost::alloc::vec::Vec<::prost_types::Api>,
     /// A list of all proto message types included in this API service.
@@ -3931,7 +4039,8 @@ pub struct Service {
     #[prost(message, repeated, tag = "24")]
     pub metrics: ::prost::alloc::vec::Vec<MetricDescriptor>,
     /// Defines the monitored resources used by this service. This is required
-    /// by the \[Service.monitoring][google.api.Service.monitoring\] and \[Service.logging][google.api.Service.logging\] configurations.
+    /// by the \[Service.monitoring][google.api.Service.monitoring\] and
+    /// \[Service.logging][google.api.Service.logging\] configurations.
     #[prost(message, repeated, tag = "25")]
     pub monitored_resources: ::prost::alloc::vec::Vec<MonitoredResourceDescriptor>,
     /// Billing configuration.

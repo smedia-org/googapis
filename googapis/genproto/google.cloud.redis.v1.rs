@@ -18,8 +18,10 @@ pub struct Instance {
     /// Note: Redis instances are managed and addressed at regional level so
     /// location_id here refers to a GCP region; however, users may choose which
     /// specific zone (or collection of zones for cross-zone instances) an instance
-    /// should be provisioned in. Refer to \[location_id][google.cloud.redis.v1.Instance.location_id\] and
-    /// \[alternative_location_id][google.cloud.redis.v1.Instance.alternative_location_id\] fields for more details.
+    /// should be provisioned in. Refer to
+    /// \[location_id][google.cloud.redis.v1.Instance.location_id\] and
+    /// \[alternative_location_id][google.cloud.redis.v1.Instance.alternative_location_id\]
+    /// fields for more details.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// An arbitrary and optional user-provided name for the instance.
@@ -63,11 +65,11 @@ pub struct Instance {
     /// the default block size is /28.
     #[prost(string, tag = "9")]
     pub reserved_ip_range: ::prost::alloc::string::String,
-    /// Optional. Additional IP range for node placement. Required when enabling read
-    /// replicas on an existing instance. For DIRECT_PEERING mode value must be a
-    /// CIDR range of size /28, or "auto". For PRIVATE_SERVICE_ACCESS mode value
-    /// must be the name of an allocated address range associated with the private
-    /// service access connection, or "auto".
+    /// Optional. Additional IP range for node placement. Required when enabling
+    /// read replicas on an existing instance. For DIRECT_PEERING mode value must
+    /// be a CIDR range of size /28, or "auto". For PRIVATE_SERVICE_ACCESS mode
+    /// value must be the name of an allocated address range associated with the
+    /// private service access connection, or "auto".
     #[prost(string, tag = "30")]
     pub secondary_ip_range: ::prost::alloc::string::String,
     /// Output only. Hostname or IP address of the exposed Redis endpoint used by
@@ -138,9 +140,9 @@ pub struct Instance {
     /// If not provided, the connect mode defaults to DIRECT_PEERING.
     #[prost(enumeration = "instance::ConnectMode", tag = "22")]
     pub connect_mode: i32,
-    /// Optional. Indicates whether OSS Redis AUTH is enabled for the instance. If set to
-    /// "true" AUTH is enabled on the instance. Default value is "false" meaning
-    /// AUTH is disabled.
+    /// Optional. Indicates whether OSS Redis AUTH is enabled for the instance. If
+    /// set to "true" AUTH is enabled on the instance. Default value is "false"
+    /// meaning AUTH is disabled.
     #[prost(bool, tag = "23")]
     pub auth_enabled: bool,
     /// Output only. List of server CA certificates for the instance.
@@ -150,11 +152,6 @@ pub struct Instance {
     /// If not provided, TLS is disabled for the instance.
     #[prost(enumeration = "instance::TransitEncryptionMode", tag = "26")]
     pub transit_encryption_mode: i32,
-    // Optional. The number of replica nodes. The valid range for the Standard Tier with
-    // read replicas enabled is \[1-5\] and defaults to 2. If read replicas are not
-    // enabled for a Standard Tier instance, the only valid value is 1 and the
-    // default is 1. The valid value for basic tier is 0 and the default is also
-    // 0.
     /// Optional. The maintenance policy for the instance. If not provided,
     /// maintenance events can be performed at any time.
     #[prost(message, optional, tag = "27")]
@@ -163,11 +160,11 @@ pub struct Instance {
     /// scheduled.
     #[prost(message, optional, tag = "28")]
     pub maintenance_schedule: ::core::option::Option<MaintenanceSchedule>,
-    /// Optional. The number of replica nodes. The valid range for the Standard Tier with
-    /// read replicas enabled is \[1-5\] and defaults to 2. If read replicas are not
-    /// enabled for a Standard Tier instance, the only valid value is 1 and the
-    /// default is 1. The valid value for basic tier is 0 and the default is also
-    /// 0.
+    /// Optional. The number of replica nodes. The valid range for the Standard
+    /// Tier with read replicas enabled is \[1-5\] and defaults to 2. If read
+    /// replicas are not enabled for a Standard Tier instance, the only valid value
+    /// is 1 and the default is 1. The valid value for basic tier is 0 and the
+    /// default is also 0.
     #[prost(int32, tag = "31")]
     pub replica_count: i32,
     /// Output only. Info per node.
@@ -183,9 +180,33 @@ pub struct Instance {
     /// endpoint. Standard tier only. Write requests should target 'port'.
     #[prost(int32, tag = "34")]
     pub read_endpoint_port: i32,
-    /// Optional. Read replicas mode for the instance. Defaults to READ_REPLICAS_DISABLED.
+    /// Optional. Read replicas mode for the instance. Defaults to
+    /// READ_REPLICAS_DISABLED.
     #[prost(enumeration = "instance::ReadReplicasMode", tag = "35")]
     pub read_replicas_mode: i32,
+    /// Optional. The KMS key reference that the customer provides when trying to
+    /// create the instance.
+    #[prost(string, tag = "36")]
+    pub customer_managed_key: ::prost::alloc::string::String,
+    /// Optional. Persistence configuration parameters
+    #[prost(message, optional, tag = "37")]
+    pub persistence_config: ::core::option::Option<PersistenceConfig>,
+    /// Optional. reasons that causes instance in "SUSPENDED" state.
+    #[prost(
+        enumeration = "instance::SuspensionReason",
+        repeated,
+        packed = "false",
+        tag = "38"
+    )]
+    pub suspension_reasons: ::prost::alloc::vec::Vec<i32>,
+    /// Optional. The self service update maintenance version.
+    /// The version is date based such as "20210712_00_00".
+    #[prost(string, tag = "39")]
+    pub maintenance_version: ::prost::alloc::string::String,
+    /// Optional. The available maintenance versions that an instance could update
+    /// to.
+    #[prost(string, repeated, tag = "40")]
+    pub available_maintenance_versions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Nested message and enum types in `Instance`.
 pub mod instance {
@@ -263,8 +284,72 @@ pub mod instance {
         /// up and down the number of replicas. Not valid for basic tier.
         ReadReplicasEnabled = 2,
     }
+    /// Possible reasons for the instance to be in a "SUSPENDED" state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SuspensionReason {
+        /// Not set.
+        Unspecified = 0,
+        /// Something wrong with the CMEK key provided by customer.
+        CustomerManagedKeyIssue = 1,
+    }
 }
-/// Request for \[RescheduleMaintenance][google.cloud.redis.v1.CloudRedis.RescheduleMaintenance\].
+/// Configuration of the persistence functionality.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PersistenceConfig {
+    /// Optional. Controls whether Persistence features are enabled.
+    /// If not provided, the existing value will be used.
+    #[prost(enumeration = "persistence_config::PersistenceMode", tag = "1")]
+    pub persistence_mode: i32,
+    /// Optional. Period between RDB snapshots. Snapshots will be attempted every
+    /// period starting from the provided snapshot start time. For example, a start
+    /// time of 01/01/2033 06:45 and SIX_HOURS snapshot period will do nothing
+    /// until 01/01/2033, and then trigger snapshots every day at 06:45, 12:45,
+    /// 18:45, and 00:45 the next day, and so on. If not provided,
+    /// TWENTY_FOUR_HOURS will be used as default.
+    #[prost(enumeration = "persistence_config::SnapshotPeriod", tag = "2")]
+    pub rdb_snapshot_period: i32,
+    /// Output only. The next time that a snapshot attempt is scheduled to occur.
+    #[prost(message, optional, tag = "4")]
+    pub rdb_next_snapshot_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Optional. Date and time that the first snapshot was/will be attempted, and
+    /// to which future snapshots will be aligned. If not provided, the current
+    /// time will be used.
+    #[prost(message, optional, tag = "5")]
+    pub rdb_snapshot_start_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `PersistenceConfig`.
+pub mod persistence_config {
+    /// Available Persistence modes.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum PersistenceMode {
+        /// Not set.
+        Unspecified = 0,
+        /// Persistence is disabled for the instance,
+        /// and any existing snapshots are deleted.
+        Disabled = 1,
+        /// RDB based Persistence is enabled.
+        Rdb = 2,
+    }
+    /// Available snapshot periods for scheduling.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SnapshotPeriod {
+        /// Not set.
+        Unspecified = 0,
+        /// Snapshot every 1 hour.
+        OneHour = 3,
+        /// Snapshot every 6 hours.
+        SixHours = 4,
+        /// Snapshot every 12 hours.
+        TwelveHours = 5,
+        /// Snapshot every 24 hours.
+        TwentyFourHours = 6,
+    }
+}
+/// Request for
+/// \[RescheduleMaintenance][google.cloud.redis.v1.CloudRedis.RescheduleMaintenance\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RescheduleMaintenanceRequest {
     /// Required. Redis instance resource name using the form:
@@ -272,7 +357,8 @@ pub struct RescheduleMaintenanceRequest {
     /// where `location_id` refers to a GCP region.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. If reschedule type is SPECIFIC_TIME, must set up schedule_time as well.
+    /// Required. If reschedule type is SPECIFIC_TIME, must set up schedule_time as
+    /// well.
     #[prost(
         enumeration = "reschedule_maintenance_request::RescheduleType",
         tag = "2"
@@ -330,7 +416,8 @@ pub struct WeeklyMaintenanceWindow {
     /// Required. Start time of the window in UTC time.
     #[prost(message, optional, tag = "2")]
     pub start_time: ::core::option::Option<super::super::super::r#type::TimeOfDay>,
-    /// Output only. Duration of the maintenance window. The current window is fixed at 1 hour.
+    /// Output only. Duration of the maintenance window. The current window is
+    /// fixed at 1 hour.
     #[prost(message, optional, tag = "3")]
     pub duration: ::core::option::Option<::prost_types::Duration>,
 }
@@ -338,18 +425,20 @@ pub struct WeeklyMaintenanceWindow {
 /// populated.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MaintenanceSchedule {
-    /// Output only. The start time of any upcoming scheduled maintenance for this instance.
+    /// Output only. The start time of any upcoming scheduled maintenance for this
+    /// instance.
     #[prost(message, optional, tag = "1")]
     pub start_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. The end time of any upcoming scheduled maintenance for this instance.
+    /// Output only. The end time of any upcoming scheduled maintenance for this
+    /// instance.
     #[prost(message, optional, tag = "2")]
     pub end_time: ::core::option::Option<::prost_types::Timestamp>,
     /// If the scheduled maintenance can be rescheduled, default is true.
     #[deprecated]
     #[prost(bool, tag = "3")]
     pub can_reschedule: bool,
-    /// Output only. The deadline that the maintenance schedule start time can not go beyond,
-    /// including reschedule.
+    /// Output only. The deadline that the maintenance schedule start time can not
+    /// go beyond, including reschedule.
     #[prost(message, optional, tag = "5")]
     pub schedule_deadline_time: ::core::option::Option<::prost_types::Timestamp>,
 }
@@ -371,7 +460,8 @@ pub struct ListInstancesRequest {
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// The `next_page_token` value returned from a previous
-    /// \[ListInstances][google.cloud.redis.v1.CloudRedis.ListInstances\] request, if any.
+    /// \[ListInstances][google.cloud.redis.v1.CloudRedis.ListInstances\] request, if
+    /// any.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
 }
@@ -408,7 +498,8 @@ pub struct GetInstanceRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// Request for \[GetInstanceAuthString][google.cloud.redis.v1.CloudRedis.GetInstanceAuthString\].
+/// Request for
+/// \[GetInstanceAuthString][google.cloud.redis.v1.CloudRedis.GetInstanceAuthString\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetInstanceAuthStringRequest {
     /// Required. Redis instance resource name using the form:
@@ -424,7 +515,8 @@ pub struct InstanceAuthString {
     #[prost(string, tag = "1")]
     pub auth_string: ::prost::alloc::string::String,
 }
-/// Request for \[CreateInstance][google.cloud.redis.v1.CloudRedis.CreateInstance\].
+/// Request for
+/// \[CreateInstance][google.cloud.redis.v1.CloudRedis.CreateInstance\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateInstanceRequest {
     /// Required. The resource name of the instance location using the form:
@@ -446,7 +538,8 @@ pub struct CreateInstanceRequest {
     #[prost(message, optional, tag = "3")]
     pub instance: ::core::option::Option<Instance>,
 }
-/// Request for \[UpdateInstance][google.cloud.redis.v1.CloudRedis.UpdateInstance\].
+/// Request for
+/// \[UpdateInstance][google.cloud.redis.v1.CloudRedis.UpdateInstance\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateInstanceRequest {
     /// Required. Mask of fields to update. At least one path must be supplied in
@@ -465,7 +558,8 @@ pub struct UpdateInstanceRequest {
     #[prost(message, optional, tag = "2")]
     pub instance: ::core::option::Option<Instance>,
 }
-/// Request for \[UpgradeInstance][google.cloud.redis.v1.CloudRedis.UpgradeInstance\].
+/// Request for
+/// \[UpgradeInstance][google.cloud.redis.v1.CloudRedis.UpgradeInstance\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpgradeInstanceRequest {
     /// Required. Redis instance resource name using the form:
@@ -477,7 +571,8 @@ pub struct UpgradeInstanceRequest {
     #[prost(string, tag = "2")]
     pub redis_version: ::prost::alloc::string::String,
 }
-/// Request for \[DeleteInstance][google.cloud.redis.v1.CloudRedis.DeleteInstance\].
+/// Request for
+/// \[DeleteInstance][google.cloud.redis.v1.CloudRedis.DeleteInstance\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteInstanceRequest {
     /// Required. Redis instance resource name using the form:

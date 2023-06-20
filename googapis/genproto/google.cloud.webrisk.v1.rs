@@ -1,9 +1,9 @@
 /// Describes an API diff request.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ComputeThreatListDiffRequest {
-    /// Required. The threat list to update. Only a single ThreatType should be specified
-    /// per request. If you want to handle multiple ThreatTypes, you must make one
-    /// request per ThreatType.
+    /// Required. The threat list to update. Only a single ThreatType should be
+    /// specified per request. If you want to handle multiple ThreatTypes, you must
+    /// make one request per ThreatType.
     #[prost(enumeration = "ThreatType", tag = "1")]
     pub threat_type: i32,
     /// The current version token of the client for the requested list (the
@@ -101,7 +101,8 @@ pub struct SearchUrisRequest {
     /// Required. The URI to be checked for matches.
     #[prost(string, tag = "1")]
     pub uri: ::prost::alloc::string::String,
-    /// Required. The ThreatLists to search in. Multiple ThreatLists may be specified.
+    /// Required. The ThreatLists to search in. Multiple ThreatLists may be
+    /// specified.
     #[prost(enumeration = "ThreatType", repeated, packed = "false", tag = "2")]
     pub threat_types: ::prost::alloc::vec::Vec<i32>,
 }
@@ -134,7 +135,8 @@ pub struct SearchHashesRequest {
     /// the web safe base64 variant (RFC 4648).
     #[prost(bytes = "vec", tag = "1")]
     pub hash_prefix: ::prost::alloc::vec::Vec<u8>,
-    /// Required. The ThreatLists to search in. Multiple ThreatLists may be specified.
+    /// Required. The ThreatLists to search in. Multiple ThreatLists may be
+    /// specified.
     #[prost(enumeration = "ThreatType", repeated, packed = "false", tag = "2")]
     pub threat_types: ::prost::alloc::vec::Vec<i32>,
 }
@@ -248,20 +250,204 @@ pub struct RiceDeltaEncoding {
 /// Wraps a URI that might be displaying malicious content.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Submission {
-    /// Required. The URI that is being reported for malicious content to be analyzed.
+    /// Required. The URI that is being reported for malicious content to be
+    /// analyzed.
     #[prost(string, tag = "1")]
     pub uri: ::prost::alloc::string::String,
+    /// Output only. ThreatTypes found to be associated with the submitted URI
+    /// after reviewing it. This might be empty if the URI was not added to any
+    /// list.
+    #[prost(enumeration = "ThreatType", repeated, packed = "false", tag = "2")]
+    pub threat_types: ::prost::alloc::vec::Vec<i32>,
+}
+/// Context about the submission including the type of abuse found on the URI and
+/// supporting details.
+/// option (google.api.message_visibility).restriction = "TRUSTED_TESTER";
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ThreatInfo {
+    /// The type of abuse.
+    #[prost(enumeration = "threat_info::AbuseType", tag = "1")]
+    pub abuse_type: i32,
+    /// Confidence that the URI is unsafe.
+    #[prost(message, optional, tag = "2")]
+    pub threat_confidence: ::core::option::Option<threat_info::Confidence>,
+    /// Context about why the URI is unsafe.
+    #[prost(message, optional, tag = "3")]
+    pub threat_justification: ::core::option::Option<threat_info::ThreatJustification>,
+}
+/// Nested message and enum types in `ThreatInfo`.
+pub mod threat_info {
+    /// Confidence that a URI is unsafe.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Confidence {
+        #[prost(oneof = "confidence::Value", tags = "1, 2")]
+        pub value: ::core::option::Option<confidence::Value>,
+    }
+    /// Nested message and enum types in `Confidence`.
+    pub mod confidence {
+        /// Enum representation of confidence.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum ConfidenceLevel {
+            /// Default.
+            Unspecified = 0,
+            /// Less than 60% confidence that the URI is unsafe.
+            Low = 1,
+            /// Between 60% and 80% confidence that the URI is unsafe.
+            Medium = 2,
+            /// Greater than 80% confidence that the URI is unsafe.
+            High = 3,
+        }
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Value {
+            /// A decimal representation of confidence in the range of 0
+            /// to 1 where 0 indicates no confidence and 1 indicates
+            /// complete confidence.
+            #[prost(float, tag = "1")]
+            Score(f32),
+            /// Enum representation of confidence.
+            #[prost(enumeration = "ConfidenceLevel", tag = "2")]
+            Level(i32),
+        }
+    }
+    /// Context about why the URI is unsafe.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ThreatJustification {
+        /// Labels associated with this URI that explain how it was classified.
+        #[prost(
+            enumeration = "threat_justification::JustificationLabel",
+            repeated,
+            tag = "1"
+        )]
+        pub labels: ::prost::alloc::vec::Vec<i32>,
+        /// Free-form context on why this URI is unsafe.
+        #[prost(string, repeated, tag = "2")]
+        pub comments: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+    /// Nested message and enum types in `ThreatJustification`.
+    pub mod threat_justification {
+        /// Labels that explain how the URI was classified.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum JustificationLabel {
+            /// Default.
+            Unspecified = 0,
+            /// The submitter manually verified that the submission is unsafe.
+            ManualVerification = 1,
+            /// The submitter received the submission from an end user.
+            UserReport = 2,
+            /// The submitter received the submission from an automated system.
+            AutomatedReport = 3,
+        }
+    }
+    /// The abuse type found on the URI.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AbuseType {
+        /// Default.
+        Unspecified = 0,
+        /// The URI contains malware.
+        Malware = 1,
+        /// The URI contains social engineering.
+        SocialEngineering = 2,
+        /// The URI contains unwanted software.
+        UnwantedSoftware = 3,
+    }
+}
+/// Details about how the threat was discovered.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ThreatDiscovery {
+    /// Platform on which the threat was discovered.
+    #[prost(enumeration = "threat_discovery::Platform", tag = "1")]
+    pub platform: i32,
+    /// CLDR region code of the countries/regions the URI poses a threat ordered
+    /// from most impact to least impact. Example: "US" for United States.
+    #[prost(string, repeated, tag = "2")]
+    pub region_codes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Nested message and enum types in `ThreatDiscovery`.
+pub mod threat_discovery {
+    /// Platform types.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Platform {
+        /// Default.
+        Unspecified = 0,
+        /// General Android platform.
+        Android = 1,
+        /// General iOS platform.
+        Ios = 2,
+        /// General macOS platform.
+        Macos = 3,
+        /// General Windows platform.
+        Windows = 4,
+    }
 }
 /// Request to send a potentially phishy URI to WebRisk.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateSubmissionRequest {
-    /// Required. The name of the project that is making the submission. This string is in
-    /// the format "projects/{project_number}".
+    /// Required. The name of the project that is making the submission. This
+    /// string is in the format "projects/{project_number}".
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The submission that contains the content of the phishing report.
     #[prost(message, optional, tag = "2")]
     pub submission: ::core::option::Option<Submission>,
+}
+/// Request to send a potentially malicious URI to WebRisk.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubmitUriRequest {
+    /// Required. The name of the project that is making the submission. This
+    /// string is in the format "projects/{project_number}".
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The submission that contains the URI to be scanned.
+    #[prost(message, optional, tag = "2")]
+    pub submission: ::core::option::Option<Submission>,
+    /// Provides additional information about the submission.
+    #[prost(message, optional, tag = "3")]
+    pub threat_info: ::core::option::Option<ThreatInfo>,
+    /// Provides additional information about how the submission was discovered.
+    #[prost(message, optional, tag = "4")]
+    pub threat_discovery: ::core::option::Option<ThreatDiscovery>,
+}
+/// Metadata for the Submit URI long-running operation.
+/// option (google.api.message_visibility).restriction = "TRUSTED_TESTER";
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubmitUriMetadata {
+    /// The state of the operation.
+    #[prost(enumeration = "submit_uri_metadata::State", tag = "1")]
+    pub state: i32,
+    /// Creation time of the operation.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Latest update time of the operation.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `SubmitUriMetadata`.
+pub mod submit_uri_metadata {
+    /// Enum that represents the state of the long-running operation.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Default unspecified state.
+        Unspecified = 0,
+        /// The operation is currently running.
+        Running = 1,
+        /// The operation finished with a success status.
+        Succeeded = 2,
+        /// The operation was cancelled.
+        Cancelled = 3,
+        /// The operation finished with a failure status.
+        Failed = 4,
+        /// The operation was closed with no action taken.
+        Closed = 5,
+    }
 }
 /// The type of threat. This maps directly to the threat list a threat may
 /// belong to.
@@ -426,6 +612,35 @@ pub mod web_risk_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.webrisk.v1.WebRiskService/CreateSubmission",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Submits a URI suspected of containing malicious content to be reviewed."]
+        #[doc = " Returns a google.longrunning.Operation which, once the review is complete,"]
+        #[doc = " is updated with its result. You can use the [Pub/Sub API]"]
+        #[doc = " (https://cloud.google.com/pubsub) to receive notifications for the returned"]
+        #[doc = " Operation. If the result verifies the existence of malicious content, the"]
+        #[doc = " site will be added to the [Google's Social Engineering lists]"]
+        #[doc = " (https://support.google.com/webmasters/answer/6350487/) in order to"]
+        #[doc = " protect users that could get exposed to this threat in the future. Only"]
+        #[doc = " allowlisted projects can use this method during Early Access. Please reach"]
+        #[doc = " out to Sales or your customer engineer to obtain access."]
+        pub async fn submit_uri(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SubmitUriRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.webrisk.v1.WebRiskService/SubmitUri",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

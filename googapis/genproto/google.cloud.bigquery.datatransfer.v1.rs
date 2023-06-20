@@ -123,9 +123,9 @@ pub struct TransferConfig {
     /// to the email address of the user who owns this transfer config.
     #[prost(message, optional, tag = "18")]
     pub email_preferences: ::core::option::Option<EmailPreferences>,
-    /// Output only. Information about the user whose credentials are used to transfer data.
-    /// Populated only for `transferConfigs.get` requests. In case the user
-    /// information is not available, this field will not be populated.
+    /// Output only. Information about the user whose credentials are used to
+    /// transfer data. Populated only for `transferConfigs.get` requests. In case
+    /// the user information is not available, this field will not be populated.
     #[prost(message, optional, tag = "27")]
     pub owner_info: ::core::option::Option<UserInfo>,
     /// The desination of the transfer config.
@@ -172,9 +172,10 @@ pub struct TransferRun {
     /// Output only. Last time the data transfer run state was updated.
     #[prost(message, optional, tag = "6")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. Parameters specific to each data source. For more information see the
-    /// bq tab in the 'Setting up a data transfer' section for each data source.
-    /// For example the parameters for Cloud Storage transfers are listed here:
+    /// Output only. Parameters specific to each data source. For more information
+    /// see the bq tab in the 'Setting up a data transfer' section for each data
+    /// source. For example the parameters for Cloud Storage transfers are listed
+    /// here:
     /// <https://cloud.google.com/bigquery-transfer/docs/cloud-storage-transfer#bq>
     #[prost(message, optional, tag = "9")]
     pub params: ::core::option::Option<::prost_types::Struct>,
@@ -466,8 +467,8 @@ pub mod data_source {
 /// A request to get data source info.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetDataSourceRequest {
-    /// Required. The field will contain name of the resource requested, for example:
-    /// `projects/{project_id}/dataSources/{data_source_id}` or
+    /// Required. The field will contain name of the resource requested, for
+    /// example: `projects/{project_id}/dataSources/{data_source_id}` or
     /// `projects/{project_id}/locations/{location_id}/dataSources/{data_source_id}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -475,8 +476,8 @@ pub struct GetDataSourceRequest {
 /// Request to list supported data sources and their data transfer settings.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListDataSourcesRequest {
-    /// Required. The BigQuery project id for which data sources should be returned.
-    /// Must be in the form: `projects/{project_id}` or
+    /// Required. The BigQuery project id for which data sources should be
+    /// returned. Must be in the form: `projects/{project_id}` or
     /// `projects/{project_id}/locations/{location_id}`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
@@ -512,10 +513,11 @@ pub struct ListDataSourcesResponse {
 /// user.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateTransferConfigRequest {
-    /// Required. The BigQuery project id where the transfer configuration should be created.
-    /// Must be in the format projects/{project_id}/locations/{location_id} or
-    /// projects/{project_id}. If specified location and location of the
-    /// destination bigquery dataset do not match - the request will fail.
+    /// Required. The BigQuery project id where the transfer configuration should
+    /// be created. Must be in the format
+    /// projects/{project_id}/locations/{location_id} or projects/{project_id}. If
+    /// specified location and location of the destination bigquery dataset do not
+    /// match - the request will fail.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. Data transfer configuration to create.
@@ -553,7 +555,7 @@ pub struct CreateTransferConfigRequest {
     /// create the transfer config.
     #[prost(string, tag = "5")]
     pub version_info: ::prost::alloc::string::String,
-    /// Optional service account name. If this field is set, the transfer config
+    /// Optional service account email. If this field is set, the transfer config
     /// will be created with this service account's credentials. It requires that
     /// the requesting user calling this API has permissions to act as this service
     /// account.
@@ -607,7 +609,7 @@ pub struct UpdateTransferConfigRequest {
     /// update the transfer config.
     #[prost(string, tag = "5")]
     pub version_info: ::prost::alloc::string::String,
-    /// Optional service account name. If this field is set, the transfer config
+    /// Optional service account email. If this field is set, the transfer config
     /// will be created with this service account's credentials. It requires that
     /// the requesting user calling this API has permissions to act as this service
     /// account.
@@ -622,8 +624,8 @@ pub struct UpdateTransferConfigRequest {
 /// A request to get data transfer information.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetTransferConfigRequest {
-    /// Required. The field will contain name of the resource requested, for example:
-    /// `projects/{project_id}/transferConfigs/{config_id}` or
+    /// Required. The field will contain name of the resource requested, for
+    /// example: `projects/{project_id}/transferConfigs/{config_id}` or
     /// `projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -632,8 +634,8 @@ pub struct GetTransferConfigRequest {
 /// and log messages will be deleted as well.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteTransferConfigRequest {
-    /// Required. The field will contain name of the resource requested, for example:
-    /// `projects/{project_id}/transferConfigs/{config_id}` or
+    /// Required. The field will contain name of the resource requested, for
+    /// example: `projects/{project_id}/transferConfigs/{config_id}` or
     /// `projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -641,8 +643,9 @@ pub struct DeleteTransferConfigRequest {
 /// A request to get data transfer run information.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetTransferRunRequest {
-    /// Required. The field will contain name of the resource requested, for example:
-    /// `projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}` or
+    /// Required. The field will contain name of the resource requested, for
+    /// example: `projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}`
+    /// or
     /// `projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}/runs/{run_id}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -650,8 +653,9 @@ pub struct GetTransferRunRequest {
 /// A request to delete data transfer run information.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteTransferRunRequest {
-    /// Required. The field will contain name of the resource requested, for example:
-    /// `projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}` or
+    /// Required. The field will contain name of the resource requested, for
+    /// example: `projects/{project_id}/transferConfigs/{config_id}/runs/{run_id}`
+    /// or
     /// `projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}/runs/{run_id}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -694,8 +698,8 @@ pub struct ListTransferConfigsResponse {
 /// A request to list data transfer runs.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTransferRunsRequest {
-    /// Required. Name of transfer configuration for which transfer runs should be retrieved.
-    /// Format of transfer configuration resource name is:
+    /// Required. Name of transfer configuration for which transfer runs should be
+    /// retrieved. Format of transfer configuration resource name is:
     /// `projects/{project_id}/transferConfigs/{config_id}` or
     /// `projects/{project_id}/locations/{location_id}/transferConfigs/{config_id}`.
     #[prost(string, tag = "1")]

@@ -378,6 +378,45 @@ pub mod day_of_week_enum {
         Sunday = 8,
     }
 }
+// Proto file describing criteria types.
+
+/// The dimensions that can be targeted.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TargetingDimensionEnum {}
+/// Nested message and enum types in `TargetingDimensionEnum`.
+pub mod targeting_dimension_enum {
+    /// Enum describing possible targeting dimensions.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum TargetingDimension {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Keyword criteria, for example, 'mars cruise'. KEYWORD may be used as a
+        /// custom bid dimension. Keywords are always a targeting dimension, so may
+        /// not be set as a target "ALL" dimension with TargetRestriction.
+        Keyword = 2,
+        /// Audience criteria, which include user list, user interest, custom
+        /// affinity,  and custom in market.
+        Audience = 3,
+        /// Topic criteria for targeting categories of content, for example,
+        /// 'category::Animals>Pets' Used for Display and Video targeting.
+        Topic = 4,
+        /// Criteria for targeting gender.
+        Gender = 5,
+        /// Criteria for targeting age ranges.
+        AgeRange = 6,
+        /// Placement criteria, which include websites like 'www.flowers4sale.com',
+        /// as well as mobile applications, mobile app categories, YouTube videos,
+        /// and YouTube channels.
+        Placement = 7,
+        /// Criteria for parental status targeting.
+        ParentalStatus = 8,
+        /// Criteria for income range targeting.
+        IncomeRange = 9,
+    }
+}
 // Proto file describing account status.
 
 /// Container for enum describing possible statuses of an account.
@@ -438,6 +477,57 @@ pub mod account_type_enum {
         YahooJapan = 9,
     }
 }
+// Proto file describing engine status for the ad_group_ad.
+
+/// Container for enum describing possible AdGroupAd engine statuses.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdGroupAdEngineStatusEnum {}
+/// Nested message and enum types in `AdGroupAdEngineStatusEnum`.
+pub mod ad_group_ad_engine_status_enum {
+    /// Enumerates AdGroupAd engine statuses.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AdGroupAdEngineStatus {
+        /// No value has been specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Deprecated. Do not use.
+        AdGroupAdEligible = 2,
+        /// Baidu: Creative was not approved.
+        AdGroupAdInappropriateForCampaign = 3,
+        /// Baidu: Mobile URL in process to be reviewed.
+        AdGroupAdMobileUrlUnderReview = 4,
+        /// Baidu: Creative is invalid on mobile device but valid on desktop.
+        AdGroupAdPartiallyInvalid = 5,
+        /// Baidu: Creative is ready for activation.
+        AdGroupAdToBeActivated = 6,
+        /// Baidu: Creative not reviewed.
+        AdGroupAdNotReviewed = 7,
+        /// Deprecated. Do not use. Previously used by Gemini
+        AdGroupAdOnHold = 8,
+        /// Creative has been paused.
+        AdGroupAdPaused = 9,
+        /// Creative has been removed.
+        AdGroupAdRemoved = 10,
+        /// Creative is pending review.
+        AdGroupAdPendingReview = 11,
+        /// Creative is under review.
+        AdGroupAdUnderReview = 12,
+        /// Creative has been approved.
+        AdGroupAdApproved = 13,
+        /// Creative has been disapproved.
+        AdGroupAdDisapproved = 14,
+        /// Creative is serving.
+        AdGroupAdServing = 15,
+        /// Creative has been paused because the account is paused.
+        AdGroupAdAccountPaused = 16,
+        /// Creative has been paused because the campaign is paused.
+        AdGroupAdCampaignPaused = 17,
+        /// Creative has been paused because the ad group is paused.
+        AdGroupAdAdGroupPaused = 18,
+    }
+}
 // Proto file describing ad group ad rotation mode.
 
 /// Container for enum describing possible ad rotation modes of ads within an
@@ -460,6 +550,31 @@ pub mod ad_group_ad_rotation_mode_enum {
         Optimize = 2,
         /// Rotate evenly forever.
         RotateForever = 3,
+    }
+}
+// Proto file describing ad group status.
+
+/// Container for enum describing possible statuses of an AdGroupAd.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdGroupAdStatusEnum {}
+/// Nested message and enum types in `AdGroupAdStatusEnum`.
+pub mod ad_group_ad_status_enum {
+    /// The possible statuses of an AdGroupAd.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AdGroupAdStatus {
+        /// No value has been specified.
+        Unspecified = 0,
+        /// The received value is not known in this version.
+        ///
+        /// This is a response-only value.
+        Unknown = 1,
+        /// The ad group ad is enabled.
+        Enabled = 2,
+        /// The ad group ad is paused.
+        Paused = 3,
+        /// The ad group ad is removed.
+        Removed = 4,
     }
 }
 // Proto file describing engine status for the ad_group_criterion.
@@ -547,6 +662,45 @@ pub mod ad_group_criterion_status_enum {
         Removed = 4,
     }
 }
+// Proto file describing engine status for the ad_group_criterion.
+
+/// Container for enum describing possible AdGroup engine statuses.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdGroupEngineStatusEnum {}
+/// Nested message and enum types in `AdGroupEngineStatusEnum`.
+pub mod ad_group_engine_status_enum {
+    /// Next ID = 11
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AdGroupEngineStatus {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Deprecated. Do not use.
+        AdGroupEligible = 2,
+        /// No ads are running for this ad group, because the ad group's end date has
+        /// passed.
+        AdGroupExpired = 3,
+        /// The ad group has been deleted.
+        AdGroupRemoved = 4,
+        /// No ads are running for this ad group because the associated ad group is
+        /// still in draft form.
+        AdGroupDraft = 5,
+        /// The ad group has been paused.
+        AdGroupPaused = 6,
+        /// The ad group is active and currently serving ads.
+        AdGroupServing = 7,
+        /// The ad group has been submitted (Microsoft Bing Ads legacy status).
+        AdGroupSubmitted = 8,
+        /// No ads are running for this ad group, because the campaign has been
+        /// paused.
+        CampaignPaused = 9,
+        /// No ads are running for this ad group, because the account has been
+        /// paused.
+        AccountPaused = 10,
+    }
+}
 // Proto file describing ad group status.
 
 /// Container for enum describing possible statuses of an ad group.
@@ -626,6 +780,8 @@ pub mod ad_group_type_enum {
         VideoEfficientReach = 17,
         /// Ad group type for Smart campaigns.
         SmartCampaignAds = 18,
+        /// Ad group type for Travel campaigns.
+        TravelAds = 19,
     }
 }
 // Proto file describing ad serving statuses.
@@ -660,6 +816,88 @@ pub mod ad_serving_optimization_status_enum {
         Unavailable = 6,
     }
 }
+// Proto file describing the ad type.
+
+/// Container for enum describing possible types of an ad.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdTypeEnum {}
+/// Nested message and enum types in `AdTypeEnum`.
+pub mod ad_type_enum {
+    /// The possible types of an ad.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AdType {
+        /// No value has been specified.
+        Unspecified = 0,
+        /// The received value is not known in this version.
+        ///
+        /// This is a response-only value.
+        Unknown = 1,
+        /// The ad is a text ad.
+        TextAd = 2,
+        /// The ad is an expanded text ad.
+        ExpandedTextAd = 3,
+        /// The ad is a call only ad.
+        CallOnlyAd = 6,
+        /// The ad is an expanded dynamic search ad.
+        ExpandedDynamicSearchAd = 7,
+        /// The ad is a hotel ad.
+        HotelAd = 8,
+        /// The ad is a Smart Shopping ad.
+        ShoppingSmartAd = 9,
+        /// The ad is a standard Shopping ad.
+        ShoppingProductAd = 10,
+        /// The ad is a video ad.
+        VideoAd = 12,
+        /// This ad is a Gmail ad.
+        GmailAd = 13,
+        /// This ad is an Image ad.
+        ImageAd = 14,
+        /// The ad is a responsive search ad.
+        ResponsiveSearchAd = 15,
+        /// The ad is a legacy responsive display ad.
+        LegacyResponsiveDisplayAd = 16,
+        /// The ad is an app ad.
+        AppAd = 17,
+        /// The ad is a legacy app install ad.
+        LegacyAppInstallAd = 18,
+        /// The ad is a responsive display ad.
+        ResponsiveDisplayAd = 19,
+        /// The ad is a local ad.
+        LocalAd = 20,
+        /// The ad is a display upload ad with the HTML5_UPLOAD_AD product type.
+        Html5UploadAd = 21,
+        /// The ad is a display upload ad with one of the DYNAMIC_HTML5_* product
+        /// types.
+        DynamicHtml5Ad = 22,
+        /// The ad is an app engagement ad.
+        AppEngagementAd = 23,
+        /// The ad is a Shopping Comparison Listing ad.
+        ShoppingComparisonListingAd = 24,
+        /// Video bumper ad.
+        VideoBumperAd = 25,
+        /// Video non-skippable in-stream ad.
+        VideoNonSkippableInStreamAd = 26,
+        /// Video outstream ad.
+        VideoOutstreamAd = 27,
+        /// Video TrueView in-display ad.
+        VideoTrueviewDiscoveryAd = 28,
+        /// Video TrueView in-stream ad.
+        VideoTrueviewInStreamAd = 29,
+        /// Video responsive ad.
+        VideoResponsiveAd = 30,
+        /// Smart campaign ad.
+        SmartCampaignAd = 31,
+        /// Universal app pre-registration ad.
+        AppPreRegistrationAd = 33,
+        /// Discovery multi asset ad.
+        DiscoveryMultiAssetAd = 35,
+        /// Discovery carousel ad.
+        DiscoveryCarouselAd = 36,
+        /// Travel ad.
+        TravelAd = 37,
+    }
+}
 // Proto file describing advertising channel subtypes.
 
 /// An immutable specialization of an Advertising Channel.
@@ -687,7 +925,8 @@ pub mod advertising_channel_sub_type_enum {
         ShoppingSmartAds = 6,
         /// Gmail Ad campaigns.
         DisplayGmailAd = 7,
-        /// Smart display campaigns.
+        /// Smart display campaigns. New campaigns of this sub type cannot be
+        /// created.
         DisplaySmartCampaign = 8,
         /// Video Outstream campaigns.
         VideoOutstream = 9,
@@ -715,6 +954,10 @@ pub mod advertising_channel_sub_type_enum {
         /// app pre-registration, that targets multiple advertising channels across
         /// Google Play, YouTube and Display Network.
         AppCampaignForPreRegistration = 18,
+        /// Video reach campaign with Target Frequency bidding strategy.
+        VideoReachTargetFrequency = 19,
+        /// Travel Activities campaigns.
+        TravelActivities = 20,
     }
 }
 // Proto file describing advertising channel types
@@ -756,6 +999,8 @@ pub mod advertising_channel_type_enum {
         LocalServices = 11,
         /// Discovery campaigns.
         Discovery = 12,
+        /// Travel campaigns.
+        Travel = 13,
     }
 }
 // Proto file describing asset type.
@@ -796,7 +1041,7 @@ pub mod asset_field_type_enum {
         Callout = 11,
         /// The asset is linked for use as a Structured Snippet extension.
         StructuredSnippet = 12,
-        /// The asset is linked for use as a Sitelink extension.
+        /// The asset is linked for use as a Sitelink.
         Sitelink = 13,
         /// The asset is linked for use as a Mobile App extension.
         MobileApp = 14,
@@ -824,6 +1069,11 @@ pub mod asset_field_type_enum {
         CallToActionSelection = 25,
         /// The asset is linked for use to select an ad image.
         AdImage = 26,
+        /// The asset is linked for use as a business logo.
+        BusinessLogo = 27,
+        /// The asset is linked for use as a hotel property in a Performance Max for
+        /// travel goals campaign.
+        HotelProperty = 28,
     }
 }
 /// Container for enum representing the attribution model that describes how to
@@ -1104,6 +1354,31 @@ pub mod budget_period_enum {
         CustomPeriod = 5,
     }
 }
+// Proto file describing CampaignCriterion statuses.
+
+/// Message describing CampaignCriterion statuses.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CampaignCriterionStatusEnum {}
+/// Nested message and enum types in `CampaignCriterionStatusEnum`.
+pub mod campaign_criterion_status_enum {
+    /// The possible statuses of a CampaignCriterion.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CampaignCriterionStatus {
+        /// No value has been specified.
+        Unspecified = 0,
+        /// The received value is not known in this version.
+        ///
+        /// This is a response-only value.
+        Unknown = 1,
+        /// The campaign criterion is enabled.
+        Enabled = 2,
+        /// The campaign criterion is paused.
+        Paused = 3,
+        /// The campaign criterion is removed.
+        Removed = 4,
+    }
+}
 // Proto file describing Campaign serving statuses.
 
 /// Message describing Campaign serving statuses.
@@ -1291,6 +1566,9 @@ pub mod conversion_action_type_enum {
         /// Conversions that occur when a user visits an advertiser's retail store.
         /// Read only.
         StoreVisits = 36,
+        /// Conversions created from website events (such as form submissions or page
+        /// loads), that don't use individually coded event snippets.
+        WebpageCodeless = 37,
     }
 }
 /// Container for enum representing the conversion tracking status of the
@@ -1403,7 +1681,7 @@ pub mod criterion_type_enum {
         KeywordTheme = 34,
         /// Audience
         Audience = 35,
-        /// Google Local Services (GLS) Service ID.
+        /// Local Services Ads Service ID.
         LocalServiceId = 37,
     }
 }
@@ -1488,6 +1766,25 @@ pub mod data_driven_model_status_enum {
         /// because there has never been the required number of events in any 30-day
         /// period.
         NeverGenerated = 5,
+    }
+}
+/// Container for enum describing possible status of a label.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LabelStatusEnum {}
+/// Nested message and enum types in `LabelStatusEnum`.
+pub mod label_status_enum {
+    /// Possible statuses of a label.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum LabelStatus {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// Label is enabled.
+        Enabled = 2,
+        /// Label is removed.
+        Removed = 3,
     }
 }
 /// Container for enum describing possible status of a manager and client link.
@@ -1712,5 +2009,35 @@ pub mod summary_row_setting_enum {
         SummaryRowWithResults = 3,
         /// Return summary row only and return no results.
         SummaryRowOnly = 4,
+    }
+}
+// Proto file describing user list type.
+
+/// The user list types.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserListTypeEnum {}
+/// Nested message and enum types in `UserListTypeEnum`.
+pub mod user_list_type_enum {
+    /// Enum containing possible user list types.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum UserListType {
+        /// Not specified.
+        Unspecified = 0,
+        /// Used for return value only. Represents value unknown in this version.
+        Unknown = 1,
+        /// UserList represented as a collection of conversion types.
+        Remarketing = 2,
+        /// UserList represented as a combination of other user lists/interests.
+        Logical = 3,
+        /// UserList created in the Google Ad Manager platform.
+        ExternalRemarketing = 4,
+        /// UserList associated with a rule.
+        RuleBased = 5,
+        /// UserList with users similar to users of another UserList.
+        Similar = 6,
+        /// UserList of first-party CRM data provided by advertiser in the form of
+        /// emails or other formats.
+        CrmBased = 7,
     }
 }

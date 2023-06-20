@@ -137,6 +137,8 @@ pub enum NoteKind {
     Compliance = 9,
     /// This represents a DSSE attestation Note
     DsseAttestation = 10,
+    /// This represents a Vulnerability Assessment.
+    VulnerabilityAssessment = 11,
 }
 // An attestation wrapper with a PGP-compatible signature. This message only
 // supports `ATTACHED` signatures, where the payload that is signed is included
@@ -1128,6 +1130,7 @@ pub mod cvss {
         Unspecified = 0,
         Low = 1,
         High = 2,
+        Medium = 3,
     }
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -1166,6 +1169,8 @@ pub mod cvss {
         High = 1,
         Low = 2,
         None = 3,
+        Partial = 4,
+        Complete = 5,
     }
 }
 /// CVSS Version.
@@ -1700,6 +1705,218 @@ pub struct UpgradeOccurrence {
     #[prost(message, optional, tag = "5")]
     pub windows_update: ::core::option::Option<WindowsUpdate>,
 }
+/// A single VulnerabilityAssessmentNote represents
+/// one particular product's vulnerability assessment for one CVE.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VulnerabilityAssessmentNote {
+    /// The title of the note. E.g. `Vex-Debian-11.4`
+    #[prost(string, tag = "1")]
+    pub title: ::prost::alloc::string::String,
+    /// A one sentence description of this Vex.
+    #[prost(string, tag = "2")]
+    pub short_description: ::prost::alloc::string::String,
+    /// A detailed description of this Vex.
+    #[prost(string, tag = "3")]
+    pub long_description: ::prost::alloc::string::String,
+    /// Identifies the language used by this document,
+    /// corresponding to IETF BCP 47 / RFC 5646.
+    #[prost(string, tag = "4")]
+    pub language_code: ::prost::alloc::string::String,
+    /// Publisher details of this Note.
+    #[prost(message, optional, tag = "5")]
+    pub publisher: ::core::option::Option<vulnerability_assessment_note::Publisher>,
+    /// The product affected by this vex.
+    #[prost(message, optional, tag = "6")]
+    pub product: ::core::option::Option<vulnerability_assessment_note::Product>,
+    /// Represents a vulnerability assessment for the product.
+    #[prost(message, optional, tag = "7")]
+    pub assessment: ::core::option::Option<vulnerability_assessment_note::Assessment>,
+}
+/// Nested message and enum types in `VulnerabilityAssessmentNote`.
+pub mod vulnerability_assessment_note {
+    /// Publisher contains information about the publisher of
+    /// this Note.
+    /// (-- api-linter: core::0123::resource-annotation=disabled
+    ///     aip.dev/not-precedent: Publisher is not a separate resource. --)
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Publisher {
+        /// Name of the publisher.
+        /// Examples: 'Google', 'Google Cloud Platform'.
+        #[prost(string, tag = "1")]
+        pub name: ::prost::alloc::string::String,
+        /// Provides information about the authority of the issuing party to
+        /// release the document, in particular, the party's constituency and
+        /// responsibilities or other obligations.
+        #[prost(string, tag = "2")]
+        pub issuing_authority: ::prost::alloc::string::String,
+        /// The context or namespace.
+        /// Contains a URL which is under control of the issuing party and can
+        /// be used as a globally unique identifier for that issuing party.
+        /// Example: <https://csaf.io>
+        #[prost(string, tag = "3")]
+        pub publisher_namespace: ::prost::alloc::string::String,
+    }
+    /// Product contains information about a product and how to uniquely identify
+    /// it.
+    /// (-- api-linter: core::0123::resource-annotation=disabled
+    ///     aip.dev/not-precedent: Product is not a separate resource. --)
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Product {
+        /// Name of the product.
+        #[prost(string, tag = "1")]
+        pub name: ::prost::alloc::string::String,
+        /// Token that identifies a product so that it can be referred to from other
+        /// parts in the document. There is no predefined format as long as it
+        /// uniquely identifies a group in the context of the current document.
+        #[prost(string, tag = "2")]
+        pub id: ::prost::alloc::string::String,
+        #[prost(oneof = "product::Identifier", tags = "3")]
+        pub identifier: ::core::option::Option<product::Identifier>,
+    }
+    /// Nested message and enum types in `Product`.
+    pub mod product {
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Identifier {
+            /// Contains a URI which is vendor-specific.
+            /// Example: The artifact repository URL of an image.
+            #[prost(string, tag = "3")]
+            GenericUri(::prost::alloc::string::String),
+        }
+    }
+    /// Assessment provides all information that is related to a single
+    /// vulnerability for this product.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Assessment {
+        /// Holds the MITRE standard Common Vulnerabilities and Exposures (CVE)
+        /// tracking number for the vulnerability.
+        #[prost(string, tag = "1")]
+        pub cve: ::prost::alloc::string::String,
+        /// A one sentence description of this Vex.
+        #[prost(string, tag = "2")]
+        pub short_description: ::prost::alloc::string::String,
+        /// A detailed description of this Vex.
+        #[prost(string, tag = "3")]
+        pub long_description: ::prost::alloc::string::String,
+        /// Holds a list of references associated with this vulnerability item and
+        /// assessment. These uris have additional information about the
+        /// vulnerability and the assessment itself. E.g. Link to a document which
+        /// details how this assessment concluded the state of this vulnerability.
+        #[prost(message, repeated, tag = "4")]
+        pub related_uris: ::prost::alloc::vec::Vec<super::RelatedUrl>,
+        /// Provides the state of this Vulnerability assessment.
+        #[prost(enumeration = "assessment::State", tag = "5")]
+        pub state: i32,
+        /// Contains information about the impact of this vulnerability,
+        /// this will change with time.
+        #[prost(string, repeated, tag = "6")]
+        pub impacts: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Justification provides the justification when the state of the
+        /// assessment if NOT_AFFECTED.
+        #[prost(message, optional, tag = "7")]
+        pub justification: ::core::option::Option<assessment::Justification>,
+        /// Specifies details on how to handle (and presumably, fix) a vulnerability.
+        #[prost(message, repeated, tag = "8")]
+        pub remediations: ::prost::alloc::vec::Vec<assessment::Remediation>,
+    }
+    /// Nested message and enum types in `Assessment`.
+    pub mod assessment {
+        /// Justification provides the justification when the state of the
+        /// assessment if NOT_AFFECTED.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Justification {
+            /// The justification type for this vulnerability.
+            #[prost(enumeration = "justification::JustificationType", tag = "1")]
+            pub justification_type: i32,
+            /// Additional details on why this justification was chosen.
+            #[prost(string, tag = "2")]
+            pub details: ::prost::alloc::string::String,
+        }
+        /// Nested message and enum types in `Justification`.
+        pub mod justification {
+            /// Provides the type of justification.
+            #[derive(
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+            )]
+            #[repr(i32)]
+            pub enum JustificationType {
+                /// JUSTIFICATION_TYPE_UNSPECIFIED.
+                Unspecified = 0,
+                /// The vulnerable component is not present in the product.
+                ComponentNotPresent = 1,
+                /// The vulnerable code is not present. Typically this case
+                /// occurs when source code is configured or built in a way that excludes
+                /// the vulnerable code.
+                VulnerableCodeNotPresent = 2,
+                /// The vulnerable code can not be executed.
+                /// Typically this case occurs when the product includes the vulnerable
+                /// code but does not call or use the vulnerable code.
+                VulnerableCodeNotInExecutePath = 3,
+                /// The vulnerable code cannot be controlled by an attacker to exploit
+                /// the vulnerability.
+                VulnerableCodeCannotBeControlledByAdversary = 4,
+                /// The product includes built-in protections or features that prevent
+                /// exploitation of the vulnerability. These built-in protections cannot
+                /// be subverted by the attacker and cannot be configured or disabled by
+                /// the user. These mitigations completely prevent exploitation based on
+                /// known attack vectors.
+                InlineMitigationsAlreadyExist = 5,
+            }
+        }
+        /// Specifies details on how to handle (and presumably, fix) a vulnerability.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Remediation {
+            /// The type of remediation that can be applied.
+            #[prost(enumeration = "remediation::RemediationType", tag = "1")]
+            pub remediation_type: i32,
+            /// Contains a comprehensive human-readable discussion of the remediation.
+            #[prost(string, tag = "2")]
+            pub details: ::prost::alloc::string::String,
+            /// Contains the URL where to obtain the remediation.
+            #[prost(message, optional, tag = "3")]
+            pub remediation_uri: ::core::option::Option<super::super::RelatedUrl>,
+        }
+        /// Nested message and enum types in `Remediation`.
+        pub mod remediation {
+            /// The type of remediation that can be applied.
+            #[derive(
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+            )]
+            #[repr(i32)]
+            pub enum RemediationType {
+                /// No remediation type specified.
+                Unspecified = 0,
+                /// A MITIGATION is available.
+                Mitigation = 1,
+                /// No fix is planned.
+                NoFixPlanned = 2,
+                /// Not available.
+                NoneAvailable = 3,
+                /// A vendor fix is available.
+                VendorFix = 4,
+                /// A workaround is available.
+                Workaround = 5,
+            }
+        }
+        /// Provides the state of this Vulnerability assessment.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum State {
+            /// No state is specified.
+            Unspecified = 0,
+            /// This product is known to be affected by this vulnerability.
+            Affected = 1,
+            /// This product is known to be not affected by this vulnerability.
+            NotAffected = 2,
+            /// This product contains a fix for this vulnerability.
+            Fixed = 3,
+            /// It is not known yet whether these versions are or are not affected
+            /// by the vulnerability. However, it is still under investigation.
+            UnderInvestigation = 4,
+        }
+    }
+}
 /// A security vulnerability that can be found in resources.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VulnerabilityNote {
@@ -1730,6 +1947,9 @@ pub struct VulnerabilityNote {
     /// CVSS version used to populate cvss_score and severity.
     #[prost(enumeration = "CvssVersion", tag = "7")]
     pub cvss_version: i32,
+    /// The full description of the v2 CVSS for this vulnerability.
+    #[prost(message, optional, tag = "8")]
+    pub cvss_v2: ::core::option::Option<Cvss>,
 }
 /// Nested message and enum types in `VulnerabilityNote`.
 pub mod vulnerability_note {
@@ -1886,6 +2106,11 @@ pub struct VulnerabilityOccurrence {
     /// Output only. CVSS version used to populate cvss_score and severity.
     #[prost(enumeration = "CvssVersion", tag = "11")]
     pub cvss_version: i32,
+    /// The cvss v2 score for the vulnerability.
+    #[prost(message, optional, tag = "12")]
+    pub cvss_v2: ::core::option::Option<Cvss>,
+    #[prost(message, optional, tag = "13")]
+    pub vex_assessment: ::core::option::Option<vulnerability_occurrence::VexAssessment>,
 }
 /// Nested message and enum types in `VulnerabilityOccurrence`.
 pub mod vulnerability_occurrence {
@@ -1931,6 +2156,45 @@ pub mod vulnerability_occurrence {
         /// The location at which this package was found.
         #[prost(message, repeated, tag = "10")]
         pub file_location: ::prost::alloc::vec::Vec<super::FileLocation>,
+    }
+    /// VexAssessment provides all publisher provided Vex information that is
+    /// related to this vulnerability.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct VexAssessment {
+        /// Holds the MITRE standard Common Vulnerabilities and Exposures (CVE)
+        /// tracking number for the vulnerability.
+        #[prost(string, tag = "1")]
+        pub cve: ::prost::alloc::string::String,
+        /// Holds a list of references associated with this vulnerability item and
+        /// assessment.
+        #[prost(message, repeated, tag = "2")]
+        pub related_uris: ::prost::alloc::vec::Vec<super::RelatedUrl>,
+        /// The VulnerabilityAssessment note from which this VexAssessment was
+        /// generated.
+        /// This will be of the form: `projects/\[PROJECT_ID]/notes/[NOTE_ID\]`.
+        /// (-- api-linter: core::0122::name-suffix=disabled
+        ///     aip.dev/not-precedent: The suffix is kept for consistency. --)
+        #[prost(string, tag = "3")]
+        pub note_name: ::prost::alloc::string::String,
+        /// Provides the state of this Vulnerability assessment.
+        #[prost(
+            enumeration = "super::vulnerability_assessment_note::assessment::State",
+            tag = "4"
+        )]
+        pub state: i32,
+        /// Contains information about the impact of this vulnerability,
+        /// this will change with time.
+        #[prost(string, repeated, tag = "5")]
+        pub impacts: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Specifies details on how to handle (and presumably, fix) a vulnerability.
+        #[prost(message, repeated, tag = "6")]
+        pub remediations:
+            ::prost::alloc::vec::Vec<super::vulnerability_assessment_note::assessment::Remediation>,
+        /// Justification provides the justification when the state of the
+        /// assessment if NOT_AFFECTED.
+        #[prost(message, optional, tag = "7")]
+        pub justification:
+            ::core::option::Option<super::vulnerability_assessment_note::assessment::Justification>,
     }
 }
 /// An instance of an analysis type that has been found on a resource.
@@ -2048,7 +2312,10 @@ pub struct Note {
     #[prost(string, repeated, tag = "9")]
     pub related_note_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Required. Immutable. The type of analysis this note represents.
-    #[prost(oneof = "note::Type", tags = "10, 11, 12, 13, 14, 15, 16, 17, 18, 19")]
+    #[prost(
+        oneof = "note::Type",
+        tags = "10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20"
+    )]
     pub r#type: ::core::option::Option<note::Type>,
 }
 /// Nested message and enum types in `Note`.
@@ -2086,6 +2353,9 @@ pub mod note {
         /// A note describing a dsse attestation note.
         #[prost(message, tag = "19")]
         DsseAttestation(super::DsseAttestationNote),
+        /// A note describing a vulnerability assessment.
+        #[prost(message, tag = "20")]
+        VulnerabilityAssessment(super::VulnerabilityAssessmentNote),
     }
 }
 /// Request to get an occurrence.

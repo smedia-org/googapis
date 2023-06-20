@@ -1,4 +1,5 @@
 /// Resource that represents a build target.
+/// -- NEXT_TAG: 2 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BuildTarget {
     /// The resource name of the build target.
@@ -8,6 +9,7 @@ pub struct BuildTarget {
 }
 /// Resource that represents a model. Each model belongs to a build target. For
 /// non-unified build, the model name is the same as its build target name.
+/// -- NEXT_TAG: 2 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Model {
     /// The resource name of the model.
@@ -16,6 +18,7 @@ pub struct Model {
     pub name: ::prost::alloc::string::String,
 }
 /// Resource that represents a chrome OS milestone.
+/// -- NEXT_TAG: 2 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Milestone {
     /// The resource name of the milestone.
@@ -25,6 +28,7 @@ pub struct Milestone {
 }
 /// Resource that represents a build for the given build target, model, milestone
 /// and build version.
+/// -- NEXT_TAG: 9 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Build {
     /// The resource name of the build.
@@ -48,10 +52,13 @@ pub struct Build {
     /// The branch of the build.
     #[prost(string, tag = "6")]
     pub branch: ::prost::alloc::string::String,
-    /// The read write firmware version of the software that is flashed to the chip
-    /// on the Chrome OS device.
+    /// The firmware version of the software that is flashed to the chip on the
+    /// Chrome OS device.
     #[prost(string, tag = "7")]
     pub rw_firmware_version: ::prost::alloc::string::String,
+    /// The labels of the build.
+    #[prost(string, repeated, tag = "8")]
+    pub labels: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Nested message and enum types in `Build`.
 pub mod build {
@@ -84,6 +91,7 @@ pub mod build {
 }
 /// Resource that represents a build artifact stored in Google Cloud Storage for
 /// the given build target, model, build version and bucket.
+/// -- NEXT_TAG: 6 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BuildArtifact {
     /// The resource name of the build artifact.
@@ -109,6 +117,7 @@ pub struct BuildArtifact {
     pub object_count: u32,
 }
 /// Request message for finding the most stable build.
+/// -- NEXT_TAG: 2 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FindMostStableBuildRequest {
     /// Required. The full resource name of the build target.
@@ -118,6 +127,7 @@ pub struct FindMostStableBuildRequest {
     pub build_target: ::prost::alloc::string::String,
 }
 /// Response message for finding the most stable build.
+/// -- NEXT_TAG: 2 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FindMostStableBuildResponse {
     /// The most stable build.
@@ -125,17 +135,19 @@ pub struct FindMostStableBuildResponse {
     pub build: ::core::option::Option<Build>,
 }
 /// Request message for listing build targets.
+/// -- NEXT_TAG: 3 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBuildTargetsRequest {
     /// Optional. The number of build targets to return in a page.
     #[prost(int32, tag = "1")]
     pub page_size: i32,
-    /// Optional. A page token, received from a previous `ListBuildTargets` call. Provide
-    /// this to retrieve the subsequent page.
+    /// Optional. A page token, received from a previous `ListBuildTargets` call.
+    /// Provide this to retrieve the subsequent page.
     #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
 }
 /// Response message for listing build targets.
+/// -- NEXT_TAG: 4 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBuildTargetsResponse {
     /// The list of build targets.
@@ -150,6 +162,7 @@ pub struct ListBuildTargetsResponse {
     pub total_size: i32,
 }
 /// Request message for listing models.
+/// -- NEXT_TAG: 4 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListModelsRequest {
     /// Required. The full resource name of build target.
@@ -164,6 +177,7 @@ pub struct ListModelsRequest {
     pub page_token: ::prost::alloc::string::String,
 }
 /// Response message for listing models.
+/// -- NEXT_TAG: 4 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListModelsResponse {
     /// The list of models.
@@ -178,6 +192,7 @@ pub struct ListModelsResponse {
     pub total_size: i32,
 }
 /// Request message for listing builds.
+/// -- NEXT_TAG: 7 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBuildsRequest {
     /// Required. The full resource name of the model. The model id is the same as
@@ -189,30 +204,30 @@ pub struct ListBuildsRequest {
     /// Optional. The number of builds to return in a page.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
-    /// Optional. A page token, received from a previous `ListBuilds` call. Provide this to
-    /// retrieve the subsequent page.
+    /// Optional. A page token, received from a previous `ListBuilds` call. Provide
+    /// this to retrieve the subsequent page.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
-    /// Optional. Filter that specifies value constraints of fields. For example, the
-    /// filter can be set as "filter='milestone=milestones/80'" to only select
+    /// Optional. Filter that specifies value constraints of fields. For example,
+    /// the filter can be set as "filter='milestone=milestones/80'" to only select
     /// builds in milestone 80.
     #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
-    /// Optional. Read mask that specifies which Build fields to return. If empty, all Build
-    /// fields will be returned.
-    /// Valid fields: name, milestone, build_version.
-    /// For example, if the read_mask is set as "read_mask='milestone'", the
-    /// ListBuilds will return a list of Builds object with only the milestone
-    /// field.
+    /// Optional. Read mask that specifies which Build fields to return. If empty,
+    /// all Build fields will be returned. Valid fields: name, milestone,
+    /// build_version. For example, if the read_mask is set as
+    /// "read_mask='milestone'", the ListBuilds will return a list of Builds object
+    /// with only the milestone field.
     #[prost(message, optional, tag = "5")]
     pub read_mask: ::core::option::Option<::prost_types::FieldMask>,
-    /// Optional. The operation that groups by all the Build fields specified in the read
-    /// mask. The group_by field should be the same as the read_mask field in
-    /// convention of SQL.
+    /// Optional. The operation that groups by all the Build fields specified in
+    /// the read mask. The group_by field should be the same as the read_mask field
+    /// in convention of SQL.
     #[prost(message, optional, tag = "6")]
     pub group_by: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Response message for listing builds.
+/// -- NEXT_TAG: 4 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBuildsResponse {
     /// The list of builds.
@@ -227,6 +242,7 @@ pub struct ListBuildsResponse {
     pub total_size: i32,
 }
 /// Request message for checking if the build artifact is staged.
+/// -- NEXT_TAG: 3 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CheckBuildStageStatusRequest {
     /// Required. The full resource name of the build artifact.
@@ -234,13 +250,14 @@ pub struct CheckBuildStageStatusRequest {
     /// 'buildTargets/octopus/models/bobba/builds/12607.6.0/artifacts/chromeos-moblab-peng-staging'.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Optional. Filter that specifies value constraints of fields. For example, the
-    /// filter can be set as "filter='type=release'" to only check the release
+    /// Optional. Filter that specifies value constraints of fields. For example,
+    /// the filter can be set as "filter='type=release'" to only check the release
     /// builds.
     #[prost(string, tag = "2")]
     pub filter: ::prost::alloc::string::String,
 }
 /// Response message for checking the stage status of a build artifact.
+/// -- NEXT_TAG: 4 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CheckBuildStageStatusResponse {
     /// The status to represent if the build is staged or not.
@@ -254,6 +271,7 @@ pub struct CheckBuildStageStatusResponse {
     pub source_build_artifact: ::core::option::Option<BuildArtifact>,
 }
 /// Request message for staging a build artifact.
+/// -- NEXT_TAG: 3 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StageBuildRequest {
     /// Required. The full resource name of the build artifact.
@@ -261,13 +279,14 @@ pub struct StageBuildRequest {
     /// 'buildTargets/octopus/models/bobba/builds/12607.6.0/artifacts/chromeos-moblab-peng-staging'.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Optional. Filter that specifies value constraints of fields. For example, the
-    /// filter can be set as "filter='type=release'" to only check the release
+    /// Optional. Filter that specifies value constraints of fields. For example,
+    /// the filter can be set as "filter='type=release'" to only check the release
     /// builds.
     #[prost(string, tag = "2")]
     pub filter: ::prost::alloc::string::String,
 }
 /// Response message for staging a build artifact.
+/// -- NEXT_TAG: 2 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StageBuildResponse {
     /// The staged build in the destination bucket.
@@ -275,6 +294,7 @@ pub struct StageBuildResponse {
     pub staged_build_artifact: ::core::option::Option<BuildArtifact>,
 }
 /// Metadata message for staging a build artifact.
+/// -- NEXT_TAG: 4 --
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StageBuildMetadata {
     /// Approximate percentage of progress, e.g. "50" means 50%.
@@ -408,10 +428,12 @@ pub mod build_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Stages a given build artifact from a internal Google Cloud Storage bucket"]
-        #[doc = " to a partner Google Cloud Storage bucket. If any of objects has already"]
-        #[doc = " been copied, it will overwrite the previous objects. Operation <response:"]
-        #[doc = " [StageBuildResponse][google.chromeos.moblab.v1beta1.StageBuildResponse],"]
-        #[doc = "            metadata: [StageBuildMetadata][google.chromeos.moblab.v1beta1.StageBuildMetadata]>"]
+        #[doc = " to a partner Google Cloud Storage bucket. The stage will be skipped if all"]
+        #[doc = " the objects in the partner bucket are the same as in the internal bucket."]
+        #[doc = " Operation"]
+        #[doc = " <response:[StageBuildResponse][google.chromeos.moblab.v1beta1.StageBuildResponse],"]
+        #[doc = "            metadata:"]
+        #[doc = "           [StageBuildMetadata][google.chromeos.moblab.v1beta1.StageBuildMetadata]>"]
         pub async fn stage_build(
             &mut self,
             request: impl tonic::IntoRequest<super::StageBuildRequest>,
@@ -432,7 +454,7 @@ pub mod build_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Finds the most stable build for the given build target. The definition of"]
-        #[doc = " the most stable build is determined by evaluating the following rules in"]
+        #[doc = " the most stable build is determined by evaluating the following rule in"]
         #[doc = " order until one is true. If none are true, then there is no stable build"]
         #[doc = " and it will return an empty response."]
         #[doc = ""]

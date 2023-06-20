@@ -48,6 +48,33 @@ pub struct StorageSource {
     #[prost(int64, tag = "3")]
     pub generation: i64,
 }
+/// Location of the source in any accessible Git repository.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GitSource {
+    /// Location of the Git repo to build.
+    ///
+    /// This will be used as a `git remote`, see
+    /// <https://git-scm.com/docs/git-remote.>
+    #[prost(string, tag = "1")]
+    pub url: ::prost::alloc::string::String,
+    /// Directory, relative to the source root, in which to run the build.
+    ///
+    /// This must be a relative path. If a step's `dir` is specified and is an
+    /// absolute path, this value is ignored for that step's execution.
+    #[prost(string, tag = "5")]
+    pub dir: ::prost::alloc::string::String,
+    /// The revision to fetch from the Git repository such as a branch, a tag, a
+    /// commit SHA, or any Git ref.
+    ///
+    /// Cloud Build uses `git fetch` to fetch the revision from the Git
+    /// repository; therefore make sure that the string you provide for `revision`
+    /// is parsable  by the command. For information on string values accepted by
+    /// `git fetch`, see
+    /// <https://git-scm.com/docs/gitrevisions#_specifying_revisions.> For
+    /// information on `git fetch`, see <https://git-scm.com/docs/git-fetch.>
+    #[prost(string, tag = "6")]
+    pub revision: ::prost::alloc::string::String,
+}
 /// Location of the source in a Google Cloud Source Repository.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RepoSource {
@@ -125,7 +152,7 @@ pub struct StorageSourceManifest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Source {
     /// Location of source.
-    #[prost(oneof = "source::Source", tags = "2, 3, 8")]
+    #[prost(oneof = "source::Source", tags = "2, 3, 5, 8")]
     pub source: ::core::option::Option<source::Source>,
 }
 /// Nested message and enum types in `Source`.
@@ -140,6 +167,9 @@ pub mod source {
         /// Repository.
         #[prost(message, tag = "3")]
         RepoSource(super::RepoSource),
+        /// If provided, get the source from this Git repository.
+        #[prost(message, tag = "5")]
+        GitSource(super::GitSource),
         /// If provided, get the source from this manifest in Google Cloud Storage.
         /// This feature is in Preview; see description
         /// \[here\](<https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/gcs-fetcher>).
@@ -181,6 +211,20 @@ pub struct UploadedMavenArtifact {
     #[prost(string, tag = "1")]
     pub uri: ::prost::alloc::string::String,
     /// Hash types and values of the Maven Artifact.
+    #[prost(message, optional, tag = "2")]
+    pub file_hashes: ::core::option::Option<FileHashes>,
+    /// Output only. Stores timing information for pushing the specified artifact.
+    #[prost(message, optional, tag = "3")]
+    pub push_timing: ::core::option::Option<TimeSpan>,
+}
+/// An npm package uploaded to Artifact Registry using the NpmPackage
+/// directive.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UploadedNpmPackage {
+    /// URI of the uploaded npm package.
+    #[prost(string, tag = "1")]
+    pub uri: ::prost::alloc::string::String,
+    /// Hash types and values of the npm package.
     #[prost(message, optional, tag = "2")]
     pub file_hashes: ::core::option::Option<FileHashes>,
     /// Output only. Stores timing information for pushing the specified artifact.
@@ -330,10 +374,12 @@ pub struct Results {
     /// indices.
     #[prost(string, repeated, tag = "3")]
     pub build_step_images: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Path to the artifact manifest. Only populated when artifacts are uploaded.
+    /// Path to the artifact manifest for non-container artifacts uploaded to Cloud
+    /// Storage. Only populated when artifacts are uploaded to Cloud Storage.
     #[prost(string, tag = "4")]
     pub artifact_manifest: ::prost::alloc::string::String,
-    /// Number of artifacts uploaded. Only populated when artifacts are uploaded.
+    /// Number of non-container artifacts uploaded to Cloud Storage. Only populated
+    /// when artifacts are uploaded to Cloud Storage.
     #[prost(int64, tag = "5")]
     pub num_artifacts: i64,
     /// List of build step outputs, produced by builder images, in the order
@@ -344,7 +390,7 @@ pub struct Results {
     /// Only the first 4KB of data is stored.
     #[prost(bytes = "vec", repeated, tag = "6")]
     pub build_step_outputs: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
-    /// Time to push all non-container artifacts.
+    /// Time to push all non-container artifacts to Cloud Storage.
     #[prost(message, optional, tag = "7")]
     pub artifact_timing: ::core::option::Option<TimeSpan>,
     /// Python artifacts uploaded to Artifact Registry at the end of the build.
@@ -353,6 +399,9 @@ pub struct Results {
     /// Maven artifacts uploaded to Artifact Registry at the end of the build.
     #[prost(message, repeated, tag = "9")]
     pub maven_artifacts: ::prost::alloc::vec::Vec<UploadedMavenArtifact>,
+    /// Npm packages uploaded to Artifact Registry at the end of the build.
+    #[prost(message, repeated, tag = "12")]
+    pub npm_packages: ::prost::alloc::vec::Vec<UploadedNpmPackage>,
 }
 /// An artifact that was uploaded during a build. This
 /// is a single record in the artifact manifest JSON file.
@@ -378,6 +427,7 @@ pub struct ArtifactResult {
 ///
 /// - $PROJECT_ID: the project ID of the build.
 /// - $PROJECT_NUMBER: the project number of the build.
+/// - $LOCATION: the location/region of the build.
 /// - $BUILD_ID: the autogenerated ID of the build.
 /// - $REPO_NAME: the source repository name specified by RepoSource.
 /// - $BRANCH_NAME: the branch name specified by RepoSource.
@@ -431,7 +481,7 @@ pub struct Build {
     ///
     /// `timeout` starts ticking from `startTime`.
     ///
-    /// Default time is ten minutes.
+    /// Default time is 60 minutes.
     #[prost(message, optional, tag = "12")]
     pub timeout: ::core::option::Option<::prost_types::Duration>,
     /// A list of images to be pushed upon the successful completion of all build
@@ -494,7 +544,8 @@ pub struct Build {
     /// are:
     ///
     /// * BUILD: time to execute all build steps.
-    /// * PUSH: time to push all specified images.
+    /// * PUSH: time to push all artifacts including docker images and non docker
+    /// artifacts.
     /// * FETCHSOURCE: time to fetch source.
     /// * SETUPBUILD: time to set up build.
     ///
@@ -661,6 +712,16 @@ pub struct Artifacts {
     /// If any objects fail to be pushed, the build is marked FAILURE.
     #[prost(message, repeated, tag = "5")]
     pub python_packages: ::prost::alloc::vec::Vec<artifacts::PythonPackage>,
+    /// A list of npm packages to be uploaded to Artifact Registry upon
+    /// successful completion of all build steps.
+    ///
+    /// Npm packages in the specified paths will be uploaded
+    /// to the specified Artifact Registry repository using the builder service
+    /// account's credentials.
+    ///
+    /// If any packages fail to be pushed, the build is marked FAILURE.
+    #[prost(message, repeated, tag = "6")]
+    pub npm_packages: ::prost::alloc::vec::Vec<artifacts::NpmPackage>,
 }
 /// Nested message and enum types in `Artifacts`.
 pub mod artifacts {
@@ -732,6 +793,22 @@ pub mod artifacts {
         /// file.
         #[prost(string, repeated, tag = "2")]
         pub paths: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+    /// Npm package to upload to Artifact Registry upon successful completion
+    /// of all build steps.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct NpmPackage {
+        /// Artifact Registry repository, in the form
+        /// "<https://$REGION-npm.pkg.dev/$PROJECT/$REPOSITORY">
+        ///
+        /// Npm package in the workspace specified by path will be zipped and
+        /// uploaded to Artifact Registry with this location as a prefix.
+        #[prost(string, tag = "1")]
+        pub repository: ::prost::alloc::string::String,
+        /// Path to the package.json.
+        /// e.g. workspace/path/to/package
+        #[prost(string, tag = "2")]
+        pub package_path: ::prost::alloc::string::String,
     }
 }
 /// Start and end times for a build execution phase.
@@ -811,6 +888,8 @@ pub mod hash {
         Sha256 = 1,
         /// Use a md5 hash.
         Md5 = 2,
+        /// Use a sha512 hash.
+        Sha512 = 4,
     }
 }
 /// Secrets and secret environment variables.
@@ -907,7 +986,7 @@ pub struct GetBuildRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBuildsRequest {
     /// The parent of the collection of `Builds`.
-    /// Format: `projects/{project}/locations/location`
+    /// Format: `projects/{project}/locations/{location}`
     #[prost(string, tag = "9")]
     pub parent: ::prost::alloc::string::String,
     /// Required. ID of the project.
@@ -1451,7 +1530,7 @@ pub struct BuildOptions {
     /// "disk free"; some of the space will be used by the operating system and
     /// build utilities. Also note that this is the minimum disk size that will be
     /// allocated for the build -- the build may run with a larger disk than
-    /// requested. At present, the maximum disk size is 1000GB; builds that request
+    /// requested. At present, the maximum disk size is 2000GB; builds that request
     /// more than the maximum are rejected with an error.
     #[prost(int64, tag = "6")]
     pub disk_size_gb: i64,
@@ -1513,6 +1592,9 @@ pub struct BuildOptions {
     /// it is indicative of a build request with an incorrect configuration.
     #[prost(message, repeated, tag = "14")]
     pub volumes: ::prost::alloc::vec::Vec<Volume>,
+    /// Optional. Option to specify how default logs buckets are setup.
+    #[prost(enumeration = "build_options::DefaultLogsBucketBehavior", tag = "21")]
+    pub default_logs_bucket_behavior: i32,
 }
 /// Nested message and enum types in `BuildOptions`.
 pub mod build_options {
@@ -1535,9 +1617,9 @@ pub mod build_options {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum VerifyOption {
-        /// Not a verifiable build. (default)
+        /// Not a verifiable build (the default).
         NotVerified = 0,
-        /// Verified build.
+        /// Build must be verified.
         Verified = 1,
     }
     /// Supported Compute Engine machine types.
@@ -1586,18 +1668,29 @@ pub mod build_options {
         /// The service determines the logging mode. The default is `LEGACY`. Do not
         /// rely on the default logging behavior as it may change in the future.
         LoggingUnspecified = 0,
-        /// Cloud Logging and Cloud Storage logging are enabled.
+        /// Build logs are stored in Cloud Logging and Cloud Storage.
         Legacy = 1,
-        /// Only Cloud Storage logging is enabled.
+        /// Build logs are stored in Cloud Storage.
         GcsOnly = 2,
         /// This option is the same as CLOUD_LOGGING_ONLY.
         StackdriverOnly = 3,
-        /// Only Cloud Logging is enabled. Note that logs for both the Cloud Console
-        /// UI and Cloud SDK are based on Cloud Storage logs, so neither will provide
-        /// logs if this option is chosen.
+        /// Build logs are stored in Cloud Logging. Selecting this option will not
+        /// allow [logs
+        /// streaming](<https://cloud.google.com/sdk/gcloud/reference/builds/log>).
         CloudLoggingOnly = 5,
         /// Turn off all logging. No build logs will be captured.
         None = 4,
+    }
+    /// Default GCS log bucket behavior options.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DefaultLogsBucketBehavior {
+        /// Unspecified.
+        Unspecified = 0,
+        /// Bucket is located in user-owned project in the same region as the
+        /// build. The builder service account must have access to create and write
+        /// to GCS buckets in the build project.
+        RegionalUserOwnedBucket = 1,
     }
 }
 /// ReceiveTriggerWebhookRequest \[Experimental\] is the request object accepted by
@@ -1679,7 +1772,7 @@ pub struct WorkerPool {
     /// proceeding.
     #[prost(string, tag = "11")]
     pub etag: ::prost::alloc::string::String,
-    /// Private Pool configuration for the `WorkerPool`.
+    /// Configuration for the `WorkerPool`.
     #[prost(oneof = "worker_pool::Config", tags = "12")]
     pub config: ::core::option::Option<worker_pool::Config>,
 }
@@ -1700,10 +1793,10 @@ pub mod worker_pool {
         /// `WorkerPool` is deleted.
         Deleted = 4,
     }
-    /// Private Pool configuration for the `WorkerPool`.
+    /// Configuration for the `WorkerPool`.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Config {
-        /// Private Pool using a v1 configuration.
+        /// Legacy Private Pool configuration.
         #[prost(message, tag = "12")]
         PrivatePoolV1Config(super::PrivatePoolV1Config),
     }
@@ -1733,7 +1826,7 @@ pub mod private_pool_v1_config {
         /// Size of the disk attached to the worker, in GB.
         /// See [Worker pool config
         /// file](<https://cloud.google.com/build/docs/private-pools/worker-pool-config-file-schema>).
-        /// Specify a value of up to 1000. If `0` is specified, Cloud Build will use
+        /// Specify a value of up to 2000. If `0` is specified, Cloud Build will use
         /// a standard disk size.
         #[prost(int64, tag = "2")]
         pub disk_size_gb: i64,
@@ -1754,6 +1847,16 @@ pub mod private_pool_v1_config {
         /// Option to configure network egress for the workers.
         #[prost(enumeration = "network_config::EgressOption", tag = "2")]
         pub egress_option: i32,
+        /// Immutable. Subnet IP range within the peered network. This is specified
+        /// in CIDR notation with a slash and the subnet prefix size. You can
+        /// optionally specify an IP address before the subnet prefix value. e.g.
+        /// `192.168.0.0/29` would specify an IP range starting at 192.168.0.0 with a
+        /// prefix size of 29 bits.
+        /// `/16` would specify a prefix size of 16 bits, with an automatically
+        /// determined IP within the peered VPC.
+        /// If unspecified, a value of `/24` will be used.
+        #[prost(string, tag = "3")]
+        pub peered_network_ip_range: ::prost::alloc::string::String,
     }
     /// Nested message and enum types in `NetworkConfig`.
     pub mod network_config {
@@ -1809,7 +1912,7 @@ pub struct GetWorkerPoolRequest {
 pub struct DeleteWorkerPoolRequest {
     /// Required. The name of the `WorkerPool` to delete.
     /// Format:
-    /// `projects/{project}/locations/{workerPool}/workerPools/{workerPool}`.
+    /// `projects/{project}/locations/{location}/workerPools/{workerPool}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Optional. If this is provided, it must match the server's etag on the

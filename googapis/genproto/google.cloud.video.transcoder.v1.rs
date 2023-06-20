@@ -5,18 +5,18 @@ pub struct Job {
     /// Format: `projects/{project_number}/locations/{location}/jobs/{job}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Input only. Specify the `input_uri` to populate empty `uri` fields in each element of
-    /// `Job.config.inputs` or `JobTemplate.config.inputs` when using template.
-    /// URI of the media. Input files must be at least 5 seconds in duration and
-    /// stored in Cloud Storage (for example, `gs://bucket/inputs/file.mp4`). See
-    /// [Supported input and output
+    /// Input only. Specify the `input_uri` to populate empty `uri` fields in each
+    /// element of `Job.config.inputs` or `JobTemplate.config.inputs` when using
+    /// template. URI of the media. Input files must be at least 5 seconds in
+    /// duration and stored in Cloud Storage (for example,
+    /// `gs://bucket/inputs/file.mp4`). See [Supported input and output
     /// formats](<https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats>).
     #[prost(string, tag = "2")]
     pub input_uri: ::prost::alloc::string::String,
-    /// Input only. Specify the `output_uri` to populate an empty `Job.config.output.uri` or
-    /// `JobTemplate.config.output.uri` when using template.
-    /// URI for the output file(s). For example, `gs://my-bucket/outputs/`. See
-    /// [Supported input and output
+    /// Input only. Specify the `output_uri` to populate an empty
+    /// `Job.config.output.uri` or `JobTemplate.config.output.uri` when using
+    /// template. URI for the output file(s). For example,
+    /// `gs://my-bucket/outputs/`. See [Supported input and output
     /// formats](<https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats>).
     #[prost(string, tag = "3")]
     pub output_uri: ::prost::alloc::string::String,
@@ -46,6 +46,10 @@ pub struct Job {
     /// This property is always present when `state` is `FAILED`.
     #[prost(message, optional, tag = "17")]
     pub error: ::core::option::Option<super::super::super::super::rpc::Status>,
+    /// The processing mode of the job.
+    /// The default is `PROCESSING_MODE_INTERACTIVE`.
+    #[prost(enumeration = "job::ProcessingMode", tag = "20")]
+    pub mode: i32,
     /// Specify the `job_config` for the transcoding job. If you don't specify the
     /// `job_config`, the API selects `templateId`; this template ID is set to
     /// `preset/web-hd` by default. When you use a `template_id` to create a job,
@@ -71,20 +75,30 @@ pub mod job {
         /// `failure_details`
         Failed = 4,
     }
+    /// The processing mode of the job.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ProcessingMode {
+        /// The job processing mode is not specified.
+        Unspecified = 0,
+        /// The job processing mode is interactive mode.
+        /// Interactive job will either be ran or rejected if quota does not allow
+        /// for it.
+        Interactive = 1,
+        /// The job processing mode is batch mode.
+        /// Batch mode allows queuing of jobs.
+        Batch = 2,
+    }
     /// Specify the `job_config` for the transcoding job. If you don't specify the
     /// `job_config`, the API selects `templateId`; this template ID is set to
     /// `preset/web-hd` by default. When you use a `template_id` to create a job,
     /// the `Job.config` is populated by the `JobTemplate.config`.<br>
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum JobConfig {
-        /// Input only. Specify the `template_id` to use for populating `Job.config`. The default
-        /// is `preset/web-hd`.
+        /// Input only. Specify the `template_id` to use for populating `Job.config`.
+        /// The default is `preset/web-hd`, which is the only supported preset.
         ///
-        /// Preset Transcoder templates:
-        /// - `preset/{preset_id}`
-        ///
-        /// - User defined JobTemplate:
-        ///   `{job_template_id}`
+        /// User defined JobTemplate: `{job_template_id}`
         #[prost(string, tag = "4")]
         TemplateId(::prost::alloc::string::String),
         /// The configuration for this job.
@@ -276,7 +290,8 @@ pub struct Manifest {
     /// Required. Type of the manifest, can be `HLS` or `DASH`.
     #[prost(enumeration = "manifest::ManifestType", tag = "2")]
     pub r#type: i32,
-    /// Required. List of user given `MuxStream.key`s that should appear in this manifest.
+    /// Required. List of user given `MuxStream.key`s that should appear in this
+    /// manifest.
     ///
     /// When `Manifest.type` is `HLS`, a media manifest with name `MuxStream.key`
     /// and `.m3u8` extension is generated for each element of the
@@ -322,10 +337,13 @@ pub struct SpriteSheet {
     /// from 0 before the extension, such as `sprite_sheet0000000123.jpeg`.
     #[prost(string, tag = "2")]
     pub file_prefix: ::prost::alloc::string::String,
-    /// Required. The width of sprite in pixels. Must be an even integer. To preserve the
-    /// source aspect ratio, set the \[SpriteSheet.sprite_width_pixels][google.cloud.video.transcoder.v1.SpriteSheet.sprite_width_pixels\] field or
-    /// the \[SpriteSheet.sprite_height_pixels][google.cloud.video.transcoder.v1.SpriteSheet.sprite_height_pixels\] field, but not both (the API will
-    /// automatically calculate the missing field).
+    /// Required. The width of sprite in pixels. Must be an even integer. To
+    /// preserve the source aspect ratio, set the
+    /// \[SpriteSheet.sprite_width_pixels][google.cloud.video.transcoder.v1.SpriteSheet.sprite_width_pixels\]
+    /// field or the
+    /// \[SpriteSheet.sprite_height_pixels][google.cloud.video.transcoder.v1.SpriteSheet.sprite_height_pixels\]
+    /// field, but not both (the API will automatically calculate the missing
+    /// field).
     ///
     /// For portrait videos that contain horizontal ASR and rotation metadata,
     /// provide the width, in pixels, per the horizontal ASR. The API calculates
@@ -333,10 +351,13 @@ pub struct SpriteSheet {
     /// and swaps the requested height and width for the output.
     #[prost(int32, tag = "3")]
     pub sprite_width_pixels: i32,
-    /// Required. The height of sprite in pixels. Must be an even integer. To preserve the
-    /// source aspect ratio, set the \[SpriteSheet.sprite_height_pixels][google.cloud.video.transcoder.v1.SpriteSheet.sprite_height_pixels\] field or
-    /// the \[SpriteSheet.sprite_width_pixels][google.cloud.video.transcoder.v1.SpriteSheet.sprite_width_pixels\] field, but not both (the API will
-    /// automatically calculate the missing field).
+    /// Required. The height of sprite in pixels. Must be an even integer. To
+    /// preserve the source aspect ratio, set the
+    /// \[SpriteSheet.sprite_height_pixels][google.cloud.video.transcoder.v1.SpriteSheet.sprite_height_pixels\]
+    /// field or the
+    /// \[SpriteSheet.sprite_width_pixels][google.cloud.video.transcoder.v1.SpriteSheet.sprite_width_pixels\]
+    /// field, but not both (the API will automatically calculate the missing
+    /// field).
     ///
     /// For portrait videos that contain horizontal ASR and rotation metadata,
     /// provide the height, in pixels, per the horizontal ASR. The API calculates
@@ -411,11 +432,11 @@ pub mod overlay {
         #[prost(double, tag = "2")]
         pub y: f64,
     }
-    /// Overlaid jpeg image.
+    /// Overlaid image.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Image {
-        /// Required. URI of the JPEG image in Cloud Storage. For example,
-        /// `gs://bucket/inputs/image.jpeg`. JPEG is the only supported image type.
+        /// Required. URI of the image in Cloud Storage. For example,
+        /// `gs://bucket/inputs/image.png`. Only PNG and JPEG images are supported.
         #[prost(string, tag = "1")]
         pub uri: ::prost::alloc::string::String,
         /// Normalized image resolution, based on output video resolution. Valid
@@ -756,17 +777,17 @@ pub mod video_stream {
         /// and swaps the requested height and width for the output.
         #[prost(int32, tag = "2")]
         pub height_pixels: i32,
-        /// Required. The target video frame rate in frames per second (FPS). Must be less than
-        /// or equal to 120. Will default to the input frame rate if larger than the
-        /// input frame rate. The API will generate an output FPS that is divisible
-        /// by the input FPS, and smaller or equal to the target FPS. See
+        /// Required. The target video frame rate in frames per second (FPS). Must be
+        /// less than or equal to 120. Will default to the input frame rate if larger
+        /// than the input frame rate. The API will generate an output FPS that is
+        /// divisible by the input FPS, and smaller or equal to the target FPS. See
         /// [Calculating frame
         /// rate](<https://cloud.google.com/transcoder/docs/concepts/frame-rate>) for
         /// more information.
         #[prost(double, tag = "3")]
         pub frame_rate: f64,
-        /// Required. The video bitrate in bits per second. The minimum value is 1,000.
-        /// The maximum value is 800,000,000.
+        /// Required. The video bitrate in bits per second. The minimum value is
+        /// 1,000. The maximum value is 800,000,000.
         #[prost(int32, tag = "4")]
         pub bitrate_bps: i32,
         /// Pixel format to use. The default is `yuv420p`.
@@ -909,17 +930,17 @@ pub mod video_stream {
         /// and swaps the requested height and width for the output.
         #[prost(int32, tag = "2")]
         pub height_pixels: i32,
-        /// Required. The target video frame rate in frames per second (FPS). Must be less than
-        /// or equal to 120. Will default to the input frame rate if larger than the
-        /// input frame rate. The API will generate an output FPS that is divisible
-        /// by the input FPS, and smaller or equal to the target FPS. See
+        /// Required. The target video frame rate in frames per second (FPS). Must be
+        /// less than or equal to 120. Will default to the input frame rate if larger
+        /// than the input frame rate. The API will generate an output FPS that is
+        /// divisible by the input FPS, and smaller or equal to the target FPS. See
         /// [Calculating frame
         /// rate](<https://cloud.google.com/transcoder/docs/concepts/frame-rate>) for
         /// more information.
         #[prost(double, tag = "3")]
         pub frame_rate: f64,
-        /// Required. The video bitrate in bits per second. The minimum value is 1,000.
-        /// The maximum value is 800,000,000.
+        /// Required. The video bitrate in bits per second. The minimum value is
+        /// 1,000. The maximum value is 800,000,000.
         #[prost(int32, tag = "4")]
         pub bitrate_bps: i32,
         /// Pixel format to use. The default is `yuv420p`.
@@ -1069,17 +1090,17 @@ pub mod video_stream {
         /// and swaps the requested height and width for the output.
         #[prost(int32, tag = "2")]
         pub height_pixels: i32,
-        /// Required. The target video frame rate in frames per second (FPS). Must be less than
-        /// or equal to 120. Will default to the input frame rate if larger than the
-        /// input frame rate. The API will generate an output FPS that is divisible
-        /// by the input FPS, and smaller or equal to the target FPS. See
+        /// Required. The target video frame rate in frames per second (FPS). Must be
+        /// less than or equal to 120. Will default to the input frame rate if larger
+        /// than the input frame rate. The API will generate an output FPS that is
+        /// divisible by the input FPS, and smaller or equal to the target FPS. See
         /// [Calculating frame
         /// rate](<https://cloud.google.com/transcoder/docs/concepts/frame-rate>) for
         /// more information.
         #[prost(double, tag = "3")]
         pub frame_rate: f64,
-        /// Required. The video bitrate in bits per second. The minimum value is 1,000.
-        /// The maximum value is 480,000,000.
+        /// Required. The video bitrate in bits per second. The minimum value is
+        /// 1,000. The maximum value is 480,000,000.
         #[prost(int32, tag = "4")]
         pub bitrate_bps: i32,
         /// Pixel format to use. The default is `yuv420p`.
@@ -1176,7 +1197,8 @@ pub struct AudioStream {
     /// - `eac3`
     #[prost(string, tag = "1")]
     pub codec: ::prost::alloc::string::String,
-    /// Required. Audio bitrate in bits per second. Must be between 1 and 10,000,000.
+    /// Required. Audio bitrate in bits per second. Must be between 1 and
+    /// 10,000,000.
     #[prost(int32, tag = "2")]
     pub bitrate_bps: i32,
     /// Number of audio channels. Must be between 1 and 6. The default is 2.
@@ -1202,14 +1224,24 @@ pub struct AudioStream {
     /// The audio sample rate in Hertz. The default is 48000 Hertz.
     #[prost(int32, tag = "6")]
     pub sample_rate_hertz: i32,
+    /// The BCP-47 language code, such as `en-US` or `sr-Latn`. For more
+    /// information, see
+    /// <https://www.unicode.org/reports/tr35/#Unicode_locale_identifier.> Not
+    /// supported in MP4 files.
+    #[prost(string, tag = "7")]
+    pub language_code: ::prost::alloc::string::String,
+    /// The name for this particular audio stream that
+    /// will be added to the HLS/DASH manifest. Not supported in MP4 files.
+    #[prost(string, tag = "8")]
+    pub display_name: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `AudioStream`.
 pub mod audio_stream {
     /// The mapping for the `Job.edit_list` atoms with audio `EditAtom.inputs`.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct AudioMapping {
-        /// Required. The `EditAtom.key` that references the atom with audio inputs in the
-        /// `Job.edit_list`.
+        /// Required. The `EditAtom.key` that references the atom with audio inputs
+        /// in the `Job.edit_list`.
         #[prost(string, tag = "1")]
         pub atom_key: ::prost::alloc::string::String,
         /// Required. The `Input.key` that identifies the input file.
@@ -1244,9 +1276,19 @@ pub struct TextStream {
     /// - `webvtt`
     #[prost(string, tag = "1")]
     pub codec: ::prost::alloc::string::String,
+    /// The BCP-47 language code, such as `en-US` or `sr-Latn`. For more
+    /// information, see
+    /// <https://www.unicode.org/reports/tr35/#Unicode_locale_identifier.> Not
+    /// supported in MP4 files.
+    #[prost(string, tag = "2")]
+    pub language_code: ::prost::alloc::string::String,
     /// The mapping for the `Job.edit_list` atoms with text `EditAtom.inputs`.
     #[prost(message, repeated, tag = "3")]
     pub mapping: ::prost::alloc::vec::Vec<text_stream::TextMapping>,
+    /// The name for this particular text stream that
+    /// will be added to the HLS/DASH manifest. Not supported in MP4 files.
+    #[prost(string, tag = "4")]
+    pub display_name: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `TextStream`.
 pub mod text_stream {
@@ -1355,8 +1397,8 @@ pub struct CreateJobTemplateRequest {
     /// Required. Parameters for creating job template.
     #[prost(message, optional, tag = "2")]
     pub job_template: ::core::option::Option<JobTemplate>,
-    /// Required. The ID to use for the job template, which will become the final component
-    /// of the job template's resource name.
+    /// Required. The ID to use for the job template, which will become the final
+    /// component of the job template's resource name.
     ///
     /// This value should be 4-63 characters, and valid characters must match the
     /// regular expression `\[a-zA-Z][a-zA-Z0-9_-\]*`.
@@ -1366,8 +1408,8 @@ pub struct CreateJobTemplateRequest {
 /// Request message for `TranscoderService.ListJobTemplates`.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListJobTemplatesRequest {
-    /// Required. The parent location from which to retrieve the collection of job templates.
-    /// Format: `projects/{project}/locations/{location}`
+    /// Required. The parent location from which to retrieve the collection of job
+    /// templates. Format: `projects/{project}/locations/{location}`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of items to return.

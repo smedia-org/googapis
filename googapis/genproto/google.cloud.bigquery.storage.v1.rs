@@ -130,7 +130,8 @@ pub struct TableFieldSchema {
     /// Optional. The field mode. The default value is NULLABLE.
     #[prost(enumeration = "table_field_schema::Mode", tag = "3")]
     pub mode: i32,
-    /// Optional. Describes the nested schema fields if the type property is set to STRUCT.
+    /// Optional. Describes the nested schema fields if the type property is set to
+    /// STRUCT.
     #[prost(message, repeated, tag = "4")]
     pub fields: ::prost::alloc::vec::Vec<TableFieldSchema>,
     /// Optional. The field description. The maximum length is 1,024 characters.
@@ -187,6 +188,10 @@ pub struct TableFieldSchema {
     /// Optional. See documentation for precision.
     #[prost(int64, tag = "9")]
     pub scale: i64,
+    /// Optional. A SQL expression to specify the [default value]
+    /// (<https://cloud.google.com/bigquery/docs/default-values>) for this field.
+    #[prost(string, tag = "10")]
+    pub default_value_expression: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `TableFieldSchema`.
 pub mod table_field_schema {
@@ -243,19 +248,22 @@ pub struct ReadSession {
     /// `projects/{project_id}/locations/{location}/sessions/{session_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Output only. Time at which the session becomes invalid. After this time, subsequent
-    /// requests to read this Session will return errors. The expire_time is
-    /// automatically assigned and currently cannot be specified or updated.
+    /// Output only. Time at which the session becomes invalid. After this time,
+    /// subsequent requests to read this Session will return errors. The
+    /// expire_time is automatically assigned and currently cannot be specified or
+    /// updated.
     #[prost(message, optional, tag = "2")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Immutable. Data format of the output data. DATA_FORMAT_UNSPECIFIED not supported.
+    /// Immutable. Data format of the output data. DATA_FORMAT_UNSPECIFIED not
+    /// supported.
     #[prost(enumeration = "DataFormat", tag = "3")]
     pub data_format: i32,
     /// Immutable. Table that this ReadSession is reading from, in the form
     /// `projects/{project_id}/datasets/{dataset_id}/tables/{table_id}`
     #[prost(string, tag = "6")]
     pub table: ::prost::alloc::string::String,
-    /// Optional. Any modifiers which are applied when reading from the specified table.
+    /// Optional. Any modifiers which are applied when reading from the specified
+    /// table.
     #[prost(message, optional, tag = "7")]
     pub table_modifiers: ::core::option::Option<read_session::TableModifiers>,
     /// Optional. Read options for this session (e.g. column selection, filters).
@@ -274,8 +282,13 @@ pub struct ReadSession {
     /// metadata from the table which might be incomplete or stale.
     #[prost(int64, tag = "12")]
     pub estimated_total_bytes_scanned: i64,
-    /// Optional. ID set by client to annotate a session identity.  This does not need
-    /// to be strictly unique, but instead the same ID should be used to group
+    /// Output only. An estimate on the number of rows present in this session's
+    /// streams. This estimate is based on metadata from the table which might be
+    /// incomplete or stale.
+    #[prost(int64, tag = "14")]
+    pub estimated_row_count: i64,
+    /// Optional. ID set by client to annotate a session identity.  This does not
+    /// need to be strictly unique, but instead the same ID should be used to group
     /// logically connected sessions (e.g. All using the same ID for all sessions
     /// needed to complete a Spark SQL query is reasonable).
     ///
@@ -361,6 +374,14 @@ pub mod read_session {
         /// Restricted to a maximum length for 1 MB.
         #[prost(string, tag = "2")]
         pub row_restriction: ::prost::alloc::string::String,
+        /// Optional. Specifies a table sampling percentage. Specifically, the query
+        /// planner will use TABLESAMPLE SYSTEM (sample_percentage PERCENT). This
+        /// samples at the file-level. It will randomly choose for each file whether
+        /// to include that file in the sample returned. Note, that if the table only
+        /// has one file, then TABLESAMPLE SYSTEM will select that file and return
+        /// all returnable rows contained within.
+        #[prost(double, optional, tag = "5")]
+        pub sample_percentage: ::core::option::Option<f64>,
         #[prost(
             oneof = "table_read_options::OutputFormatSerializationOptions",
             tags = "3, 4"
@@ -413,8 +434,8 @@ pub struct WriteStream {
     /// Immutable. Type of the stream.
     #[prost(enumeration = "write_stream::Type", tag = "2")]
     pub r#type: i32,
-    /// Output only. Create time of the stream. For the _default stream, this is the
-    /// creation_time of the table.
+    /// Output only. Create time of the stream. For the _default stream, this is
+    /// the creation_time of the table.
     #[prost(message, optional, tag = "3")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Output only. Commit time of the stream.
@@ -680,10 +701,10 @@ pub struct CreateWriteStreamRequest {
 /// Requests larger than this return an error, typically `INVALID_ARGUMENT`.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AppendRowsRequest {
-    /// Required. The write_stream identifies the target of the append operation, and only
-    /// needs to be specified as part of the first request on the gRPC connection.
-    /// If provided for subsequent requests, it must match the value of the first
-    /// request.
+    /// Required. The write_stream identifies the target of the append operation,
+    /// and only needs to be specified as part of the first request on the gRPC
+    /// connection. If provided for subsequent requests, it must match the value of
+    /// the first request.
     ///
     /// For explicitly created write streams, the format is:
     ///
@@ -854,8 +875,8 @@ pub struct GetWriteStreamRequest {
 /// Request message for `BatchCommitWriteStreams`.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchCommitWriteStreamsRequest {
-    /// Required. Parent table that all the streams should belong to, in the form of
-    /// `projects/{project}/datasets/{dataset}/tables/{table}`.
+    /// Required. Parent table that all the streams should belong to, in the form
+    /// of `projects/{project}/datasets/{dataset}/tables/{table}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The group of streams that will be committed atomically.
@@ -957,6 +978,17 @@ pub mod storage_error {
         OffsetAlreadyExists = 8,
         /// Offset out of range.
         OffsetOutOfRange = 9,
+        /// Customer-managed encryption key (CMEK) not provided for CMEK-enabled
+        /// data.
+        CmekNotProvided = 10,
+        /// Customer-managed encryption key (CMEK) was incorrectly provided.
+        InvalidCmekProvided = 11,
+        /// There is an encryption error while using customer-managed encryption key.
+        CmekEncryptionError = 12,
+        /// Key Management Service (KMS) service returned an error.
+        KmsServiceError = 13,
+        /// Permission denied while using customer-managed encryption key.
+        KmsPermissionDenied = 14,
     }
 }
 /// The message that presents row level error info in a request.

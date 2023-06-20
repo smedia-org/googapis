@@ -95,12 +95,18 @@ pub mod account_budget_proposal_error_enum {
         NotAuthorized = 22,
         /// Mutates are not allowed for the given billing setup.
         InvalidBillingSetup = 23,
-        /// Budget creation failed as it overlaps with an pending budget proposal
+        /// Budget creation failed as it overlaps with a pending budget proposal
         /// or an approved budget.
         OverlapsExistingBudget = 24,
         /// The control setting in user's payments profile doesn't allow budget
         /// creation through API. Log in to Google Ads to create budget.
         CannotCreateBudgetThroughApi = 25,
+        /// Master service agreement has not been signed yet for the Payments
+        /// Profile.
+        InvalidMasterServiceAgreement = 26,
+        /// Budget mutates are not allowed because the given billing setup is
+        /// canceled.
+        CanceledBillingSetup = 27,
     }
 }
 // Proto file describing AccountLink errors.
@@ -120,6 +126,8 @@ pub mod account_link_error_enum {
         Unknown = 1,
         /// The new link status is invalid.
         InvalidStatus = 2,
+        /// The authenticated user doesn't have the permission to do the change.
+        PermissionDenied = 3,
     }
 }
 // Proto file describing ad customizer errors.
@@ -730,6 +738,9 @@ pub mod ad_group_error_enum {
         /// The field type cannot be excluded because an active ad group-asset link
         /// of this type exists.
         InvalidExcludedParentAssetFieldType = 16,
+        /// The asset set type is invalid for setting the
+        /// excluded_parent_asset_set_types field.
+        InvalidExcludedParentAssetSetType = 17,
     }
 }
 // Proto file describing ad group feed errors.
@@ -922,6 +933,8 @@ pub mod asset_error_enum {
         CannotModifyAssetSource = 35,
         /// User can not modify the automatically created asset.
         CannotModifyAutomaticallyCreatedAsset = 36,
+        /// Lead Form is disallowed to use "LOCATION" answer type.
+        LeadFormLocationAnswerTypeDisallowed = 37,
     }
 }
 // Proto file describing asset group asset errors.
@@ -945,6 +958,9 @@ pub mod asset_group_asset_error_enum {
         ExpandableTagsNotAllowedInDescription = 3,
         /// Ad customizers are not supported in assetgroup's text assets.
         AdCustomizerNotSupported = 4,
+        /// Cannot add a HotelPropertyAsset to an AssetGroup that isn't linked
+        /// to the parent campaign's hotel_property_asset_set field.
+        HotelPropertyAssetNotLinkedToCampaign = 5,
     }
 }
 // Proto file describing asset group errors.
@@ -982,6 +998,18 @@ pub mod asset_group_error_enum {
         NotEnoughLogoAsset = 10,
         /// Final url and shopping merchant url does not have the same domain.
         FinalUrlShoppingMerchantHomePageUrlDomainsDiffer = 11,
+        /// Path1 required when path2 is set.
+        Path1RequiredWhenPath2IsSet = 12,
+        /// At least one short description asset is required for a valid asset group.
+        ShortDescriptionRequired = 13,
+        /// Final url field is required for asset group.
+        FinalUrlRequired = 14,
+        /// Final url contains invalid domain name.
+        FinalUrlContainsInvalidDomainName = 15,
+        /// Ad customizers are not supported in asset group's text field.
+        AdCustomizerNotSupported = 16,
+        /// Cannot mutate asset group for campaign with removed status.
+        CannotMutateAssetGroupForRemovedCampaign = 17,
     }
 }
 // Proto file describing asset group asset errors.
@@ -1098,9 +1126,12 @@ pub mod asset_link_error_enum {
         CannotCreateAutomaticallyCreatedLinks = 19,
         /// Advertiser links cannot link to automatically created asset.
         CannotLinkToAutomaticallyCreatedAsset = 20,
-        /// Automatically created links cannot be changed into adveritser links or
+        /// Automatically created links cannot be changed into advertiser links or
         /// the reverse.
         CannotModifyAssetLinkSource = 21,
+        /// Lead Form asset with Location answer type can't be linked to the
+        /// Customer/Campaign because there are no Location assets.
+        CannotLinkLocationLeadFormWithoutLocationAsset = 22,
     }
 }
 // Proto file describing asset set asset errors.
@@ -1127,6 +1158,10 @@ pub mod asset_set_asset_error_enum {
         /// The asset contains duplicate external key with another asset in the asset
         /// set.
         DuplicateExternalKey = 4,
+        /// When attaching a Location typed Asset to a LocationGroup typed AssetSet,
+        /// the AssetSetAsset linkage between the parent LocationSync AssetSet and
+        /// the Asset doesn't exist.
+        ParentLinkageDoesNotExist = 5,
     }
 }
 // Proto file describing asset set errors.
@@ -1146,6 +1181,32 @@ pub mod asset_set_error_enum {
         Unknown = 1,
         /// The asset set name matches that of another enabled asset set.
         DuplicateAssetSetName = 2,
+        /// The type of AssetSet.asset_set_source does not match the type of
+        /// AssetSet.location_set.source in its parent AssetSet.
+        InvalidParentAssetSetType = 3,
+        /// The asset set source doesn't match its parent AssetSet's data.
+        AssetSetSourceIncompatibleWithParentAssetSet = 4,
+        /// This AssetSet type cannot be linked to CustomerAssetSet.
+        AssetSetTypeCannotBeLinkedToCustomer = 5,
+        /// The chain id(s) in ChainSet of a LOCATION_SYNC typed AssetSet is invalid.
+        InvalidChainIds = 6,
+        /// The relationship type in ChainSet of a LOCATION_SYNC typed AssetSet is
+        /// not supported.
+        LocationSyncAssetSetDoesNotSupportRelationshipType = 7,
+        /// There is more than one enabled LocationSync typed AssetSet under one
+        /// customer.
+        NotUniqueEnabledLocationSyncTypedAssetSet = 8,
+        /// The place id(s) in a LocationSync typed AssetSet is invalid and can't be
+        /// decoded.
+        InvalidPlaceIds = 9,
+        /// The Google Business Profile OAuth info is invalid.
+        OauthInfoInvalid = 11,
+        /// The Google Business Profile OAuth info is missing.
+        OauthInfoMissing = 12,
+        /// Can't delete an AssetSet if it has any enabled linkages (e.g.
+        /// CustomerAssetSet), or AssetSet is a parent AssetSet and has enabled child
+        /// AssetSet associated.
+        CannotDeleteAsEnabledLinkagesExist = 10,
     }
 }
 // Proto file describing asset set link errors.
@@ -1324,13 +1385,14 @@ pub mod authorization_error_enum {
         ActionNotPermitted = 7,
         /// Signup not complete.
         IncompleteSignup = 8,
-        /// The customer can't be used because it isn't enabled.
+        /// The customer account can't be accessed because it is not yet enabled or
+        /// has been deactivated.
         CustomerNotEnabled = 24,
         /// The developer must sign the terms of service. They can be found here:
         /// ads.google.com/aw/apicenter
         MissingTos = 9,
-        /// The developer token is not approved. Non-approved developer tokens can
-        /// only be used with test accounts.
+        /// The developer token is only approved for use with test accounts. To
+        /// access non-test accounts, apply for Basic or Standard access.
         DeveloperTokenNotApproved = 10,
         /// The login customer specified does not have access to the account
         /// specified, so the request is invalid.
@@ -1372,6 +1434,9 @@ pub mod batch_job_error_enum {
         InvalidPageSize = 6,
         /// The batch job cannot be removed because it has started running.
         CanOnlyRemovePendingJob = 7,
+        /// The batch job cannot be listed due to unexpected errors such as duplicate
+        /// checkpoints.
+        CannotListResults = 8,
     }
 }
 // Proto file describing bidding errors.
@@ -1401,11 +1466,6 @@ pub mod bidding_error_enum {
         InvalidBid = 17,
         /// Bidding strategy is not available for the account type.
         BiddingStrategyNotAvailableForAccountType = 18,
-        /// Conversion tracking is not enabled in the campaign that has value-based
-        /// bidding transitions.
-        ConversionTrackingNotEnabled = 19,
-        /// Not enough conversions tracked for value-based bidding transitions.
-        NotEnoughConversions = 20,
         /// Campaign can not be created with given bidding strategy. It can be
         /// transitioned to the strategy, once eligible.
         CannotCreateCampaignWithBiddingStrategy = 21,
@@ -1437,10 +1497,6 @@ pub mod bidding_error_enum {
         InvalidDomainName = 33,
         /// The field is not compatible with the payment mode.
         NotCompatibleWithPaymentMode = 34,
-        /// The field is not compatible with the budget type.
-        NotCompatibleWithBudgetType = 35,
-        /// The field is not compatible with the bidding strategy type.
-        NotCompatibleWithBiddingStrategyType = 36,
         /// Bidding strategy type is incompatible with shared budget.
         BiddingStrategyTypeIncompatibleWithSharedBudget = 37,
         /// The attached bidding strategy and budget must be aligned with each other
@@ -1451,6 +1507,8 @@ pub mod bidding_error_enum {
         BiddingStrategyAndBudgetMustBeAttachedToTheSameCampaignsToAlign = 39,
         /// The aligned bidding strategy and budget must be removed at the same time.
         BiddingStrategyAndBudgetMustBeRemovedTogether = 40,
+        /// cpc_bid_floor_micros is greater than cpc_bid_ceiling_micros.
+        CpcBidFloorMicrosGreaterThanCpcBidCeilingMicros = 41,
     }
 }
 // Proto file describing bidding strategy errors.
@@ -1538,12 +1596,17 @@ pub mod billing_setup_error_enum {
         /// Billing setup creation failed because the payments profile needs internal
         /// approval.
         CustomerNeedsInternalApproval = 17,
+        /// Billing setup creation failed because the user needs to accept master
+        /// service agreement on the payments profile.
+        PaymentsProfileNeedsServiceAgreementAcceptance = 18,
         /// Payments account has different currency code than the current customer
         /// and hence cannot be used to setup billing.
         PaymentsAccountIneligibleCurrencyCodeMismatch = 19,
         /// A start time in the future cannot be used because there is currently no
         /// active billing setup for this customer.
         FutureStartTimeProhibited = 20,
+        /// The payments account has maximum number of billing setups.
+        TooManyBillingSetupsForPaymentsAccount = 21,
     }
 }
 // Proto file describing campaign budget errors.
@@ -1600,6 +1663,10 @@ pub mod campaign_budget_error_enum {
         TotalBudgetAmountMustBeUnsetForBudgetPeriodDaily = 18,
         /// The period of the budget is not allowed.
         InvalidPeriod = 19,
+        /// Cannot use accelerated delivery method on this budget.
+        CannotUseAcceleratedDeliveryMode = 20,
+        /// Budget amount must be unset when BudgetPeriod is CUSTOM.
+        BudgetAmountMustBeUnsetForCustomBudgetPeriod = 21,
     }
 }
 // Proto file describing campaign conversion goal errors.
@@ -1675,6 +1742,25 @@ pub mod campaign_criterion_error_enum {
         CannotTargetBothProximityAndLocationCriteriaForSmartCampaign = 16,
         /// A Smart campaign may not target multiple proximity criteria.
         CannotTargetMultipleProximityCriteriaForSmartCampaign = 17,
+        /// Location is not launched for Local Services Campaigns.
+        LocationNotLaunchedForLocalServicesCampaign = 18,
+        /// A Local Services campaign may not target certain criteria types.
+        LocationInvalidForLocalServicesCampaign = 19,
+        /// Country locations are not supported for Local Services campaign.
+        CannotTargetCountryForLocalServicesCampaign = 20,
+        /// Location is not within the home country of Local Services campaign.
+        LocationNotInHomeCountryForLocalServicesCampaign = 21,
+        /// Local Services profile does not exist for a particular Local Services
+        /// campaign.
+        CannotAddOrRemoveLocationForLocalServicesCampaign = 22,
+        /// Local Services campaign must have at least one target location.
+        AtLeastOnePositiveLocationRequiredForLocalServicesCampaign = 23,
+        /// At least one positive local service ID criterion is required for a Local
+        /// Services campaign.
+        AtLeastOneLocalServiceIdCriterionRequiredForLocalServicesCampaign = 24,
+        /// Local service ID is not found under selected categories in local
+        /// services campaign setting.
+        LocalServiceIdNotFoundForCategory = 25,
     }
 }
 // Proto file describing campaign customizer errors.
@@ -1871,6 +1957,56 @@ pub mod campaign_error_enum {
         /// Category bid list in the local services campaign setting is missing a
         /// bid for a category ID that must be present.
         LocalServicesMissingCategoryBid = 55,
+        /// The requested change in status is not supported.
+        InvalidStatusChange = 57,
+        /// Travel Campaign's travel_account_id does not match any customer links.
+        MissingTravelCustomerLink = 58,
+        /// Travel Campaign's travel_account_id matches an existing customer link
+        /// but the customer link is not active.
+        InvalidTravelCustomerLink = 59,
+        /// The asset set type is invalid to be set in
+        /// excluded_parent_asset_set_types field.
+        InvalidExcludedParentAssetSetType = 62,
+        /// Campaign.hotel_property_asset_set must point to an asset set of type
+        /// HOTEL_PROPERTY.
+        AssetSetNotAHotelPropertyAssetSet = 63,
+        /// The hotel property asset set can only be set on Performance Max for
+        /// travel goals campaigns.
+        HotelPropertyAssetSetOnlyForPerformanceMaxForTravelGoals = 64,
+        /// Customer's average daily spend is too high to enable this feature.
+        AverageDailySpendTooHigh = 65,
+        /// Cannot attach the campaign to a deleted campaign group.
+        CannotAttachToRemovedCampaignGroup = 66,
+        /// Cannot attach the campaign to this bidding strategy.
+        CannotAttachToBiddingStrategy = 67,
+        /// A budget with a different period cannot be assigned to the campaign.
+        CannotChangeBudgetPeriod = 68,
+        /// Customer does not have enough conversions to enable this feature.
+        NotEnoughConversions = 71,
+        /// This campaign type can only have one conversion action.
+        CannotSetMoreThanOneConversionAction = 72,
+        /// The field is not compatible with the budget type.
+        NotCompatibleWithBudgetType = 73,
+        /// The feature is incompatible with ConversionActionType.UPLOAD_CLICKS.
+        NotCompatibleWithUploadClicksConversion = 74,
+        /// App campaign setting app ID must match selective optimization conversion
+        /// action app ID.
+        AppIdMustMatchConversionActionAppId = 76,
+        /// Selective optimization conversion action with Download category is not
+        /// allowed.
+        ConversionActionWithDownloadCategoryNotAllowed = 77,
+        /// One software download for selective optimization conversion action is
+        /// required for this campaign conversion action.
+        ConversionActionWithDownloadCategoryRequired = 78,
+        /// Conversion tracking is not enabled and is required for this feature.
+        ConversionTrackingNotEnabled = 79,
+        /// The field is not compatible with the bidding strategy type.
+        NotCompatibleWithBiddingStrategyType = 80,
+        /// Campaign is not compatible with a conversion tracker that has Google
+        /// attribution enabled.
+        NotCompatibleWithGoogleAttributionConversions = 81,
+        /// Customer level conversion lag is too high.
+        ConversionLagTooHigh = 82,
     }
 }
 // Proto file describing campaign experiment errors.
@@ -1948,6 +2084,8 @@ pub mod campaign_feed_error_enum {
         /// Location CampaignFeeds cannot be created unless there is a location
         /// CustomerFeed for the specified feed.
         NoExistingLocationCustomerFeed = 9,
+        /// Feed is read only.
+        LegacyFeedTypeReadOnly = 10,
     }
 }
 // Proto file describing campaign shared set errors.
@@ -2131,76 +2269,78 @@ pub mod conversion_adjustment_upload_error_enum {
     pub enum ConversionAdjustmentUploadError {
         /// Not specified.
         Unspecified = 0,
-        /// The received error code is not known in this version.
+        /// Used for return value only. Represents value unknown in this version.
         Unknown = 1,
-        /// The specified conversion action was created too recently.
-        /// Try the upload again after 4-6 hours have passed since the
-        /// conversion action was created.
+        /// Can't import events to a conversion action that was just created. Try
+        /// importing again in 6 hours.
         TooRecentConversionAction = 2,
-        /// No conversion action of a supported ConversionActionType that matches the
-        /// provided information can be found for the customer.
+        /// Make sure you specify an active conversion action that can be adjusted.
         InvalidConversionAction = 3,
-        /// A retraction was already reported for this conversion.
+        /// The conversion was already retracted. This adjustment was not processed.
         ConversionAlreadyRetracted = 4,
-        /// A conversion for the supplied combination of conversion
-        /// action and conversion identifier could not be found.
+        /// The conversion for this conversion action and conversion identifier can't
+        /// be found. Make sure your conversion identifiers are associated with the
+        /// correct conversion action and try again.
         ConversionNotFound = 5,
-        /// The specified conversion has already expired. Conversions expire after 55
-        /// days, after which adjustments cannot be reported against them.
+        /// Adjustment can't be made to a conversion that occurred more than 54 days
+        /// ago.
         ConversionExpired = 6,
-        /// The supplied adjustment date time precedes that of the original
-        /// conversion.
+        /// Adjustment has an `adjustment_date_time` that occurred before the
+        /// associated conversion. Make sure your `adjustment_date_time` is correct
+        /// and try again.
         AdjustmentPrecedesConversion = 7,
-        /// A restatement with a more recent adjustment date time was already
-        /// reported for this conversion.
+        /// More recent adjustment `adjustment_date_time` has already been reported
+        /// for the associated conversion.  Make sure your adjustment
+        /// `adjustment_date_time` is correct and try again.
         MoreRecentRestatementFound = 8,
-        /// The conversion was created too recently.
+        /// Adjustment can't be recorded because the conversion occurred too
+        /// recently. Try adjusting a conversion that occurred at least 24 hours ago.
         TooRecentConversion = 9,
-        /// Restatements cannot be reported for a conversion action that always uses
-        /// the default value.
+        /// Can't make an adjustment to a conversion that is set up to use the
+        /// default value. Check your conversion action value setting and try again.
         CannotRestateConversionActionThatAlwaysUsesDefaultConversionValue = 10,
-        /// The request contained more than 2000 adjustments.
+        /// Try uploading fewer than 2001 adjustments in a single API request.
         TooManyAdjustmentsInRequest = 11,
-        /// The conversion has been adjusted too many times.
+        /// The conversion has already been adjusted the maximum number of times.
+        /// Make sure you're only making necessary adjustment to existing conversion.
         TooManyAdjustments = 12,
-        /// A restatement with this timestamp already exists for this conversion. To
-        /// upload another adjustment, use a different timestamp.
+        /// The conversion has prior a restatement with the same
+        /// `adjustment_date_time`. Make sure your adjustment has the correct and
+        /// unique `adjustment_date_time` and try again.
         RestatementAlreadyExists = 13,
-        /// This adjustment has the same timestamp as another adjustment in the
-        /// request for this conversion. To upload another adjustment, use a
-        /// different timestamp.
+        /// Imported adjustment has a duplicate conversion adjustment with same
+        /// `adjustment_date_time`. Make sure your adjustment has the correct
+        /// `adjustment_date_time` and try again.
         DuplicateAdjustmentInRequest = 14,
-        /// The customer has not accepted the customer data terms in the conversion
-        /// settings page.
+        /// Make sure you agree to the customer data processing terms in conversion
+        /// settings and try again.
         CustomerNotAcceptedCustomerDataTerms = 15,
-        /// The enhanced conversion settings of the conversion action supplied is
-        /// not eligible for enhancements.
+        /// Can't use enhanced conversions with the specified conversion action.
         ConversionActionNotEligibleForEnhancement = 16,
-        /// The provided user identifier is not a SHA-256 hash. It is either unhashed
-        /// or hashed using a different hash function.
+        /// Make sure you hash user provided data using SHA-256 and ensure you are
+        /// normalizing according to the guidelines.
         InvalidUserIdentifier = 17,
-        /// The provided user identifier is not supported.
-        /// ConversionAdjustmentUploadService only supports hashed_email,
-        /// hashed_phone_number, and address_info.
+        /// Use user provided data such as emails or phone numbers hashed using
+        /// SHA-256 and try again.
         UnsupportedUserIdentifier = 18,
-        /// Cannot set both gclid_date_time_pair and order_id.
+        /// Cannot set both gclid_date_time_pair and order_id. Use only 1 type and
+        /// try again.
         GclidDateTimePairAndOrderIdBothSet = 20,
-        /// An enhancement with this conversion action and order_id already exists
-        /// for this conversion.
+        /// Conversion already has enhancements with the same Order ID and conversion
+        /// action. Make sure your data is correctly configured and try again.
         ConversionAlreadyEnhanced = 21,
-        /// This enhancement has the same conversion action and order_id as
-        /// another enhancement in the request.
+        /// Multiple enhancements have the same conversion action and Order ID.  Make
+        /// sure your data is correctly configured and try again.
         DuplicateEnhancementInRequest = 22,
-        /// Per our customer data policies, enhancement has been prohibited in your
-        /// account. If you have any questions, contact your Google
-        /// representative.
+        /// Enhanced conversions can't be used for this account because of Google
+        /// customer data policies. Contact your Google representative.
         CustomerDataPolicyProhibitsEnhancement = 23,
-        /// The conversion adjustment is for a conversion action of type WEBPAGE, but
-        /// does not have an order_id. The order_id is required for an adjustment for
-        /// a WEBPAGE conversion action.
+        /// Adjustment for website conversion requires Order ID (ie, transaction ID).
+        /// Make sure your website tags capture Order IDs and you send the same Order
+        /// IDs with your adjustment.
         MissingOrderIdForWebpage = 24,
-        /// The order_id contains personally identifiable information (PII), such as
-        /// an email address or phone number.
+        /// Can't use adjustment with Order IDs containing personally-identifiable
+        /// information (PII).
         OrderIdContainsPii = 25,
     }
 }
@@ -2266,134 +2406,146 @@ pub mod conversion_upload_error_enum {
     pub enum ConversionUploadError {
         /// Enum unspecified.
         Unspecified = 0,
-        /// The received error code is not known in this version.
+        /// Used for return value only. Represents value unknown in this version.
         Unknown = 1,
-        /// The request contained more than 2000 conversions.
+        /// Upload fewer than 2001 events in a single request.
         TooManyConversionsInRequest = 2,
-        /// The specified gclid could not be decoded.
+        /// The imported gclid could not be decoded. Make sure you have not modified
+        /// the click IDs.
         UnparseableGclid = 3,
-        /// The specified conversion_date_time is before the event time
-        /// associated with the given identifier or iOS URL parameter.
+        /// The imported event has a `conversion_date_time` that precedes the click.
+        /// Make sure your `conversion_date_time` is correct and try again.
         ConversionPrecedesEvent = 42,
-        /// The click associated with the given identifier or iOS URL parameter is
-        /// either too old to be imported or occurred outside of the click through
-        /// lookback window for the specified conversion action.
+        /// The imported event can't be recorded because its click occurred before
+        /// this conversion's click-through window. Make sure you import the most
+        /// recent data.
         ExpiredEvent = 43,
         /// The click associated with the given identifier or iOS URL parameter
-        /// occurred too recently. Try uploading again after 6 hours have
-        /// passed since the click occurred.
+        /// occurred less than 6 hours ago. Retry after 6 hours have passed.
         TooRecentEvent = 44,
-        /// The click associated with the given identifier or iOS URL parameter could
-        /// not be found in the system. This can happen if the identifier or iOS URL
-        /// parameter are collected for non Google Ads clicks.
+        /// The imported event could not be attributed to a click. This may be
+        /// because the event did not come from a Google Ads campaign.
         EventNotFound = 45,
-        /// The click associated with the given identifier or iOS URL parameter is
-        /// owned by a customer account that the uploading customer does not manage.
+        /// The click ID or call is associated with an Ads account you don't have
+        /// access to. Make sure you import conversions for accounts managed by your
+        /// manager account.
         UnauthorizedCustomer = 8,
-        /// No upload eligible conversion action that matches the provided
-        /// information can be found for the customer.
+        /// Make sure you specify a valid conversion action set up for offline
+        /// import.
         InvalidConversionAction = 9,
-        /// The specified conversion action was created too recently.
-        /// Try the upload again after 4-6 hours have passed since the
-        /// conversion action was created.
+        /// Can't import events to a conversion action that was just created. Try
+        /// importing again in 6 hours.
         TooRecentConversionAction = 10,
-        /// The click associated with the given identifier does not contain
-        /// conversion tracking information.
+        /// At the time of the click, conversion tracking was not enabled in the
+        /// effective conversion account of the click's Google Ads account.
         ConversionTrackingNotEnabledAtImpressionTime = 11,
-        /// The specified conversion action does not use an external attribution
-        /// model, but external_attribution_data was set.
+        /// The imported event includes external attribution data, but the conversion
+        /// action isn't set up to use an external attribution model. Make sure the
+        /// conversion action is correctly configured and try again.
         ExternalAttributionDataSetForNonExternallyAttributedConversionAction = 12,
-        /// The specified conversion action uses an external attribution model, but
-        /// external_attribution_data or one of its contained fields was not set.
-        /// Both external_attribution_credit and external_attribution_model must be
-        /// set for externally attributed conversion actions.
+        /// The conversion action is set up to use an external attribution model, but
+        /// the imported event is missing data. Make sure imported events include the
+        /// external attribution credit and all necessary fields.
         ExternalAttributionDataNotSetForExternallyAttributedConversionAction = 13,
-        /// Order IDs are not supported for conversion actions which use an external
-        /// attribution model.
+        /// Order IDs can't be used for a conversion measured with an external
+        /// attribution model. Make sure the conversion is correctly configured and
+        /// imported events include only necessary data and try again.
         OrderIdNotPermittedForExternallyAttributedConversionAction = 14,
-        /// A conversion with the same order id and conversion action combination
-        /// already exists in our system.
+        /// The imported event includes an order ID that was previously recorded, so
+        /// the event was not processed.
         OrderIdAlreadyInUse = 15,
-        /// The request contained two or more conversions with the same order id and
-        /// conversion action combination.
+        /// Imported events include multiple conversions with the same order ID and
+        /// were not processed.  Make sure order IDs are unique and try again.
         DuplicateOrderId = 16,
-        /// The call occurred too recently. Try uploading again after 12 hours
-        /// have passed since the call occurred.
+        /// Can't import calls that occurred less than 6 hours ago. Try uploading
+        /// again in 6 hours.
         TooRecentCall = 17,
-        /// The click that initiated the call is too old for this conversion to be
-        /// imported.
+        /// The call can't be recorded because it occurred before this conversion
+        /// action's lookback window. Make sure your import is configured to get the
+        /// most recent data.
         ExpiredCall = 18,
-        /// The call or the click leading to the call was not found.
+        /// The call or click leading to the imported event can't be found. Make sure
+        /// your data source is set up to include correct identifiers.
         CallNotFound = 19,
-        /// The specified conversion_date_time is before the call_start_date_time.
+        /// The call has a `conversion_date_time` that precedes the associated click.
+        /// Make sure your `conversion_date_time` is correct.
         ConversionPrecedesCall = 20,
-        /// The click associated with the call does not contain conversion tracking
-        /// information.
+        /// At the time of the imported call, conversion tracking was not enabled in
+        /// the effective conversion account of the click's Google Ads account.
         ConversionTrackingNotEnabledAtCallTime = 21,
-        /// The caller's phone number cannot be parsed. It should be formatted either
-        /// as E.164 "+16502531234", International "+64 3-331 6005" or US national
-        /// number "6502531234".
+        /// Make sure phone numbers are formatted as E.164 (+16502531234),
+        /// International (+64 3-331 6005), or US national number (6502531234).
         UnparseableCallersPhoneNumber = 22,
-        /// A conversion with this timestamp already exists for this click. To upload
-        /// another conversion, use a different timestamp.
+        /// The imported event has the same click and `conversion_date_time` as an
+        /// existing conversion. Use a unique `conversion_date_time` or order ID for
+        /// each unique event and try again.
         ClickConversionAlreadyExists = 23,
-        /// A conversion with this timestamp already exists for this call. To upload
-        /// another conversion, use a different timestamp.
+        /// The imported call has the same `conversion_date_time` as an existing
+        /// conversion. Make sure your `conversion_date_time` correctly configured
+        /// and try again.
         CallConversionAlreadyExists = 24,
-        /// This conversion has the same click and timestamp as another conversion in
-        /// the request. To upload another conversion for this click, use a
-        /// different timestamp.
+        /// Multiple events have the same click and `conversion_date_time`. Make sure
+        /// your `conversion_date_time` is correctly configured and try again.
         DuplicateClickConversionInRequest = 25,
-        /// This conversion has the same call and timestamp as another conversion in
-        /// the request. To upload another conversion for this call, use a
-        /// different timestamp.
+        /// Multiple events have the same call and `conversion_date_time`. Make sure
+        /// your `conversion_date_time` is correctly configured and try again.
         DuplicateCallConversionInRequest = 26,
-        /// The custom variable is not enabled.
+        /// Enable the custom variable in your conversion settings and try again.
         CustomVariableNotEnabled = 28,
-        /// The value of the custom variable contains personally identifiable
-        /// information (PII), such as an email address or phone number.
+        /// Can't import events with custom variables containing
+        /// personally-identifiable information (PII). Remove these variables and try
+        /// again.
         CustomVariableValueContainsPii = 29,
-        /// The click associated with the given identifier or iOS URL parameter isn't
-        /// from the account where conversion tracking is set up.
+        /// The click from the imported event is associated with a different Google
+        /// Ads account. Make sure you're importing to the correct account.
         InvalidCustomerForClick = 30,
-        /// The click associated with the given call isn't from the account where
-        /// conversion tracking is set up.
+        /// The click from the call is associated with a different Google Ads
+        /// account. Make sure you're importing to the correct account. Query
+        /// conversion_tracking_setting.google_ads_conversion_customer on Customer to
+        /// identify the correct account.
         InvalidCustomerForCall = 31,
-        /// The conversion can't be uploaded because the conversion source didn't
-        /// comply with the App Tracking Transparency (ATT) policy or the person who
-        /// converted didn't consent to tracking.
+        /// The connversion can't be imported because the conversion source didn't
+        /// comply with Apple App Transparency Tracking (ATT) policies or because the
+        /// customer didn't consent to tracking.
         ConversionNotCompliantWithAttPolicy = 32,
-        /// No click was found for the provided user identifiers. This may be because
-        /// the conversion did not come from a Google Ads campaign.
+        /// The click can't be found for the specified identifiers. This may be
+        /// because it did not come from a Google Ads campaign.
         ClickNotFound = 33,
-        /// The provided user identifier is not a SHA-256 hash. It is either unhashed
-        /// or hashed using a different hash function.
+        /// Make sure you hash user provided data using SHA-256 and ensure you are
+        /// normalizing according to the guidelines.
         InvalidUserIdentifier = 34,
-        /// Conversion actions which use an external attribution model cannot be used
-        /// with UserIdentifier.
+        /// User provided data can't be used with external attribution models. Use a
+        /// different attribution model or omit user identifiers and try again.
         ExternallyAttributedConversionActionNotPermittedWithUserIdentifier = 35,
-        /// The provided user identifier is not supported. ConversionUploadService
-        /// only supports hashed_email and hashed_phone_number.
+        /// The provided user identifiers are not supported. Use only hashed email
+        /// or phone number and try again.
         UnsupportedUserIdentifier = 36,
-        /// gbraid and wbraid are both set in the request. Only one is allowed.
+        /// Can't use both gbraid and wbraid parameters. Use only 1 and try again.
         GbraidWbraidBothSet = 38,
-        /// The specified wbraid could not be decoded.
+        /// Can't parse event import data. Check if your wbraid parameter was
+        /// not modified and try again.
         UnparseableWbraid = 39,
-        /// The specified gbraid could not be decoded.
+        /// Can't parse event import data. Check if your gbraid parameter was
+        /// not modified and try again.
         UnparseableGbraid = 40,
-        /// Conversion actions which use the one-per-click counting type cannot be
-        /// used with gbraid or wbraid.
+        /// Conversion actions that use one-per-click counting can't be used with
+        /// gbraid or wbraid parameters.
         OnePerClickConversionActionNotPermittedWithBraid = 46,
-        /// Per our customer data policies, enhanced conversions have been prohibited
-        /// in your account. If you have any questions, contact your Google
-        /// representative.
+        /// Enhanced conversions can't be used for this account because of Google
+        /// customer data policies. Contact your Google representative.
         CustomerDataPolicyProhibitsEnhancedConversions = 47,
-        /// The customer has not accepted the customer data terms in the conversion
-        /// settings page.
+        /// Make sure you agree to the customer data processing terms in conversion
+        /// settings and try again. You can check your setting by querying
+        /// conversion_tracking_setting.accepted_customer_data_terms on Customer.
         CustomerNotAcceptedCustomerDataTerms = 48,
-        /// The order_id contains personally identifiable information (PII), such as
-        /// an email address or phone number.
+        /// Can't import events with order IDs containing personally-identifiable
+        /// information (PII).
         OrderIdContainsPii = 49,
+        /// Make sure you've turned on enhanced conversions for leads in conversion
+        /// settings and try again. You can check your setting by querying
+        /// conversion_tracking_setting.enhanced_conversions_for_leads_enabled on
+        /// Customer.
+        CustomerNotEnabledEnhancedConversionsForLeads = 50,
     }
 }
 // Proto file describing conversion value rule errors.
@@ -2713,6 +2865,18 @@ pub mod criterion_error_enum {
         LocationFilterInvalid = 80,
         /// Cannot set geo target constants and feed item sets at the same time.
         CannotSetGeoTargetConstantsWithFeedItemSets = 123,
+        /// Cannot set both assetset and feed at the same time.
+        CannotSetBothAssetSetAndFeed = 140,
+        /// Cannot set feed or feed item sets for Customer.
+        CannotSetFeedOrFeedItemSetsForCustomer = 142,
+        /// Cannot set AssetSet criteria for customer.
+        CannotSetAssetSetFieldForCustomer = 150,
+        /// Cannot set geo target constants and asset sets at the same time.
+        CannotSetGeoTargetConstantsWithAssetSets = 143,
+        /// Cannot set asset sets and feed item sets at the same time.
+        CannotSetAssetSetsWithFeedItemSets = 144,
+        /// The location group asset set id is invalid
+        InvalidLocationGroupAssetSet = 141,
         /// The location group radius is in the range but not at the valid increment.
         InvalidLocationGroupRadius = 124,
         /// The location group radius unit is invalid.
@@ -2843,6 +3007,19 @@ pub mod criterion_error_enum {
         /// policy. See
         /// <https://support.google.com/google-ads/answer/6299717.>
         CannotTargetCustomerMatchUserList = 139,
+        /// Cannot create a negative keyword list criterion with a shared set that
+        /// does not exist.
+        NegativeKeywordSharedSetDoesNotExist = 145,
+        /// Cannot create a negative keyword list with deleted shared set.
+        CannotAddRemovedNegativeKeywordSharedSet = 146,
+        /// Can only have one Negative Keyword List per account.
+        CannotHaveMultipleNegativeKeywordListPerAccount = 147,
+        /// Only allowlisted customers can add criteria of this type.
+        CustomerCannotAddCriterionOfThisType = 149,
+        /// Targeting for Similar audiences is not supported, since this feature has
+        /// been deprecated. See
+        /// <https://support.google.com/google-ads/answer/12463119> to learn more.
+        CannotTargetSimilarUserList = 151,
     }
 }
 // Proto file describing currency code errors.
@@ -2862,6 +3039,25 @@ pub mod currency_code_error_enum {
         Unknown = 1,
         /// The currency code is not supported.
         Unsupported = 2,
+    }
+}
+// Proto file describing currency errors.
+
+/// Container for enum describing possible currency errors.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CurrencyErrorEnum {}
+/// Nested message and enum types in `CurrencyErrorEnum`.
+pub mod currency_error_enum {
+    /// Enum describing possible currency errors.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CurrencyError {
+        /// Enum unspecified.
+        Unspecified = 0,
+        /// The received error code is not known in this version.
+        Unknown = 1,
+        /// Bid must be a multiple of billable unit.
+        ValueNotMultipleOfBillableUnit = 2,
     }
 }
 // Proto file describing custom audience errors.
@@ -2924,6 +3120,9 @@ pub mod custom_conversion_goal_error_enum {
         CustomGoalDuplicateName = 5,
         /// Custom goal with the same conversion action list already exists.
         DuplicateConversionActionList = 6,
+        /// Conversion types that cannot be biddable should not be included in custom
+        /// goal.
+        NonBiddableConversionActionNotEligibleForCustomGoal = 7,
     }
 }
 // Proto file describing custom interest errors.
@@ -3098,6 +3297,32 @@ pub mod customer_manager_link_error_enum {
         /// The authorized customer is a test account. It can add no more than the
         /// allowed number of accounts
         TestAccountLinksTooManyChildAccounts = 10,
+    }
+}
+// Proto file describing CustomerSkAdNetworkConversionValueSchema errors.
+
+/// Container for enum describing possible
+/// CustomerSkAdNetworkConversionValueSchema errors.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CustomerSkAdNetworkConversionValueSchemaErrorEnum {}
+/// Nested message and enum types in `CustomerSkAdNetworkConversionValueSchemaErrorEnum`.
+pub mod customer_sk_ad_network_conversion_value_schema_error_enum {
+    /// Enum describing possible CustomerSkAdNetworkConversionValueSchema errors.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CustomerSkAdNetworkConversionValueSchemaError {
+        /// Enum unspecified.
+        Unspecified = 0,
+        /// The received error code is not known in this version.
+        Unknown = 1,
+        /// The customer link ID provided is invalid.
+        InvalidLinkId = 2,
+        /// The app ID provided is invalid.
+        InvalidAppId = 3,
+        /// The conversion value schema provided is invalid.
+        InvalidSchema = 4,
+        /// The customer link id provided could not be found.
+        LinkCodeNotFound = 5,
     }
 }
 // Proto file describing CustomerUserAccess errors.
@@ -3808,6 +4033,8 @@ pub mod feed_item_error_enum {
         CannotModifyKeyAttributeValue = 9,
         /// The feed attribute value is too large.
         SizeTooLargeForMultiValueAttribute = 10,
+        /// Feed is read only.
+        LegacyFeedTypeReadOnly = 11,
     }
 }
 // Proto file describing feed item set errors.
@@ -4203,6 +4430,8 @@ pub mod feed_mapping_error_enum {
         InvalidPlaceholderTypeForSystemGeneratedFeedType = 18,
         /// The "field" oneof was not set in an AttributeFieldMapping.
         AttributeFieldMappingMissingField = 19,
+        /// Feed is read only.
+        LegacyFeedTypeReadOnly = 20,
     }
 }
 // Proto file describing field errors.
@@ -5815,6 +6044,10 @@ pub mod recommendation_error_enum {
         RecommendationAlreadyDismissed = 14,
         /// The recommendation apply request was malformed and invalid.
         InvalidApplyRequest = 15,
+        /// The type of recommendation requested to apply is not supported.
+        RecommendationTypeApplyNotSupported = 17,
+        /// The target multiplier specified is invalid.
+        InvalidMultiplier = 18,
     }
 }
 // Proto file describing region code errors.
@@ -5903,6 +6136,8 @@ pub mod request_error_enum {
         TotalResultsCountNotOriginallyRequested = 32,
         /// Deadline specified by the client was too short.
         RpcDeadlineTooShort = 33,
+        /// This API version has been sunset and is no longer supported.
+        UnsupportedVersion = 38,
     }
 }
 // Proto file describing resource access denied errors.
@@ -6097,6 +6332,38 @@ pub mod size_limit_error_enum {
         RequestSizeLimitExceeded = 2,
         /// The number of entries in the response exceeds the system limit.
         ResponseSizeLimitExceeded = 3,
+    }
+}
+// Proto file describing Smart campaign errors.
+
+/// Container for enum describing possible Smart campaign errors.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignErrorEnum {}
+/// Nested message and enum types in `SmartCampaignErrorEnum`.
+pub mod smart_campaign_error_enum {
+    /// Enum describing possible Smart campaign errors.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SmartCampaignError {
+        /// Enum unspecified.
+        Unspecified = 0,
+        /// The received error code is not known in this version.
+        Unknown = 1,
+        /// The business location id is invalid.
+        InvalidBusinessLocationId = 2,
+        /// The SmartCampaignSetting resource is only applicable for campaigns
+        /// with advertising channel type SMART.
+        InvalidCampaign = 3,
+        /// The business name or business location id is required.
+        BusinessNameOrBusinessLocationIdMissing = 4,
+        /// A Smart campaign suggestion request field is required.
+        RequiredSuggestionFieldMissing = 5,
+        /// A location list or proximity is required.
+        GeoTargetsRequired = 6,
+        /// The locale could not be determined.
+        CannotDetermineSuggestionLocale = 7,
+        /// The final URL could not be crawled.
+        FinalUrlNotCrawlable = 8,
     }
 }
 // Proto file describing string format errors.
@@ -6425,6 +6692,13 @@ pub mod user_list_error_enum {
         /// Logical user list should not have a mix of CRM based user list and other
         /// types of lists in its rules.
         CanNotMixCrmBasedInLogicalListWithOtherLists = 36,
+        /// crm_based_user_list.app_id field can only be set when upload_key_type is
+        /// MOBILE_ADVERTISING_ID.
+        AppIdNotAllowed = 39,
+        /// Google system generated user lists cannot be mutated.
+        CannotMutateSystemList = 40,
+        /// The mobile app associated with the remarketing list is sensitive.
+        MobileAppIsSensitive = 41,
     }
 }
 // Proto file describing YouTube video registration errors.
@@ -6489,7 +6763,7 @@ pub struct ErrorCode {
     /// The list of error enums
     #[prost(
         oneof = "error_code::ErrorCode",
-        tags = "1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 161, 18, 159, 19, 21, 24, 25, 107, 149, 155, 148, 153, 154, 152, 26, 29, 166, 160, 31, 165, 109, 32, 150, 158, 90, 151, 33, 34, 35, 36, 37, 38, 39, 40, 110, 42, 116, 86, 162, 44, 45, 46, 47, 48, 49, 58, 51, 52, 53, 54, 55, 56, 57, 117, 59, 60, 61, 62, 63, 64, 65, 115, 143, 111, 145, 146, 66, 67, 68, 70, 71, 72, 132, 74, 133, 76, 77, 78, 136, 79, 80, 81, 82, 83, 84, 87, 88, 91, 92, 93, 94, 96, 97, 98, 100, 101, 102, 103, 140, 141, 104, 105, 112, 114, 118, 119, 137, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 134, 135, 138, 139, 164, 156, 167"
+        tags = "1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 161, 18, 159, 19, 21, 24, 25, 107, 149, 155, 148, 153, 154, 152, 26, 29, 166, 160, 31, 165, 109, 32, 150, 158, 90, 151, 33, 34, 35, 36, 37, 38, 39, 40, 110, 42, 116, 86, 162, 44, 45, 46, 47, 48, 49, 58, 51, 52, 53, 54, 55, 56, 57, 117, 59, 60, 61, 62, 63, 64, 65, 115, 143, 111, 145, 146, 66, 67, 68, 70, 71, 72, 132, 74, 133, 76, 77, 78, 136, 79, 80, 81, 82, 83, 84, 87, 88, 91, 92, 93, 94, 96, 97, 98, 100, 101, 102, 103, 140, 141, 104, 105, 112, 114, 118, 119, 137, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 134, 135, 138, 139, 164, 147, 156, 167, 170, 171"
     )]
     pub error_code: ::core::option::Option<error_code::ErrorCode>,
 }
@@ -7224,6 +7498,12 @@ pub mod error_code {
         /// The reasons for the audience error
         #[prost(enumeration = "super::audience_error_enum::AudienceError", tag = "164")]
         AudienceError(i32),
+        /// The reasons for the Smart campaign error
+        #[prost(
+            enumeration = "super::smart_campaign_error_enum::SmartCampaignError",
+            tag = "147"
+        )]
+        SmartCampaignError(i32),
         /// The reasons for the experiment arm error
         #[prost(
             enumeration = "super::experiment_arm_error_enum::ExperimentArmError",
@@ -7236,6 +7516,15 @@ pub mod error_code {
             tag = "167"
         )]
         AudienceInsightsError(i32),
+        /// The reasons for the customer SK Ad network conversion value schema error
+        #[prost(
+            enumeration = "super::customer_sk_ad_network_conversion_value_schema_error_enum::CustomerSkAdNetworkConversionValueSchemaError",
+            tag = "170"
+        )]
+        CustomerSkAdNetworkConversionValueSchemaError(i32),
+        /// The reasons for the currency errors.
+        #[prost(enumeration = "super::currency_error_enum::CurrencyError", tag = "171")]
+        CurrencyError(i32),
     }
 }
 /// Describes the part of the request proto that caused the error.

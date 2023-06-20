@@ -313,7 +313,116 @@ pub struct StaticAdResource {
     #[prost(string, tag = "2")]
     pub creative_type: ::prost::alloc::string::String,
 }
-/// Metadata for a VOD session.
+/// Metadata for used to register live configs.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LiveConfig {
+    /// Output only. The resource name of the live config, in the form of
+    /// `projects/{project}/locations/{location}/liveConfigs/{id}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Source URI for the live stream manifest.
+    #[prost(string, tag = "2")]
+    pub source_uri: ::prost::alloc::string::String,
+    /// The default ad tag associated with this live stream config.
+    #[prost(string, tag = "3")]
+    pub ad_tag_uri: ::prost::alloc::string::String,
+    /// Additional metadata used to register a live stream with Google Ad Manager
+    /// (GAM)
+    #[prost(message, optional, tag = "4")]
+    pub gam_live_config: ::core::option::Option<GamLiveConfig>,
+    /// Output only. State of the live config.
+    #[prost(enumeration = "live_config::State", tag = "5")]
+    pub state: i32,
+    /// Required. Determines how the ads are tracked. If
+    /// \[gam_live_config][google.cloud.video.stitcher.v1.LiveConfig.gam_live_config\]
+    /// is set, the value must be `CLIENT` because the IMA SDK handles ad tracking.
+    #[prost(enumeration = "AdTracking", tag = "6")]
+    pub ad_tracking: i32,
+    /// This must refer to a slate in the same
+    /// project. If Google Ad Manager (GAM) is used for ads, this string sets the
+    /// value of `slateCreativeId` in
+    /// <https://developers.google.com/ad-manager/api/reference/v202211/LiveStreamEventService.LiveStreamEvent#slateCreativeId>
+    #[prost(string, tag = "7")]
+    pub default_slate: ::prost::alloc::string::String,
+    /// Defines the stitcher behavior in case an ad does not align exactly with
+    /// the ad break boundaries. If not specified, the default is `CUT_CURRENT`.
+    #[prost(enumeration = "live_config::StitchingPolicy", tag = "8")]
+    pub stitching_policy: i32,
+    /// The configuration for prefetching ads.
+    #[prost(message, optional, tag = "10")]
+    pub prefetch_config: ::core::option::Option<PrefetchConfig>,
+}
+/// Nested message and enum types in `LiveConfig`.
+pub mod live_config {
+    /// State of the live config.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// State is not specified.
+        Unspecified = 0,
+        /// Live config is being created.
+        Creating = 1,
+        /// Live config is ready for use.
+        Ready = 2,
+        /// Live config is queued up for deletion.
+        Deleting = 3,
+    }
+    /// Defines the ad stitching behavior in case the ad duration does not align
+    /// exactly with the ad break boundaries. If not specified, the default is
+    /// `CUT_CURRENT`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum StitchingPolicy {
+        /// Stitching policy is not specified.
+        Unspecified = 0,
+        /// Cuts an ad short and returns to content in the middle of the ad.
+        CutCurrent = 1,
+        /// Finishes stitching the current ad before returning to content.
+        CompleteAd = 2,
+    }
+}
+/// The configuration for prefetch ads.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PrefetchConfig {
+    /// Required. Indicates whether the option to prefetch ad requests is enabled.
+    #[prost(bool, tag = "1")]
+    pub enabled: bool,
+    /// The duration in seconds of the part of the break to be prefetched.
+    /// This field is only relevant if prefetch is enabled.
+    /// You should set this duration to as long as possible to increase the
+    /// benefits of prefetching, but not longer than the shortest ad break
+    /// expected. For example, for a live event with 30s and 60s ad breaks, the
+    /// initial duration should be set to 30s.
+    #[prost(message, optional, tag = "2")]
+    pub initial_ad_request_duration: ::core::option::Option<::prost_types::Duration>,
+}
+/// Metadata used to register a live stream with Google Ad Manager (GAM)
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GamLiveConfig {
+    /// Required. Ad Manager network code to associate with the live config.
+    #[prost(string, tag = "1")]
+    pub network_code: ::prost::alloc::string::String,
+    /// Output only. The asset key identifier generated for the live config.
+    #[prost(string, tag = "2")]
+    pub asset_key: ::prost::alloc::string::String,
+    /// Output only. The custom asset key identifier generated for the live config.
+    #[prost(string, tag = "3")]
+    pub custom_asset_key: ::prost::alloc::string::String,
+}
+/// Determines the ad tracking policy.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum AdTracking {
+    /// The ad tracking policy is not specified.
+    Unspecified = 0,
+    /// Client-side ad tracking is specified. The client player is expected to
+    /// trigger playback and activity events itself.
+    Client = 1,
+    /// The Video Stitcher API will trigger playback events on behalf of
+    /// the client player.
+    Server = 2,
+}
+/// Metadata for a VOD session. The session expires 4 hours after its creation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VodSession {
     /// Output only. The name of the VOD session, in the form of
@@ -347,20 +456,35 @@ pub struct VodSession {
     #[prost(map = "string, string", tag = "7")]
     pub ad_tag_macro_map:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Indicates whether client side ad tracking is enabled. If client
-    /// side ad tracking is enabled, then the client player is expected
-    /// to trigger playback and activity events itself.
-    /// If this is set to false, server side ad tracking is enabled,
-    /// causing the Video Stitcher service will trigger playback events
-    /// on behalf of the client player.
-    #[prost(bool, tag = "8")]
-    pub client_ad_tracking: bool,
     /// Additional options that affect the output of the manifest.
     #[prost(message, optional, tag = "9")]
     pub manifest_options: ::core::option::Option<ManifestOptions>,
     /// Output only. The generated ID of the VodSession's source media.
     #[prost(string, tag = "10")]
     pub asset_id: ::prost::alloc::string::String,
+    /// Required. Determines how the ad should be tracked. If
+    /// \[gam_vod_config][google.cloud.video.stitcher.v1.VodSession.gam_vod_config\]
+    /// is set, the value must be `CLIENT` because the IMA SDK handles ad tracking.
+    #[prost(enumeration = "AdTracking", tag = "11")]
+    pub ad_tracking: i32,
+    /// This field should be set with appropriate values if GAM is being used for
+    /// ads.
+    #[prost(message, optional, tag = "13")]
+    pub gam_settings: ::core::option::Option<vod_session::GamSettings>,
+}
+/// Nested message and enum types in `VodSession`.
+pub mod vod_session {
+    /// Defines fields related to Google Ad Manager (GAM). This should be set if
+    /// GAM is being used for ads.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct GamSettings {
+        /// Required. Ad Manager network code.
+        #[prost(string, tag = "1")]
+        pub network_code: ::prost::alloc::string::String,
+        /// Required. The stream ID generated by Ad Manager.
+        #[prost(string, tag = "2")]
+        pub stream_id: ::prost::alloc::string::String,
+    }
 }
 /// Describes what was stitched into a VOD session's manifest.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -413,7 +537,8 @@ pub struct VodSessionAdBreak {
     #[prost(message, optional, tag = "4")]
     pub start_time_offset: ::core::option::Option<::prost_types::Duration>,
 }
-/// Metadata for a live session.
+/// Metadata for a live session. The session expires 5 minutes after the client
+/// stops fetching the session's playlists.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LiveSession {
     /// Output only. The name of the live session, in the form of
@@ -423,20 +548,6 @@ pub struct LiveSession {
     /// Output only. The URI to play the live session's ad-stitched stream.
     #[prost(string, tag = "2")]
     pub play_uri: ::prost::alloc::string::String,
-    /// The URI of the live session's source stream.
-    #[prost(string, tag = "3")]
-    pub source_uri: ::prost::alloc::string::String,
-    /// The default ad tag to use when no ad tag ids are specified in an ad break's
-    /// SCTE-35 message.
-    ///
-    /// default_ad_tag_id is necessary when `adTagMap` has more than one key. Its
-    /// value must be present in the `adTagMap`.
-    #[prost(string, tag = "4")]
-    pub default_ad_tag_id: ::prost::alloc::string::String,
-    /// Key value pairs for ad tags. Ads parsed from ad tags must be MP4 videos
-    /// each with at least one audio track.
-    #[prost(map = "string, message", tag = "5")]
-    pub ad_tag_map: ::std::collections::HashMap<::prost::alloc::string::String, AdTag>,
     /// Key value pairs for ad tag macro replacement. If the
     /// specified ad tag URI has macros, this field provides the mapping
     /// to the value that will replace the macro in the ad tag URI.
@@ -453,50 +564,29 @@ pub struct LiveSession {
     #[prost(map = "string, string", tag = "6")]
     pub ad_tag_macros:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Whether client side ad tracking is enabled. If enabled, the client player
-    /// is expected to trigger playback and activity events itself. Otherwise,
-    /// server side ad tracking is enabled and the Video Stitcher API will trigger
-    /// playback events on behalf of the client player.
-    #[prost(bool, tag = "7")]
-    pub client_ad_tracking: bool,
-    /// The default slate to use when no slates are specified in an ad break's
-    /// SCTE-35 message. When specified, this value must match the ID for a slate
-    /// that has already been created via the
-    /// \[CreateSlate\](projects.locations.slates/create) method.
-    #[prost(string, tag = "8")]
-    pub default_slate_id: ::prost::alloc::string::String,
-    /// Defines the stitcher behavior in case an ad does not align exactly with
-    /// the ad break boundaries. If not specified, the default is `COMPLETE_AD`.
-    #[prost(enumeration = "live_session::StitchingPolicy", tag = "9")]
-    pub stitching_policy: i32,
     /// Additional options that affect the output of the manifest.
     #[prost(message, optional, tag = "10")]
     pub manifest_options: ::core::option::Option<ManifestOptions>,
-    /// Output only. The generated ID of the LiveSession's source stream.
-    #[prost(string, tag = "11")]
-    pub stream_id: ::prost::alloc::string::String,
+    /// This field should be set with appropriate values if GAM is being used for
+    /// ads.
+    #[prost(message, optional, tag = "15")]
+    pub gam_settings: ::core::option::Option<live_session::GamSettings>,
+    /// Required. The resource name of the live config for this session, in the
+    /// form of `projects/{project}/locations/{location}/liveConfigs/{id}`.
+    #[prost(string, tag = "16")]
+    pub live_config: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `LiveSession`.
 pub mod live_session {
-    /// Defines the stitcher behavior in case an ad does not align exactly with
-    /// the ad break boundaries. If not specified, the default is COMPLETE_AD.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum StitchingPolicy {
-        /// Stitching policy is not specified.
-        Unspecified = 0,
-        /// Finishes stitching the current ad before returning to content.
-        CompleteAd = 1,
-        /// Cuts an ad short and returns to content in the middle of the ad.
-        CutCurrent = 3,
+    /// Defines fields related to Google Ad Manager (GAM). This should be set if
+    /// GAM
+    /// is being used for ads.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct GamSettings {
+        /// Required. The stream ID generated by Ad Manager.
+        #[prost(string, tag = "1")]
+        pub stream_id: ::prost::alloc::string::String,
     }
-}
-/// Metadata of an ad tag.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct AdTag {
-    /// Ad tag URI template.
-    #[prost(string, tag = "1")]
-    pub uri: ::prost::alloc::string::String,
 }
 /// Options for manifest generation.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -547,6 +637,23 @@ pub struct Slate {
     /// MP4 video with at least one audio track.
     #[prost(string, tag = "2")]
     pub uri: ::prost::alloc::string::String,
+    /// gam_slate has all the GAM-related attributes of slates.
+    #[prost(message, optional, tag = "3")]
+    pub gam_slate: ::core::option::Option<slate::GamSlate>,
+}
+/// Nested message and enum types in `Slate`.
+pub mod slate {
+    /// GamSlate object has Google Ad Manager (GAM) related properties for the
+    /// slate.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct GamSlate {
+        /// Required. Ad Manager network code to associate with the live config.
+        #[prost(string, tag = "1")]
+        pub network_code: ::prost::alloc::string::String,
+        /// Output only. The identifier generated for the slate by GAM.
+        #[prost(int64, tag = "2")]
+        pub gam_slate_id: i64,
+    }
 }
 /// Detailed information related to the interstitial of a VOD session.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -581,15 +688,15 @@ pub struct AdStitchDetail {
 /// Request message for VideoStitcherService.createCdnKey.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateCdnKeyRequest {
-    /// Required. The project in which the CDN key should be created, in the form of
-    /// `projects/{project_number}/locations/{location}`.
+    /// Required. The project in which the CDN key should be created, in the form
+    /// of `projects/{project_number}/locations/{location}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The CDN key resource to create.
     #[prost(message, optional, tag = "2")]
     pub cdn_key: ::core::option::Option<CdnKey>,
-    /// Required. The ID to use for the CDN key, which will become the final component of
-    /// the CDN key's resource name.
+    /// Required. The ID to use for the CDN key, which will become the final
+    /// component of the CDN key's resource name.
     ///
     /// This value should conform to RFC-1034, which restricts to
     /// lower-case letters, numbers, and hyphen, with the first character a
@@ -662,8 +769,8 @@ pub struct UpdateCdnKeyRequest {
 /// Request message for VideoStitcherService.createVodSession
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateVodSessionRequest {
-    /// Required. The project and location in which the VOD session should be created, in the
-    /// form of `projects/{project_number}/locations/{location}`.
+    /// Required. The project and location in which the VOD session should be
+    /// created, in the form of `projects/{project_number}/locations/{location}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. Parameters for creating a session.
@@ -681,8 +788,8 @@ pub struct GetVodSessionRequest {
 /// Request message for VideoStitcherService.listVodStitchDetails.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListVodStitchDetailsRequest {
-    /// Required. The VOD session where the stitch details belong to, in the form of
-    /// `projects/{project}/locations/{location}/vodSessions/{id}`.
+    /// Required. The VOD session where the stitch details belong to, in the form
+    /// of `projects/{project}/locations/{location}/vodSessions/{id}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of items to return.
@@ -705,7 +812,8 @@ pub struct ListVodStitchDetailsResponse {
 /// Request message for VideoStitcherService.getVodStitchDetail.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetVodStitchDetailRequest {
-    /// Required. The name of the stitch detail in the specified VOD session, in the form of
+    /// Required. The name of the stitch detail in the specified VOD session, in
+    /// the form of
     /// `projects/{project}/locations/{location}/vodSessions/{vod_session_id}/vodStitchDetails/{id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -713,8 +821,8 @@ pub struct GetVodStitchDetailRequest {
 /// Request message for VideoStitcherService.listVodAdTagDetails.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListVodAdTagDetailsRequest {
-    /// Required. The VOD session which the ad tag details belong to, in the form of
-    /// `projects/{project}/locations/{location}/vodSessions/{vod_session_id}`.
+    /// Required. The VOD session which the ad tag details belong to, in the form
+    /// of `projects/{project}/locations/{location}/vodSessions/{vod_session_id}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of items to return.
@@ -737,7 +845,8 @@ pub struct ListVodAdTagDetailsResponse {
 /// Request message for VideoStitcherService.getVodAdTagDetail
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetVodAdTagDetailRequest {
-    /// Required. The name of the ad tag detail for the specified VOD session, in the form of
+    /// Required. The name of the ad tag detail for the specified VOD session, in
+    /// the form of
     /// `projects/{project}/locations/{location}/vodSessions/{vod_session_id}/vodAdTagDetails/{vod_ad_tag_detail}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -778,7 +887,7 @@ pub struct GetLiveAdTagDetailRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateSlateRequest {
     /// Required. The project in which the slate should be created, in the form of
-    /// `projects/{project_number}`.
+    /// `projects/{project_number}/locations/{location}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The unique identifier for the slate.
@@ -790,19 +899,35 @@ pub struct CreateSlateRequest {
     /// Required. The slate to create.
     #[prost(message, optional, tag = "3")]
     pub slate: ::core::option::Option<Slate>,
+    /// A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server will guarantee
+    /// that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported `(00000000-0000-0000-0000-000000000000)`.
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for VideoStitcherService.getSlate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSlateRequest {
-    /// Required. The name of the slate to be retrieved, of the slate, in the form of
-    /// `projects/{project_number}/locations/{location}/slates/{id}`.
+    /// Required. The name of the slate to be retrieved, of the slate, in the form
+    /// of `projects/{project_number}/locations/{location}/slates/{id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for VideoStitcherService.listSlates.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSlatesRequest {
-    /// Required. The project to list slates, in the form of `projects/{project_number}`.
+    /// Required. The project to list slates, in the form of
+    /// `projects/{project_number}/locations/{location}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Requested page size. Server may return fewer items than requested.
@@ -853,8 +978,8 @@ pub struct DeleteSlateRequest {
 /// Request message for VideoStitcherService.createLiveSession.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateLiveSessionRequest {
-    /// Required. The project and location in which the live session should be created,
-    /// in the form of `projects/{project_number}/locations/{location}`.
+    /// Required. The project and location in which the live session should be
+    /// created, in the form of `projects/{project_number}/locations/{location}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. Parameters for creating a live session.
@@ -868,6 +993,104 @@ pub struct GetLiveSessionRequest {
     /// `projects/{project_number}/locations/{location}/liveSessions/{id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+}
+/// Request message for VideoStitcherService.createLiveConfig
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateLiveConfigRequest {
+    /// Required. The project in which the live config should be created, in
+    /// the form of `projects/{project_number}/locations/{location}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The unique identifier ID to use for the live config.
+    #[prost(string, tag = "2")]
+    pub live_config_id: ::prost::alloc::string::String,
+    /// Required. The live config resource to create.
+    #[prost(message, optional, tag = "3")]
+    pub live_config: ::core::option::Option<LiveConfig>,
+    /// A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server will guarantee
+    /// that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported `(00000000-0000-0000-0000-000000000000)`.
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for VideoStitcherService.listLiveConfig.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListLiveConfigsRequest {
+    /// Required. The project that contains the list of live configs, in the
+    /// form of `projects/{project_number}/locations/{location}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of items to return.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// The next_page_token value returned from a previous List request, if any.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. The filter to apply to list results (see
+    /// \[Filtering\](<https://google.aip.dev/160>)).
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Optional. Specifies the ordering of results following
+    /// [Cloud API
+    /// syntax](<https://cloud.google.com/apis/design/design_patterns#sorting_order>).
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for VideoStitcher.ListLiveConfig.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListLiveConfigsResponse {
+    /// List of live configs.
+    #[prost(message, repeated, tag = "1")]
+    pub live_configs: ::prost::alloc::vec::Vec<LiveConfig>,
+    /// The pagination token.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request message for VideoStitcherService.getLiveConfig.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetLiveConfigRequest {
+    /// Required. The name of the live config to be retrieved, in the form
+    /// of
+    /// `projects/{project_number}/locations/{location}/liveConfigs/{id}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for VideoStitcherService.deleteLiveConfig.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteLiveConfigRequest {
+    /// Required. The name of the live config to be deleted, in the form of
+    /// `projects/{project_number}/locations/{location}/liveConfigs/{id}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Represents the metadata of the long-running operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OperationMetadata {
+    /// The time the operation was created.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time the operation finished running.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Server-defined resource path for the target of the operation.
+    #[prost(string, tag = "3")]
+    pub target: ::prost::alloc::string::String,
+    /// Name of the verb executed by the operation.
+    #[prost(string, tag = "4")]
+    pub verb: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod video_stitcher_service_client {
@@ -927,7 +1150,10 @@ pub mod video_stitcher_service_client {
         pub async fn create_cdn_key(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateCdnKeyRequest>,
-        ) -> Result<tonic::Response<super::CdnKey>, tonic::Status> {
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -978,7 +1204,10 @@ pub mod video_stitcher_service_client {
         pub async fn delete_cdn_key(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteCdnKeyRequest>,
-        ) -> Result<tonic::Response<()>, tonic::Status> {
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -996,7 +1225,10 @@ pub mod video_stitcher_service_client {
         pub async fn update_cdn_key(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateCdnKeyRequest>,
-        ) -> Result<tonic::Response<super::CdnKey>, tonic::Status> {
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -1152,7 +1384,10 @@ pub mod video_stitcher_service_client {
         pub async fn create_slate(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateSlateRequest>,
-        ) -> Result<tonic::Response<super::Slate>, tonic::Status> {
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -1203,7 +1438,10 @@ pub mod video_stitcher_service_client {
         pub async fn update_slate(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateSlateRequest>,
-        ) -> Result<tonic::Response<super::Slate>, tonic::Status> {
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -1220,7 +1458,10 @@ pub mod video_stitcher_service_client {
         pub async fn delete_slate(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteSlateRequest>,
-        ) -> Result<tonic::Response<()>, tonic::Status> {
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -1264,6 +1505,83 @@ pub mod video_stitcher_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.video.stitcher.v1.VideoStitcherService/GetLiveSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Registers the live config with the provided unique ID in"]
+        #[doc = " the specified region."]
+        pub async fn create_live_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateLiveConfigRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.stitcher.v1.VideoStitcherService/CreateLiveConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all live configs managed by the Video Stitcher that"]
+        #[doc = " belong to the specified project and region."]
+        pub async fn list_live_configs(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListLiveConfigsRequest>,
+        ) -> Result<tonic::Response<super::ListLiveConfigsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.stitcher.v1.VideoStitcherService/ListLiveConfigs",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the specified live config managed by the Video"]
+        #[doc = " Stitcher service."]
+        pub async fn get_live_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetLiveConfigRequest>,
+        ) -> Result<tonic::Response<super::LiveConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.stitcher.v1.VideoStitcherService/GetLiveConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes the specified live config."]
+        pub async fn delete_live_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteLiveConfigRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.stitcher.v1.VideoStitcherService/DeleteLiveConfig",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

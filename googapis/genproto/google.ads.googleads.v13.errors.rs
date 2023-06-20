@@ -21,13 +21,13 @@ pub mod access_invitation_error_enum {
         InvalidInvitationStatus = 4,
         /// Email address cannot be like abc+foo@google.com.
         GoogleConsumerAccountNotAllowed = 5,
-        /// Invalid invitation id.
+        /// Invalid invitation ID.
         InvalidInvitationId = 6,
         /// Email address already has a pending invitation.
         EmailAddressAlreadyHasPendingInvitation = 7,
         /// Pending invitation limit exceeded for the customer.
         PendingInvitationsLimitExceeded = 8,
-        /// Email address doesn't conform to the email domain policy. Please see
+        /// Email address doesn't conform to the email domain policy. See
         /// <https://support.google.com/google-ads/answer/2375456>
         EmailDomainPolicyViolated = 9,
     }
@@ -95,12 +95,18 @@ pub mod account_budget_proposal_error_enum {
         NotAuthorized = 22,
         /// Mutates are not allowed for the given billing setup.
         InvalidBillingSetup = 23,
-        /// Budget creation failed as it overlaps with an pending budget proposal
+        /// Budget creation failed as it overlaps with a pending budget proposal
         /// or an approved budget.
         OverlapsExistingBudget = 24,
         /// The control setting in user's payments profile doesn't allow budget
         /// creation through API. Log in to Google Ads to create budget.
         CannotCreateBudgetThroughApi = 25,
+        /// Master service agreement has not been signed yet for the Payments
+        /// Profile.
+        InvalidMasterServiceAgreement = 26,
+        /// Budget mutates are not allowed because the given billing setup is
+        /// canceled.
+        CanceledBillingSetup = 27,
     }
 }
 // Proto file describing AccountLink errors.
@@ -120,6 +126,8 @@ pub mod account_link_error_enum {
         Unknown = 1,
         /// The new link status is invalid.
         InvalidStatus = 2,
+        /// The authenticated user doesn't have the permission to do the change.
+        PermissionDenied = 3,
     }
 }
 // Proto file describing ad customizer errors.
@@ -215,11 +223,11 @@ pub mod ad_error_enum {
         DimensionNotInUnion = 26,
         /// Display Url cannot be specified (applies to Ad Exchange Ads)
         DisplayUrlCannotBeSpecified = 27,
-        /// Telephone number contains invalid characters or invalid format. Please
-        /// re-enter your number using digits (0-9), dashes (-), and parentheses
+        /// Telephone number contains invalid characters or invalid format.
+        /// Re-enter your number using digits (0-9), dashes (-), and parentheses
         /// only.
         DomesticPhoneNumberFormat = 28,
-        /// Emergency telephone numbers are not allowed. Please enter a valid
+        /// Emergency telephone numbers are not allowed. Enter a valid
         /// domestic phone number to connect customers to your business.
         EmergencyPhoneNumber = 29,
         /// A required field was not specified or is an empty string.
@@ -273,7 +281,7 @@ pub mod ad_error_enum {
         InvalidMobileCarrierTarget = 51,
         /// Wrong number of elements for given element type
         InvalidNumberOfElements = 52,
-        /// The format of the telephone number is incorrect. Please re-enter the
+        /// The format of the telephone number is incorrect. Re-enter the
         /// number using the correct format.
         InvalidPhoneNumberFormat = 53,
         /// The certified vendor format id is incorrect.
@@ -299,10 +307,10 @@ pub mod ad_error_enum {
         MissingDescription1 = 63,
         /// Description (line 3) must be entered.
         MissingDescription2 = 64,
-        /// The destination url must contain at least one tag (e.g. {lpurl})
+        /// The destination url must contain at least one tag (for example, {lpurl})
         MissingDestinationUrlTag = 65,
         /// The tracking url template of ExpandedDynamicSearchAd must contain at
-        /// least one tag. (e.g. {lpurl})
+        /// least one tag. (for example, {lpurl})
         MissingLandingPageUrlTag = 66,
         /// A valid dimension must be specified for this ad.
         MissingDimension = 67,
@@ -375,7 +383,7 @@ pub mod ad_error_enum {
         /// URL must not contain a query.
         UrlQueryNotAllowed = 100,
         /// A url scheme is not allowed in front of tag in tracking url template
-        /// (e.g. <http://{lpurl}>)
+        /// (for example, <http://{lpurl}>)
         UrlSchemeBeforeExpandedDynamicSearchAdTag = 102,
         /// The user does not have permissions to create a template ad for the given
         /// template.
@@ -439,7 +447,7 @@ pub mod ad_error_enum {
         /// The associated ad is not compatible with restriction type.
         IncompatibleWithRestrictionType = 130,
         /// Consent for call recording is required for creating/updating call only
-        /// ads. Please see <https://support.google.com/google-ads/answer/7412639.>
+        /// ads. See <https://support.google.com/google-ads/answer/7412639.>
         CustomerConsentForCallRecordingRequired = 131,
         /// Either an image or a media bundle is required in a display upload ad.
         MissingImageOrMediaBundle = 132,
@@ -621,7 +629,7 @@ pub mod ad_group_criterion_error_enum {
         InvalidKeywordText = 11,
         /// Destination URL was invalid.
         InvalidDestinationUrl = 12,
-        /// The destination url must contain at least one tag (e.g. {lpurl})
+        /// The destination url must contain at least one tag (for example, {lpurl})
         MissingDestinationUrlTag = 13,
         /// Keyword-level cpm bid is not supported
         KeywordLevelBidNotSupportedForManualcpm = 14,
@@ -639,7 +647,7 @@ pub mod ad_group_criterion_error_enum {
         /// Partial failure is not supported for shopping campaign mutate operations.
         CampaignTypeNotCompatibleWithPartialFailure = 27,
         /// Operations in the mutate request changes too many shopping ad groups.
-        /// Please split requests for multiple shopping ad groups across multiple
+        /// Split requests for multiple shopping ad groups across multiple
         /// requests.
         OperationsForTooManyShoppingAdgroups = 28,
         /// Not allowed to modify url fields of an ad group criterion if there are
@@ -730,6 +738,9 @@ pub mod ad_group_error_enum {
         /// The field type cannot be excluded because an active ad group-asset link
         /// of this type exists.
         InvalidExcludedParentAssetFieldType = 16,
+        /// The asset set type is invalid for setting the
+        /// excluded_parent_asset_set_types field.
+        InvalidExcludedParentAssetSetType = 17,
     }
 }
 // Proto file describing ad group feed errors.
@@ -918,6 +929,12 @@ pub mod asset_error_enum {
         LeadFormLegacyQualifyingQuestionsDisallowed = 33,
         /// Unique name is required for this asset type.
         NameConflictForAssetType = 34,
+        /// Cannot modify asset source.
+        CannotModifyAssetSource = 35,
+        /// User can not modify the automatically created asset.
+        CannotModifyAutomaticallyCreatedAsset = 36,
+        /// Lead Form is disallowed to use "LOCATION" answer type.
+        LeadFormLocationAnswerTypeDisallowed = 37,
     }
 }
 // Proto file describing asset group asset errors.
@@ -941,6 +958,9 @@ pub mod asset_group_asset_error_enum {
         ExpandableTagsNotAllowedInDescription = 3,
         /// Ad customizers are not supported in assetgroup's text assets.
         AdCustomizerNotSupported = 4,
+        /// Cannot add a HotelPropertyAsset to an AssetGroup that isn't linked
+        /// to the parent campaign's hotel_property_asset_set field.
+        HotelPropertyAssetNotLinkedToCampaign = 5,
     }
 }
 // Proto file describing asset group errors.
@@ -978,6 +998,18 @@ pub mod asset_group_error_enum {
         NotEnoughLogoAsset = 10,
         /// Final url and shopping merchant url does not have the same domain.
         FinalUrlShoppingMerchantHomePageUrlDomainsDiffer = 11,
+        /// Path1 required when path2 is set.
+        Path1RequiredWhenPath2IsSet = 12,
+        /// At least one short description asset is required for a valid asset group.
+        ShortDescriptionRequired = 13,
+        /// Final url field is required for asset group.
+        FinalUrlRequired = 14,
+        /// Final url contains invalid domain name.
+        FinalUrlContainsInvalidDomainName = 15,
+        /// Ad customizers are not supported in asset group's text field.
+        AdCustomizerNotSupported = 16,
+        /// Cannot mutate asset group for campaign with removed status.
+        CannotMutateAssetGroupForRemovedCampaign = 17,
     }
 }
 // Proto file describing asset group asset errors.
@@ -1042,7 +1074,7 @@ pub mod asset_link_error_enum {
         Unknown = 1,
         /// Pinning is not supported for the given asset link field.
         PinningUnsupported = 2,
-        /// The given field type is not supported to be added directly via asset
+        /// The given field type is not supported to be added directly through asset
         /// links.
         UnsupportedFieldType = 3,
         /// The given asset's type and the specified field type are incompatible.
@@ -1064,9 +1096,9 @@ pub mod asset_link_error_enum {
         /// assets are pinned to specific fields.
         NotEnoughAvailableAssetLinksForValidCombination = 10,
         /// Not enough assets with fallback are available. When validating the
-        /// minimum number of assets, assets without fallback (e.g. assets that
-        /// contain location tag without default value "{LOCATION(City)}") will not
-        /// be counted.
+        /// minimum number of assets, assets without fallback (for example, assets
+        /// that contain location tag without default value "{LOCATION(City)}") will
+        /// not be counted.
         NotEnoughAvailableAssetLinksWithFallback = 11,
         /// This is a combination of the
         /// NOT_ENOUGH_AVAILABLE_ASSET_LINKS_FOR_VALID_COMBINATION and
@@ -1081,6 +1113,8 @@ pub mod asset_link_error_enum {
         /// The YouTube video referenced in the provided asset is too short for the
         /// field submitted.
         YoutubeVideoTooShort = 15,
+        /// The specified field type is excluded for given campaign or ad group.
+        ExcludedParentFieldType = 16,
         /// The status is invalid for the operation specified.
         InvalidStatus = 17,
         /// The YouTube video referenced in the provided asset has unknown duration.
@@ -1088,6 +1122,16 @@ pub mod asset_link_error_enum {
         /// uploaded to YouTube. In both cases, the video duration should eventually
         /// get resolved.
         YoutubeVideoDurationNotDefined = 18,
+        /// User cannot create automatically created links.
+        CannotCreateAutomaticallyCreatedLinks = 19,
+        /// Advertiser links cannot link to automatically created asset.
+        CannotLinkToAutomaticallyCreatedAsset = 20,
+        /// Automatically created links cannot be changed into advertiser links or
+        /// the reverse.
+        CannotModifyAssetLinkSource = 21,
+        /// Lead Form asset with Location answer type can't be linked to the
+        /// Customer/Campaign because there are no Location assets.
+        CannotLinkLocationLeadFormWithoutLocationAsset = 22,
     }
 }
 // Proto file describing asset set asset errors.
@@ -1114,6 +1158,10 @@ pub mod asset_set_asset_error_enum {
         /// The asset contains duplicate external key with another asset in the asset
         /// set.
         DuplicateExternalKey = 4,
+        /// When attaching a Location typed Asset to a LocationGroup typed AssetSet,
+        /// the AssetSetAsset linkage between the parent LocationSync AssetSet and
+        /// the Asset doesn't exist.
+        ParentLinkageDoesNotExist = 5,
     }
 }
 // Proto file describing asset set errors.
@@ -1133,6 +1181,32 @@ pub mod asset_set_error_enum {
         Unknown = 1,
         /// The asset set name matches that of another enabled asset set.
         DuplicateAssetSetName = 2,
+        /// The type of AssetSet.asset_set_source does not match the type of
+        /// AssetSet.location_set.source in its parent AssetSet.
+        InvalidParentAssetSetType = 3,
+        /// The asset set source doesn't match its parent AssetSet's data.
+        AssetSetSourceIncompatibleWithParentAssetSet = 4,
+        /// This AssetSet type cannot be linked to CustomerAssetSet.
+        AssetSetTypeCannotBeLinkedToCustomer = 5,
+        /// The chain id(s) in ChainSet of a LOCATION_SYNC typed AssetSet is invalid.
+        InvalidChainIds = 6,
+        /// The relationship type in ChainSet of a LOCATION_SYNC typed AssetSet is
+        /// not supported.
+        LocationSyncAssetSetDoesNotSupportRelationshipType = 7,
+        /// There is more than one enabled LocationSync typed AssetSet under one
+        /// customer.
+        NotUniqueEnabledLocationSyncTypedAssetSet = 8,
+        /// The place id(s) in a LocationSync typed AssetSet is invalid and can't be
+        /// decoded.
+        InvalidPlaceIds = 9,
+        /// The Google Business Profile OAuth info is invalid.
+        OauthInfoInvalid = 11,
+        /// The Google Business Profile OAuth info is missing.
+        OauthInfoMissing = 12,
+        /// Can't delete an AssetSet if it has any enabled linkages (e.g.
+        /// CustomerAssetSet), or AssetSet is a parent AssetSet and has enabled child
+        /// AssetSet associated.
+        CannotDeleteAsEnabledLinkagesExist = 10,
     }
 }
 // Proto file describing asset set link errors.
@@ -1199,6 +1273,26 @@ pub mod audience_error_enum {
         InUse = 9,
     }
 }
+// Proto file describing errors generated from AudienceInsightsService.
+
+/// Container for enum describing possible errors returned from
+/// the AudienceInsightsService.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AudienceInsightsErrorEnum {}
+/// Nested message and enum types in `AudienceInsightsErrorEnum`.
+pub mod audience_insights_error_enum {
+    /// Enum describing possible errors from AudienceInsightsService.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AudienceInsightsError {
+        /// Enum unspecified.
+        Unspecified = 0,
+        /// The received error code is not known in this version.
+        Unknown = 1,
+        /// The dimensions cannot be used with topic audience combinations.
+        DimensionIncompatibleWithTopicAudienceCombinations = 2,
+    }
+}
 // Proto file describing authentication errors.
 
 /// Container for enum describing possible authentication errors.
@@ -1216,11 +1310,11 @@ pub mod authentication_error_enum {
         Unknown = 1,
         /// Authentication of the request failed.
         AuthenticationError = 2,
-        /// Client Customer ID is not a number.
+        /// Client customer ID is not a number.
         ClientCustomerIdInvalid = 5,
         /// No customer found for the provided customer ID.
         CustomerNotFound = 8,
-        /// Client's Google Account is deleted.
+        /// Client's Google account is deleted.
         GoogleAccountDeleted = 9,
         /// Google account login token in the cookie is invalid.
         GoogleAccountCookieInvalid = 10,
@@ -1233,19 +1327,19 @@ pub mod authentication_error_enum {
         LoginCookieRequired = 13,
         /// User in the cookie is not a valid Ads user.
         NotAdsUser = 14,
-        /// Oauth token in the header is not valid.
+        /// OAuth token in the header is not valid.
         OauthTokenInvalid = 15,
-        /// Oauth token in the header has expired.
+        /// OAuth token in the header has expired.
         OauthTokenExpired = 16,
-        /// Oauth token in the header has been disabled.
+        /// OAuth token in the header has been disabled.
         OauthTokenDisabled = 17,
-        /// Oauth token in the header has been revoked.
+        /// OAuth token in the header has been revoked.
         OauthTokenRevoked = 18,
-        /// Oauth token HTTP header is malformed.
+        /// OAuth token HTTP header is malformed.
         OauthTokenHeaderInvalid = 19,
         /// Login cookie is not valid.
         LoginCookieInvalid = 20,
-        /// User Id in the header is not a valid id.
+        /// User ID in the header is not a valid ID.
         UserIdInvalid = 22,
         /// An account administrator changed this account's authentication settings.
         /// To access this Google Ads account, enable 2-Step Verification in your
@@ -1287,17 +1381,18 @@ pub mod authorization_error_enum {
         /// Authorization of the client failed.
         AuthorizationError = 6,
         /// The user does not have permission to perform this action
-        /// (e.g., ADD, UPDATE, REMOVE) on the resource or call a method.
+        /// (for example, ADD, UPDATE, REMOVE) on the resource or call a method.
         ActionNotPermitted = 7,
         /// Signup not complete.
         IncompleteSignup = 8,
-        /// The customer can't be used because it isn't enabled.
+        /// The customer account can't be accessed because it is not yet enabled or
+        /// has been deactivated.
         CustomerNotEnabled = 24,
         /// The developer must sign the terms of service. They can be found here:
         /// ads.google.com/aw/apicenter
         MissingTos = 9,
-        /// The developer token is not approved. Non-approved developer tokens can
-        /// only be used with test accounts.
+        /// The developer token is only approved for use with test accounts. To
+        /// access non-test accounts, apply for Basic or Standard access.
         DeveloperTokenNotApproved = 10,
         /// The login customer specified does not have access to the account
         /// specified, so the request is invalid.
@@ -1368,11 +1463,6 @@ pub mod bidding_error_enum {
         InvalidBid = 17,
         /// Bidding strategy is not available for the account type.
         BiddingStrategyNotAvailableForAccountType = 18,
-        /// Conversion tracking is not enabled in the campaign that has value-based
-        /// bidding transitions.
-        ConversionTrackingNotEnabled = 19,
-        /// Not enough conversions tracked for value-based bidding transitions.
-        NotEnoughConversions = 20,
         /// Campaign can not be created with given bidding strategy. It can be
         /// transitioned to the strategy, once eligible.
         CannotCreateCampaignWithBiddingStrategy = 21,
@@ -1404,10 +1494,6 @@ pub mod bidding_error_enum {
         InvalidDomainName = 33,
         /// The field is not compatible with the payment mode.
         NotCompatibleWithPaymentMode = 34,
-        /// The field is not compatible with the budget type.
-        NotCompatibleWithBudgetType = 35,
-        /// The field is not compatible with the bidding strategy type.
-        NotCompatibleWithBiddingStrategyType = 36,
         /// Bidding strategy type is incompatible with shared budget.
         BiddingStrategyTypeIncompatibleWithSharedBudget = 37,
         /// The attached bidding strategy and budget must be aligned with each other
@@ -1418,6 +1504,8 @@ pub mod bidding_error_enum {
         BiddingStrategyAndBudgetMustBeAttachedToTheSameCampaignsToAlign = 39,
         /// The aligned bidding strategy and budget must be removed at the same time.
         BiddingStrategyAndBudgetMustBeRemovedTogether = 40,
+        /// cpc_bid_floor_micros is greater than cpc_bid_ceiling_micros.
+        CpcBidFloorMicrosGreaterThanCpcBidCeilingMicros = 41,
     }
 }
 // Proto file describing bidding strategy errors.
@@ -1505,12 +1593,17 @@ pub mod billing_setup_error_enum {
         /// Billing setup creation failed because the payments profile needs internal
         /// approval.
         CustomerNeedsInternalApproval = 17,
+        /// Billing setup creation failed because the user needs to accept master
+        /// service agreement on the payments profile.
+        PaymentsProfileNeedsServiceAgreementAcceptance = 18,
         /// Payments account has different currency code than the current customer
         /// and hence cannot be used to setup billing.
         PaymentsAccountIneligibleCurrencyCodeMismatch = 19,
         /// A start time in the future cannot be used because there is currently no
         /// active billing setup for this customer.
         FutureStartTimeProhibited = 20,
+        /// The payments account has maximum number of billing setups.
+        TooManyBillingSetupsForPaymentsAccount = 21,
     }
 }
 // Proto file describing campaign budget errors.
@@ -1567,6 +1660,8 @@ pub mod campaign_budget_error_enum {
         TotalBudgetAmountMustBeUnsetForBudgetPeriodDaily = 18,
         /// The period of the budget is not allowed.
         InvalidPeriod = 19,
+        /// Cannot use accelerated delivery method on this budget.
+        CannotUseAcceleratedDeliveryMode = 20,
     }
 }
 // Proto file describing campaign conversion goal errors.
@@ -1642,6 +1737,25 @@ pub mod campaign_criterion_error_enum {
         CannotTargetBothProximityAndLocationCriteriaForSmartCampaign = 16,
         /// A Smart campaign may not target multiple proximity criteria.
         CannotTargetMultipleProximityCriteriaForSmartCampaign = 17,
+        /// Location is not launched for Local Services Campaigns.
+        LocationNotLaunchedForLocalServicesCampaign = 18,
+        /// A Local Services campaign may not target certain criteria types.
+        LocationInvalidForLocalServicesCampaign = 19,
+        /// Country locations are not supported for Local Services campaign.
+        CannotTargetCountryForLocalServicesCampaign = 20,
+        /// Location is not within the home country of Local Services campaign.
+        LocationNotInHomeCountryForLocalServicesCampaign = 21,
+        /// Local Services profile does not exist for a particular Local Services
+        /// campaign.
+        CannotAddOrRemoveLocationForLocalServicesCampaign = 22,
+        /// Local Services campaign must have at least one target location.
+        AtLeastOnePositiveLocationRequiredForLocalServicesCampaign = 23,
+        /// At least one positive local service ID criterion is required for a Local
+        /// Services campaign.
+        AtLeastOneLocalServiceIdCriterionRequiredForLocalServicesCampaign = 24,
+        /// Local service ID is not found under selected categories in local
+        /// services campaign setting.
+        LocalServiceIdNotFoundForCategory = 25,
     }
 }
 // Proto file describing campaign customizer errors.
@@ -1829,6 +1943,65 @@ pub mod campaign_error_enum {
         AppNotAvailableToCreateAppPreRegistrationCampaign = 51,
         /// The type of the Budget is not compatible with this Campaign.
         IncompatibleBudgetType = 52,
+        /// Category bid list in the local services campaign setting contains
+        /// multiple bids for the same category ID.
+        LocalServicesDuplicateCategoryBid = 53,
+        /// Category bid list in the local services campaign setting contains
+        /// a bid for an invalid category ID.
+        LocalServicesInvalidCategoryBid = 54,
+        /// Category bid list in the local services campaign setting is missing a
+        /// bid for a category ID that must be present.
+        LocalServicesMissingCategoryBid = 55,
+        /// The requested change in status is not supported.
+        InvalidStatusChange = 57,
+        /// Travel Campaign's travel_account_id does not match any customer links.
+        MissingTravelCustomerLink = 58,
+        /// Travel Campaign's travel_account_id matches an existing customer link
+        /// but the customer link is not active.
+        InvalidTravelCustomerLink = 59,
+        /// The asset set type is invalid to be set in
+        /// excluded_parent_asset_set_types field.
+        InvalidExcludedParentAssetSetType = 62,
+        /// Campaign.hotel_property_asset_set must point to an asset set of type
+        /// HOTEL_PROPERTY.
+        AssetSetNotAHotelPropertyAssetSet = 63,
+        /// The hotel property asset set can only be set on Performance Max for
+        /// travel goals campaigns.
+        HotelPropertyAssetSetOnlyForPerformanceMaxForTravelGoals = 64,
+        /// Customer's average daily spend is too high to enable this feature.
+        AverageDailySpendTooHigh = 65,
+        /// Cannot attach the campaign to a deleted campaign group.
+        CannotAttachToRemovedCampaignGroup = 66,
+        /// Cannot attach the campaign to this bidding strategy.
+        CannotAttachToBiddingStrategy = 67,
+        /// A budget with a different period cannot be assigned to the campaign.
+        CannotChangeBudgetPeriod = 68,
+        /// Customer does not have enough conversions to enable this feature.
+        NotEnoughConversions = 71,
+        /// This campaign type can only have one conversion action.
+        CannotSetMoreThanOneConversionAction = 72,
+        /// The field is not compatible with the budget type.
+        NotCompatibleWithBudgetType = 73,
+        /// The feature is incompatible with ConversionActionType.UPLOAD_CLICKS.
+        NotCompatibleWithUploadClicksConversion = 74,
+        /// App campaign setting app ID must match selective optimization conversion
+        /// action app ID.
+        AppIdMustMatchConversionActionAppId = 76,
+        /// Selective optimization conversion action with Download category is not
+        /// allowed.
+        ConversionActionWithDownloadCategoryNotAllowed = 77,
+        /// One software download for selective optimization conversion action is
+        /// required for this campaign conversion action.
+        ConversionActionWithDownloadCategoryRequired = 78,
+        /// Conversion tracking is not enabled and is required for this feature.
+        ConversionTrackingNotEnabled = 79,
+        /// The field is not compatible with the bidding strategy type.
+        NotCompatibleWithBiddingStrategyType = 80,
+        /// Campaign is not compatible with a conversion tracker that has Google
+        /// attribution enabled.
+        NotCompatibleWithGoogleAttributionConversions = 81,
+        /// Customer level conversion lag is too high.
+        ConversionLagTooHigh = 82,
     }
 }
 // Proto file describing campaign experiment errors.
@@ -1906,6 +2079,8 @@ pub mod campaign_feed_error_enum {
         /// Location CampaignFeeds cannot be created unless there is a location
         /// CustomerFeed for the specified feed.
         NoExistingLocationCustomerFeed = 9,
+        /// Feed is read only.
+        LegacyFeedTypeReadOnly = 10,
     }
 }
 // Proto file describing campaign shared set errors.
@@ -2092,7 +2267,7 @@ pub mod conversion_adjustment_upload_error_enum {
         /// The received error code is not known in this version.
         Unknown = 1,
         /// The specified conversion action was created too recently.
-        /// Please try the upload again after 4-6 hours have passed since the
+        /// Try the upload again after 4-6 hours have passed since the
         /// conversion action was created.
         TooRecentConversionAction = 2,
         /// No conversion action of a supported ConversionActionType that matches the
@@ -2122,10 +2297,10 @@ pub mod conversion_adjustment_upload_error_enum {
         /// The conversion has been adjusted too many times.
         TooManyAdjustments = 12,
         /// A restatement with this timestamp already exists for this conversion. To
-        /// upload another adjustment, please use a different timestamp.
+        /// upload another adjustment, use a different timestamp.
         RestatementAlreadyExists = 13,
         /// This adjustment has the same timestamp as another adjustment in the
-        /// request for this conversion. To upload another adjustment, please use a
+        /// request for this conversion. To upload another adjustment, use a
         /// different timestamp.
         DuplicateAdjustmentInRequest = 14,
         /// The customer has not accepted the customer data terms in the conversion
@@ -2150,13 +2325,16 @@ pub mod conversion_adjustment_upload_error_enum {
         /// another enhancement in the request.
         DuplicateEnhancementInRequest = 22,
         /// Per our customer data policies, enhancement has been prohibited in your
-        /// account. If you have any questions, please contact your Google
+        /// account. If you have any questions, contact your Google
         /// representative.
         CustomerDataPolicyProhibitsEnhancement = 23,
         /// The conversion adjustment is for a conversion action of type WEBPAGE, but
         /// does not have an order_id. The order_id is required for an adjustment for
         /// a WEBPAGE conversion action.
         MissingOrderIdForWebpage = 24,
+        /// The order_id contains personally identifiable information (PII), such as
+        /// an email address or phone number.
+        OrderIdContainsPii = 25,
     }
 }
 // Proto file describing conversion custom variable errors.
@@ -2235,7 +2413,7 @@ pub mod conversion_upload_error_enum {
         /// lookback window for the specified conversion action.
         ExpiredEvent = 43,
         /// The click associated with the given identifier or iOS URL parameter
-        /// occurred too recently. Please try uploading again after 6 hours have
+        /// occurred too recently. Try uploading again after 6 hours have
         /// passed since the click occurred.
         TooRecentEvent = 44,
         /// The click associated with the given identifier or iOS URL parameter could
@@ -2249,7 +2427,7 @@ pub mod conversion_upload_error_enum {
         /// information can be found for the customer.
         InvalidConversionAction = 9,
         /// The specified conversion action was created too recently.
-        /// Please try the upload again after 4-6 hours have passed since the
+        /// Try the upload again after 4-6 hours have passed since the
         /// conversion action was created.
         TooRecentConversionAction = 10,
         /// The click associated with the given identifier does not contain
@@ -2272,7 +2450,7 @@ pub mod conversion_upload_error_enum {
         /// The request contained two or more conversions with the same order id and
         /// conversion action combination.
         DuplicateOrderId = 16,
-        /// The call occurred too recently. Please try uploading again after 12 hours
+        /// The call occurred too recently. Try uploading again after 12 hours
         /// have passed since the call occurred.
         TooRecentCall = 17,
         /// The click that initiated the call is too old for this conversion to be
@@ -2290,17 +2468,17 @@ pub mod conversion_upload_error_enum {
         /// number "6502531234".
         UnparseableCallersPhoneNumber = 22,
         /// A conversion with this timestamp already exists for this click. To upload
-        /// another conversion, please use a different timestamp.
+        /// another conversion, use a different timestamp.
         ClickConversionAlreadyExists = 23,
         /// A conversion with this timestamp already exists for this call. To upload
-        /// another conversion, please use a different timestamp.
+        /// another conversion, use a different timestamp.
         CallConversionAlreadyExists = 24,
         /// This conversion has the same click and timestamp as another conversion in
-        /// the request. To upload another conversion for this click, please use a
+        /// the request. To upload another conversion for this click, use a
         /// different timestamp.
         DuplicateClickConversionInRequest = 25,
         /// This conversion has the same call and timestamp as another conversion in
-        /// the request. To upload another conversion for this call, please use a
+        /// the request. To upload another conversion for this call, use a
         /// different timestamp.
         DuplicateCallConversionInRequest = 26,
         /// The custom variable is not enabled.
@@ -2318,8 +2496,8 @@ pub mod conversion_upload_error_enum {
         /// comply with the App Tracking Transparency (ATT) policy or the person who
         /// converted didn't consent to tracking.
         ConversionNotCompliantWithAttPolicy = 32,
-        /// No click was found for the provided user identifiers that could be
-        /// applied to the specified conversion action.
+        /// No click was found for the provided user identifiers. This may be because
+        /// the conversion did not come from a Google Ads campaign.
         ClickNotFound = 33,
         /// The provided user identifier is not a SHA-256 hash. It is either unhashed
         /// or hashed using a different hash function.
@@ -2336,19 +2514,22 @@ pub mod conversion_upload_error_enum {
         UnparseableWbraid = 39,
         /// The specified gbraid could not be decoded.
         UnparseableGbraid = 40,
-        /// Conversion types which use an external attribution model cannot be used
-        /// with gbraid or wbraid.
-        ExternallyAttributedConversionTypeNotPermittedWithBraid = 41,
         /// Conversion actions which use the one-per-click counting type cannot be
         /// used with gbraid or wbraid.
         OnePerClickConversionActionNotPermittedWithBraid = 46,
         /// Per our customer data policies, enhanced conversions have been prohibited
-        /// in your account. If you have any questions, please contact your Google
+        /// in your account. If you have any questions, contact your Google
         /// representative.
         CustomerDataPolicyProhibitsEnhancedConversions = 47,
         /// The customer has not accepted the customer data terms in the conversion
         /// settings page.
         CustomerNotAcceptedCustomerDataTerms = 48,
+        /// The order_id contains personally identifiable information (PII), such as
+        /// an email address or phone number.
+        OrderIdContainsPii = 49,
+        /// The customer has not enabled enhanced conversions for leads in the
+        /// conversion settings page.
+        CustomerNotEnabledEnhancedConversionsForLeads = 50,
     }
 }
 // Proto file describing conversion value rule errors.
@@ -2367,7 +2548,7 @@ pub mod conversion_value_rule_error_enum {
         /// The received error code is not known in this version.
         Unknown = 1,
         /// The value rule's geo location condition contains invalid geo target
-        /// constant(s), i.e. there's no matching geo target.
+        /// constant(s), for example, there's no matching geo target.
         InvalidGeoTargetConstant = 2,
         /// The value rule's geo location condition contains conflicting included and
         /// excluded geo targets. Specifically, some of the excluded geo target(s)
@@ -2668,6 +2849,18 @@ pub mod criterion_error_enum {
         LocationFilterInvalid = 80,
         /// Cannot set geo target constants and feed item sets at the same time.
         CannotSetGeoTargetConstantsWithFeedItemSets = 123,
+        /// Cannot set both assetset and feed at the same time.
+        CannotSetBothAssetSetAndFeed = 140,
+        /// Cannot set feed or feed item sets for Customer.
+        CannotSetFeedOrFeedItemSetsForCustomer = 142,
+        /// Cannot set AssetSet criteria for customer.
+        CannotSetAssetSetFieldForCustomer = 150,
+        /// Cannot set geo target constants and asset sets at the same time.
+        CannotSetGeoTargetConstantsWithAssetSets = 143,
+        /// Cannot set asset sets and feed item sets at the same time.
+        CannotSetAssetSetsWithFeedItemSets = 144,
+        /// The location group asset set id is invalid
+        InvalidLocationGroupAssetSet = 141,
         /// The location group radius is in the range but not at the valid increment.
         InvalidLocationGroupRadius = 124,
         /// The location group radius unit is invalid.
@@ -2682,7 +2875,8 @@ pub mod criterion_error_enum {
         /// overlaps with an existing criterion.
         HotelAdvanceBookingWindowOverlapsWithExistingCriterion = 83,
         /// The field is not allowed to be set when the negative field is set to
-        /// true, e.g. we don't allow bids in negative ad group or campaign criteria.
+        /// true, for example, we don't allow bids in negative ad group or campaign
+        /// criteria.
         FieldIncompatibleWithNegativeTargeting = 84,
         /// The combination of operand and operator in webpage condition is invalid.
         InvalidWebpageCondition = 85,
@@ -2753,9 +2947,9 @@ pub mod criterion_error_enum {
         ListingGroupTooLong = 117,
         /// Listing group tree is too deep.
         ListingGroupTreeTooDeep = 118,
-        /// Listing dimension is invalid (e.g. dimension contains illegal value,
-        /// dimension type is represented with wrong class, etc). Listing dimension
-        /// value can not contain "==" or "&+".
+        /// Listing dimension is invalid (for example, dimension contains illegal
+        /// value, dimension type is represented with wrong class, etc). Listing
+        /// dimension value can not contain "==" or "&+".
         InvalidListingDimension = 119,
         /// Listing dimension type is either invalid for campaigns of this type or
         /// cannot be used in the current context. BIDDING_CATEGORY_Lx and
@@ -2783,7 +2977,7 @@ pub mod criterion_error_enum {
         HotelCheckInDateRangeEndDateTooLate = 133,
         /// Start date is after end date.
         HotelCheckInDateRangeReversed = 134,
-        /// Broad match modifier (BMM) keywords can no longer be created. Please see
+        /// Broad match modifier (BMM) keywords can no longer be created. See
         /// <https://ads-developers.googleblog.com/2021/06/broad-match-modifier-upcoming-changes.html.>
         BroadMatchModifierKeywordNotAllowed = 135,
         /// Only one audience is allowed in an asset group.
@@ -2794,7 +2988,7 @@ pub mod criterion_error_enum {
         /// false.
         AudienceNotAllowedToAttachWhenAudienceGroupedSetToFalse = 138,
         /// Targeting is not allowed for Customer Match lists as per Customer Match
-        /// policy. Please see
+        /// policy. See
         /// <https://support.google.com/google-ads/answer/6299717.>
         CannotTargetCustomerMatchUserList = 139,
     }
@@ -2816,6 +3010,25 @@ pub mod currency_code_error_enum {
         Unknown = 1,
         /// The currency code is not supported.
         Unsupported = 2,
+    }
+}
+// Proto file describing currency errors.
+
+/// Container for enum describing possible currency errors.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CurrencyErrorEnum {}
+/// Nested message and enum types in `CurrencyErrorEnum`.
+pub mod currency_error_enum {
+    /// Enum describing possible currency errors.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CurrencyError {
+        /// Enum unspecified.
+        Unspecified = 0,
+        /// The received error code is not known in this version.
+        Unknown = 1,
+        /// Bid must be a multiple of billable unit.
+        ValueNotMultipleOfBillableUnit = 2,
     }
 }
 // Proto file describing custom audience errors.
@@ -2878,6 +3091,9 @@ pub mod custom_conversion_goal_error_enum {
         CustomGoalDuplicateName = 5,
         /// Custom goal with the same conversion action list already exists.
         DuplicateConversionActionList = 6,
+        /// Conversion types that cannot be biddable should not be included in custom
+        /// goal.
+        NonBiddableConversionActionNotEligibleForCustomGoal = 7,
     }
 }
 // Proto file describing custom interest errors.
@@ -3054,6 +3270,32 @@ pub mod customer_manager_link_error_enum {
         TestAccountLinksTooManyChildAccounts = 10,
     }
 }
+// Proto file describing CustomerSkAdNetworkConversionValueSchema errors.
+
+/// Container for enum describing possible
+/// CustomerSkAdNetworkConversionValueSchema errors.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CustomerSkAdNetworkConversionValueSchemaErrorEnum {}
+/// Nested message and enum types in `CustomerSkAdNetworkConversionValueSchemaErrorEnum`.
+pub mod customer_sk_ad_network_conversion_value_schema_error_enum {
+    /// Enum describing possible CustomerSkAdNetworkConversionValueSchema errors.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CustomerSkAdNetworkConversionValueSchemaError {
+        /// Enum unspecified.
+        Unspecified = 0,
+        /// The received error code is not known in this version.
+        Unknown = 1,
+        /// The customer link ID provided is invalid.
+        InvalidLinkId = 2,
+        /// The app ID provided is invalid.
+        InvalidAppId = 3,
+        /// The conversion value schema provided is invalid.
+        InvalidSchema = 4,
+        /// The customer link id provided could not be found.
+        LinkCodeNotFound = 5,
+    }
+}
 // Proto file describing CustomerUserAccess errors.
 
 /// Container for enum describing possible CustomerUserAccess errors.
@@ -3118,12 +3360,12 @@ pub mod database_error_enum {
         /// The received error code is not known in this version.
         Unknown = 1,
         /// Multiple requests were attempting to modify the same resource at once.
-        /// Please retry the request.
+        /// Retry the request.
         ConcurrentModification = 2,
         /// The request conflicted with existing data. This error will usually be
         /// replaced with a more specific error if the request is retried.
         DataConstraintViolation = 3,
-        /// The data written is too large. Please split the request into smaller
+        /// The data written is too large. Split the request into smaller
         /// requests.
         RequestTooLarge = 4,
     }
@@ -3295,13 +3537,13 @@ pub mod experiment_error_enum {
         /// The received error code is not known in this version.
         Unknown = 1,
         /// The start date of an experiment cannot be set in the past.
-        /// Please use a start date in the future.
+        /// Use a start date in the future.
         CannotSetStartDateInPast = 2,
         /// The end date of an experiment is before its start date.
-        /// Please use an end date after the start date.
+        /// Use an end date after the start date.
         EndDateBeforeStartDate = 3,
         /// The start date of an experiment is too far in the future.
-        /// Please use a start date no more than 1 year in the future.
+        /// Use a start date no more than 1 year in the future.
         StartDateTooFarInFuture = 4,
         /// The experiment has the same name as an existing active experiment.
         DuplicateExperimentName = 5,
@@ -3392,8 +3634,8 @@ pub mod extension_feed_item_error_enum {
         /// Phone number for a call extension does not meet domestic format
         /// requirements.
         InvalidDomesticPhoneNumberFormat = 12,
-        /// Vanity phone numbers (i.e. those including letters) are not allowed for
-        /// call extensions.
+        /// Vanity phone numbers (for example, those including letters) are not
+        /// allowed for call extensions.
         VanityPhoneNumberNotAllowed = 13,
         /// Call conversion action provided for a call extension is invalid.
         InvalidCallConversionAction = 14,
@@ -3404,7 +3646,7 @@ pub mod extension_feed_item_error_enum {
         /// extension.
         CalltrackingNotSupportedForCountry = 16,
         /// Customer hasn't consented for call recording, which is required for
-        /// creating/updating call feed items. Please see
+        /// creating/updating call feed items. See
         /// <https://support.google.com/google-ads/answer/7412639.>
         CustomerConsentForCallRecordingRequired = 17,
         /// App id provided for an app extension is invalid.
@@ -3435,8 +3677,8 @@ pub mod extension_feed_item_error_enum {
         UnsupportedValueInSelectedLanguage = 29,
         /// Unknown or unsupported device preference.
         InvalidDevicePreference = 30,
-        /// Invalid feed item schedule end time (i.e., endHour = 24 and endMinute !=
-        /// 0).
+        /// Invalid feed item schedule end time (for example, endHour = 24 and
+        /// endMinute != 0).
         InvalidScheduleEnd = 31,
         /// Date time zone does not match the account's time zone.
         DateTimeMustBeInAccountTimeZone = 32,
@@ -3452,7 +3694,7 @@ pub mod extension_feed_item_error_enum {
         /// The type of the input extension feed item doesn't match the existing
         /// extension feed item.
         ExtensionTypeMismatch = 37,
-        /// The oneof field extension i.e. subtype of extension feed item is
+        /// The oneof field extension for example, subtype of extension feed item is
         /// required.
         ExtensionSubtypeRequired = 38,
         /// The referenced feed item is not mapped to a supported extension type.
@@ -3543,8 +3785,8 @@ pub mod extension_setting_error_enum {
         /// Phone number for a call extension does not meet domestic format
         /// requirements.
         InvalidDomesticPhoneNumberFormat = 25,
-        /// Vanity phone numbers (i.e. those including letters) are not allowed for
-        /// call extensions.
+        /// Vanity phone numbers (for example, those including letters) are not
+        /// allowed for call extensions.
         VanityPhoneNumberNotAllowed = 26,
         /// Country code provided for a call extension is invalid.
         InvalidCountryCode = 27,
@@ -3583,13 +3825,13 @@ pub mod extension_setting_error_enum {
         UnsupportedValue = 42,
         /// Unknown or unsupported device preference.
         InvalidDevicePreference = 43,
-        /// Invalid feed item schedule end time (i.e., endHour = 24 and
+        /// Invalid feed item schedule end time (for example, endHour = 24 and
         /// endMinute != 0).
         InvalidScheduleEnd = 45,
         /// Date time zone does not match the account's time zone.
         DateTimeMustBeInAccountTimeZone = 47,
-        /// Overlapping feed item schedule times (e.g., 7-10AM and 8-11AM) are not
-        /// allowed.
+        /// Overlapping feed item schedule times (for example, 7-10AM and 8-11AM) are
+        /// not allowed.
         OverlappingSchedulesNotAllowed = 48,
         /// Feed item schedule end time must be after start time.
         ScheduleEndNotAfterStart = 49,
@@ -3632,7 +3874,7 @@ pub mod extension_setting_error_enum {
         /// The language is not supported.
         UnsupportedLanguage = 65,
         /// Customer hasn't consented for call recording, which is required for
-        /// adding/updating call extensions. Please see
+        /// adding/updating call extensions. See
         /// <https://support.google.com/google-ads/answer/7412639.>
         CustomerConsentForCallRecordingRequired = 66,
         /// The UPDATE operation does not specify any fields other than the resource
@@ -3762,6 +4004,8 @@ pub mod feed_item_error_enum {
         CannotModifyKeyAttributeValue = 9,
         /// The feed attribute value is too large.
         SizeTooLargeForMultiValueAttribute = 10,
+        /// Feed is read only.
+        LegacyFeedTypeReadOnly = 11,
     }
 }
 // Proto file describing feed item set errors.
@@ -3967,8 +4211,8 @@ pub mod feed_item_validation_error_enum {
         /// Advertisers can link a conversion action with a phone number to indicate
         /// that sufficiently long calls forwarded to that phone number should be
         /// counted as conversions of the specified type.  This is an error message
-        /// indicating that the conversion action specified is invalid (e.g., the
-        /// conversion action does not exist within the appropriate Google Ads
+        /// indicating that the conversion action specified is invalid (for example,
+        /// the conversion action does not exist within the appropriate Google Ads
         /// account, or it is a type of conversion not appropriate to phone call
         /// conversions).
         InvalidCallConversionActionId = 45,
@@ -4052,7 +4296,7 @@ pub mod feed_item_validation_error_enum {
         /// Final url suffix is formatted incorrectly.
         InvalidFinalUrlSuffixFormat = 83,
         /// Consent for call recording, which is required for the use of call
-        /// extensions, was not provided by the advertiser. Please see
+        /// extensions, was not provided by the advertiser. See
         /// <https://support.google.com/google-ads/answer/7412639.>
         CustomerConsentForCallRecordingRequired = 84,
         /// Multiple message delivery options are set.
@@ -4157,6 +4401,8 @@ pub mod feed_mapping_error_enum {
         InvalidPlaceholderTypeForSystemGeneratedFeedType = 18,
         /// The "field" oneof was not set in an AttributeFieldMapping.
         AttributeFieldMappingMissingField = 19,
+        /// Feed is read only.
+        LegacyFeedTypeReadOnly = 20,
     }
 }
 // Proto file describing field errors.
@@ -4188,6 +4434,8 @@ pub mod field_error_enum {
         FieldCannotBeCleared = 7,
         /// The field's value is on a deny-list for this field.
         BlockedValue = 9,
+        /// The field's value cannot be modified, except for clearing.
+        FieldCanOnlyBeCleared = 10,
     }
 }
 // Proto file describing field mask errors.
@@ -4354,12 +4602,12 @@ pub mod header_error_enum {
 }
 // Proto file describing id errors.
 
-/// Container for enum describing possible id errors.
+/// Container for enum describing possible ID errors.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IdErrorEnum {}
 /// Nested message and enum types in `IdErrorEnum`.
 pub mod id_error_enum {
-    /// Enum describing possible id errors.
+    /// Enum describing possible ID errors.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum IdError {
@@ -4367,7 +4615,7 @@ pub mod id_error_enum {
         Unspecified = 0,
         /// The received error code is not known in this version.
         Unknown = 1,
-        /// Id not found
+        /// ID not found
         NotFound = 2,
     }
 }
@@ -5035,7 +5283,7 @@ pub mod media_upload_error_enum {
         /// The uploaded media bundle format is not allowed.
         MediaBundleNotAllowed = 24,
         /// The media bundle is not compatible with the asset spec product type.
-        /// (E.g. Gmail, dynamic remarketing, etc.)
+        /// (For example, Gmail, dynamic remarketing, etc.)
         MediaBundleNotCompatibleToProductType = 25,
         /// A bundle being uploaded that is incompatible with multiple assets for
         /// different reasons.
@@ -5104,8 +5352,8 @@ pub mod multiplier_error_enum {
         TooManyFractionalDigits = 4,
         /// A multiplier cannot be set for this bidding strategy
         MultiplierNotAllowedForBiddingStrategy = 5,
-        /// A multiplier cannot be set when there is no base bid (e.g., content max
-        /// cpc)
+        /// A multiplier cannot be set when there is no base bid (for example,
+        /// content max cpc)
         MultiplierNotAllowedWhenBaseBidIsMissing = 6,
         /// A bid multiplier must be specified
         NoMultiplierSpecified = 7,
@@ -5119,7 +5367,8 @@ pub mod multiplier_error_enum {
         MultiplierCausesBidToExceedMaxAllowedBid = 11,
         /// Multiplier causes bid to become less than the minimum bid allowed
         BidLessThanMinAllowedBidWithMultiplier = 12,
-        /// Multiplier type (cpc vs. cpm) needs to match campaign's bidding strategy
+        /// Multiplier type (cpc versus cpm) needs to match campaign's bidding
+        /// strategy
         MultiplierAndBiddingStrategyTypeMismatch = 13,
     }
 }
@@ -5321,8 +5570,8 @@ pub mod offline_user_data_job_error_enum {
         CustomerNotAcceptedCustomerDataTerms = 30,
         /// User attributes cannot be uploaded into a user list.
         AttributesNotApplicableForCustomerMatchUserList = 34,
-        /// Lifetime value bucket must be a number from 1-10, except for remove
-        /// operation where 0 will be accepted.
+        /// Lifetime bucket value must be a number from 0 to 10; 0 is only accepted
+        /// for remove operations
         LifetimeValueBucketNotInRange = 35,
         /// Identifiers not supported for Customer Match attributes. User attributes
         /// can only be provided with contact info (email, phone, address) user
@@ -5338,6 +5587,16 @@ pub mod offline_user_data_job_error_enum {
         CustomerIdentifierNotAllowed = 39,
         /// Provided item ID is invalid.
         InvalidItemId = 40,
+        /// First purchase date time cannot be greater than the last purchase date
+        /// time.
+        FirstPurchaseTimeGreaterThanLastPurchaseTime = 42,
+        /// Provided lifecycle stage is invalid.
+        InvalidLifecycleStage = 43,
+        /// The event value of the Customer Match user attribute is invalid.
+        InvalidEventValue = 44,
+        /// All the fields are not present in the EventAttribute of the Customer
+        /// Match.
+        EventAttributeAllFieldsAreRequired = 45,
     }
 }
 // Proto file describing operation access denied errors.
@@ -5523,7 +5782,7 @@ pub mod query_error_enum {
         BadEscapeSequence = 7,
         /// Field name is invalid.
         BadFieldName = 12,
-        /// Limit value is invalid (i.e. not a number)
+        /// Limit value is invalid (for example, not a number)
         BadLimitValue = 15,
         /// Encountered number can not be parsed.
         BadNumber = 5,
@@ -5573,8 +5832,8 @@ pub mod query_error_enum {
         /// week/month/quarter if the filtered field is
         /// segments.week/segments.month/segments.quarter.
         MisalignedDateForFilter = 64,
-        /// Value passed was not a string when it should have been. I.e., it was a
-        /// number or unquoted literal.
+        /// Value passed was not a string when it should have been. For example, it
+        /// was a number or unquoted literal.
         InvalidStringValue = 57,
         /// A String value passed to the BETWEEN operator does not parse as a date.
         InvalidValueWithBetweenOperator = 26,
@@ -5724,18 +5983,18 @@ pub mod recommendation_error_enum {
         Unspecified = 0,
         /// The received error code is not known in this version.
         Unknown = 1,
-        /// The specified budget amount is too low e.g. lower than minimum currency
-        /// unit or lower than ad group minimum cost-per-click.
+        /// The specified budget amount is too low for example, lower than minimum
+        /// currency unit or lower than ad group minimum cost-per-click.
         BudgetAmountTooSmall = 2,
         /// The specified budget amount is too large.
         BudgetAmountTooLarge = 3,
-        /// The specified budget amount is not a valid amount. e.g. not a multiple
-        /// of minimum currency unit.
+        /// The specified budget amount is not a valid amount, for example, not a
+        /// multiple of minimum currency unit.
         InvalidBudgetAmount = 4,
         /// The specified keyword or ad violates ad policy.
         PolicyError = 5,
-        /// The specified bid amount is not valid. e.g. too many fractional digits,
-        /// or negative amount.
+        /// The specified bid amount is not valid, for example, too many fractional
+        /// digits, or negative amount.
         InvalidBidAmount = 6,
         /// The number of keywords in ad group have reached the maximum allowed.
         AdgroupKeywordLimit = 7,
@@ -5756,6 +6015,8 @@ pub mod recommendation_error_enum {
         RecommendationAlreadyDismissed = 14,
         /// The recommendation apply request was malformed and invalid.
         InvalidApplyRequest = 15,
+        /// The type of recommendation requested to apply is not supported.
+        RecommendationTypeApplyNotSupported = 17,
     }
 }
 // Proto file describing region code errors.
@@ -5844,6 +6105,8 @@ pub mod request_error_enum {
         TotalResultsCountNotOriginallyRequested = 32,
         /// Deadline specified by the client was too short.
         RpcDeadlineTooShort = 33,
+        /// This API version has been sunset and is no longer supported.
+        UnsupportedVersion = 38,
     }
 }
 // Proto file describing resource access denied errors.
@@ -5967,6 +6230,10 @@ pub mod setting_error_enum {
         TargetAllIsNotAllowedForPlacementInSearchCampaign = 12,
         /// The setting value is not compatible with the campaign type.
         SettingValueNotCompatibleWithCampaign = 20,
+        /// Switching from observation setting to targeting setting is not allowed
+        /// for Customer Match lists. See
+        /// <https://support.google.com/google-ads/answer/6299717.>
+        BidOnlyIsNotAllowedToBeModifiedWithCustomerMatchTargeting = 21,
     }
 }
 // Proto file describing shared criterion errors.
@@ -6028,10 +6295,44 @@ pub mod size_limit_error_enum {
         Unspecified = 0,
         /// The received error code is not known in this version.
         Unknown = 1,
-        /// The number of entries in the request exceeds the system limit.
+        /// The number of entries in the request exceeds the system limit, or the
+        /// contents of the operations exceed transaction limits due to their size
+        /// or complexity. Try reducing the number of entries per request.
         RequestSizeLimitExceeded = 2,
         /// The number of entries in the response exceeds the system limit.
         ResponseSizeLimitExceeded = 3,
+    }
+}
+// Proto file describing Smart campaign errors.
+
+/// Container for enum describing possible Smart campaign errors.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignErrorEnum {}
+/// Nested message and enum types in `SmartCampaignErrorEnum`.
+pub mod smart_campaign_error_enum {
+    /// Enum describing possible Smart campaign errors.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SmartCampaignError {
+        /// Enum unspecified.
+        Unspecified = 0,
+        /// The received error code is not known in this version.
+        Unknown = 1,
+        /// The business location id is invalid.
+        InvalidBusinessLocationId = 2,
+        /// The SmartCampaignSetting resource is only applicable for campaigns
+        /// with advertising channel type SMART.
+        InvalidCampaign = 3,
+        /// The business name or business location id is required.
+        BusinessNameOrBusinessLocationIdMissing = 4,
+        /// A Smart campaign suggestion request field is required.
+        RequiredSuggestionFieldMissing = 5,
+        /// A location list or proximity is required.
+        GeoTargetsRequired = 6,
+        /// The locale could not be determined.
+        CannotDetermineSuggestionLocale = 7,
+        /// The final URL could not be crawled.
+        FinalUrlNotCrawlable = 8,
     }
 }
 // Proto file describing string format errors.
@@ -6143,9 +6444,9 @@ pub mod url_field_error_enum {
         InvalidTrackingUrlTemplate = 2,
         /// The tracking url template contains invalid tag.
         InvalidTagInTrackingUrlTemplate = 3,
-        /// The tracking url template must contain at least one tag (e.g. {lpurl}),
-        /// This applies only to tracking url template associated with website ads or
-        /// product ads.
+        /// The tracking url template must contain at least one tag (for example,
+        /// {lpurl}), This applies only to tracking url template associated with
+        /// website ads or product ads.
         MissingTrackingUrlTemplateTag = 4,
         /// The tracking url template must start with a valid protocol (or lpurl
         /// tag).
@@ -6160,14 +6461,14 @@ pub mod url_field_error_enum {
         /// extension.
         InvalidTldInTrackingUrlTemplate = 9,
         /// The tracking url template contains nested occurrences of the same
-        /// conditional tag (i.e. {ifmobile:{ifmobile:x}}).
+        /// conditional tag (for example, {ifmobile:{ifmobile:x}}).
         RedundantNestedTrackingUrlTemplateTag = 10,
         /// The final url is invalid.
         InvalidFinalUrl = 11,
         /// The final url contains invalid tag.
         InvalidTagInFinalUrl = 12,
         /// The final url contains nested occurrences of the same conditional tag
-        /// (i.e. {ifmobile:{ifmobile:x}}).
+        /// (for example, {ifmobile:{ifmobile:x}}).
         RedundantNestedFinalUrlTag = 13,
         /// The final url must start with a valid protocol.
         MissingProtocolInFinalUrl = 14,
@@ -6185,7 +6486,7 @@ pub mod url_field_error_enum {
         /// The final mobile url contains invalid tag.
         InvalidTagInFinalMobileUrl = 20,
         /// The final mobile url contains nested occurrences of the same conditional
-        /// tag (i.e. {ifmobile:{ifmobile:x}}).
+        /// tag (for example, {ifmobile:{ifmobile:x}}).
         RedundantNestedFinalMobileUrlTag = 21,
         /// The final mobile url must start with a valid protocol.
         MissingProtocolInFinalMobileUrl = 22,
@@ -6203,13 +6504,14 @@ pub mod url_field_error_enum {
         /// The final app url contains invalid tag.
         InvalidTagInFinalAppUrl = 28,
         /// The final app url contains nested occurrences of the same conditional tag
-        /// (i.e. {ifmobile:{ifmobile:x}}).
+        /// (for example, {ifmobile:{ifmobile:x}}).
         RedundantNestedFinalAppUrlTag = 29,
         /// More than one app url found for the same OS type.
         MultipleAppUrlsForOstype = 30,
         /// The OS type given for an app url is not valid.
         InvalidOstype = 31,
-        /// The protocol given for an app url is not valid. (E.g. "android-app://")
+        /// The protocol given for an app url is not valid. (For example,
+        /// "android-app://")
         InvalidProtocolForAppUrl = 32,
         /// The package id (app id) given for an app url is not valid.
         InvalidPackageIdForAppUrl = 33,
@@ -6223,7 +6525,7 @@ pub mod url_field_error_enum {
         /// The url custom parameter value fails url tag validation.
         InvalidTagInUrlCustomParameterValue = 41,
         /// The custom parameter contains nested occurrences of the same conditional
-        /// tag (i.e. {ifmobile:{ifmobile:x}}).
+        /// tag (for example, {ifmobile:{ifmobile:x}}).
         RedundantNestedUrlCustomParameterTag = 42,
         /// The protocol (http:// or https://) is missing.
         MissingProtocol = 43,
@@ -6235,7 +6537,7 @@ pub mod url_field_error_enum {
         DestinationUrlDeprecated = 45,
         /// The url contains invalid tag.
         InvalidTagInUrl = 46,
-        /// The url must contain at least one tag (e.g. {lpurl}).
+        /// The url must contain at least one tag (for example, {lpurl}).
         MissingUrlTag = 47,
         /// Duplicate url id.
         DuplicateUrlId = 48,
@@ -6246,8 +6548,8 @@ pub mod url_field_error_enum {
         FinalUrlSuffixMalformed = 50,
         /// The final url suffix cannot contain {lpurl} related or {ignore} tags.
         InvalidTagInFinalUrlSuffix = 51,
-        /// The top level domain is invalid, e.g. not a public top level domain
-        /// listed in publicsuffix.org.
+        /// The top level domain is invalid, for example, not a public top level
+        /// domain listed in publicsuffix.org.
         InvalidTopLevelDomain = 53,
         /// Malformed top level domain in URL.
         MalformedTopLevelDomain = 54,
@@ -6350,7 +6652,7 @@ pub mod user_list_error_enum {
         /// be used.
         UserlistNameIsReservedForSystemList = 32,
         /// Advertiser needs to be on the allow-list to use remarketing lists created
-        /// from advertiser uploaded data (e.g., Customer Match lists).
+        /// from advertiser uploaded data (for example, Customer Match lists).
         AdvertiserNotOnAllowlistForUsingUploadedData = 37,
         /// The provided rule_type is not supported for the user list.
         RuleTypeIsNotSupported = 34,
@@ -6359,6 +6661,13 @@ pub mod user_list_error_enum {
         /// Logical user list should not have a mix of CRM based user list and other
         /// types of lists in its rules.
         CanNotMixCrmBasedInLogicalListWithOtherLists = 36,
+        /// crm_based_user_list.app_id field can only be set when upload_key_type is
+        /// MOBILE_ADVERTISING_ID.
+        AppIdNotAllowed = 39,
+        /// Google system generated user lists cannot be mutated.
+        CannotMutateSystemList = 40,
+        /// The mobile app associated with the remarketing list is sensitive.
+        MobileAppIsSensitive = 41,
     }
 }
 // Proto file describing YouTube video registration errors.
@@ -6378,9 +6687,9 @@ pub mod youtube_video_registration_error_enum {
         Unknown = 1,
         /// Video to be registered wasn't found.
         VideoNotFound = 2,
-        /// Video to be registered is not accessible (e.g. private).
+        /// Video to be registered is not accessible (for example, private).
         VideoNotAccessible = 3,
-        /// Video to be registered is not eligible (e.g. mature content).
+        /// Video to be registered is not eligible (for example, mature content).
         VideoNotEligible = 4,
     }
 }
@@ -6423,7 +6732,7 @@ pub struct ErrorCode {
     /// The list of error enums
     #[prost(
         oneof = "error_code::ErrorCode",
-        tags = "1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 161, 18, 159, 19, 21, 24, 25, 107, 149, 155, 148, 153, 154, 152, 26, 29, 166, 160, 31, 165, 109, 32, 150, 158, 90, 151, 33, 34, 35, 36, 37, 38, 39, 40, 110, 42, 116, 86, 162, 44, 45, 46, 47, 48, 49, 58, 51, 52, 53, 54, 55, 56, 57, 117, 59, 60, 61, 62, 63, 64, 65, 115, 143, 111, 145, 146, 66, 67, 68, 70, 71, 72, 132, 74, 133, 76, 77, 78, 136, 79, 80, 81, 82, 83, 84, 87, 88, 91, 92, 93, 94, 96, 97, 98, 100, 101, 102, 103, 140, 141, 104, 105, 112, 114, 118, 119, 137, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 134, 135, 138, 139, 164, 156"
+        tags = "1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 161, 18, 159, 19, 21, 24, 25, 107, 149, 155, 148, 153, 154, 152, 26, 29, 166, 160, 31, 165, 109, 32, 150, 158, 90, 151, 33, 34, 35, 36, 37, 38, 39, 40, 110, 42, 116, 86, 162, 44, 45, 46, 47, 48, 49, 58, 51, 52, 53, 54, 55, 56, 57, 117, 59, 60, 61, 62, 63, 64, 65, 115, 143, 111, 145, 146, 66, 67, 68, 70, 71, 72, 132, 74, 133, 76, 77, 78, 136, 79, 80, 81, 82, 83, 84, 87, 88, 91, 92, 93, 94, 96, 97, 98, 100, 101, 102, 103, 140, 141, 104, 105, 112, 114, 118, 119, 137, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 134, 135, 138, 139, 164, 147, 156, 167, 170, 171"
     )]
     pub error_code: ::core::option::Option<error_code::ErrorCode>,
 }
@@ -7158,12 +7467,33 @@ pub mod error_code {
         /// The reasons for the audience error
         #[prost(enumeration = "super::audience_error_enum::AudienceError", tag = "164")]
         AudienceError(i32),
+        /// The reasons for the Smart campaign error
+        #[prost(
+            enumeration = "super::smart_campaign_error_enum::SmartCampaignError",
+            tag = "147"
+        )]
+        SmartCampaignError(i32),
         /// The reasons for the experiment arm error
         #[prost(
             enumeration = "super::experiment_arm_error_enum::ExperimentArmError",
             tag = "156"
         )]
         ExperimentArmError(i32),
+        /// The reasons for the Audience Insights error
+        #[prost(
+            enumeration = "super::audience_insights_error_enum::AudienceInsightsError",
+            tag = "167"
+        )]
+        AudienceInsightsError(i32),
+        /// The reasons for the customer SK Ad network conversion value schema error
+        #[prost(
+            enumeration = "super::customer_sk_ad_network_conversion_value_schema_error_enum::CustomerSkAdNetworkConversionValueSchemaError",
+            tag = "170"
+        )]
+        CustomerSkAdNetworkConversionValueSchemaError(i32),
+        /// The reasons for the currency errors.
+        #[prost(enumeration = "super::currency_error_enum::CurrencyError", tag = "171")]
+        CurrencyError(i32),
     }
 }
 /// Describes the part of the request proto that caused the error.

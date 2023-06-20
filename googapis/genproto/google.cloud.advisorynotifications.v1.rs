@@ -1,0 +1,295 @@
+/// A notification object for notifying customers about security and privacy
+/// issues.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Notification {
+    /// The resource name of the notification.
+    /// Format:
+    /// organizations/{organization}/locations/{location}/notifications/{notification}.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The subject line of the notification.
+    #[prost(message, optional, tag = "2")]
+    pub subject: ::core::option::Option<Subject>,
+    /// A list of messages in the notification.
+    #[prost(message, repeated, tag = "3")]
+    pub messages: ::prost::alloc::vec::Vec<Message>,
+    /// Output only. Time the notification was created.
+    #[prost(message, optional, tag = "4")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Type of notification
+    #[prost(enumeration = "NotificationType", tag = "12")]
+    pub notification_type: i32,
+}
+/// A text object containing the English text and its localized copies.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Text {
+    /// The English copy.
+    #[prost(string, tag = "1")]
+    pub en_text: ::prost::alloc::string::String,
+    /// The requested localized copy (if applicable).
+    #[prost(string, tag = "2")]
+    pub localized_text: ::prost::alloc::string::String,
+    /// Status of the localization.
+    #[prost(enumeration = "LocalizationState", tag = "3")]
+    pub localization_state: i32,
+}
+/// A subject line of a notification.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Subject {
+    /// The text content.
+    #[prost(message, optional, tag = "1")]
+    pub text: ::core::option::Option<Text>,
+}
+/// A message which contains notification details.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Message {
+    /// The message content.
+    #[prost(message, optional, tag = "1")]
+    pub body: ::core::option::Option<message::Body>,
+    /// The attachments to download.
+    #[prost(message, repeated, tag = "2")]
+    pub attachments: ::prost::alloc::vec::Vec<Attachment>,
+    /// The Message creation timestamp.
+    #[prost(message, optional, tag = "3")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Time when Message was localized
+    #[prost(message, optional, tag = "4")]
+    pub localization_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `Message`.
+pub mod message {
+    /// A message body containing text.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Body {
+        /// The text content of the message body.
+        #[prost(message, optional, tag = "1")]
+        pub text: ::core::option::Option<super::Text>,
+    }
+}
+/// Attachment with specific information about the issue.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Attachment {
+    /// The title of the attachment.
+    #[prost(string, tag = "1")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Data type of the attachment.
+    #[prost(oneof = "attachment::Data", tags = "2")]
+    pub data: ::core::option::Option<attachment::Data>,
+}
+/// Nested message and enum types in `Attachment`.
+pub mod attachment {
+    /// Data type of the attachment.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Data {
+        /// A CSV file attachment. Max size is 10 MB.
+        #[prost(message, tag = "2")]
+        Csv(super::Csv),
+    }
+}
+/// A representation of a CSV file attachment, as a list of column headers and
+/// a list of data rows.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Csv {
+    /// The list of headers for data columns in a CSV file.
+    #[prost(string, repeated, tag = "1")]
+    pub headers: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The list of data rows in a CSV file, as string arrays rather than as a
+    /// single comma-separated string.
+    #[prost(message, repeated, tag = "2")]
+    pub data_rows: ::prost::alloc::vec::Vec<csv::CsvRow>,
+}
+/// Nested message and enum types in `Csv`.
+pub mod csv {
+    /// A representation of a single data row in a CSV file.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CsvRow {
+        /// The data entries in a CSV file row, as a string array rather than a
+        /// single comma-separated string.
+        #[prost(string, repeated, tag = "1")]
+        pub entries: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+}
+/// Request for fetching all notifications for a given parent.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListNotificationsRequest {
+    /// Required. The parent, which owns this collection of notifications.
+    /// Must be of the form "organizations/{organization}/locations/{location}".
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of notifications to return. The service may return
+    /// fewer than this value. If unspecified or equal to 0, at most 50
+    /// notifications will be returned. The maximum value is 50; values above 50
+    /// will be coerced to 50.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token returned from a previous request.
+    /// When paginating, all other parameters provided in the request
+    /// must match the call that returned the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Specifies which parts of the notification resource should be returned
+    /// in the response.
+    #[prost(enumeration = "NotificationView", tag = "4")]
+    pub view: i32,
+    /// ISO code for requested localization language.  If unset, will be
+    /// interpereted as "en". If the requested language is valid, but not supported
+    /// for this notification, English will be returned with an "Not applicable"
+    /// LocalizationState. If the ISO code is invalid (i.e. not a real language),
+    /// this RPC will throw an error.
+    #[prost(string, tag = "5")]
+    pub language_code: ::prost::alloc::string::String,
+}
+/// Response of ListNotifications endpoint.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListNotificationsResponse {
+    /// List of notifications under a given parent.
+    #[prost(message, repeated, tag = "1")]
+    pub notifications: ::prost::alloc::vec::Vec<Notification>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Estimation of a total number of notifications.
+    #[prost(int32, tag = "3")]
+    pub total_size: i32,
+}
+/// Request for fetching a notification.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetNotificationRequest {
+    /// Required. A name of the notification to retrieve.
+    /// Format:
+    /// organizations/{organization}/locations/{location}/notifications/{notification}.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// ISO code for requested localization language. If unset, will be
+    /// interpereted as "en". If the requested language is valid, but not supported
+    /// for this notification, English will be returned with an "Not applicable"
+    /// LocalizationState. If the ISO code is invalid (i.e. not a real language),
+    /// this RPC will throw an error.
+    #[prost(string, tag = "5")]
+    pub language_code: ::prost::alloc::string::String,
+}
+/// Notification view.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum NotificationView {
+    /// Not specified, equivalent to BASIC.
+    Unspecified = 0,
+    /// Server responses only include title, creation time and Notification ID.
+    /// Note: for internal use responses also include the last update time,
+    /// the latest message text and whether notification has attachments.
+    Basic = 1,
+    /// Include everything.
+    Full = 2,
+}
+/// Status of localized text.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum LocalizationState {
+    /// Not used.
+    Unspecified = 0,
+    /// Localization is not applicable for requested language. This can happen
+    /// when:
+    /// - The requested language was not supported by Advisory Notifications at the
+    /// time of localization (including notifications created before the
+    /// localization feature was launched).
+    /// - The requested language is English, so only the English text is returned.
+    NotApplicable = 1,
+    /// Localization for requested language is in progress, and not ready yet.
+    Pending = 2,
+    /// Localization for requested language is completed.
+    Completed = 3,
+}
+/// Type of notification
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum NotificationType {
+    /// Default type
+    Unspecified = 0,
+    /// Security and privacy advisory notifications
+    SecurityPrivacyAdvisory = 1,
+    /// Sensitive action notifications
+    SensitiveActions = 2,
+}
+#[doc = r" Generated client implementations."]
+pub mod advisory_notifications_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service to manage Security and Privacy Notifications."]
+    #[derive(Debug, Clone)]
+    pub struct AdvisoryNotificationsServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> AdvisoryNotificationsServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> AdvisoryNotificationsServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            AdvisoryNotificationsServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Lists notifications under a given parent."]
+        pub async fn list_notifications(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListNotificationsRequest>,
+        ) -> Result<tonic::Response<super::ListNotificationsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.advisorynotifications.v1.AdvisoryNotificationsService/ListNotifications") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a notification."]
+        pub async fn get_notification(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetNotificationRequest>,
+        ) -> Result<tonic::Response<super::Notification>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.advisorynotifications.v1.AdvisoryNotificationsService/GetNotification") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}

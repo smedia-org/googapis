@@ -460,7 +460,7 @@ pub mod occupancy_counting_prediction_result {
     }
     /// Nested message and enum types in `Stats`.
     pub mod stats {
-        /// The object info and count for annotations from occupancy counting
+        /// The object info and instant count for annotations from occupancy counting
         /// operator.
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct ObjectCount {
@@ -470,6 +470,17 @@ pub mod occupancy_counting_prediction_result {
             /// Count of the object.
             #[prost(int32, tag = "2")]
             pub count: i32,
+        }
+        /// The object info and accumulated count for annotations from occupancy
+        /// counting operator.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct AccumulatedObjectCount {
+            /// The start time of the accumulated count.
+            #[prost(message, optional, tag = "1")]
+            pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+            /// The object count for the accumulated count.
+            #[prost(message, optional, tag = "2")]
+            pub object_count: ::core::option::Option<ObjectCount>,
         }
         /// Message for Crossing line count.
         #[derive(Clone, PartialEq, ::prost::Message)]
@@ -483,6 +494,14 @@ pub mod occupancy_counting_prediction_result {
             /// The direction that is opposite to the right hand rule.
             #[prost(message, repeated, tag = "3")]
             pub negative_direction_counts: ::prost::alloc::vec::Vec<ObjectCount>,
+            /// The accumulated positive count.
+            #[prost(message, repeated, tag = "4")]
+            pub accumulated_positive_direction_counts:
+                ::prost::alloc::vec::Vec<AccumulatedObjectCount>,
+            /// The accumulated negative count.
+            #[prost(message, repeated, tag = "5")]
+            pub accumulated_negative_direction_counts:
+                ::prost::alloc::vec::Vec<AccumulatedObjectCount>,
         }
         /// Message for the active zone count.
         #[derive(Clone, PartialEq, ::prost::Message)]
@@ -646,6 +665,15 @@ pub struct AppPlatformCloudFunctionResponse {
     #[prost(message, repeated, tag = "2")]
     pub annotations:
         ::prost::alloc::vec::Vec<app_platform_cloud_function_response::StructedOutputAnnotation>,
+    /// If set to true, AppPlatform will use original annotations instead of
+    /// dropping them, even if it is empty in the annotations filed.
+    #[prost(bool, tag = "3")]
+    pub annotation_passthrough: bool,
+    /// The event notifications that is returned back to AppPlatform. Typically it
+    /// will then be configured to be consumed/forwared to a operator that handles
+    /// events, such as Pub/Sub operator.
+    #[prost(message, repeated, tag = "4")]
+    pub events: ::prost::alloc::vec::Vec<AppPlatformEventBody>,
 }
 /// Nested message and enum types in `AppPlatformCloudFunctionResponse`.
 pub mod app_platform_cloud_function_response {
@@ -657,6 +685,24 @@ pub mod app_platform_cloud_function_response {
         #[prost(message, optional, tag = "1")]
         pub annotation: ::core::option::Option<::prost_types::Struct>,
     }
+}
+/// Message of content of appPlatform event
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AppPlatformEventBody {
+    /// Human readable string of the event like "There are more than 6 people in
+    /// the scene". or "Shelf is empty!".
+    #[prost(string, tag = "1")]
+    pub event_message: ::prost::alloc::string::String,
+    /// For the case of Pub/Sub, it will be stored in the message attributes.
+    /// ​​pubsub.proto
+    #[prost(message, optional, tag = "2")]
+    pub payload: ::core::option::Option<::prost_types::Struct>,
+    /// User defined Event Id, used to classify event, within a delivery interval,
+    /// events from the same application instance with the same id will be
+    /// de-duplicated & only first one will be sent out. Empty event_id will be
+    /// treated as "".
+    #[prost(string, tag = "3")]
+    pub event_id: ::prost::alloc::string::String,
 }
 /// Enum describing all possible types of a stream annotation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1167,6 +1213,15 @@ pub mod live_video_analytics_client {
         }
     }
 }
+/// Message for DeleteApplicationInstance Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteApplicationInstancesResponse {}
+/// Message for CreateApplicationInstance Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateApplicationInstancesResponse {}
+/// Message for UpdateApplicationInstances Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateApplicationInstancesResponse {}
 /// Message for adding stream input to an Application.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateApplicationInstancesRequest {
@@ -1221,6 +1276,22 @@ pub struct DeleteApplicationInstancesRequest {
     #[prost(string, tag = "3")]
     pub request_id: ::prost::alloc::string::String,
 }
+/// RPC Request Messages.
+/// Message for DeployApplication Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeployApplicationResponse {}
+/// Message for UndeployApplication Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UndeployApplicationResponse {}
+/// Message for RemoveApplicationStreamInput Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveApplicationStreamInputResponse {}
+/// Message for AddApplicationStreamInput Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AddApplicationStreamInputResponse {}
+/// Message for AddApplicationStreamInput Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateApplicationStreamInputResponse {}
 /// Message for requesting list of Applications.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListApplicationsRequest {
@@ -1894,6 +1965,9 @@ pub mod application {
         #[prost(message, repeated, tag = "3")]
         pub global_output_resources:
             ::prost::alloc::vec::Vec<application_runtime_info::GlobalOutputResource>,
+        /// Monitoring-related configuration for this application.
+        #[prost(message, optional, tag = "4")]
+        pub monitoring_config: ::core::option::Option<application_runtime_info::MonitoringConfig>,
     }
     /// Nested message and enum types in `ApplicationRuntimeInfo`.
     pub mod application_runtime_info {
@@ -1915,6 +1989,13 @@ pub mod application {
             /// the key can be used to match corresponding output resources.
             #[prost(string, tag = "3")]
             pub key: ::prost::alloc::string::String,
+        }
+        /// Monitoring-related configuration for an application.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct MonitoringConfig {
+            /// Whether this application has monitoring enabled.
+            #[prost(bool, tag = "1")]
+            pub enabled: bool,
         }
     }
     /// State of the Application
@@ -1951,18 +2032,27 @@ pub struct ApplicationConfigs {
     /// A list of nodes  in the application graph.
     #[prost(message, repeated, tag = "1")]
     pub nodes: ::prost::alloc::vec::Vec<Node>,
-    /// Monitoring-related configuration for this application.
-    #[prost(message, optional, tag = "2")]
-    pub monitoring_config: ::core::option::Option<application_configs::MonitoringConfig>,
+    /// Event-related configuration for this application.
+    #[prost(message, optional, tag = "3")]
+    pub event_delivery_config: ::core::option::Option<application_configs::EventDeliveryConfig>,
 }
 /// Nested message and enum types in `ApplicationConfigs`.
 pub mod application_configs {
-    /// Monitoring-related configuration for an application.
+    /// message storing the config for event delivery
     #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct MonitoringConfig {
-        /// Whether this application has monitoring enabled.
-        #[prost(bool, tag = "1")]
-        pub enabled: bool,
+    pub struct EventDeliveryConfig {
+        /// The delivery channel for the event notification, only pub/sub topic is
+        /// supported now.
+        /// Example channel:
+        /// \[//pubsub.googleapis.com/projects/visionai-testing-stable/topics/test-topic\]
+        #[prost(string, tag = "1")]
+        pub channel: ::prost::alloc::string::String,
+        /// The expected delivery interval for the same event. The same event won't
+        /// be notified multiple times during this internal event that it is
+        /// happening multiple times during the period of time.The same event is
+        /// identified by <event_id, app_platform_metadata>.
+        #[prost(message, optional, tag = "2")]
+        pub minimal_delivery_interval: ::core::option::Option<::prost_types::Duration>,
     }
 }
 /// Message describing node object.
@@ -2105,6 +2195,9 @@ pub mod instance {
         /// Resource, can be ignored is there is only 1 input binding.
         #[prost(string, tag = "3")]
         pub input_resource_binding: ::prost::alloc::string::String,
+        /// Contains resource annotations.
+        #[prost(message, optional, tag = "5")]
+        pub annotations: ::core::option::Option<super::ResourceAnnotations>,
         /// Required. Specify the input to the application instance.
         #[prost(oneof = "input_resource::InputResourceInformation", tags = "1, 4")]
         pub input_resource_information:
@@ -2191,7 +2284,7 @@ pub struct ApplicationInstance {
     pub instance: ::core::option::Option<Instance>,
 }
 /// Message describing Processor object.
-/// Next ID: 16
+/// Next ID: 18
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Processor {
     /// name of resource.
@@ -2241,6 +2334,9 @@ pub struct Processor {
         tag = "15"
     )]
     pub supported_annotation_types: ::prost::alloc::vec::Vec<i32>,
+    /// Indicates if the processor supports post processing.
+    #[prost(bool, tag = "17")]
+    pub supports_post_processing: bool,
 }
 /// Nested message and enum types in `Processor`.
 pub mod processor {
@@ -2462,7 +2558,7 @@ pub mod custom_processor_source_info {
         VertexModel(::prost::alloc::string::String),
     }
 }
-/// Next ID: 23
+/// Next ID: 24
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProcessorConfig {
     #[prost(
@@ -2548,6 +2644,34 @@ pub mod stream_with_annotation {
         #[prost(message, repeated, tag = "2")]
         pub annotations: ::prost::alloc::vec::Vec<super::StreamAnnotation>,
     }
+}
+/// Message describing annotations specific to application node.
+/// This message is a duplication of StreamWithAnnotation.NodeAnnotation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ApplicationNodeAnnotation {
+    /// The node name of the application graph.
+    #[prost(string, tag = "1")]
+    pub node: ::prost::alloc::string::String,
+    /// The node specific stream annotations.
+    #[prost(message, repeated, tag = "2")]
+    pub annotations: ::prost::alloc::vec::Vec<StreamAnnotation>,
+}
+/// Message describing general annotation for resources.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourceAnnotations {
+    /// Annotations that will be applied to the whole application.
+    #[prost(message, repeated, tag = "1")]
+    pub application_annotations: ::prost::alloc::vec::Vec<StreamAnnotation>,
+    /// Annotations that will be applied to the specific node of the application.
+    /// If the same type of the annotations is applied to both application and
+    /// node, the node annotation will be added in addition to the global
+    /// application one.
+    /// For example, if there is one active zone annotation for the whole
+    /// application and one active zone annotation for the Occupancy Analytic
+    /// processor, then the Occupancy Analytic processor will have two active zones
+    /// defined.
+    #[prost(message, repeated, tag = "2")]
+    pub node_annotations: ::prost::alloc::vec::Vec<ApplicationNodeAnnotation>,
 }
 /// Message describing Video Stream Input Config.
 /// This message should only be used as a placeholder for builtin:stream-input
@@ -2762,6 +2886,7 @@ pub struct VertexCustomConfig {
     /// If true, the prediction request received by custom model will also contain
     /// metadata with the following schema:
     /// 'appPlatformMetadata': {
+    ///       'ingestionTime': DOUBLE; (UNIX timestamp)
     ///       'application': STRING;
     ///       'instanceId': STRING;
     ///       'node': STRING;
@@ -2867,31 +2992,6 @@ pub struct DedicatedResources {
     #[prost(message, repeated, tag = "4")]
     pub autoscaling_metric_specs: ::prost::alloc::vec::Vec<AutoscalingMetricSpec>,
 }
-/// RPC Request Messages.
-/// Message for DeployApplication Response.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DeployApplicationResponse {}
-/// Message for UndeployApplication Response.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UndeployApplicationResponse {}
-/// Message for RemoveApplicationStreamInput Response.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RemoveApplicationStreamInputResponse {}
-/// Message for AddApplicationStreamInput Response.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct AddApplicationStreamInputResponse {}
-/// Message for AddApplicationStreamInput Response.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateApplicationStreamInputResponse {}
-/// Message for DeleteApplicationInstance Response.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DeleteApplicationInstancesResponse {}
-/// Message for CreateApplicationInstance Response.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateApplicationInstancesResponse {}
-/// Message for UpdateApplicationInstances Response.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateApplicationInstancesResponse {}
 /// All the supported model types in Vision AI App Platform.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -3891,34 +3991,6 @@ pub struct SendPacketsResponse {}
 /// Request message for receiving packets.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReceivePacketsRequest {
-    /// Metadata that the server needs to know where to read the packets from.
-    ///
-    #[prost(message, optional, tag = "1")]
-    pub series_metadata: ::core::option::Option<SeriesMetadata>,
-    /// To start receiving packets, client has to provide a unique consumer name.
-    /// If the consumer name was duplicated, the stream server will reject the
-    /// request.
-    ///
-    #[prost(string, tag = "2")]
-    pub consumer: ::prost::alloc::string::String,
-    /// The configuration for the consumer to reset its offset. If this field is
-    /// not set, the existing consumers will resume its consumption from where it
-    /// stopped previously; otherwise a new consumer it will consume from the
-    /// latest packet in the stream.
-    ///
-    #[prost(message, optional, tag = "3")]
-    pub offset_config: ::core::option::Option<OffsetConfig>,
-    /// If this value is specified, the stream server will stop the streaming gRPC
-    /// connection if no new packet is available for a duration longer than the
-    /// `timeout` here. Otherwise, the stream server will block until a packet is
-    /// available.
-    ///
-    #[prost(message, optional, tag = "4")]
-    pub timeout: ::core::option::Option<::prost_types::Duration>,
-    /// Request metadata is the metadata of the ReceivePacketRequest.
-    ///
-    #[prost(message, optional, tag = "5")]
-    pub metadata: ::core::option::Option<RequestMetadata>,
     /// Possible request types from the client.
     #[prost(oneof = "receive_packets_request::Request", tags = "6, 7")]
     pub request: ::core::option::Option<receive_packets_request::Request>,
@@ -3982,15 +4054,6 @@ pub mod receive_packets_request {
         CommitRequest(super::CommitRequest),
     }
 }
-/// Response metadata message.
-///
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ResponseMetadata {
-    /// If the EOS is on, the client should not expect more packets from the
-    /// server.
-    #[prost(bool, tag = "1")]
-    pub end_of_stream: bool,
-}
 /// Control message for a ReceivePacketsResponse.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReceivePacketsControlResponse {
@@ -4023,7 +4086,7 @@ pub mod receive_packets_control_response {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReceivePacketsResponse {
     /// Possible response types.
-    #[prost(oneof = "receive_packets_response::Response", tags = "1, 3, 2")]
+    #[prost(oneof = "receive_packets_response::Response", tags = "1, 3")]
     pub response: ::core::option::Option<receive_packets_response::Response>,
 }
 /// Nested message and enum types in `ReceivePacketsResponse`.
@@ -4037,51 +4100,6 @@ pub mod receive_packets_response {
         /// A control message from the server.
         #[prost(message, tag = "3")]
         Control(super::ReceivePacketsControlResponse),
-        /// Response metadata message.
-        ///
-        #[prost(message, tag = "2")]
-        Metadata(super::ResponseMetadata),
-    }
-}
-/// Configuration used by consumers to reset its offset.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct OffsetConfig {
-    /// Offset config.
-    #[prost(oneof = "offset_config::Config", tags = "1, 2, 3")]
-    pub config: ::core::option::Option<offset_config::Config>,
-}
-/// Nested message and enum types in `OffsetConfig`.
-pub mod offset_config {
-    /// SpecialOffset is a set of predefined special offset configuration.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum SpecialOffset {
-        /// Offset not specified.
-        Unspecified = 0,
-        /// Beginning of the stream.
-        OffsetBeginning = 1,
-        /// End of the stream.
-        OffsetEnd = 2,
-    }
-    /// Offset config.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Config {
-        /// The start consuming from the earliest or latest position.
-        #[prost(enumeration = "SpecialOffset", tag = "1")]
-        SpecialOffset(i32),
-        /// The offset position that the consumer wants to set to. The consumer can
-        /// specify a position in the stream and start consuming from there. If the
-        /// packet for the `seek_position` is not a critical frame, the consumer will
-        /// receive the latest critical packet prior to the that in the
-        /// `seek_position`.
-        #[prost(int64, tag = "2")]
-        SeekPosition(i64),
-        /// The consumer will start consuming from the latest packet that is earlier
-        /// than the `seek_time`. If the packet for the `seek_time` is not a critical
-        /// frame, the consumer will receive the latest critical packet prior to the
-        /// `seek_time`.
-        #[prost(message, tag = "3")]
-        SeekTime(::prost_types::Timestamp),
     }
 }
 /// The options for receiver under the eager mode.
@@ -5557,6 +5575,9 @@ pub struct CreateCorpusRequest {
     #[prost(message, optional, tag = "2")]
     pub corpus: ::core::option::Option<Corpus>,
 }
+/// Metadata for CreateCorpus API.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateCorpusMetadata {}
 /// Corpus is a set of video contents for management. Within a corpus, videos
 /// share the same data schema. Search is also restricted within a single corpus.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -6522,67 +6543,11 @@ pub struct SearchAssetsRequest {
     /// strategy must not be NO_SEARCH.
     #[prost(string, repeated, tag = "8")]
     pub result_annotation_keys: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Sorting specification. If this field is not specified, by default:
-    /// - STREAM_VIDEO: search results are sorted by the start time.
-    #[prost(oneof = "search_assets_request::SortSpec", tags = "9")]
-    pub sort_spec: ::core::option::Option<search_assets_request::SortSpec>,
 }
-/// Nested message and enum types in `SearchAssetsRequest`.
-pub mod search_assets_request {
-    /// Sorting specification. If this field is not specified, by default:
-    /// - STREAM_VIDEO: search results are sorted by the start time.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum SortSpec {
-        /// Sort by the value under the data schema key.
-        #[prost(message, tag = "9")]
-        SchemaKeySortingStrategy(super::SchemaKeySortingStrategy),
-    }
-}
-/// A strategy to specify how to sort by data schema key.
+/// The metadata for DeleteAsset API that embeds in
+/// \[metadata][google.longrunning.Operation.metadata\] field.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SchemaKeySortingStrategy {
-    /// Options in the front have high priority than those in the back.
-    #[prost(message, repeated, tag = "1")]
-    pub options: ::prost::alloc::vec::Vec<schema_key_sorting_strategy::Option>,
-}
-/// Nested message and enum types in `SchemaKeySortingStrategy`.
-pub mod schema_key_sorting_strategy {
-    /// Option for one data schema key.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct Option {
-        /// The data used to sort.
-        #[prost(string, tag = "1")]
-        pub data_schema_key: ::prost::alloc::string::String,
-        /// Whether to sort in decreasing order or increasing order.
-        /// By default, results are sorted in incresing order.
-        #[prost(bool, tag = "2")]
-        pub sort_decreasing: bool,
-        /// Aggregate method for the current data schema key.
-        #[prost(enumeration = "option::AggregateMethod", optional, tag = "3")]
-        pub aggregate_method: ::core::option::Option<i32>,
-    }
-    /// Nested message and enum types in `Option`.
-    pub mod option {
-        /// When one result has multiple values with the same key, specify
-        /// which value is used to sort. By default, AGGREGATE_METHOD_LARGEST
-        /// is used when results are sorted in decreasing order,
-        /// AGGREGATE_METHOD_SMALLEST is used when results are sorted in
-        /// incresing order.
-        #[derive(
-            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
-        )]
-        #[repr(i32)]
-        pub enum AggregateMethod {
-            /// The unspecified aggregate method will be overwritten as mentioned
-            /// above.
-            Unspecified = 0,
-            /// Take the (lexicographical or numerical) largest value to sort.
-            Largest = 1,
-            /// Take the (lexicographical or numerical) smallest value to sort.
-            Smallest = 2,
-        }
-    }
-}
+pub struct DeleteAssetMetadata {}
 /// Stores the criteria-annotation matching results for each search result item.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AnnotationMatchingResult {
@@ -6804,13 +6769,6 @@ pub mod partition {
         pub y_max: ::core::option::Option<i64>,
     }
 }
-/// The metadata for DeleteAsset API that embeds in
-/// \[metadata][google.longrunning.Operation.metadata\] field.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DeleteAssetMetadata {}
-/// Metadata for CreateCorpus API.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateCorpusMetadata {}
 /// Different types for a facet bucket.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]

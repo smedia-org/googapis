@@ -82,20 +82,20 @@ pub struct BasicYarnAutoscalingConfig {
     /// Bounds: [0s, 1d].
     #[prost(message, optional, tag = "5")]
     pub graceful_decommission_timeout: ::core::option::Option<::prost_types::Duration>,
-    /// Required. Fraction of average YARN pending memory in the last cooldown period
-    /// for which to add workers. A scale-up factor of 1.0 will result in scaling
-    /// up so that there is no pending memory remaining after the update (more
-    /// aggressive scaling). A scale-up factor closer to 0 will result in a smaller
-    /// magnitude of scaling up (less aggressive scaling).
-    /// See [How autoscaling
+    /// Required. Fraction of average YARN pending memory in the last cooldown
+    /// period for which to add workers. A scale-up factor of 1.0 will result in
+    /// scaling up so that there is no pending memory remaining after the update
+    /// (more aggressive scaling). A scale-up factor closer to 0 will result in a
+    /// smaller magnitude of scaling up (less aggressive scaling). See [How
+    /// autoscaling
     /// works](<https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/autoscaling#how_autoscaling_works>)
     /// for more information.
     ///
     /// Bounds: [0.0, 1.0].
     #[prost(double, tag = "1")]
     pub scale_up_factor: f64,
-    /// Required. Fraction of average YARN pending memory in the last cooldown period
-    /// for which to remove workers. A scale-down factor of 1 will result in
+    /// Required. Fraction of average YARN pending memory in the last cooldown
+    /// period for which to remove workers. A scale-down factor of 1 will result in
     /// scaling down so that there is no available memory remaining after the
     /// update (more aggressive scaling). A scale-down factor of 0 disables
     /// removing workers, which can be beneficial for autoscaling a single job.
@@ -408,12 +408,12 @@ pub struct RuntimeConfig {
     /// Optional. Version of the batch runtime.
     #[prost(string, tag = "1")]
     pub version: ::prost::alloc::string::String,
-    /// Optional. Optional custom container image for the job runtime environment. If
-    /// not specified, a default container image will be used.
+    /// Optional. Optional custom container image for the job runtime environment.
+    /// If not specified, a default container image will be used.
     #[prost(string, tag = "2")]
     pub container_image: ::prost::alloc::string::String,
-    /// Optional. A mapping of property names to values, which are used to configure workload
-    /// execution.
+    /// Optional. A mapping of property names to values, which are used to
+    /// configure workload execution.
     #[prost(map = "string, string", tag = "3")]
     pub properties:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
@@ -440,6 +440,28 @@ pub struct ExecutionConfig {
     /// Optional. The Cloud KMS key to use for encryption.
     #[prost(string, tag = "7")]
     pub kms_key: ::prost::alloc::string::String,
+    /// Optional. The duration after which the workload will be terminated.
+    /// When the workload passes this ttl, it will be unconditionally killed
+    /// without waiting for ongoing work to finish.
+    /// Minimum value is 10 minutes; maximum value is 14 days (see JSON
+    /// representation of
+    /// \[Duration\](<https://developers.google.com/protocol-buffers/docs/proto3#json>)).
+    /// If both ttl and idle_ttl are specified, the conditions are treated as
+    /// and OR: the workload will be terminated when it has been idle for idle_ttl
+    /// or when the ttl has passed, whichever comes first.
+    /// If ttl is not specified for a session, it defaults to 24h.
+    #[prost(message, optional, tag = "9")]
+    pub ttl: ::core::option::Option<::prost_types::Duration>,
+    /// Optional. A Cloud Storage bucket used to stage workload dependencies,
+    /// config files, and store workload output and other ephemeral data, such as
+    /// Spark history files. If you do not specify a staging bucket, Cloud Dataproc
+    /// will determine a Cloud Storage location according to the region where your
+    /// workload is running, and then create and manage project-level, per-location
+    /// staging and temporary buckets.
+    /// **This field requires a Cloud Storage bucket name, not a `gs://...` URI to
+    /// a Cloud Storage bucket.**
+    #[prost(string, tag = "10")]
+    pub staging_bucket: ::prost::alloc::string::String,
     /// Network configuration for workload execution.
     #[prost(oneof = "execution_config::Network", tags = "4, 5")]
     pub network: ::core::option::Option<execution_config::Network>,
@@ -460,8 +482,8 @@ pub mod execution_config {
 /// Spark History Server configuration for the workload.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SparkHistoryServerConfig {
-    /// Optional. Resource name of an existing Dataproc Cluster to act as a Spark History
-    /// Server for the workload.
+    /// Optional. Resource name of an existing Dataproc Cluster to act as a Spark
+    /// History Server for the workload.
     ///
     /// Example:
     ///
@@ -486,44 +508,87 @@ pub struct PeripheralsConfig {
 /// Runtime information about workload execution.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RuntimeInfo {
-    /// Output only. Map of remote access endpoints (such as web interfaces and APIs) to their
-    /// URIs.
+    /// Output only. Map of remote access endpoints (such as web interfaces and
+    /// APIs) to their URIs.
     #[prost(map = "string, string", tag = "1")]
     pub endpoints:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Output only. A URI pointing to the location of the stdout and stderr of the workload.
+    /// Output only. A URI pointing to the location of the stdout and stderr of the
+    /// workload.
     #[prost(string, tag = "2")]
     pub output_uri: ::prost::alloc::string::String,
     /// Output only. A URI pointing to the location of the diagnostics tarball.
     #[prost(string, tag = "3")]
     pub diagnostic_output_uri: ::prost::alloc::string::String,
+    /// Output only. Approximate workload resource usage calculated after workload
+    /// finishes (see [Dataproc Serverless pricing]
+    /// (<https://cloud.google.com/dataproc-serverless/pricing>)).
+    #[prost(message, optional, tag = "6")]
+    pub approximate_usage: ::core::option::Option<UsageMetrics>,
+    /// Output only. Snapshot of current workload resource usage.
+    #[prost(message, optional, tag = "7")]
+    pub current_usage: ::core::option::Option<UsageSnapshot>,
+}
+/// Usage metrics represent approximate total resources consumed by a workload.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UsageMetrics {
+    /// Optional. DCU (Dataproc Compute Units) usage in (`milliDCU` x `seconds`)
+    /// (see [Dataproc Serverless pricing]
+    /// (<https://cloud.google.com/dataproc-serverless/pricing>)).
+    #[prost(int64, tag = "1")]
+    pub milli_dcu_seconds: i64,
+    /// Optional. Shuffle storage usage in (`GB` x `seconds`) (see
+    /// [Dataproc Serverless pricing]
+    /// (<https://cloud.google.com/dataproc-serverless/pricing>)).
+    #[prost(int64, tag = "2")]
+    pub shuffle_storage_gb_seconds: i64,
+}
+/// The usage snaphot represents the resources consumed by a workload at a
+/// specified time.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UsageSnapshot {
+    /// Optional. Milli (one-thousandth) Dataproc Compute Units (DCUs) (see
+    /// [Dataproc Serverless pricing]
+    /// (<https://cloud.google.com/dataproc-serverless/pricing>)).
+    #[prost(int64, tag = "1")]
+    pub milli_dcu: i64,
+    /// Optional. Shuffle Storage in gigabytes (GB). (see [Dataproc Serverless
+    /// pricing] (<https://cloud.google.com/dataproc-serverless/pricing>))
+    #[prost(int64, tag = "2")]
+    pub shuffle_storage_gb: i64,
+    /// Optional. The timestamp of the usage snapshot.
+    #[prost(message, optional, tag = "3")]
+    pub snapshot_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// The cluster's GKE config.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GkeClusterConfig {
-    /// Optional. A target GKE cluster to deploy to. It must be in the same project and
-    /// region as the Dataproc cluster (the GKE cluster can be zonal or regional).
-    /// Format: 'projects/{project}/locations/{location}/clusters/{cluster_id}'
+    /// Optional. A target GKE cluster to deploy to. It must be in the same project
+    /// and region as the Dataproc cluster (the GKE cluster can be zonal or
+    /// regional). Format:
+    /// 'projects/{project}/locations/{location}/clusters/{cluster_id}'
     #[prost(string, tag = "2")]
     pub gke_cluster_target: ::prost::alloc::string::String,
-    /// Optional. GKE NodePools where workloads will be scheduled. At least one node pool
-    /// must be assigned the 'default' role. Each role can be given to only a
-    /// single NodePoolTarget. All NodePools must have the same location settings.
-    /// If a nodePoolTarget is not specified, Dataproc constructs a default
-    /// nodePoolTarget.
+    /// Optional. GKE node pools where workloads will be scheduled. At least one
+    /// node pool must be assigned the `DEFAULT`
+    /// \[GkeNodePoolTarget.Role][google.cloud.dataproc.v1.GkeNodePoolTarget.Role\].
+    /// If a `GkeNodePoolTarget` is not specified, Dataproc constructs a `DEFAULT`
+    /// `GkeNodePoolTarget`. Each role can be given to only one
+    /// `GkeNodePoolTarget`. All node pools must have the same location settings.
     #[prost(message, repeated, tag = "3")]
     pub node_pool_target: ::prost::alloc::vec::Vec<GkeNodePoolTarget>,
 }
 /// The configuration for running the Dataproc cluster on Kubernetes.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KubernetesClusterConfig {
-    /// Optional. A namespace within the Kubernetes cluster to deploy into. If this namespace
-    /// does not exist, it is created. If it exists, Dataproc
-    /// verifies that another Dataproc VirtualCluster is not installed
-    /// into it. If not specified, the name of the Dataproc Cluster is used.
+    /// Optional. A namespace within the Kubernetes cluster to deploy into. If this
+    /// namespace does not exist, it is created. If it exists, Dataproc verifies
+    /// that another Dataproc VirtualCluster is not installed into it. If not
+    /// specified, the name of the Dataproc Cluster is used.
     #[prost(string, tag = "1")]
     pub kubernetes_namespace: ::prost::alloc::string::String,
-    /// Optional. The software configuration for this Dataproc cluster running on Kubernetes.
+    /// Optional. The software configuration for this Dataproc cluster running on
+    /// Kubernetes.
     #[prost(message, optional, tag = "3")]
     pub kubernetes_software_config: ::core::option::Option<KubernetesSoftwareConfig>,
     #[prost(oneof = "kubernetes_cluster_config::Config", tags = "2")]
@@ -562,15 +627,15 @@ pub struct KubernetesSoftwareConfig {
     pub properties:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
-/// GKE NodePools that Dataproc workloads run on.
+/// GKE node pools that Dataproc workloads run on.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GkeNodePoolTarget {
-    /// Required. The target GKE NodePool.
+    /// Required. The target GKE node pool.
     /// Format:
     /// 'projects/{project}/locations/{location}/clusters/{cluster}/nodePools/{node_pool}'
     #[prost(string, tag = "1")]
     pub node_pool: ::prost::alloc::string::String,
-    /// Required. The types of role for a GKE NodePool
+    /// Required. The roles associated with the GKE node pool.
     #[prost(
         enumeration = "gke_node_pool_target::Role",
         repeated,
@@ -578,42 +643,49 @@ pub struct GkeNodePoolTarget {
         tag = "2"
     )]
     pub roles: ::prost::alloc::vec::Vec<i32>,
-    /// Optional. The configuration for the GKE NodePool.
+    /// Input only. The configuration for the GKE node pool.
     ///
-    /// If specified, Dataproc attempts to create a NodePool with the
+    /// If specified, Dataproc attempts to create a node pool with the
     /// specified shape. If one with the same name already exists, it is
     /// verified against all specified fields. If a field differs, the
     /// virtual cluster creation will fail.
     ///
-    /// If omitted, any NodePool with the specified name is used. If a
-    /// NodePool with the specified name does not exist, Dataproc create a NodePool
-    /// with default values.
+    /// If omitted, any node pool with the specified name is used. If a
+    /// node pool with the specified name does not exist, Dataproc create a
+    /// node pool with default values.
+    ///
+    /// This is an input only field. It will not be returned by the API.
     #[prost(message, optional, tag = "3")]
     pub node_pool_config: ::core::option::Option<GkeNodePoolConfig>,
 }
 /// Nested message and enum types in `GkeNodePoolTarget`.
 pub mod gke_node_pool_target {
-    /// `Role` specifies whose tasks will run on the NodePool. The roles can be
-    /// specific to workloads. Exactly one GkeNodePoolTarget within the
-    /// VirtualCluster must have 'default' role, which is used to run all workloads
-    /// that are not associated with a NodePool.
+    /// `Role` specifies the tasks that will run on the node pool. Roles can be
+    /// specific to workloads. Exactly one
+    /// \[GkeNodePoolTarget][google.cloud.dataproc.v1.GkeNodePoolTarget\] within the
+    /// virtual cluster must have the `DEFAULT` role, which is used to run all
+    /// workloads that are not associated with a node pool.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum Role {
         /// Role is unspecified.
         Unspecified = 0,
-        /// Any roles that are not directly assigned to a NodePool run on the
-        /// `default` role's NodePool.
+        /// At least one node pool must have the `DEFAULT` role.
+        /// Work assigned to a role that is not associated with a node pool
+        /// is assigned to the node pool with the `DEFAULT` role. For example,
+        /// work assigned to the `CONTROLLER` role will be assigned to the node pool
+        /// with the `DEFAULT` role if no node pool has the `CONTROLLER` role.
         Default = 1,
-        /// Run controllers and webhooks.
+        /// Run work associated with the Dataproc control plane (for example,
+        /// controllers and webhooks). Very low resource requirements.
         Controller = 2,
-        /// Run spark driver.
+        /// Run work associated with a Spark driver of a job.
         SparkDriver = 3,
-        /// Run spark executors.
+        /// Run work associated with a Spark executor of a job.
         SparkExecutor = 4,
     }
 }
-/// The configuration of a GKE NodePool used by a [Dataproc-on-GKE
+/// The configuration of a GKE node pool used by a [Dataproc-on-GKE
 /// cluster](<https://cloud.google.com/dataproc/docs/concepts/jobs/dataproc-gke#create-a-dataproc-on-gke-cluster>).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GkeNodePoolConfig {
@@ -622,16 +694,19 @@ pub struct GkeNodePoolConfig {
     pub config: ::core::option::Option<gke_node_pool_config::GkeNodeConfig>,
     /// Optional. The list of Compute Engine
     /// \[zones\](<https://cloud.google.com/compute/docs/zones#available>) where
-    /// NodePool's nodes will be located.
+    /// node pool nodes associated with a Dataproc on GKE virtual cluster
+    /// will be located.
     ///
-    /// **Note:** Currently, only one zone may be specified.
+    /// **Note:** All node pools associated with a virtual cluster
+    /// must be located in the same region as the virtual cluster, and they must
+    /// be located in the same zone within that region.
     ///
-    /// If a location is not specified during NodePool creation, Dataproc will
-    /// choose a location.
+    /// If a location is not specified during node pool creation, Dataproc on GKE
+    /// will choose the zone.
     #[prost(string, repeated, tag = "13")]
     pub locations: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Optional. The autoscaler configuration for this NodePool. The autoscaler is enabled
-    /// only when a valid configuration is present.
+    /// Optional. The autoscaler configuration for this node pool. The autoscaler
+    /// is enabled only when a valid configuration is present.
     #[prost(message, optional, tag = "4")]
     pub autoscaling: ::core::option::Option<gke_node_pool_config::GkeNodePoolAutoscalingConfig>,
 }
@@ -644,15 +719,23 @@ pub mod gke_node_pool_config {
         /// type](<https://cloud.google.com/compute/docs/machine-types>).
         #[prost(string, tag = "1")]
         pub machine_type: ::prost::alloc::string::String,
-        /// Optional. Whether the nodes are created as [preemptible VM
-        /// instances](<https://cloud.google.com/compute/docs/instances/preemptible>).
-        #[prost(bool, tag = "10")]
-        pub preemptible: bool,
-        /// Optional. The number of local SSD disks to attach to the node, which is limited by
-        /// the maximum number of disks allowable per zone (see [Adding Local
-        /// SSDs](<https://cloud.google.com/compute/docs/disks/local-ssd>)).
+        /// Optional. The number of local SSD disks to attach to the node, which is
+        /// limited by the maximum number of disks allowable per zone (see [Adding
+        /// Local SSDs](<https://cloud.google.com/compute/docs/disks/local-ssd>)).
         #[prost(int32, tag = "7")]
         pub local_ssd_count: i32,
+        /// Optional. Whether the nodes are created as legacy [preemptible VM
+        /// instances] (<https://cloud.google.com/compute/docs/instances/preemptible>).
+        /// Also see
+        /// \[Spot][google.cloud.dataproc.v1.GkeNodePoolConfig.GkeNodeConfig.spot\]
+        /// VMs, preemptible VM instances without a maximum lifetime. Legacy and Spot
+        /// preemptible nodes cannot be used in a node pool with the `CONTROLLER`
+        /// \[role\]
+        /// (/dataproc/docs/reference/rest/v1/projects.regions.clusters#role)
+        /// or in the DEFAULT node pool if the CONTROLLER role is not assigned (the
+        /// DEFAULT node pool will assume the CONTROLLER role).
+        #[prost(bool, tag = "10")]
+        pub preemptible: bool,
         /// Optional. A list of [hardware
         /// accelerators](<https://cloud.google.com/compute/docs/gpus>) to attach to
         /// each node.
@@ -665,9 +748,28 @@ pub mod gke_node_pool_config {
         /// platforms, such as "Intel Haswell"` or Intel Sandy Bridge".
         #[prost(string, tag = "13")]
         pub min_cpu_platform: ::prost::alloc::string::String,
+        /// Optional. The [Customer Managed Encryption Key (CMEK)]
+        /// (<https://cloud.google.com/kubernetes-engine/docs/how-to/using-cmek>)
+        /// used to encrypt the boot disk attached to each node in the node pool.
+        /// Specify the key using the following format:
+        /// <code>projects/<var>KEY_PROJECT_ID</var>/locations/<var>LOCATION</var>/keyRings/<var>RING_NAME</var>/cryptoKeys/<var>KEY_NAME</var></code>.
+        #[prost(string, tag = "23")]
+        pub boot_disk_kms_key: ::prost::alloc::string::String,
+        /// Optional. Whether the nodes are created as [Spot VM instances]
+        /// (<https://cloud.google.com/compute/docs/instances/spot>).
+        /// Spot VMs are the latest update to legacy
+        /// [preemptible
+        /// VMs]\[google.cloud.dataproc.v1.GkeNodePoolConfig.GkeNodeConfig.preemptible\].
+        /// Spot VMs do not have a maximum lifetime. Legacy and Spot preemptible
+        /// nodes cannot be used in a node pool with the `CONTROLLER`
+        /// \[role\](/dataproc/docs/reference/rest/v1/projects.regions.clusters#role)
+        /// or in the DEFAULT node pool if the CONTROLLER role is not assigned (the
+        /// DEFAULT node pool will assume the CONTROLLER role).
+        #[prost(bool, tag = "32")]
+        pub spot: bool,
     }
     /// A GkeNodeConfigAcceleratorConfig represents a Hardware Accelerator request
-    /// for a NodePool.
+    /// for a node pool.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct GkeNodePoolAcceleratorConfig {
         /// The number of accelerator cards exposed to an instance.
@@ -676,16 +778,22 @@ pub mod gke_node_pool_config {
         /// The accelerator type resource namename (see GPUs on Compute Engine).
         #[prost(string, tag = "2")]
         pub accelerator_type: ::prost::alloc::string::String,
+        /// Size of partitions to create on the GPU. Valid values are described in
+        /// the NVIDIA [mig user
+        /// guide](<https://docs.nvidia.com/datacenter/tesla/mig-user-guide/#partitioning>).
+        #[prost(string, tag = "3")]
+        pub gpu_partition_size: ::prost::alloc::string::String,
     }
     /// GkeNodePoolAutoscaling contains information the cluster autoscaler needs to
     /// adjust the size of the node pool to the current cluster usage.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct GkeNodePoolAutoscalingConfig {
-        /// The minimum number of nodes in the NodePool. Must be >= 0 and <=
+        /// The minimum number of nodes in the node pool. Must be >= 0 and <=
         /// max_node_count.
         #[prost(int32, tag = "2")]
         pub min_node_count: i32,
-        /// The maximum number of nodes in the NodePool. Must be >= min_node_count.
+        /// The maximum number of nodes in the node pool. Must be >= min_node_count,
+        /// and must be > 0.
         /// **Note:** Quota must be sufficient to scale up the cluster.
         #[prost(int32, tag = "3")]
         pub max_node_count: i32,
@@ -713,10 +821,14 @@ pub enum Component {
     Hbase = 11,
     /// The Hive Web HCatalog (the REST service for accessing HCatalog).
     HiveWebhcat = 3,
+    /// Hudi.
+    Hudi = 18,
     /// The Jupyter Notebook.
     Jupyter = 1,
     /// The Presto query engine.
     Presto = 6,
+    /// The Trino query engine.
+    Trino = 17,
     /// The Ranger service.
     Ranger = 12,
     /// The Solr service.
@@ -747,8 +859,8 @@ pub struct CreateBatchRequest {
     /// Required. The batch to create.
     #[prost(message, optional, tag = "2")]
     pub batch: ::core::option::Option<Batch>,
-    /// Optional. The ID to use for the batch, which will become the final component of
-    /// the batch's resource name.
+    /// Optional. The ID to use for the batch, which will become the final
+    /// component of the batch's resource name.
     ///
     /// This value must be 4-63 characters. Valid characters are `/\[a-z][0-9\]-/`.
     #[prost(string, tag = "3")]
@@ -771,7 +883,9 @@ pub struct CreateBatchRequest {
 /// A request to get the resource representation for a batch workload.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetBatchRequest {
-    /// Required. The name of the batch to retrieve.
+    /// Required. The fully qualified name of the batch to retrieve
+    /// in the format
+    /// "projects/PROJECT_ID/locations/DATAPROC_REGION/batches/BATCH_ID"
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -790,6 +904,28 @@ pub struct ListBatchesRequest {
     /// Provide this token to retrieve the subsequent page.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
+    /// Optional. A filter for the batches to return in the response.
+    ///
+    /// A filter is a logical expression constraining the values of various fields
+    /// in each batch resource. Filters are case sensitive, and may contain
+    /// multiple clauses combined with logical operators (AND/OR).
+    /// Supported fields are `batch_id`, `batch_uuid`, `state`, and `create_time`.
+    ///
+    /// e.g. `state = RUNNING and create_time < "2023-01-01T00:00:00Z"`
+    /// filters for batches in state RUNNING that were created before 2023-01-01
+    ///
+    /// See <https://google.aip.dev/assets/misc/ebnf-filtering.txt> for a detailed
+    /// description of the filter syntax and a list of supported comparisons.
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Optional. Field(s) on which to sort the list of batches.
+    ///
+    /// Currently the only supported sort orders are unspecified (empty) and
+    /// `create_time desc` to sort by most recently created batches first.
+    ///
+    /// See <https://google.aip.dev/132#ordering> for more details.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
 }
 /// A list of batch workloads.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -805,7 +941,9 @@ pub struct ListBatchesResponse {
 /// A request to delete a batch workload.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteBatchRequest {
-    /// Required. The name of the batch resource to delete.
+    /// Required. The fully qualified name of the batch to retrieve
+    /// in the format
+    /// "projects/PROJECT_ID/locations/DATAPROC_REGION/batches/BATCH_ID"
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -921,8 +1059,8 @@ pub mod batch {
 /// batch workload.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PySparkBatch {
-    /// Required. The HCFS URI of the main Python file to use as the Spark driver. Must
-    /// be a .py file.
+    /// Required. The HCFS URI of the main Python file to use as the Spark driver.
+    /// Must be a .py file.
     #[prost(string, tag = "1")]
     pub main_python_file_uri: ::prost::alloc::string::String,
     /// Optional. The arguments to pass to the driver. Do not include arguments
@@ -948,7 +1086,7 @@ pub struct PySparkBatch {
     #[prost(string, repeated, tag = "6")]
     pub archive_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
-/// A configuration for running an [Apache Spark](<http://spark.apache.org/>)
+/// A configuration for running an [Apache Spark](<https://spark.apache.org/>)
 /// batch workload.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SparkBatch {
@@ -990,8 +1128,8 @@ pub mod spark_batch {
         /// Optional. The HCFS URI of the jar file that contains the main class.
         #[prost(string, tag = "1")]
         MainJarFileUri(::prost::alloc::string::String),
-        /// Optional. The name of the driver main class. The jar file that contains the class
-        /// must be in the classpath or specified in `jar_file_uris`.
+        /// Optional. The name of the driver main class. The jar file that contains
+        /// the class must be in the classpath or specified in `jar_file_uris`.
         #[prost(string, tag = "2")]
         MainClass(::prost::alloc::string::String),
     }
@@ -1005,9 +1143,9 @@ pub struct SparkRBatch {
     /// Must be a `.R` or `.r` file.
     #[prost(string, tag = "1")]
     pub main_r_file_uri: ::prost::alloc::string::String,
-    /// Optional. The arguments to pass to the Spark driver. Do not include arguments
-    /// that can be set as batch properties, such as `--conf`, since a collision
-    /// can occur that causes an incorrect batch submission.
+    /// Optional. The arguments to pass to the Spark driver. Do not include
+    /// arguments that can be set as batch properties, such as `--conf`, since a
+    /// collision can occur that causes an incorrect batch submission.
     #[prost(string, repeated, tag = "2")]
     pub args: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Optional. HCFS URIs of files to be placed in the working directory of
@@ -1021,10 +1159,12 @@ pub struct SparkRBatch {
     pub archive_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// A configuration for running
-/// [Apache Spark SQL](<http://spark.apache.org/sql/>) queries as a batch workload.
+/// [Apache Spark SQL](<https://spark.apache.org/sql/>) queries as a batch
+/// workload.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SparkSqlBatch {
-    /// Required. The HCFS URI of the script that contains Spark SQL queries to execute.
+    /// Required. The HCFS URI of the script that contains Spark SQL queries to
+    /// execute.
     #[prost(string, tag = "1")]
     pub query_file_uri: ::prost::alloc::string::String,
     /// Optional. Mapping of query variable names to values (equivalent to the
@@ -1167,22 +1307,28 @@ pub struct Cluster {
     /// Required. The Google Cloud Platform project ID that the cluster belongs to.
     #[prost(string, tag = "1")]
     pub project_id: ::prost::alloc::string::String,
-    /// Required. The cluster name. Cluster names within a project must be
-    /// unique. Names of deleted clusters can be reused.
+    /// Required. The cluster name, which must be unique within a project.
+    /// The name must start with a lowercase letter, and can contain
+    /// up to 51 lowercase letters, numbers, and hyphens. It cannot end
+    /// with a hyphen. The name of a deleted cluster can be reused.
     #[prost(string, tag = "2")]
     pub cluster_name: ::prost::alloc::string::String,
     /// Optional. The cluster config for a cluster of Compute Engine Instances.
     /// Note that Dataproc may set default values, and values may change
     /// when clusters are updated.
+    ///
+    /// Exactly one of ClusterConfig or VirtualClusterConfig must be specified.
     #[prost(message, optional, tag = "3")]
     pub config: ::core::option::Option<ClusterConfig>,
-    /// Optional. The virtual cluster config, used when creating a Dataproc cluster that
-    /// does not directly control the underlying compute resources, for example,
-    /// when creating a [Dataproc-on-GKE
-    /// cluster](<https://cloud.google.com/dataproc/docs/concepts/jobs/dataproc-gke#create-a-dataproc-on-gke-cluster>).
-    /// Note that Dataproc may set default values, and values may change when
-    /// clusters are updated. Exactly one of config or virtualClusterConfig must be
-    /// specified.
+    /// Optional. The virtual cluster config is used when creating a Dataproc
+    /// cluster that does not directly control the underlying compute resources,
+    /// for example, when creating a [Dataproc-on-GKE
+    /// cluster](<https://cloud.google.com/dataproc/docs/guides/dpgke/dataproc-gke-overview>).
+    /// Dataproc may set default values, and values may change when
+    /// clusters are updated. Exactly one of
+    /// \[config][google.cloud.dataproc.v1.Cluster.config\] or
+    /// \[virtual_cluster_config][google.cloud.dataproc.v1.Cluster.virtual_cluster_config\]
+    /// must be specified.
     #[prost(message, optional, tag = "10")]
     pub virtual_cluster_config: ::core::option::Option<VirtualClusterConfig>,
     /// Optional. The labels to associate with this cluster.
@@ -1228,15 +1374,13 @@ pub struct ClusterConfig {
     /// a Cloud Storage bucket.**
     #[prost(string, tag = "1")]
     pub config_bucket: ::prost::alloc::string::String,
-    /// Optional. A Cloud Storage bucket used to store ephemeral cluster and jobs data,
-    /// such as Spark and MapReduce history files.
-    /// If you do not specify a temp bucket,
-    /// Dataproc will determine a Cloud Storage location (US,
-    /// ASIA, or EU) for your cluster's temp bucket according to the
-    /// Compute Engine zone where your cluster is deployed, and then create
-    /// and manage this project-level, per-location bucket. The default bucket has
-    /// a TTL of 90 days, but you can use any TTL (or none) if you specify a
-    /// bucket (see
+    /// Optional. A Cloud Storage bucket used to store ephemeral cluster and jobs
+    /// data, such as Spark and MapReduce history files. If you do not specify a
+    /// temp bucket, Dataproc will determine a Cloud Storage location (US, ASIA, or
+    /// EU) for your cluster's temp bucket according to the Compute Engine zone
+    /// where your cluster is deployed, and then create and manage this
+    /// project-level, per-location bucket. The default bucket has a TTL of 90
+    /// days, but you can use any TTL (or none) if you specify a bucket (see
     /// [Dataproc staging and temp
     /// buckets](<https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/staging-bucket>)).
     /// **This field requires a Cloud Storage bucket name, not a `gs://...` URI to
@@ -1299,13 +1443,16 @@ pub struct ClusterConfig {
     /// Optional. The config for Dataproc metrics.
     #[prost(message, optional, tag = "23")]
     pub dataproc_metric_config: ::core::option::Option<DataprocMetricConfig>,
+    /// Optional. The node group settings.
+    #[prost(message, repeated, tag = "25")]
+    pub auxiliary_node_groups: ::prost::alloc::vec::Vec<AuxiliaryNodeGroup>,
 }
-/// Dataproc cluster config for a cluster that does not directly control the
+/// The Dataproc cluster config for a cluster that does not directly control the
 /// underlying compute resources, such as a [Dataproc-on-GKE
-/// cluster](<https://cloud.google.com/dataproc/docs/concepts/jobs/dataproc-gke#create-a-dataproc-on-gke-cluster>).
+/// cluster](<https://cloud.google.com/dataproc/docs/guides/dpgke/dataproc-gke-overview>).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VirtualClusterConfig {
-    /// Optional. A Storage bucket used to stage job
+    /// Optional. A Cloud Storage bucket used to stage job
     /// dependencies, config files, and job driver console output.
     /// If you do not specify a staging bucket, Cloud
     /// Dataproc will determine a Cloud Storage location (US,
@@ -1328,7 +1475,8 @@ pub struct VirtualClusterConfig {
 pub mod virtual_cluster_config {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum InfrastructureConfig {
-        /// Required. The configuration for running the Dataproc cluster on Kubernetes.
+        /// Required. The configuration for running the Dataproc cluster on
+        /// Kubernetes.
         #[prost(message, tag = "6")]
         KubernetesClusterConfig(super::KubernetesClusterConfig),
     }
@@ -1383,17 +1531,15 @@ pub struct EncryptionConfig {
 /// instances, applicable to all instances in the cluster.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GceClusterConfig {
-    /// Optional. The zone where the Compute Engine cluster will be located.
-    /// On a create request, it is required in the "global" region. If omitted
-    /// in a non-global Dataproc region, the service will pick a zone in the
-    /// corresponding Compute Engine region. On a get request, zone will
-    /// always be present.
+    /// Optional. The Compute Engine zone where the Dataproc cluster will be
+    /// located. If omitted, the service will pick a zone in the cluster's Compute
+    /// Engine region. On a get request, zone will always be present.
     ///
     /// A full URL, partial URI, or short name are valid. Examples:
     ///
     /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id]/zones/[zone\]`>
     /// * `projects/\[project_id]/zones/[zone\]`
-    /// * `us-central1-f`
+    /// * `\[zone\]`
     #[prost(string, tag = "1")]
     pub zone_uri: ::prost::alloc::string::String,
     /// Optional. The Compute Engine network to be used for machine
@@ -1405,8 +1551,8 @@ pub struct GceClusterConfig {
     ///
     /// A full URL, partial URI, or short name are valid. Examples:
     ///
-    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id\]/regions/global/default`>
-    /// * `projects/\[project_id\]/regions/global/default`
+    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id\]/global/networks/default`>
+    /// * `projects/\[project_id\]/global/networks/default`
     /// * `default`
     #[prost(string, tag = "2")]
     pub network_uri: ::prost::alloc::string::String,
@@ -1415,8 +1561,8 @@ pub struct GceClusterConfig {
     ///
     /// A full URL, partial URI, or short name are valid. Examples:
     ///
-    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id\]/regions/us-east1/subnetworks/sub0`>
-    /// * `projects/\[project_id\]/regions/us-east1/subnetworks/sub0`
+    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id]/regions/[region\]/subnetworks/sub0`>
+    /// * `projects/\[project_id]/regions/[region\]/subnetworks/sub0`
     /// * `sub0`
     #[prost(string, tag = "6")]
     pub subnetwork_uri: ::prost::alloc::string::String,
@@ -1426,8 +1572,8 @@ pub struct GceClusterConfig {
     /// instance. This `internal_ip_only` restriction can only be enabled for
     /// subnetwork enabled networks, and all off-cluster dependencies must be
     /// configured to be accessible without external IP addresses.
-    #[prost(bool, tag = "7")]
-    pub internal_ip_only: bool,
+    #[prost(bool, optional, tag = "7")]
+    pub internal_ip_only: ::core::option::Option<bool>,
     /// Optional. The type of IPv6 access for a cluster.
     #[prost(
         enumeration = "gce_cluster_config::PrivateIpv6GoogleAccess",
@@ -1479,7 +1625,8 @@ pub struct GceClusterConfig {
     /// Optional. Node Group Affinity for sole-tenant clusters.
     #[prost(message, optional, tag = "13")]
     pub node_group_affinity: ::core::option::Option<NodeGroupAffinity>,
-    /// Optional. Shielded Instance Config for clusters using [Compute Engine Shielded
+    /// Optional. Shielded Instance Config for clusters using [Compute Engine
+    /// Shielded
     /// VMs](<https://cloud.google.com/security/shielded-cloud/shielded-vm>).
     #[prost(message, optional, tag = "14")]
     pub shielded_instance_config: ::core::option::Option<ShieldedInstanceConfig>,
@@ -1499,7 +1646,8 @@ pub mod gce_cluster_config {
     #[repr(i32)]
     pub enum PrivateIpv6GoogleAccess {
         /// If unspecified, Compute Engine default behavior will apply, which
-        /// is the same as \[INHERIT_FROM_SUBNETWORK][google.cloud.dataproc.v1.GceClusterConfig.PrivateIpv6GoogleAccess.INHERIT_FROM_SUBNETWORK\].
+        /// is the same as
+        /// \[INHERIT_FROM_SUBNETWORK][google.cloud.dataproc.v1.GceClusterConfig.PrivateIpv6GoogleAccess.INHERIT_FROM_SUBNETWORK\].
         Unspecified = 0,
         /// Private access to and from Google Services configuration
         /// inherited from the subnetwork configuration. This is the
@@ -1514,6 +1662,8 @@ pub mod gce_cluster_config {
     }
 }
 /// Node Group Affinity for clusters using sole-tenant node groups.
+/// **The Dataproc `NodeGroupAffinity` resource is not related to the
+/// Dataproc \[NodeGroup][google.cloud.dataproc.v1.NodeGroup\] resource.**
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NodeGroupAffinity {
     /// Required. The URI of a
@@ -1523,8 +1673,8 @@ pub struct NodeGroupAffinity {
     ///
     /// A full URL, partial URI, or node group name are valid. Examples:
     ///
-    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id\]/zones/us-central1-a/nodeGroups/node-group-1`>
-    /// * `projects/\[project_id\]/zones/us-central1-a/nodeGroups/node-group-1`
+    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id]/zones/[zone\]/nodeGroups/node-group-1`>
+    /// * `projects/\[project_id]/zones/[zone\]/nodeGroups/node-group-1`
     /// * `node-group-1`
     #[prost(string, tag = "1")]
     pub node_group_uri: ::prost::alloc::string::String,
@@ -1534,20 +1684,21 @@ pub struct NodeGroupAffinity {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ShieldedInstanceConfig {
     /// Optional. Defines whether instances have Secure Boot enabled.
-    #[prost(bool, tag = "1")]
-    pub enable_secure_boot: bool,
+    #[prost(bool, optional, tag = "1")]
+    pub enable_secure_boot: ::core::option::Option<bool>,
     /// Optional. Defines whether instances have the vTPM enabled.
-    #[prost(bool, tag = "2")]
-    pub enable_vtpm: bool,
+    #[prost(bool, optional, tag = "2")]
+    pub enable_vtpm: ::core::option::Option<bool>,
     /// Optional. Defines whether instances have integrity monitoring enabled.
-    #[prost(bool, tag = "3")]
-    pub enable_integrity_monitoring: bool,
+    #[prost(bool, optional, tag = "3")]
+    pub enable_integrity_monitoring: ::core::option::Option<bool>,
 }
 /// Confidential Instance Config for clusters using [Confidential
 /// VMs](<https://cloud.google.com/compute/confidential-vm/docs>)
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ConfidentialInstanceConfig {
-    /// Optional. Defines whether the instance should have confidential compute enabled.
+    /// Optional. Defines whether the instance should have confidential compute
+    /// enabled.
     #[prost(bool, tag = "1")]
     pub enable_confidential_compute: bool,
 }
@@ -1573,14 +1724,14 @@ pub struct InstanceGroupConfig {
     ///
     /// Image examples:
     ///
-    /// * `<https://www.googleapis.com/compute/beta/projects/\[project_id]/global/images/[image-id\]`>
+    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id]/global/images/[image-id\]`>
     /// * `projects/\[project_id]/global/images/[image-id\]`
     /// * `image-id`
     ///
     /// Image family examples. Dataproc will use the most recent
     /// image from the family:
     ///
-    /// * `<https://www.googleapis.com/compute/beta/projects/\[project_id]/global/images/family/[custom-image-family-name\]`>
+    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id]/global/images/family/[custom-image-family-name\]`>
     /// * `projects/\[project_id]/global/images/family/[custom-image-family-name\]`
     ///
     /// If the URI is unspecified, it will be inferred from
@@ -1591,8 +1742,8 @@ pub struct InstanceGroupConfig {
     ///
     /// A full URL, partial URI, or short name are valid. Examples:
     ///
-    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id\]/zones/us-east1-a/machineTypes/n1-standard-2`>
-    /// * `projects/\[project_id\]/zones/us-east1-a/machineTypes/n1-standard-2`
+    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id]/zones/[zone\]/machineTypes/n1-standard-2`>
+    /// * `projects/\[project_id]/zones/[zone\]/machineTypes/n1-standard-2`
     /// * `n1-standard-2`
     ///
     /// **Auto Zone Exception**: If you are using the Dataproc
@@ -1635,10 +1786,7 @@ pub struct InstanceGroupConfig {
 }
 /// Nested message and enum types in `InstanceGroupConfig`.
 pub mod instance_group_config {
-    /// Controls the use of
-    /// [preemptible instances]
-    /// (<https://cloud.google.com/compute/docs/instances/preemptible>)
-    /// within the group.
+    /// Controls the use of preemptible instances within the group.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum Preemptibility {
@@ -1650,10 +1798,22 @@ pub mod instance_group_config {
         /// This option is allowed for all instance groups and is the only valid
         /// value for Master and Worker instance groups.
         NonPreemptible = 1,
-        /// Instances are preemptible.
+        /// Instances are \[preemptible\]
+        /// (<https://cloud.google.com/compute/docs/instances/preemptible>).
         ///
-        /// This option is allowed only for secondary worker groups.
+        /// This option is allowed only for [secondary worker]
+        /// (<https://cloud.google.com/dataproc/docs/concepts/compute/secondary-vms>)
+        /// groups.
         Preemptible = 2,
+        /// Instances are [Spot VMs]
+        /// (<https://cloud.google.com/compute/docs/instances/spot>).
+        ///
+        /// This option is allowed only for [secondary worker]
+        /// (<https://cloud.google.com/dataproc/docs/concepts/compute/secondary-vms>)
+        /// groups. Spot VMs are the latest version of [preemptible VMs]
+        /// (<https://cloud.google.com/compute/docs/instances/preemptible>), and
+        /// provide additional features.
+        Spot = 3,
     }
 }
 /// Specifies the resources used to actively manage an instance group.
@@ -1675,12 +1835,12 @@ pub struct AcceleratorConfig {
     /// Full URL, partial URI, or short name of the accelerator type resource to
     /// expose to this instance. See
     /// [Compute Engine
-    /// AcceleratorTypes](<https://cloud.google.com/compute/docs/reference/beta/acceleratorTypes>).
+    /// AcceleratorTypes](<https://cloud.google.com/compute/docs/reference/v1/acceleratorTypes>).
     ///
     /// Examples:
     ///
-    /// * `<https://www.googleapis.com/compute/beta/projects/\[project_id\]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80`>
-    /// * `projects/\[project_id\]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80`
+    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id]/zones/[zone\]/acceleratorTypes/nvidia-tesla-k80`>
+    /// * `projects/\[project_id]/zones/[zone\]/acceleratorTypes/nvidia-tesla-k80`
     /// * `nvidia-tesla-k80`
     ///
     /// **Auto Zone Exception**: If you are using the Dataproc
@@ -1707,12 +1867,15 @@ pub struct DiskConfig {
     /// Optional. Size in GB of the boot disk (default is 500GB).
     #[prost(int32, tag = "1")]
     pub boot_disk_size_gb: i32,
-    /// Optional. Number of attached SSDs, from 0 to 4 (default is 0).
+    /// Optional. Number of attached SSDs, from 0 to 8 (default is 0).
     /// If SSDs are not attached, the boot disk is used to store runtime logs and
     /// \[HDFS\](<https://hadoop.apache.org/docs/r1.2.1/hdfs_user_guide.html>) data.
     /// If one or more SSDs are attached, this runtime bulk
     /// data is spread across them, and the boot disk contains only basic
     /// config and installed binaries.
+    ///
+    /// Note: Local SSD options may vary by machine type and number of vCPUs
+    /// selected.
     #[prost(int32, tag = "2")]
     pub num_local_ssds: i32,
     /// Optional. Interface type of local SSDs (default is "scsi").
@@ -1722,6 +1885,64 @@ pub struct DiskConfig {
     /// performance](<https://cloud.google.com/compute/docs/disks/local-ssd#performance>).
     #[prost(string, tag = "4")]
     pub local_ssd_interface: ::prost::alloc::string::String,
+}
+/// Node group identification and configuration information.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AuxiliaryNodeGroup {
+    /// Required. Node group configuration.
+    #[prost(message, optional, tag = "1")]
+    pub node_group: ::core::option::Option<NodeGroup>,
+    /// Optional. A node group ID. Generated if not specified.
+    ///
+    /// The ID must contain only letters (a-z, A-Z), numbers (0-9),
+    /// underscores (_), and hyphens (-). Cannot begin or end with underscore
+    /// or hyphen. Must consist of from 3 to 33 characters.
+    #[prost(string, tag = "2")]
+    pub node_group_id: ::prost::alloc::string::String,
+}
+/// Dataproc Node Group.
+/// **The Dataproc `NodeGroup` resource is not related to the
+/// Dataproc \[NodeGroupAffinity][google.cloud.dataproc.v1.NodeGroupAffinity\]
+/// resource.**
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NodeGroup {
+    /// The Node group [resource name](<https://aip.dev/122>).
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Node group roles.
+    #[prost(
+        enumeration = "node_group::Role",
+        repeated,
+        packed = "false",
+        tag = "2"
+    )]
+    pub roles: ::prost::alloc::vec::Vec<i32>,
+    /// Optional. The node group instance group configuration.
+    #[prost(message, optional, tag = "3")]
+    pub node_group_config: ::core::option::Option<InstanceGroupConfig>,
+    /// Optional. Node group labels.
+    ///
+    /// * Label **keys** must consist of from 1 to 63 characters and conform to
+    ///   [RFC 1035](<https://www.ietf.org/rfc/rfc1035.txt>).
+    /// * Label **values** can be empty. If specified, they must consist of from
+    ///   1 to 63 characters and conform to [RFC 1035]
+    ///   (<https://www.ietf.org/rfc/rfc1035.txt>).
+    /// * The node group must have no more than 32 labels.
+    #[prost(map = "string, string", tag = "4")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// Nested message and enum types in `NodeGroup`.
+pub mod node_group {
+    /// Node group roles.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Role {
+        /// Required unspecified role.
+        Unspecified = 0,
+        /// Job drivers run on the node group.
+        Driver = 1,
+    }
 }
 /// Specifies an executable to run on a fully configured node and a
 /// timeout period for executable completion.
@@ -1823,8 +2044,8 @@ pub struct SecurityConfig {
 /// Specifies Kerberos related configuration.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct KerberosConfig {
-    /// Optional. Flag to indicate whether to Kerberize the cluster (default: false). Set
-    /// this field to true to enable Kerberos on a cluster.
+    /// Optional. Flag to indicate whether to Kerberize the cluster (default:
+    /// false). Set this field to true to enable Kerberos on a cluster.
     #[prost(bool, tag = "1")]
     pub enable_kerberos: bool,
     /// Optional. The Cloud Storage URI of a KMS encrypted file containing the root
@@ -1964,7 +2185,8 @@ pub mod lifecycle_config {
     /// the cluster maximum age.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Ttl {
-        /// Optional. The time when cluster will be auto-deleted (see JSON representation of
+        /// Optional. The time when cluster will be auto-deleted (see JSON
+        /// representation of
         /// \[Timestamp\](<https://developers.google.com/protocol-buffers/docs/proto3#json>)).
         #[prost(message, tag = "2")]
         AutoDeleteTime(::prost_types::Timestamp),
@@ -1986,6 +2208,19 @@ pub struct MetastoreConfig {
     /// * `projects/\[project_id]/locations/[dataproc_region]/services/[service-name\]`
     #[prost(string, tag = "1")]
     pub dataproc_metastore_service: ::prost::alloc::string::String,
+}
+/// Contains cluster daemon metrics, such as HDFS and YARN stats.
+///
+/// **Beta Feature**: This report is available for testing purposes only. It may
+/// be changed before final release.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ClusterMetrics {
+    /// The HDFS metrics.
+    #[prost(map = "string, int64", tag = "1")]
+    pub hdfs_metrics: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
+    /// YARN metrics.
+    #[prost(map = "string, int64", tag = "2")]
+    pub yarn_metrics: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
 }
 /// Dataproc metric config.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2060,20 +2295,9 @@ pub mod dataproc_metric_config {
         SparkHistoryServer = 5,
         /// Hiveserver2 metric source.
         Hiveserver2 = 6,
+        /// hivemetastore metric source
+        Hivemetastore = 7,
     }
-}
-/// Contains cluster daemon metrics, such as HDFS and YARN stats.
-///
-/// **Beta Feature**: This report is available for testing purposes only. It may
-/// be changed before final release.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ClusterMetrics {
-    /// The HDFS metrics.
-    #[prost(map = "string, int64", tag = "1")]
-    pub hdfs_metrics: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
-    /// The YARN metrics.
-    #[prost(map = "string, int64", tag = "2")]
-    pub yarn_metrics: ::std::collections::HashMap<::prost::alloc::string::String, i64>,
 }
 /// A request to create a cluster.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2088,11 +2312,12 @@ pub struct CreateClusterRequest {
     /// Required. The cluster to create.
     #[prost(message, optional, tag = "2")]
     pub cluster: ::core::option::Option<Cluster>,
-    /// Optional. A unique ID used to identify the request. If the server receives two
+    /// Optional. A unique ID used to identify the request. If the server receives
+    /// two
     /// \[CreateClusterRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.CreateClusterRequest>)s
     /// with the same id, then the second request will be ignored and the
-    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created and stored in the backend
-    /// is returned.
+    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created
+    /// and stored in the backend is returned.
     ///
     /// It is recommended to always set this value to a
     /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
@@ -2121,7 +2346,7 @@ pub struct UpdateClusterRequest {
     /// Required. The changes to the cluster.
     #[prost(message, optional, tag = "3")]
     pub cluster: ::core::option::Option<Cluster>,
-    /// Optional. Timeout for graceful YARN decomissioning. Graceful
+    /// Optional. Timeout for graceful YARN decommissioning. Graceful
     /// decommissioning allows removing nodes from the cluster without
     /// interrupting jobs in progress. Timeout specifies how long to wait for jobs
     /// in progress to finish before forcefully removing nodes (and potentially
@@ -2189,8 +2414,8 @@ pub struct UpdateClusterRequest {
     /// receives two
     /// \[UpdateClusterRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.UpdateClusterRequest>)s
     /// with the same id, then the second request will be ignored and the
-    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created and stored in the
-    /// backend is returned.
+    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created
+    /// and stored in the backend is returned.
     ///
     /// It is recommended to always set this value to a
     /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
@@ -2221,8 +2446,8 @@ pub struct StopClusterRequest {
     /// receives two
     /// \[StopClusterRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.StopClusterRequest>)s
     /// with the same id, then the second request will be ignored and the
-    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created and stored in the
-    /// backend is returned.
+    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created
+    /// and stored in the backend is returned.
     ///
     /// Recommendation: Set this value to a
     /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
@@ -2253,8 +2478,8 @@ pub struct StartClusterRequest {
     /// receives two
     /// \[StartClusterRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.StartClusterRequest>)s
     /// with the same id, then the second request will be ignored and the
-    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created and stored in the
-    /// backend is returned.
+    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created
+    /// and stored in the backend is returned.
     ///
     /// Recommendation: Set this value to a
     /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
@@ -2285,8 +2510,8 @@ pub struct DeleteClusterRequest {
     /// receives two
     /// \[DeleteClusterRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.DeleteClusterRequest>)s
     /// with the same id, then the second request will be ignored and the
-    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created and stored in the
-    /// backend is returned.
+    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created
+    /// and stored in the backend is returned.
     ///
     /// It is recommended to always set this value to a
     /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
@@ -2488,7 +2713,8 @@ pub mod cluster_controller_client {
         #[doc = " Updates a cluster in a project. The returned"]
         #[doc = " [Operation.metadata][google.longrunning.Operation.metadata] will be"]
         #[doc = " [ClusterOperationMetadata](https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#clusteroperationmetadata)."]
-        #[doc = " The cluster must be in a [`RUNNING`][google.cloud.dataproc.v1.ClusterStatus.State] state or an error"]
+        #[doc = " The cluster must be in a"]
+        #[doc = " [`RUNNING`][google.cloud.dataproc.v1.ClusterStatus.State] state or an error"]
         #[doc = " is returned."]
         pub async fn update_cluster(
             &mut self,
@@ -2736,7 +2962,7 @@ pub mod hadoop_job {
         MainClass(::prost::alloc::string::String),
     }
 }
-/// A Dataproc job for running [Apache Spark](<http://spark.apache.org/>)
+/// A Dataproc job for running [Apache Spark](<https://spark.apache.org/>)
 /// applications on YARN.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SparkJob {
@@ -2903,7 +3129,7 @@ pub mod hive_job {
     }
 }
 /// A Dataproc job for running [Apache Spark
-/// SQL](<http://spark.apache.org/sql/>) queries.
+/// SQL](<https://spark.apache.org/sql/>) queries.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SparkSqlJob {
     /// Optional. Mapping of query variable names to values (equivalent to the
@@ -3070,6 +3296,53 @@ pub mod presto_job {
         QueryList(super::QueryList),
     }
 }
+/// A Dataproc job for running \[Trino\](<https://trino.io/>) queries.
+/// **IMPORTANT**: The [Dataproc Trino Optional
+/// Component](<https://cloud.google.com/dataproc/docs/concepts/components/trino>)
+/// must be enabled when the cluster is created to submit a Trino job to the
+/// cluster.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TrinoJob {
+    /// Optional. Whether to continue executing queries if a query fails.
+    /// The default value is `false`. Setting to `true` can be useful when
+    /// executing independent parallel queries.
+    #[prost(bool, tag = "3")]
+    pub continue_on_failure: bool,
+    /// Optional. The format in which query output will be displayed. See the
+    /// Trino documentation for supported output formats
+    #[prost(string, tag = "4")]
+    pub output_format: ::prost::alloc::string::String,
+    /// Optional. Trino client tags to attach to this query
+    #[prost(string, repeated, tag = "5")]
+    pub client_tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. A mapping of property names to values. Used to set Trino
+    /// [session properties](<https://trino.io/docs/current/sql/set-session.html>)
+    /// Equivalent to using the --session flag in the Trino CLI
+    #[prost(map = "string, string", tag = "6")]
+    pub properties:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Optional. The runtime log config for job execution.
+    #[prost(message, optional, tag = "7")]
+    pub logging_config: ::core::option::Option<LoggingConfig>,
+    /// Required. The sequence of Trino queries to execute, specified as
+    /// either an HCFS file URI or as a list of queries.
+    #[prost(oneof = "trino_job::Queries", tags = "1, 2")]
+    pub queries: ::core::option::Option<trino_job::Queries>,
+}
+/// Nested message and enum types in `TrinoJob`.
+pub mod trino_job {
+    /// Required. The sequence of Trino queries to execute, specified as
+    /// either an HCFS file URI or as a list of queries.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Queries {
+        /// The HCFS URI of the script that contains SQL queries.
+        #[prost(string, tag = "1")]
+        QueryFileUri(::prost::alloc::string::String),
+        /// A list of queries.
+        #[prost(message, tag = "2")]
+        QueryList(super::QueryList),
+    }
+}
 /// Dataproc job config.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobPlacement {
@@ -3080,7 +3353,8 @@ pub struct JobPlacement {
     /// the job is submitted.
     #[prost(string, tag = "2")]
     pub cluster_uuid: ::prost::alloc::string::String,
-    /// Optional. Cluster labels to identify a cluster where the job will be submitted.
+    /// Optional. Cluster labels to identify a cluster where the job will be
+    /// submitted.
     #[prost(map = "string, string", tag = "3")]
     pub cluster_labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
@@ -3162,8 +3436,8 @@ pub mod job_status {
 /// Encapsulates the full scoping used to reference a job.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobReference {
-    /// Optional. The ID of the Google Cloud Platform project that the job belongs to. If
-    /// specified, must match the request project ID.
+    /// Optional. The ID of the Google Cloud Platform project that the job belongs
+    /// to. If specified, must match the request project ID.
     #[prost(string, tag = "1")]
     pub project_id: ::prost::alloc::string::String,
     /// Optional. The job ID, which must be unique within the project.
@@ -3279,14 +3553,17 @@ pub struct Job {
     /// may be reused over time.
     #[prost(string, tag = "22")]
     pub job_uuid: ::prost::alloc::string::String,
-    /// Output only. Indicates whether the job is completed. If the value is `false`,
-    /// the job is still in progress. If `true`, the job is completed, and
+    /// Output only. Indicates whether the job is completed. If the value is
+    /// `false`, the job is still in progress. If `true`, the job is completed, and
     /// `status.state` field will indicate if it was successful, failed,
     /// or cancelled.
     #[prost(bool, tag = "24")]
     pub done: bool,
+    /// Optional. Driver scheduling configuration.
+    #[prost(message, optional, tag = "27")]
+    pub driver_scheduling_config: ::core::option::Option<DriverSchedulingConfig>,
     /// Required. The application/framework-specific portion of the job.
-    #[prost(oneof = "job::TypeJob", tags = "3, 4, 5, 6, 7, 21, 12, 23")]
+    #[prost(oneof = "job::TypeJob", tags = "3, 4, 5, 6, 7, 21, 12, 23, 28")]
     pub type_job: ::core::option::Option<job::TypeJob>,
 }
 /// Nested message and enum types in `Job`.
@@ -3318,7 +3595,20 @@ pub mod job {
         /// Optional. Job is a Presto job.
         #[prost(message, tag = "23")]
         PrestoJob(super::PrestoJob),
+        /// Optional. Job is a Trino job.
+        #[prost(message, tag = "28")]
+        TrinoJob(super::TrinoJob),
     }
+}
+/// Driver scheduling configuration.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DriverSchedulingConfig {
+    /// Required. The amount of memory in MB the driver is requesting.
+    #[prost(int32, tag = "1")]
+    pub memory_mb: i32,
+    /// Required. The number of vCPUs the driver is requesting.
+    #[prost(int32, tag = "2")]
+    pub vcores: i32,
 }
 /// Job scheduling options.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -3327,27 +3617,26 @@ pub struct JobScheduling {
     /// a result of driver exiting with non-zero code before job is
     /// reported failed.
     ///
-    /// A job may be reported as thrashing if driver exits with non-zero code
-    /// 4 times within 10 minute window.
+    /// A job may be reported as thrashing if the driver exits with a non-zero code
+    /// four times within a 10-minute window.
     ///
     /// Maximum value is 10.
     ///
-    /// **Note:** Currently, this restartable job option is
-    /// not supported in Dataproc
-    /// [workflow
-    /// template](<https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template>)
-    /// jobs.
+    /// **Note:** This restartable job option is not supported in Dataproc
+    /// [workflow templates]
+    /// (<https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template>).
     #[prost(int32, tag = "1")]
     pub max_failures_per_hour: i32,
-    /// Optional. Maximum number of times in total a driver may be restarted as a result of
-    /// driver exiting with non-zero code before job is reported failed.
+    /// Optional. Maximum total number of times a driver may be restarted as a
+    /// result of the driver exiting with a non-zero code. After the maximum number
+    /// is reached, the job will be reported as failed.
+    ///
     /// Maximum value is 240.
     ///
     /// **Note:** Currently, this restartable job option is
     /// not supported in Dataproc
     /// [workflow
-    /// template](<https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template>)
-    /// jobs.
+    /// templates](<https://cloud.google.com/dataproc/docs/concepts/workflows/using-workflows#adding_jobs_to_a_template>).
     #[prost(int32, tag = "2")]
     pub max_failures_total: i32,
 }
@@ -3712,6 +4001,204 @@ pub mod job_controller_client {
         }
     }
 }
+/// A request to create a node group.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateNodeGroupRequest {
+    /// Required. The parent resource where this node group will be created.
+    /// Format: `projects/{project}/regions/{region}/clusters/{cluster}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The node group to create.
+    #[prost(message, optional, tag = "2")]
+    pub node_group: ::core::option::Option<NodeGroup>,
+    /// Optional. An optional node group ID. Generated if not specified.
+    ///
+    /// The ID must contain only letters (a-z, A-Z), numbers (0-9),
+    /// underscores (_), and hyphens (-). Cannot begin or end with underscore
+    /// or hyphen. Must consist of from 3 to 33 characters.
+    #[prost(string, tag = "4")]
+    pub node_group_id: ::prost::alloc::string::String,
+    /// Optional. A unique ID used to identify the request. If the server receives
+    /// two
+    /// \[CreateNodeGroupRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.CreateNodeGroupRequests>)
+    /// with the same ID, the second request is ignored and the
+    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created
+    /// and stored in the backend is returned.
+    ///
+    /// Recommendation: Set this value to a
+    /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
+    ///
+    /// The ID must contain only letters (a-z, A-Z), numbers (0-9),
+    /// underscores (_), and hyphens (-). The maximum length is 40 characters.
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// A request to resize a node group.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResizeNodeGroupRequest {
+    /// Required. The name of the node group to resize.
+    /// Format:
+    /// `projects/{project}/regions/{region}/clusters/{cluster}/nodeGroups/{nodeGroup}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The number of running instances for the node group to maintain.
+    /// The group adds or removes instances to maintain the number of instances
+    /// specified by this parameter.
+    #[prost(int32, tag = "2")]
+    pub size: i32,
+    /// Optional. A unique ID used to identify the request. If the server receives
+    /// two
+    /// \[ResizeNodeGroupRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.ResizeNodeGroupRequests>)
+    /// with the same ID, the second request is ignored and the
+    /// first \[google.longrunning.Operation][google.longrunning.Operation\] created
+    /// and stored in the backend is returned.
+    ///
+    /// Recommendation: Set this value to a
+    /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
+    ///
+    /// The ID must contain only letters (a-z, A-Z), numbers (0-9),
+    /// underscores (_), and hyphens (-). The maximum length is 40 characters.
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+    /// Optional. Timeout for graceful YARN decomissioning. [Graceful
+    /// decommissioning]
+    /// (<https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/scaling-clusters#graceful_decommissioning>)
+    /// allows the removal of nodes from the Compute Engine node group
+    /// without interrupting jobs in progress. This timeout specifies how long to
+    /// wait for jobs in progress to finish before forcefully removing nodes (and
+    /// potentially interrupting jobs). Default timeout is 0 (for forceful
+    /// decommission), and the maximum allowed timeout is 1 day. (see JSON
+    /// representation of
+    /// \[Duration\](<https://developers.google.com/protocol-buffers/docs/proto3#json>)).
+    ///
+    /// Only supported on Dataproc image versions 1.2 and higher.
+    #[prost(message, optional, tag = "4")]
+    pub graceful_decommission_timeout: ::core::option::Option<::prost_types::Duration>,
+}
+/// A request to get a node group .
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetNodeGroupRequest {
+    /// Required. The name of the node group to retrieve.
+    /// Format:
+    /// `projects/{project}/regions/{region}/clusters/{cluster}/nodeGroups/{nodeGroup}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+#[doc = r" Generated client implementations."]
+pub mod node_group_controller_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " The `NodeGroupControllerService` provides methods to manage node groups"]
+    #[doc = " of Compute Engine managed instances."]
+    #[derive(Debug, Clone)]
+    pub struct NodeGroupControllerClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> NodeGroupControllerClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> NodeGroupControllerClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            NodeGroupControllerClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a node group in a cluster. The returned"]
+        #[doc = " [Operation.metadata][google.longrunning.Operation.metadata] is"]
+        #[doc = " [NodeGroupOperationMetadata](https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#nodegroupoperationmetadata)."]
+        pub async fn create_node_group(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateNodeGroupRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.NodeGroupController/CreateNodeGroup",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Resizes a node group in a cluster. The returned"]
+        #[doc = " [Operation.metadata][google.longrunning.Operation.metadata] is"]
+        #[doc = " [NodeGroupOperationMetadata](https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#nodegroupoperationmetadata)."]
+        pub async fn resize_node_group(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ResizeNodeGroupRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.NodeGroupController/ResizeNodeGroup",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets the resource representation for a node group in a"]
+        #[doc = " cluster."]
+        pub async fn get_node_group(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetNodeGroupRequest>,
+        ) -> Result<tonic::Response<super::NodeGroup>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.NodeGroupController/GetNodeGroup",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
 /// Metadata describing the Batch operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchOperationMetadata {
@@ -3816,6 +4303,59 @@ pub struct ClusterOperationMetadata {
     /// Output only. Errors encountered during operation execution.
     #[prost(string, repeated, tag = "14")]
     pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Output only. Child operation ids
+    #[prost(string, repeated, tag = "15")]
+    pub child_operation_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Metadata describing the node group operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NodeGroupOperationMetadata {
+    /// Output only. Node group ID for the operation.
+    #[prost(string, tag = "1")]
+    pub node_group_id: ::prost::alloc::string::String,
+    /// Output only. Cluster UUID associated with the node group operation.
+    #[prost(string, tag = "2")]
+    pub cluster_uuid: ::prost::alloc::string::String,
+    /// Output only. Current operation status.
+    #[prost(message, optional, tag = "3")]
+    pub status: ::core::option::Option<ClusterOperationStatus>,
+    /// Output only. The previous operation status.
+    #[prost(message, repeated, tag = "4")]
+    pub status_history: ::prost::alloc::vec::Vec<ClusterOperationStatus>,
+    /// The operation type.
+    #[prost(
+        enumeration = "node_group_operation_metadata::NodeGroupOperationType",
+        tag = "5"
+    )]
+    pub operation_type: i32,
+    /// Output only. Short description of operation.
+    #[prost(string, tag = "6")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. Labels associated with the operation.
+    #[prost(map = "string, string", tag = "7")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Errors encountered during operation execution.
+    #[prost(string, repeated, tag = "8")]
+    pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Nested message and enum types in `NodeGroupOperationMetadata`.
+pub mod node_group_operation_metadata {
+    /// Operation type for node group resources.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum NodeGroupOperationType {
+        /// Node group operation type is unknown.
+        Unspecified = 0,
+        /// Create node group operation type.
+        Create = 1,
+        /// Update node group operation type.
+        Update = 2,
+        /// Delete node group operation type.
+        Delete = 3,
+        /// Resize node group operation type.
+        Resize = 4,
+    }
 }
 /// A Dataproc workflow template resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -3969,8 +4509,8 @@ pub struct OrderedJob {
     ///
     /// The step id is used as prefix for job id, as job
     /// `goog-dataproc-workflow-step-id` label, and in
-    /// \[prerequisiteStepIds][google.cloud.dataproc.v1.OrderedJob.prerequisite_step_ids\] field from other
-    /// steps.
+    /// \[prerequisiteStepIds][google.cloud.dataproc.v1.OrderedJob.prerequisite_step_ids\]
+    /// field from other steps.
     ///
     /// The id must contain only letters (a-z, A-Z), numbers (0-9),
     /// underscores (_), and hyphens (-). Cannot begin or end with underscore
@@ -4056,10 +4596,10 @@ pub struct TemplateParameter {
     /// A field is allowed to appear in at most one parameter's list of field
     /// paths.
     ///
-    /// A field path is similar in syntax to a \[google.protobuf.FieldMask][google.protobuf.FieldMask\].
-    /// For example, a field path that references the zone field of a workflow
-    /// template's cluster selector would be specified as
-    /// `placement.clusterSelector.zone`.
+    /// A field path is similar in syntax to a
+    /// \[google.protobuf.FieldMask][google.protobuf.FieldMask\]. For example, a
+    /// field path that references the zone field of a workflow template's cluster
+    /// selector would be specified as `placement.clusterSelector.zone`.
     ///
     /// Also, field paths can reference fields using the following syntax:
     ///
@@ -4189,16 +4729,19 @@ pub struct WorkflowMetadata {
     /// Output only. The UUID of target cluster.
     #[prost(string, tag = "11")]
     pub cluster_uuid: ::prost::alloc::string::String,
-    /// Output only. The timeout duration for the DAG of jobs, expressed in seconds (see
-    /// [JSON representation of
+    /// Output only. The timeout duration for the DAG of jobs, expressed in seconds
+    /// (see [JSON representation of
     /// duration](<https://developers.google.com/protocol-buffers/docs/proto3#json>)).
     #[prost(message, optional, tag = "12")]
     pub dag_timeout: ::core::option::Option<::prost_types::Duration>,
-    /// Output only. DAG start time, only set for workflows with \[dag_timeout][google.cloud.dataproc.v1.WorkflowMetadata.dag_timeout\] when DAG
-    /// begins.
+    /// Output only. DAG start time, only set for workflows with
+    /// \[dag_timeout][google.cloud.dataproc.v1.WorkflowMetadata.dag_timeout\] when
+    /// DAG begins.
     #[prost(message, optional, tag = "13")]
     pub dag_start_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. DAG end time, only set for workflows with \[dag_timeout][google.cloud.dataproc.v1.WorkflowMetadata.dag_timeout\] when DAG ends.
+    /// Output only. DAG end time, only set for workflows with
+    /// \[dag_timeout][google.cloud.dataproc.v1.WorkflowMetadata.dag_timeout\] when
+    /// DAG ends.
     #[prost(message, optional, tag = "14")]
     pub dag_end_time: ::core::option::Option<::prost_types::Timestamp>,
 }
@@ -4586,7 +5129,8 @@ pub mod workflow_template_service_client {
         #[doc = " Instantiates a template and begins execution."]
         #[doc = ""]
         #[doc = " This method is equivalent to executing the sequence"]
-        #[doc = " [CreateWorkflowTemplate][google.cloud.dataproc.v1.WorkflowTemplateService.CreateWorkflowTemplate], [InstantiateWorkflowTemplate][google.cloud.dataproc.v1.WorkflowTemplateService.InstantiateWorkflowTemplate],"]
+        #[doc = " [CreateWorkflowTemplate][google.cloud.dataproc.v1.WorkflowTemplateService.CreateWorkflowTemplate],"]
+        #[doc = " [InstantiateWorkflowTemplate][google.cloud.dataproc.v1.WorkflowTemplateService.InstantiateWorkflowTemplate],"]
         #[doc = " [DeleteWorkflowTemplate][google.cloud.dataproc.v1.WorkflowTemplateService.DeleteWorkflowTemplate]."]
         #[doc = ""]
         #[doc = " The returned Operation can be used to track execution of"]

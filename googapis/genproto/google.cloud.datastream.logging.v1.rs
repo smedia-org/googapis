@@ -1,0 +1,10 @@
+/// Stackdriver structured-payload for events related to a stream.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StreamActivityLogEntry {
+    /// A code representing the event.
+    #[prost(string, tag = "1")]
+    pub event_code: ::prost::alloc::string::String,
+    /// A free-text message describing the event.
+    #[prost(string, tag = "2")]
+    pub event_message: ::prost::alloc::string::String,
+}

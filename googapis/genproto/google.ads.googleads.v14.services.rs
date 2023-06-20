@@ -1,11 +1,12 @@
 /// Request message for
-/// \[AccountBudgetProposalService.MutateAccountBudgetProposal][google.ads.googleads.v11.services.AccountBudgetProposalService.MutateAccountBudgetProposal\].
+/// \[AccountBudgetProposalService.MutateAccountBudgetProposal][google.ads.googleads.v14.services.AccountBudgetProposalService.MutateAccountBudgetProposal\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAccountBudgetProposalRequest {
     /// Required. The ID of the customer.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The operation to perform on an individual account-level budget proposal.
+    /// Required. The operation to perform on an individual account-level budget
+    /// proposal.
     #[prost(message, optional, tag = "2")]
     pub operation: ::core::option::Option<AccountBudgetProposalOperation>,
     /// If true, the request is validated but not executed. Only errors are
@@ -150,13 +151,13 @@ pub mod account_budget_proposal_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AccountBudgetProposalService/MutateAccountBudgetProposal") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AccountBudgetProposalService/MutateAccountBudgetProposal") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[AccountLinkService.CreateAccountLink][google.ads.googleads.v11.services.AccountLinkService.CreateAccountLink\].
+/// \[AccountLinkService.CreateAccountLink][google.ads.googleads.v14.services.AccountLinkService.CreateAccountLink\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAccountLinkRequest {
     /// Required. The ID of the customer for which the account link is created.
@@ -167,14 +168,15 @@ pub struct CreateAccountLinkRequest {
     pub account_link: ::core::option::Option<super::resources::AccountLink>,
 }
 /// Response message for
-/// \[AccountLinkService.CreateAccountLink][google.ads.googleads.v11.services.AccountLinkService.CreateAccountLink\].
+/// \[AccountLinkService.CreateAccountLink][google.ads.googleads.v14.services.AccountLinkService.CreateAccountLink\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAccountLinkResponse {
     /// Returned for successful operations. Resource name of the account link.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[AccountLinkService.MutateAccountLink][google.ads.googleads.v11.services.AccountLinkService.MutateAccountLink\].
+/// Request message for
+/// \[AccountLinkService.MutateAccountLink][google.ads.googleads.v14.services.AccountLinkService.MutateAccountLink\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAccountLinkRequest {
     /// Required. The ID of the customer being modified.
@@ -317,7 +319,7 @@ pub mod account_link_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AccountLinkService/CreateAccountLink",
+                "/google.ads.googleads.v14.services.AccountLinkService/CreateAccountLink",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -348,13 +350,14 @@ pub mod account_link_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AccountLinkService/MutateAccountLink",
+                "/google.ads.googleads.v14.services.AccountLinkService/MutateAccountLink",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdGroupAdLabelService.MutateAdGroupAdLabels][google.ads.googleads.v11.services.AdGroupAdLabelService.MutateAdGroupAdLabels\].
+/// Request message for
+/// \[AdGroupAdLabelService.MutateAdGroupAdLabels][google.ads.googleads.v14.services.AdGroupAdLabelService.MutateAdGroupAdLabels\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupAdLabelsRequest {
     /// Required. ID of the customer whose ad group ad labels are being modified.
@@ -393,7 +396,7 @@ pub mod ad_group_ad_label_operation {
         /// Remove operation: A resource name for the ad group ad label
         /// being removed, in this format:
         ///
-        /// `customers/{customer_id}/adGroupAdLabels/{ad_group_id}~{ad_id}_{label_id}`
+        /// `customers/{customer_id}/adGroupAdLabels/{ad_group_id}~{ad_id}~{label_id}`
         #[prost(string, tag = "2")]
         Remove(::prost::alloc::string::String),
     }
@@ -494,13 +497,14 @@ pub mod ad_group_ad_label_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdGroupAdLabelService/MutateAdGroupAdLabels",
+                "/google.ads.googleads.v14.services.AdGroupAdLabelService/MutateAdGroupAdLabels",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdGroupAdService.MutateAdGroupAds][google.ads.googleads.v11.services.AdGroupAdService.MutateAdGroupAds\].
+/// Request message for
+/// \[AdGroupAdService.MutateAdGroupAds][google.ads.googleads.v14.services.AdGroupAdService.MutateAdGroupAds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupAdsRequest {
     /// Required. The ID of the customer whose ads are being modified.
@@ -693,13 +697,14 @@ pub mod ad_group_ad_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdGroupAdService/MutateAdGroupAds",
+                "/google.ads.googleads.v14.services.AdGroupAdService/MutateAdGroupAds",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdGroupAssetService.MutateAdGroupAssets][google.ads.googleads.v11.services.AdGroupAssetService.MutateAdGroupAssets\].
+/// Request message for
+/// \[AdGroupAssetService.MutateAdGroupAssets][google.ads.googleads.v14.services.AdGroupAssetService.MutateAdGroupAssets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupAssetsRequest {
     /// Required. The ID of the customer whose ad group assets are being modified.
@@ -859,19 +864,170 @@ pub mod ad_group_asset_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdGroupAssetService/MutateAdGroupAssets",
+                "/google.ads.googleads.v14.services.AdGroupAssetService/MutateAdGroupAssets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdGroupBidModifierService.MutateAdGroupBidModifiers][google.ads.googleads.v11.services.AdGroupBidModifierService.MutateAdGroupBidModifiers\].
+/// Request message for
+/// \[AdGroupAssetSetService.MutateAdGroupAssetSets][google.ads.googleads.v14.services.AdGroupAssetSetService.MutateAdGroupAssetSets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MutateAdGroupBidModifiersRequest {
-    /// Required. ID of the customer whose ad group bid modifiers are being modified.
+pub struct MutateAdGroupAssetSetsRequest {
+    /// Required. The ID of the customer whose ad group asset sets are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual ad group bid modifiers.
+    /// Required. The list of operations to perform on individual ad group asset
+    /// sets.
+    #[prost(message, repeated, tag = "2")]
+    pub operations: ::prost::alloc::vec::Vec<AdGroupAssetSetOperation>,
+    /// If true, successful operations will be carried out and invalid
+    /// operations will return errors. If false, all operations will be carried
+    /// out in one transaction if and only if they are all valid.
+    /// Default is false.
+    #[prost(bool, tag = "3")]
+    pub partial_failure: bool,
+    /// If true, the request is validated but not executed. Only errors are
+    /// returned, not results.
+    #[prost(bool, tag = "4")]
+    pub validate_only: bool,
+    /// The response content type setting. Determines whether the mutable resource
+    /// or just the resource name should be returned post mutation.
+    #[prost(
+        enumeration = "super::enums::response_content_type_enum::ResponseContentType",
+        tag = "5"
+    )]
+    pub response_content_type: i32,
+}
+/// A single operation (create, remove) on an ad group asset set.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdGroupAssetSetOperation {
+    /// The mutate operation.
+    #[prost(oneof = "ad_group_asset_set_operation::Operation", tags = "1, 2")]
+    pub operation: ::core::option::Option<ad_group_asset_set_operation::Operation>,
+}
+/// Nested message and enum types in `AdGroupAssetSetOperation`.
+pub mod ad_group_asset_set_operation {
+    /// The mutate operation.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Operation {
+        /// Create operation: No resource name is expected for the new ad group asset
+        /// set.
+        #[prost(message, tag = "1")]
+        Create(super::super::resources::AdGroupAssetSet),
+        /// Remove operation: A resource name for the removed ad group asset set is
+        /// expected, in this format:
+        /// `customers/{customer_id}/adGroupAssetSets/{ad_group_id}~{asset_set_id}`
+        #[prost(string, tag = "2")]
+        Remove(::prost::alloc::string::String),
+    }
+}
+/// Response message for an ad group asset set mutate.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateAdGroupAssetSetsResponse {
+    /// All results for the mutate.
+    #[prost(message, repeated, tag = "1")]
+    pub results: ::prost::alloc::vec::Vec<MutateAdGroupAssetSetResult>,
+    /// Errors that pertain to operation failures in the partial failure mode.
+    /// Returned only when partial_failure = true and all errors occur inside the
+    /// operations. If any errors occur outside the operations (e.g. auth errors),
+    /// we return an RPC level error.
+    #[prost(message, optional, tag = "2")]
+    pub partial_failure_error: ::core::option::Option<super::super::super::super::rpc::Status>,
+}
+/// The result for the ad group asset set mutate.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateAdGroupAssetSetResult {
+    /// Returned for successful operations.
+    #[prost(string, tag = "1")]
+    pub resource_name: ::prost::alloc::string::String,
+    /// The mutated ad group asset set with only mutable fields after mutate. The
+    /// field will only be returned when response_content_type is set to
+    /// "MUTABLE_RESOURCE".
+    #[prost(message, optional, tag = "2")]
+    pub ad_group_asset_set: ::core::option::Option<super::resources::AdGroupAssetSet>,
+}
+#[doc = r" Generated client implementations."]
+pub mod ad_group_asset_set_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service to manage ad group asset set"]
+    #[derive(Debug, Clone)]
+    pub struct AdGroupAssetSetServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> AdGroupAssetSetServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> AdGroupAssetSetServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            AdGroupAssetSetServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates, or removes ad group asset sets. Operation statuses are"]
+        #[doc = " returned."]
+        pub async fn mutate_ad_group_asset_sets(
+            &mut self,
+            request: impl tonic::IntoRequest<super::MutateAdGroupAssetSetsRequest>,
+        ) -> Result<tonic::Response<super::MutateAdGroupAssetSetsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.ads.googleads.v14.services.AdGroupAssetSetService/MutateAdGroupAssetSets",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Request message for
+/// \[AdGroupBidModifierService.MutateAdGroupBidModifiers][google.ads.googleads.v14.services.AdGroupBidModifierService.MutateAdGroupBidModifiers\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateAdGroupBidModifiersRequest {
+    /// Required. ID of the customer whose ad group bid modifiers are being
+    /// modified.
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    /// Required. The list of operations to perform on individual ad group bid
+    /// modifiers.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<AdGroupBidModifierOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -1037,21 +1193,21 @@ pub mod ad_group_bid_modifier_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AdGroupBidModifierService/MutateAdGroupBidModifiers") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AdGroupBidModifierService/MutateAdGroupBidModifiers") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[AdGroupCriterionCustomizerService.MutateAdGroupCriterionCustomizers][google.ads.googleads.v11.services.AdGroupCriterionCustomizerService.MutateAdGroupCriterionCustomizers\].
+/// \[AdGroupCriterionCustomizerService.MutateAdGroupCriterionCustomizers][google.ads.googleads.v14.services.AdGroupCriterionCustomizerService.MutateAdGroupCriterionCustomizers\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupCriterionCustomizersRequest {
-    /// Required. The ID of the customer whose ad group criterion customizers are being
-    /// modified.
+    /// Required. The ID of the customer whose ad group criterion customizers are
+    /// being modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual ad group criterion
-    /// customizers.
+    /// Required. The list of operations to perform on individual ad group
+    /// criterion customizers.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<AdGroupCriterionCustomizerOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -1072,7 +1228,7 @@ pub struct MutateAdGroupCriterionCustomizersRequest {
     )]
     pub response_content_type: i32,
 }
-/// A single operation (create, remove) on an customizer attribute.
+/// A single operation (create, remove) on a customizer attribute.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AdGroupCriterionCustomizerOperation {
     /// The mutate operation.
@@ -1192,16 +1348,17 @@ pub mod ad_group_criterion_customizer_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AdGroupCriterionCustomizerService/MutateAdGroupCriterionCustomizers") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AdGroupCriterionCustomizerService/MutateAdGroupCriterionCustomizers") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[AdGroupCriterionLabelService.MutateAdGroupCriterionLabels][google.ads.googleads.v11.services.AdGroupCriterionLabelService.MutateAdGroupCriterionLabels\].
+/// \[AdGroupCriterionLabelService.MutateAdGroupCriterionLabels][google.ads.googleads.v14.services.AdGroupCriterionLabelService.MutateAdGroupCriterionLabels\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupCriterionLabelsRequest {
-    /// Required. ID of the customer whose ad group criterion labels are being modified.
+    /// Required. ID of the customer whose ad group criterion labels are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
     /// Required. The list of operations to perform on ad group criterion labels.
@@ -1336,12 +1493,13 @@ pub mod ad_group_criterion_label_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AdGroupCriterionLabelService/MutateAdGroupCriterionLabels") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AdGroupCriterionLabelService/MutateAdGroupCriterionLabels") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdGroupCriterionService.MutateAdGroupCriteria][google.ads.googleads.v11.services.AdGroupCriterionService.MutateAdGroupCriteria\].
+/// Request message for
+/// \[AdGroupCriterionService.MutateAdGroupCriteria][google.ads.googleads.v14.services.AdGroupCriterionService.MutateAdGroupCriteria\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupCriteriaRequest {
     /// Required. ID of the customer whose criteria are being modified.
@@ -1532,20 +1690,22 @@ pub mod ad_group_criterion_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdGroupCriterionService/MutateAdGroupCriteria",
+                "/google.ads.googleads.v14.services.AdGroupCriterionService/MutateAdGroupCriteria",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[AdGroupCustomizerService.MutateAdGroupCustomizers][google.ads.googleads.v11.services.AdGroupCustomizerService.MutateAdGroupCustomizers\].
+/// \[AdGroupCustomizerService.MutateAdGroupCustomizers][google.ads.googleads.v14.services.AdGroupCustomizerService.MutateAdGroupCustomizers\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupCustomizersRequest {
-    /// Required. The ID of the customer whose ad group customizers are being modified.
+    /// Required. The ID of the customer whose ad group customizers are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual ad group customizers.
+    /// Required. The list of operations to perform on individual ad group
+    /// customizers.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<AdGroupCustomizerOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -1566,7 +1726,7 @@ pub struct MutateAdGroupCustomizersRequest {
     )]
     pub response_content_type: i32,
 }
-/// A single operation (create, remove) on an customizer attribute.
+/// A single operation (create, remove) on a customizer attribute.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AdGroupCustomizerOperation {
     /// The mutate operation.
@@ -1678,21 +1838,21 @@ pub mod ad_group_customizer_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AdGroupCustomizerService/MutateAdGroupCustomizers") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AdGroupCustomizerService/MutateAdGroupCustomizers") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[AdGroupExtensionSettingService.MutateAdGroupExtensionSettings][google.ads.googleads.v11.services.AdGroupExtensionSettingService.MutateAdGroupExtensionSettings\].
+/// \[AdGroupExtensionSettingService.MutateAdGroupExtensionSettings][google.ads.googleads.v14.services.AdGroupExtensionSettingService.MutateAdGroupExtensionSettings\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupExtensionSettingsRequest {
-    /// Required. The ID of the customer whose ad group extension settings are being
-    /// modified.
+    /// Required. The ID of the customer whose ad group extension settings are
+    /// being modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual ad group extension
-    /// settings.
+    /// Required. The list of operations to perform on individual ad group
+    /// extension settings.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<AdGroupExtensionSettingOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -1867,12 +2027,13 @@ pub mod ad_group_extension_setting_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AdGroupExtensionSettingService/MutateAdGroupExtensionSettings") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AdGroupExtensionSettingService/MutateAdGroupExtensionSettings") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdGroupFeedService.MutateAdGroupFeeds][google.ads.googleads.v11.services.AdGroupFeedService.MutateAdGroupFeeds\].
+/// Request message for
+/// \[AdGroupFeedService.MutateAdGroupFeeds][google.ads.googleads.v14.services.AdGroupFeedService.MutateAdGroupFeeds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupFeedsRequest {
     /// Required. The ID of the customer whose ad group feeds are being modified.
@@ -2042,13 +2203,14 @@ pub mod ad_group_feed_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdGroupFeedService/MutateAdGroupFeeds",
+                "/google.ads.googleads.v14.services.AdGroupFeedService/MutateAdGroupFeeds",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdGroupLabelService.MutateAdGroupLabels][google.ads.googleads.v11.services.AdGroupLabelService.MutateAdGroupLabels\].
+/// Request message for
+/// \[AdGroupLabelService.MutateAdGroupLabels][google.ads.googleads.v14.services.AdGroupLabelService.MutateAdGroupLabels\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupLabelsRequest {
     /// Required. ID of the customer whose ad group labels are being modified.
@@ -2189,13 +2351,14 @@ pub mod ad_group_label_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdGroupLabelService/MutateAdGroupLabels",
+                "/google.ads.googleads.v14.services.AdGroupLabelService/MutateAdGroupLabels",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdGroupService.MutateAdGroups][google.ads.googleads.v11.services.AdGroupService.MutateAdGroups\].
+/// Request message for
+/// \[AdGroupService.MutateAdGroups][google.ads.googleads.v14.services.AdGroupService.MutateAdGroups\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdGroupsRequest {
     /// Required. The ID of the customer whose ad groups are being modified.
@@ -2371,13 +2534,14 @@ pub mod ad_group_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdGroupService/MutateAdGroups",
+                "/google.ads.googleads.v14.services.AdGroupService/MutateAdGroups",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdParameterService.MutateAdParameters][google.ads.googleads.v11.services.AdParameterService.MutateAdParameters\]
+/// Request message for
+/// \[AdParameterService.MutateAdParameters][google.ads.googleads.v14.services.AdParameterService.MutateAdParameters\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdParametersRequest {
     /// Required. The ID of the customer whose ad parameters are being modified.
@@ -2537,20 +2701,22 @@ pub mod ad_parameter_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdParameterService/MutateAdParameters",
+                "/google.ads.googleads.v14.services.AdParameterService/MutateAdParameters",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AdService.GetAd][google.ads.googleads.v11.services.AdService.GetAd\].
+/// Request message for
+/// \[AdService.GetAd][google.ads.googleads.v14.services.AdService.GetAd\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAdRequest {
     /// Required. The resource name of the ad to fetch.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[AdService.MutateAds][google.ads.googleads.v11.services.AdService.MutateAds\].
+/// Request message for
+/// \[AdService.MutateAds][google.ads.googleads.v14.services.AdService.MutateAds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAdsRequest {
     /// Required. The ID of the customer whose ads are being modified.
@@ -2699,7 +2865,7 @@ pub mod ad_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdService/GetAd",
+                "/google.ads.googleads.v14.services.AdService/GetAd",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -2757,19 +2923,22 @@ pub mod ad_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AdService/MutateAds",
+                "/google.ads.googleads.v14.services.AdService/MutateAds",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AssetGroupAssetService.MutateAssetGroupAssets][google.ads.googleads.v11.services.AssetGroupAssetService.MutateAssetGroupAssets\].
+/// Request message for
+/// \[AssetGroupAssetService.MutateAssetGroupAssets][google.ads.googleads.v14.services.AssetGroupAssetService.MutateAssetGroupAssets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAssetGroupAssetsRequest {
-    /// Required. The ID of the customer whose asset group assets are being modified.
+    /// Required. The ID of the customer whose asset group assets are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual asset group assets.
+    /// Required. The list of operations to perform on individual asset group
+    /// assets.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<AssetGroupAssetOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -2799,10 +2968,10 @@ pub mod asset_group_asset_operation {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Operation {
         /// Create operation: No resource name is expected for the new asset group
-        /// asset
+        /// asset.
         #[prost(message, tag = "1")]
         Create(super::super::resources::AssetGroupAsset),
-        /// Update operation: The asset group asset sis expected to have a valid
+        /// Update operation: The asset group asset is expected to have a valid
         /// resource name.
         #[prost(message, tag = "2")]
         Update(super::super::resources::AssetGroupAsset),
@@ -2897,24 +3066,24 @@ pub mod asset_group_asset_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AssetGroupAssetService/MutateAssetGroupAssets",
+                "/google.ads.googleads.v14.services.AssetGroupAssetService/MutateAssetGroupAssets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[AssetGroupListingGroupFilterService.MutateAssetGroupListingGroupFilters][google.ads.googleads.v11.services.AssetGroupListingGroupFilterService.MutateAssetGroupListingGroupFilters\].
+/// \[AssetGroupListingGroupFilterService.MutateAssetGroupListingGroupFilters][google.ads.googleads.v14.services.AssetGroupListingGroupFilterService.MutateAssetGroupListingGroupFilters\].
 /// partial_failure is not supported because the tree needs to be validated
 /// together.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAssetGroupListingGroupFiltersRequest {
-    /// Required. The ID of the customer whose asset group listing group filters are being
-    /// modified.
+    /// Required. The ID of the customer whose asset group listing group filters
+    /// are being modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual asset group listing group
-    /// filters.
+    /// Required. The list of operations to perform on individual asset group
+    /// listing group filters.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<AssetGroupListingGroupFilterOperation>,
     /// If true, the request is validated but not executed. Only errors are
@@ -3054,12 +3223,13 @@ pub mod asset_group_listing_group_filter_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AssetGroupListingGroupFilterService/MutateAssetGroupListingGroupFilters") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AssetGroupListingGroupFilterService/MutateAssetGroupListingGroupFilters") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AssetGroupService.MutateAssetGroups][google.ads.googleads.v11.services.AssetGroupService.MutateAssetGroups\].
+/// Request message for
+/// \[AssetGroupService.MutateAssetGroups][google.ads.googleads.v14.services.AssetGroupService.MutateAssetGroups\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAssetGroupsRequest {
     /// Required. The ID of the customer whose asset groups are being modified.
@@ -3186,20 +3356,22 @@ pub mod asset_group_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AssetGroupService/MutateAssetGroups",
+                "/google.ads.googleads.v14.services.AssetGroupService/MutateAssetGroups",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[AssetGroupSignalService.MutateAssetGroupSignals][google.ads.googleads.v11.services.AssetGroupSignalService.MutateAssetGroupSignals\].
+/// \[AssetGroupSignalService.MutateAssetGroupSignals][google.ads.googleads.v14.services.AssetGroupSignalService.MutateAssetGroupSignals\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAssetGroupSignalsRequest {
-    /// Required. The ID of the customer whose asset group signals are being modified.
+    /// Required. The ID of the customer whose asset group signals are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual asset group signals.
+    /// Required. The list of operations to perform on individual asset group
+    /// signals.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<AssetGroupSignalOperation>,
     /// If true, successful operations will be carried out and invalid operations
@@ -3331,12 +3503,13 @@ pub mod asset_group_signal_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AssetGroupSignalService/MutateAssetGroupSignals") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AssetGroupSignalService/MutateAssetGroupSignals") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AssetService.MutateAssets][google.ads.googleads.v11.services.AssetService.MutateAssets\]
+/// Request message for
+/// \[AssetService.MutateAssets][google.ads.googleads.v14.services.AssetService.MutateAssets\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAssetsRequest {
     /// Required. The ID of the customer whose assets are being modified.
@@ -3364,8 +3537,9 @@ pub struct MutateAssetsRequest {
     pub validate_only: bool,
 }
 /// A single operation to create an asset. Supported asset types are
-/// YoutubeVideoAsset, MediaBundleAsset, ImageAsset, and LeadFormAsset. TextAsset
-/// should be created with Ad inline.
+/// YoutubeVideoAsset, MediaBundleAsset, ImageAsset, LeadFormAsset,
+/// LocationAsset, and ImageAsset. TextAsset can be created with an Ad inline,
+/// but it can also be created apart from an Ad like other assets.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AssetOperation {
     /// FieldMask that determines which resource fields are modified in an update.
@@ -3509,13 +3683,14 @@ pub mod asset_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AssetService/MutateAssets",
+                "/google.ads.googleads.v14.services.AssetService/MutateAssets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AssetSetAssetService.MutateAssetSetAssets][google.ads.googleads.v11.services.AssetSetAssetService.MutateAssetSetAssets\].
+/// Request message for
+/// \[AssetSetAssetService.MutateAssetSetAssets][google.ads.googleads.v14.services.AssetSetAssetService.MutateAssetSetAssets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAssetSetAssetsRequest {
     /// Required. The ID of the customer whose asset set assets are being modified.
@@ -3654,13 +3829,14 @@ pub mod asset_set_asset_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AssetSetAssetService/MutateAssetSetAssets",
+                "/google.ads.googleads.v14.services.AssetSetAssetService/MutateAssetSetAssets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AssetSetService.MutateAssetSets][google.ads.googleads.v11.services.AssetSetService.MutateAssetSets\].
+/// Request message for
+/// \[AssetSetService.MutateAssetSets][google.ads.googleads.v14.services.AssetSetService.MutateAssetSets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAssetSetsRequest {
     /// Required. The ID of the customer whose asset sets are being modified.
@@ -3804,24 +3980,26 @@ pub mod asset_set_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AssetSetService/MutateAssetSets",
+                "/google.ads.googleads.v14.services.AssetSetService/MutateAssetSets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AudienceInsightsService.GenerateInsightsFinderReport][google.ads.googleads.v11.services.AudienceInsightsService.GenerateInsightsFinderReport\].
+/// Request message for
+/// \[AudienceInsightsService.GenerateInsightsFinderReport][google.ads.googleads.v14.services.AudienceInsightsService.GenerateInsightsFinderReport\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateInsightsFinderReportRequest {
     /// Required. The ID of the customer.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. A baseline audience for this report, typically all people in a region.
+    /// Required. A baseline audience for this report, typically all people in a
+    /// region.
     #[prost(message, optional, tag = "2")]
     pub baseline_audience: ::core::option::Option<BasicInsightsAudience>,
-    /// Required. The specific audience of interest for this report.  The insights in the
-    /// report will be based on attributes more prevalent in this audience than
-    /// in the report's baseline audience.
+    /// Required. The specific audience of interest for this report.  The insights
+    /// in the report will be based on attributes more prevalent in this audience
+    /// than in the report's baseline audience.
     #[prost(message, optional, tag = "3")]
     pub specific_audience: ::core::option::Option<BasicInsightsAudience>,
     /// The name of the customer being planned for.  This is a user-defined value.
@@ -3829,8 +4007,8 @@ pub struct GenerateInsightsFinderReportRequest {
     pub customer_insights_group: ::prost::alloc::string::String,
 }
 /// The response message for
-/// \[AudienceInsightsService.GenerateInsightsFinderReport][google.ads.googleads.v11.services.AudienceInsightsService.GenerateInsightsFinderReport\], containing the
-/// shareable URL for the report.
+/// \[AudienceInsightsService.GenerateInsightsFinderReport][google.ads.googleads.v14.services.AudienceInsightsService.GenerateInsightsFinderReport\],
+/// containing the shareable URL for the report.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateInsightsFinderReportResponse {
     /// An HTTPS URL providing a deep link into the Insights Finder UI with the
@@ -3839,7 +4017,7 @@ pub struct GenerateInsightsFinderReportResponse {
     pub saved_report_url: ::prost::alloc::string::String,
 }
 /// Request message for
-/// \[AudienceInsightsService.GenerateAudienceCompositionInsights][google.ads.googleads.v11.services.AudienceInsightsService.GenerateAudienceCompositionInsights\].
+/// \[AudienceInsightsService.GenerateAudienceCompositionInsights][google.ads.googleads.v14.services.AudienceInsightsService.GenerateAudienceCompositionInsights\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateAudienceCompositionInsightsRequest {
     /// Required. The ID of the customer.
@@ -3848,12 +4026,17 @@ pub struct GenerateAudienceCompositionInsightsRequest {
     /// Required. The audience of interest for which insights are being requested.
     #[prost(message, optional, tag = "2")]
     pub audience: ::core::option::Option<InsightsAudience>,
+    /// The baseline audience to which the audience of interest is being
+    /// compared.
+    #[prost(message, optional, tag = "6")]
+    pub baseline_audience: ::core::option::Option<InsightsAudience>,
     /// The one-month range of historical data to use for insights, in the format
     /// "yyyy-mm". If unset, insights will be returned for the last thirty days of
     /// data.
     #[prost(string, tag = "3")]
     pub data_month: ::prost::alloc::string::String,
-    /// Required. The audience dimensions for which composition insights should be returned.
+    /// Required. The audience dimensions for which composition insights should be
+    /// returned.
     #[prost(
         enumeration = "super::enums::audience_insights_dimension_enum::AudienceInsightsDimension",
         repeated,
@@ -3866,7 +4049,7 @@ pub struct GenerateAudienceCompositionInsightsRequest {
     pub customer_insights_group: ::prost::alloc::string::String,
 }
 /// Response message for
-/// \[AudienceInsightsService.GenerateAudienceCompositionInsights][google.ads.googleads.v11.services.AudienceInsightsService.GenerateAudienceCompositionInsights\].
+/// \[AudienceInsightsService.GenerateAudienceCompositionInsights][google.ads.googleads.v14.services.AudienceInsightsService.GenerateAudienceCompositionInsights\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateAudienceCompositionInsightsResponse {
     /// The contents of the insights report, organized into sections.
@@ -3876,7 +4059,7 @@ pub struct GenerateAudienceCompositionInsightsResponse {
     pub sections: ::prost::alloc::vec::Vec<AudienceCompositionSection>,
 }
 /// Request message for
-/// \[AudienceInsightsService.ListAudienceInsightsAttributes][google.ads.googleads.v11.services.AudienceInsightsService.ListAudienceInsightsAttributes\].
+/// \[AudienceInsightsService.ListAudienceInsightsAttributes][google.ads.googleads.v14.services.AudienceInsightsService.ListAudienceInsightsAttributes\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAudienceInsightsAttributesRequest {
     /// Required. The ID of the customer.
@@ -3890,21 +4073,48 @@ pub struct ListAudienceInsightsAttributesRequest {
         tag = "2"
     )]
     pub dimensions: ::prost::alloc::vec::Vec<i32>,
-    /// Required. A free text query.  Attributes matching or related to this string will be
+    /// Required. A free text query.  If the requested dimensions include
+    /// Attributes CATEGORY or KNOWLEDGE_GRAPH, then the attributes returned for
+    /// those dimensions will match or be related to this string.  For other
+    /// dimensions, this field is ignored and all available attributes are
     /// returned.
     #[prost(string, tag = "3")]
     pub query_text: ::prost::alloc::string::String,
     /// The name of the customer being planned for.  This is a user-defined value.
     #[prost(string, tag = "4")]
     pub customer_insights_group: ::prost::alloc::string::String,
+    /// If SUB_COUNTRY_LOCATION attributes are one of the requested dimensions and
+    /// this field is present, then the SUB_COUNTRY_LOCATION attributes returned
+    /// will be located in these countries. If this field is absent, then location
+    /// attributes are not filtered by country. Setting this field when
+    /// SUB_COUNTRY_LOCATION attributes are not requested will return an error.
+    #[prost(message, repeated, tag = "5")]
+    pub location_country_filters: ::prost::alloc::vec::Vec<super::common::LocationInfo>,
 }
 /// Response message for
-/// \[AudienceInsightsService.ListAudienceInsightsAttributes][google.ads.googleads.v11.services.AudienceInsightsService.ListAudienceInsightsAttributes\].
+/// \[AudienceInsightsService.ListAudienceInsightsAttributes][google.ads.googleads.v14.services.AudienceInsightsService.ListAudienceInsightsAttributes\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAudienceInsightsAttributesResponse {
     /// The attributes matching the search query.
     #[prost(message, repeated, tag = "1")]
     pub attributes: ::prost::alloc::vec::Vec<AudienceInsightsAttributeMetadata>,
+}
+/// Request message for \[AudienceInsightsService.ListAudienceInsightsDates][\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListInsightsEligibleDatesRequest {}
+/// Response message for \[AudienceInsightsService.ListAudienceInsightsDates][\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListInsightsEligibleDatesResponse {
+    /// The months for which AudienceInsights data is currently
+    /// available, each represented as a string in the form "YYYY-MM".
+    #[prost(string, repeated, tag = "1")]
+    pub data_months: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The actual dates covered by the "last 30 days" date range that will be used
+    /// implicitly for
+    /// \[AudienceInsightsService.GenerateAudienceCompositionInsights][google.ads.googleads.v14.services.AudienceInsightsService.GenerateAudienceCompositionInsights\]
+    /// requests that have no data_month set.
+    #[prost(message, optional, tag = "2")]
+    pub last_thirty_days: ::core::option::Option<super::common::DateRange>,
 }
 /// An audience attribute that can be used to request insights about the
 /// audience.
@@ -3928,7 +4138,7 @@ pub mod audience_insights_attribute {
         /// An audience attribute defined by a gender.
         #[prost(message, tag = "2")]
         Gender(super::super::common::GenderInfo),
-        /// An audience attribute defiend by a geographic location.
+        /// An audience attribute defined by a geographic location.
         #[prost(message, tag = "3")]
         Location(super::super::common::LocationInfo),
         /// An Affinity or In-Market audience.
@@ -4054,7 +4264,7 @@ pub struct AudienceInsightsAttributeMetadata {
     /// Metadata specific to the dimension of this attribute.
     #[prost(
         oneof = "audience_insights_attribute_metadata::DimensionMetadata",
-        tags = "6, 7"
+        tags = "6, 7, 8"
     )]
     pub dimension_metadata:
         ::core::option::Option<audience_insights_attribute_metadata::DimensionMetadata>,
@@ -4070,6 +4280,9 @@ pub mod audience_insights_attribute_metadata {
         /// Special metadata for a YouTube Dynamic Lineup.
         #[prost(message, tag = "7")]
         DynamicAttributeMetadata(super::DynamicLineupAttributeMetadata),
+        /// Special metadata for a Location.
+        #[prost(message, tag = "8")]
+        LocationAttributeMetadata(super::LocationAttributeMetadata),
     }
 }
 /// Metadata associated with a YouTube channel attribute.
@@ -4094,6 +4307,33 @@ pub struct DynamicLineupAttributeMetadata {
     /// The upper end of a range containing the number of channels in the lineup.
     #[prost(int64, optional, tag = "4")]
     pub channel_count_upper_bound: ::core::option::Option<i64>,
+    /// Examples of channels that are included in the lineup.
+    #[prost(message, repeated, tag = "5")]
+    pub sample_channels: ::prost::alloc::vec::Vec<dynamic_lineup_attribute_metadata::SampleChannel>,
+}
+/// Nested message and enum types in `DynamicLineupAttributeMetadata`.
+pub mod dynamic_lineup_attribute_metadata {
+    /// A YouTube channel returned as an example of the content in a lineup.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SampleChannel {
+        /// A YouTube channel.
+        #[prost(message, optional, tag = "1")]
+        pub youtube_channel: ::core::option::Option<super::super::common::YouTubeChannelInfo>,
+        /// The name of the sample channel.
+        #[prost(string, tag = "2")]
+        pub display_name: ::prost::alloc::string::String,
+        /// Metadata for the sample channel.
+        #[prost(message, optional, tag = "3")]
+        pub youtube_channel_metadata:
+            ::core::option::Option<super::YouTubeChannelAttributeMetadata>,
+    }
+}
+/// Metadata associated with a Location attribute.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LocationAttributeMetadata {
+    /// The country location of the sub country location.
+    #[prost(message, optional, tag = "1")]
+    pub country_location: ::core::option::Option<super::common::LocationInfo>,
 }
 /// A set of users, defined by various characteristics, for which insights can
 /// be requested in AudienceInsightsService.
@@ -4139,8 +4379,8 @@ pub struct InsightsAudience {
 /// A list of AudienceInsightsAttributes.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InsightsAudienceAttributeGroup {
-    /// Required. A collection of audience attributes to be combined with logical OR.
-    /// Attributes need not all be the same dimension.  Only Knowledge Graph
+    /// Required. A collection of audience attributes to be combined with logical
+    /// OR. Attributes need not all be the same dimension.  Only Knowledge Graph
     /// entities, Product & Service Categories, and Affinity and In-Market
     /// audiences are supported in this context.
     #[prost(message, repeated, tag = "1")]
@@ -4217,7 +4457,8 @@ pub mod audience_insights_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     #[doc = " Audience Insights Service helps users find information about groups of"]
-    #[doc = " people and how they can be reached with Google Ads."]
+    #[doc = " people and how they can be reached with Google Ads. Accessible to"]
+    #[doc = " allowlisted customers only."]
     #[derive(Debug, Clone)]
     pub struct AudienceInsightsServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -4286,7 +4527,7 @@ pub mod audience_insights_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AudienceInsightsService/GenerateInsightsFinderReport") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AudienceInsightsService/GenerateInsightsFinderReport") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Searches for audience attributes that can be used to generate insights."]
@@ -4312,7 +4553,33 @@ pub mod audience_insights_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AudienceInsightsService/ListAudienceInsightsAttributes") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AudienceInsightsService/ListAudienceInsightsAttributes") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists date ranges for which audience insights data can be requested."]
+        #[doc = ""]
+        #[doc = " List of thrown errors:"]
+        #[doc = "   [AuthenticationError]()"]
+        #[doc = "   [AuthorizationError]()"]
+        #[doc = "   [FieldError]()"]
+        #[doc = "   [HeaderError]()"]
+        #[doc = "   [InternalError]()"]
+        #[doc = "   [QuotaError]()"]
+        #[doc = "   [RangeError]()"]
+        #[doc = "   [RequestError]()"]
+        pub async fn list_insights_eligible_dates(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListInsightsEligibleDatesRequest>,
+        ) -> Result<tonic::Response<super::ListInsightsEligibleDatesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AudienceInsightsService/ListInsightsEligibleDates") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Returns a collection of attributes that are represented in an audience of"]
@@ -4343,12 +4610,13 @@ pub mod audience_insights_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.AudienceInsightsService/GenerateAudienceCompositionInsights") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.AudienceInsightsService/GenerateAudienceCompositionInsights") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[AudienceService.MutateAudiences][google.ads.googleads.v11.services.AudienceService.MutateAudiences\].
+/// Request message for
+/// \[AudienceService.MutateAudiences][google.ads.googleads.v14.services.AudienceService.MutateAudiences\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateAudiencesRequest {
     /// Required. The ID of the customer whose audiences are being modified.
@@ -4489,14 +4757,14 @@ pub mod audience_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.AudienceService/MutateAudiences",
+                "/google.ads.googleads.v14.services.AudienceService/MutateAudiences",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[BiddingDataExclusionService.MutateBiddingDataExclusions][google.ads.googleads.v11.services.BiddingDataExclusionService.MutateBiddingDataExclusions\].
+/// \[BiddingDataExclusionService.MutateBiddingDataExclusions][google.ads.googleads.v14.services.BiddingDataExclusionService.MutateBiddingDataExclusions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateBiddingDataExclusionsRequest {
     /// Required. ID of the customer whose data exclusions are being modified.
@@ -4646,19 +4914,21 @@ pub mod bidding_data_exclusion_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.BiddingDataExclusionService/MutateBiddingDataExclusions") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.BiddingDataExclusionService/MutateBiddingDataExclusions") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[BiddingSeasonalityAdjustmentService.MutateBiddingSeasonalityAdjustments][google.ads.googleads.v11.services.BiddingSeasonalityAdjustmentService.MutateBiddingSeasonalityAdjustments\].
+/// \[BiddingSeasonalityAdjustmentService.MutateBiddingSeasonalityAdjustments][google.ads.googleads.v14.services.BiddingSeasonalityAdjustmentService.MutateBiddingSeasonalityAdjustments\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateBiddingSeasonalityAdjustmentsRequest {
-    /// Required. ID of the customer whose seasonality adjustments are being modified.
+    /// Required. ID of the customer whose seasonality adjustments are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual seasonality adjustments.
+    /// Required. The list of operations to perform on individual seasonality
+    /// adjustments.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<BiddingSeasonalityAdjustmentOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -4808,18 +5078,21 @@ pub mod bidding_seasonality_adjustment_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.BiddingSeasonalityAdjustmentService/MutateBiddingSeasonalityAdjustments") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.BiddingSeasonalityAdjustmentService/MutateBiddingSeasonalityAdjustments") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[BiddingStrategyService.MutateBiddingStrategies][google.ads.googleads.v11.services.BiddingStrategyService.MutateBiddingStrategies\].
+/// Request message for
+/// \[BiddingStrategyService.MutateBiddingStrategies][google.ads.googleads.v14.services.BiddingStrategyService.MutateBiddingStrategies\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateBiddingStrategiesRequest {
-    /// Required. The ID of the customer whose bidding strategies are being modified.
+    /// Required. The ID of the customer whose bidding strategies are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual bidding strategies.
+    /// Required. The list of operations to perform on individual bidding
+    /// strategies.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<BiddingStrategyOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -4989,13 +5262,14 @@ pub mod bidding_strategy_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.BiddingStrategyService/MutateBiddingStrategies",
+                "/google.ads.googleads.v14.services.BiddingStrategyService/MutateBiddingStrategies",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignAssetService.MutateCampaignAssets][google.ads.googleads.v11.services.CampaignAssetService.MutateCampaignAssets\].
+/// Request message for
+/// \[CampaignAssetService.MutateCampaignAssets][google.ads.googleads.v14.services.CampaignAssetService.MutateCampaignAssets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignAssetsRequest {
     /// Required. The ID of the customer whose campaign assets are being modified.
@@ -5156,19 +5430,22 @@ pub mod campaign_asset_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CampaignAssetService/MutateCampaignAssets",
+                "/google.ads.googleads.v14.services.CampaignAssetService/MutateCampaignAssets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignAssetSetService.MutateCampaignAssetSets][google.ads.googleads.v11.services.CampaignAssetSetService.MutateCampaignAssetSets\].
+/// Request message for
+/// \[CampaignAssetSetService.MutateCampaignAssetSets][google.ads.googleads.v14.services.CampaignAssetSetService.MutateCampaignAssetSets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignAssetSetsRequest {
-    /// Required. The ID of the customer whose campaign asset sets are being modified.
+    /// Required. The ID of the customer whose campaign asset sets are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual campaign asset sets.
+    /// Required. The list of operations to perform on individual campaign asset
+    /// sets.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CampaignAssetSetOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -5301,19 +5578,21 @@ pub mod campaign_asset_set_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignAssetSetService/MutateCampaignAssetSets") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CampaignAssetSetService/MutateCampaignAssetSets") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CampaignBidModifierService.MutateCampaignBidModifiers][google.ads.googleads.v11.services.CampaignBidModifierService.MutateCampaignBidModifiers\].
+/// \[CampaignBidModifierService.MutateCampaignBidModifiers][google.ads.googleads.v14.services.CampaignBidModifierService.MutateCampaignBidModifiers\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignBidModifiersRequest {
-    /// Required. ID of the customer whose campaign bid modifiers are being modified.
+    /// Required. ID of the customer whose campaign bid modifiers are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual campaign bid modifiers.
+    /// Required. The list of operations to perform on individual campaign bid
+    /// modifiers.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CampaignBidModifierOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -5478,12 +5757,13 @@ pub mod campaign_bid_modifier_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignBidModifierService/MutateCampaignBidModifiers") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CampaignBidModifierService/MutateCampaignBidModifiers") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignBudgetService.MutateCampaignBudgets][google.ads.googleads.v11.services.CampaignBudgetService.MutateCampaignBudgets\].
+/// Request message for
+/// \[CampaignBudgetService.MutateCampaignBudgets][google.ads.googleads.v14.services.CampaignBudgetService.MutateCampaignBudgets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignBudgetsRequest {
     /// Required. The ID of the customer whose campaign budgets are being modified.
@@ -5648,20 +5928,22 @@ pub mod campaign_budget_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CampaignBudgetService/MutateCampaignBudgets",
+                "/google.ads.googleads.v14.services.CampaignBudgetService/MutateCampaignBudgets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CampaignConversionGoalService.MutateCampaignConversionGoals][google.ads.googleads.v11.services.CampaignConversionGoalService.MutateCampaignConversionGoals\].
+/// \[CampaignConversionGoalService.MutateCampaignConversionGoals][google.ads.googleads.v14.services.CampaignConversionGoalService.MutateCampaignConversionGoals\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignConversionGoalsRequest {
-    /// Required. The ID of the customer whose campaign conversion goals are being modified.
+    /// Required. The ID of the customer whose campaign conversion goals are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual campaign conversion goal.
+    /// Required. The list of operations to perform on individual campaign
+    /// conversion goal.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CampaignConversionGoalOperation>,
     /// If true, the request is validated but not executed. Only errors are
@@ -5768,12 +6050,13 @@ pub mod campaign_conversion_goal_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignConversionGoalService/MutateCampaignConversionGoals") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CampaignConversionGoalService/MutateCampaignConversionGoals") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignCriterionService.MutateCampaignCriteria][google.ads.googleads.v11.services.CampaignCriterionService.MutateCampaignCriteria\].
+/// Request message for
+/// \[CampaignCriterionService.MutateCampaignCriteria][google.ads.googleads.v14.services.CampaignCriterionService.MutateCampaignCriteria\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignCriteriaRequest {
     /// Required. The ID of the customer whose criteria are being modified.
@@ -5948,19 +6231,21 @@ pub mod campaign_criterion_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignCriterionService/MutateCampaignCriteria") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CampaignCriterionService/MutateCampaignCriteria") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CampaignCustomizerService.MutateCampaignCustomizers][google.ads.googleads.v11.services.CampaignCustomizerService.MutateCampaignCustomizers\].
+/// \[CampaignCustomizerService.MutateCampaignCustomizers][google.ads.googleads.v14.services.CampaignCustomizerService.MutateCampaignCustomizers\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignCustomizersRequest {
-    /// Required. The ID of the customer whose campaign customizers are being modified.
+    /// Required. The ID of the customer whose campaign customizers are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual campaign customizers.
+    /// Required. The list of operations to perform on individual campaign
+    /// customizers.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CampaignCustomizerOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -5981,7 +6266,7 @@ pub struct MutateCampaignCustomizersRequest {
     )]
     pub response_content_type: i32,
 }
-/// A single operation (create, remove) on an customizer attribute.
+/// A single operation (create, remove) on a customizer attribute.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CampaignCustomizerOperation {
     /// The mutate operation.
@@ -6004,7 +6289,7 @@ pub mod campaign_customizer_operation {
         Remove(::prost::alloc::string::String),
     }
 }
-/// Response message for an campaign customizer mutate.
+/// Response message for a campaign customizer mutate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignCustomizersResponse {
     /// All results for the mutate.
@@ -6093,12 +6378,13 @@ pub mod campaign_customizer_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignCustomizerService/MutateCampaignCustomizers") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CampaignCustomizerService/MutateCampaignCustomizers") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignDraftService.MutateCampaignDrafts][google.ads.googleads.v11.services.CampaignDraftService.MutateCampaignDrafts\].
+/// Request message for
+/// \[CampaignDraftService.MutateCampaignDrafts][google.ads.googleads.v14.services.CampaignDraftService.MutateCampaignDrafts\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignDraftsRequest {
     /// Required. The ID of the customer whose campaign drafts are being modified.
@@ -6125,7 +6411,8 @@ pub struct MutateCampaignDraftsRequest {
     )]
     pub response_content_type: i32,
 }
-/// Request message for \[CampaignDraftService.PromoteCampaignDraft][google.ads.googleads.v11.services.CampaignDraftService.PromoteCampaignDraft\].
+/// Request message for
+/// \[CampaignDraftService.PromoteCampaignDraft][google.ads.googleads.v14.services.CampaignDraftService.PromoteCampaignDraft\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PromoteCampaignDraftRequest {
     /// Required. The resource name of the campaign draft to promote.
@@ -6192,10 +6479,12 @@ pub struct MutateCampaignDraftResult {
     #[prost(message, optional, tag = "2")]
     pub campaign_draft: ::core::option::Option<super::resources::CampaignDraft>,
 }
-/// Request message for \[CampaignDraftService.ListCampaignDraftAsyncErrors][google.ads.googleads.v11.services.CampaignDraftService.ListCampaignDraftAsyncErrors\].
+/// Request message for
+/// \[CampaignDraftService.ListCampaignDraftAsyncErrors][google.ads.googleads.v14.services.CampaignDraftService.ListCampaignDraftAsyncErrors\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListCampaignDraftAsyncErrorsRequest {
-    /// Required. The name of the campaign draft from which to retrieve the async errors.
+    /// Required. The name of the campaign draft from which to retrieve the async
+    /// errors.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
     /// Token of the page to retrieve. If not specified, the first
@@ -6210,7 +6499,8 @@ pub struct ListCampaignDraftAsyncErrorsRequest {
     #[prost(int32, tag = "3")]
     pub page_size: i32,
 }
-/// Response message for \[CampaignDraftService.ListCampaignDraftAsyncErrors][google.ads.googleads.v11.services.CampaignDraftService.ListCampaignDraftAsyncErrors\].
+/// Response message for
+/// \[CampaignDraftService.ListCampaignDraftAsyncErrors][google.ads.googleads.v14.services.CampaignDraftService.ListCampaignDraftAsyncErrors\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListCampaignDraftAsyncErrorsResponse {
     /// Details of the errors when performing the asynchronous operation.
@@ -6299,7 +6589,7 @@ pub mod campaign_draft_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CampaignDraftService/MutateCampaignDrafts",
+                "/google.ads.googleads.v14.services.CampaignDraftService/MutateCampaignDrafts",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -6310,8 +6600,8 @@ pub mod campaign_draft_service_client {
         #[doc = " is done. Only a done status is returned in the response. See the status"]
         #[doc = " in the Campaign Draft resource to determine if the promotion was"]
         #[doc = " successful. If the LRO failed, use"]
-        #[doc = " [CampaignDraftService.ListCampaignDraftAsyncErrors][google.ads.googleads.v11.services.CampaignDraftService.ListCampaignDraftAsyncErrors] to view the list of"]
-        #[doc = " error reasons."]
+        #[doc = " [CampaignDraftService.ListCampaignDraftAsyncErrors][google.ads.googleads.v14.services.CampaignDraftService.ListCampaignDraftAsyncErrors]"]
+        #[doc = " to view the list of error reasons."]
         #[doc = ""]
         #[doc = " List of thrown errors:"]
         #[doc = "   [AuthenticationError]()"]
@@ -6336,7 +6626,7 @@ pub mod campaign_draft_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CampaignDraftService/PromoteCampaignDraft",
+                "/google.ads.googleads.v14.services.CampaignDraftService/PromoteCampaignDraft",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -6363,438 +6653,21 @@ pub mod campaign_draft_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignDraftService/ListCampaignDraftAsyncErrors") ;
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-    }
-}
-/// Request message for \[CampaignExperimentService.MutateCampaignExperiments][google.ads.googleads.v11.services.CampaignExperimentService.MutateCampaignExperiments\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MutateCampaignExperimentsRequest {
-    /// Required. The ID of the customer whose campaign experiments are being modified.
-    #[prost(string, tag = "1")]
-    pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual campaign experiments.
-    #[prost(message, repeated, tag = "2")]
-    pub operations: ::prost::alloc::vec::Vec<CampaignExperimentOperation>,
-    /// If true, successful operations will be carried out and invalid
-    /// operations will return errors. If false, all operations will be carried
-    /// out in one transaction if and only if they are all valid.
-    /// Default is false.
-    #[prost(bool, tag = "3")]
-    pub partial_failure: bool,
-    /// If true, the request is validated but not executed. Only errors are
-    /// returned, not results.
-    #[prost(bool, tag = "4")]
-    pub validate_only: bool,
-    /// The response content type setting. Determines whether the mutable resource
-    /// or just the resource name should be returned post mutation.
-    #[prost(
-        enumeration = "super::enums::response_content_type_enum::ResponseContentType",
-        tag = "5"
-    )]
-    pub response_content_type: i32,
-}
-/// A single update operation on a campaign experiment.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CampaignExperimentOperation {
-    /// FieldMask that determines which resource fields are modified in an update.
-    #[prost(message, optional, tag = "3")]
-    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
-    /// The mutate operation.
-    #[prost(oneof = "campaign_experiment_operation::Operation", tags = "1, 2")]
-    pub operation: ::core::option::Option<campaign_experiment_operation::Operation>,
-}
-/// Nested message and enum types in `CampaignExperimentOperation`.
-pub mod campaign_experiment_operation {
-    /// The mutate operation.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Operation {
-        /// Update operation: The campaign experiment is expected to have a valid
-        /// resource name.
-        #[prost(message, tag = "1")]
-        Update(super::super::resources::CampaignExperiment),
-        /// Remove operation: The campaign experiment is expected to have a valid
-        /// resource name, in this format:
-        ///
-        /// `customers/{customer_id}/campaignExperiments/{campaign_experiment_id}`
-        #[prost(string, tag = "2")]
-        Remove(::prost::alloc::string::String),
-    }
-}
-/// Response message for campaign experiment mutate.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MutateCampaignExperimentsResponse {
-    /// Errors that pertain to operation failures in the partial failure mode.
-    /// Returned only when partial_failure = true and all errors occur inside the
-    /// operations. If any errors occur outside the operations (for example, auth
-    /// errors), we return an RPC level error.
-    #[prost(message, optional, tag = "3")]
-    pub partial_failure_error: ::core::option::Option<super::super::super::super::rpc::Status>,
-    /// All results for the mutate.
-    #[prost(message, repeated, tag = "2")]
-    pub results: ::prost::alloc::vec::Vec<MutateCampaignExperimentResult>,
-}
-/// The result for the campaign experiment mutate.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MutateCampaignExperimentResult {
-    /// Returned for successful operations.
-    #[prost(string, tag = "1")]
-    pub resource_name: ::prost::alloc::string::String,
-    /// The mutated campaign experiment with only mutable fields after mutate. The
-    /// field will only be returned when response_content_type is set to
-    /// "MUTABLE_RESOURCE".
-    #[prost(message, optional, tag = "2")]
-    pub campaign_experiment: ::core::option::Option<super::resources::CampaignExperiment>,
-}
-/// Request message for \[CampaignExperimentService.CreateCampaignExperiment][google.ads.googleads.v11.services.CampaignExperimentService.CreateCampaignExperiment\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateCampaignExperimentRequest {
-    /// Required. The ID of the customer whose campaign experiment is being created.
-    #[prost(string, tag = "1")]
-    pub customer_id: ::prost::alloc::string::String,
-    /// Required. The campaign experiment to be created.
-    #[prost(message, optional, tag = "2")]
-    pub campaign_experiment: ::core::option::Option<super::resources::CampaignExperiment>,
-    /// If true, the request is validated but not executed. Only errors are
-    /// returned, not results.
-    #[prost(bool, tag = "3")]
-    pub validate_only: bool,
-}
-/// Message used as metadata returned in Long Running Operations for
-/// CreateCampaignExperimentRequest
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateCampaignExperimentMetadata {
-    /// Resource name of campaign experiment created.
-    #[prost(string, tag = "1")]
-    pub campaign_experiment: ::prost::alloc::string::String,
-}
-/// Request message for \[CampaignExperimentService.GraduateCampaignExperiment][google.ads.googleads.v11.services.CampaignExperimentService.GraduateCampaignExperiment\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GraduateCampaignExperimentRequest {
-    /// Required. The resource name of the campaign experiment to graduate.
-    #[prost(string, tag = "1")]
-    pub campaign_experiment: ::prost::alloc::string::String,
-    /// Required. Resource name of the budget to attach to the campaign graduated from the
-    /// experiment.
-    #[prost(string, tag = "2")]
-    pub campaign_budget: ::prost::alloc::string::String,
-    /// If true, the request is validated but not executed. Only errors are
-    /// returned, not results.
-    #[prost(bool, tag = "3")]
-    pub validate_only: bool,
-}
-/// Response message for campaign experiment graduate.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GraduateCampaignExperimentResponse {
-    /// The resource name of the campaign from the graduated experiment.
-    /// This campaign is the same one as CampaignExperiment.experiment_campaign.
-    #[prost(string, tag = "1")]
-    pub graduated_campaign: ::prost::alloc::string::String,
-}
-/// Request message for \[CampaignExperimentService.PromoteCampaignExperiment][google.ads.googleads.v11.services.CampaignExperimentService.PromoteCampaignExperiment\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PromoteCampaignExperimentRequest {
-    /// Required. The resource name of the campaign experiment to promote.
-    #[prost(string, tag = "1")]
-    pub campaign_experiment: ::prost::alloc::string::String,
-    /// If true, the request is validated but no Long Running Operation is created.
-    /// Only errors are returned.
-    #[prost(bool, tag = "2")]
-    pub validate_only: bool,
-}
-/// Request message for \[CampaignExperimentService.EndCampaignExperiment][google.ads.googleads.v11.services.CampaignExperimentService.EndCampaignExperiment\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct EndCampaignExperimentRequest {
-    /// Required. The resource name of the campaign experiment to end.
-    #[prost(string, tag = "1")]
-    pub campaign_experiment: ::prost::alloc::string::String,
-    /// If true, the request is validated but not executed. Only errors are
-    /// returned, not results.
-    #[prost(bool, tag = "2")]
-    pub validate_only: bool,
-}
-/// Request message for
-/// \[CampaignExperimentService.ListCampaignExperimentAsyncErrors][google.ads.googleads.v11.services.CampaignExperimentService.ListCampaignExperimentAsyncErrors\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListCampaignExperimentAsyncErrorsRequest {
-    /// Required. The name of the campaign experiment from which to retrieve the async
-    /// errors.
-    #[prost(string, tag = "1")]
-    pub resource_name: ::prost::alloc::string::String,
-    /// Token of the page to retrieve. If not specified, the first
-    /// page of results will be returned. Use the value obtained from
-    /// `next_page_token` in the previous response in order to request
-    /// the next page of results.
-    #[prost(string, tag = "2")]
-    pub page_token: ::prost::alloc::string::String,
-    /// Number of elements to retrieve in a single page.
-    /// When a page request is too large, the server may decide to
-    /// further limit the number of returned resources.
-    #[prost(int32, tag = "3")]
-    pub page_size: i32,
-}
-/// Response message for
-/// \[CampaignExperimentService.ListCampaignExperimentAsyncErrors][google.ads.googleads.v11.services.CampaignExperimentService.ListCampaignExperimentAsyncErrors\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListCampaignExperimentAsyncErrorsResponse {
-    /// Details of the errors when performing the asynchronous operation.
-    #[prost(message, repeated, tag = "1")]
-    pub errors: ::prost::alloc::vec::Vec<super::super::super::super::rpc::Status>,
-    /// Pagination token used to retrieve the next page of results.
-    /// Pass the content of this string as the `page_token` attribute of
-    /// the next request. `next_page_token` is not returned for the last
-    /// page.
-    #[prost(string, tag = "2")]
-    pub next_page_token: ::prost::alloc::string::String,
-}
-#[doc = r" Generated client implementations."]
-pub mod campaign_experiment_service_client {
-    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
-    #[doc = " CampaignExperimentService manages the life cycle of campaign experiments."]
-    #[doc = " It is used to create new experiments from drafts, modify experiment"]
-    #[doc = " properties, promote changes in an experiment back to its base campaign,"]
-    #[doc = " graduate experiments into new stand-alone campaigns, and to remove an"]
-    #[doc = " experiment."]
-    #[doc = ""]
-    #[doc = " An experiment consists of two variants or arms - the base campaign and the"]
-    #[doc = " experiment campaign, directing a fixed share of traffic to each arm."]
-    #[doc = " A campaign experiment is created from a draft of changes to the base campaign"]
-    #[doc = " and will be a snapshot of changes in the draft at the time of creation."]
-    #[derive(Debug, Clone)]
-    pub struct CampaignExperimentServiceClient<T> {
-        inner: tonic::client::Grpc<T>,
-    }
-    impl<T> CampaignExperimentServiceClient<T>
-    where
-        T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + Send + 'static,
-        T::Error: Into<StdError>,
-        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
-    {
-        pub fn new(inner: T) -> Self {
-            let inner = tonic::client::Grpc::new(inner);
-            Self { inner }
-        }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> CampaignExperimentServiceClient<InterceptedService<T, F>>
-        where
-            F: tonic::service::Interceptor,
-            T: tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
-                >,
-            >,
-            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
-                Into<StdError> + Send + Sync,
-        {
-            CampaignExperimentServiceClient::new(InterceptedService::new(inner, interceptor))
-        }
-        #[doc = r" Compress requests with `gzip`."]
-        #[doc = r""]
-        #[doc = r" This requires the server to support it otherwise it might respond with an"]
-        #[doc = r" error."]
-        pub fn send_gzip(mut self) -> Self {
-            self.inner = self.inner.send_gzip();
-            self
-        }
-        #[doc = r" Enable decompressing responses with `gzip`."]
-        pub fn accept_gzip(mut self) -> Self {
-            self.inner = self.inner.accept_gzip();
-            self
-        }
-        #[doc = " Creates a campaign experiment based on a campaign draft. The draft campaign"]
-        #[doc = " will be forked into a real campaign (called the experiment campaign) that"]
-        #[doc = " will begin serving ads if successfully created."]
-        #[doc = ""]
-        #[doc = " The campaign experiment is created immediately with status INITIALIZING."]
-        #[doc = " This method return a long running operation that tracks the forking of the"]
-        #[doc = " draft campaign. If the forking fails, a list of errors can be retrieved"]
-        #[doc = " using the ListCampaignExperimentAsyncErrors method. The operation's"]
-        #[doc = " metadata will be a StringValue containing the resource name of the created"]
-        #[doc = " campaign experiment."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [CampaignExperimentError]()"]
-        #[doc = "   [DatabaseError]()"]
-        #[doc = "   [DateError]()"]
-        #[doc = "   [DateRangeError]()"]
-        #[doc = "   [FieldError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RangeError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn create_campaign_experiment(
-            &mut self,
-            request: impl tonic::IntoRequest<super::CreateCampaignExperimentRequest>,
-        ) -> Result<
-            tonic::Response<super::super::super::super::super::longrunning::Operation>,
-            tonic::Status,
-        > {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignExperimentService/CreateCampaignExperiment") ;
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Updates campaign experiments. Operation statuses are returned."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [CampaignExperimentError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn mutate_campaign_experiments(
-            &mut self,
-            request: impl tonic::IntoRequest<super::MutateCampaignExperimentsRequest>,
-        ) -> Result<tonic::Response<super::MutateCampaignExperimentsResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignExperimentService/MutateCampaignExperiments") ;
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Graduates a campaign experiment to a full campaign. The base and experiment"]
-        #[doc = " campaigns will start running independently with their own budgets."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [CampaignExperimentError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [MutateError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn graduate_campaign_experiment(
-            &mut self,
-            request: impl tonic::IntoRequest<super::GraduateCampaignExperimentRequest>,
-        ) -> Result<tonic::Response<super::GraduateCampaignExperimentResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignExperimentService/GraduateCampaignExperiment") ;
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Promotes the changes in a experiment campaign back to the base campaign."]
-        #[doc = ""]
-        #[doc = " The campaign experiment is updated immediately with status PROMOTING."]
-        #[doc = " This method return a long running operation that tracks the promoting of"]
-        #[doc = " the experiment campaign. If the promoting fails, a list of errors can be"]
-        #[doc = " retrieved using the ListCampaignExperimentAsyncErrors method."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn promote_campaign_experiment(
-            &mut self,
-            request: impl tonic::IntoRequest<super::PromoteCampaignExperimentRequest>,
-        ) -> Result<
-            tonic::Response<super::super::super::super::super::longrunning::Operation>,
-            tonic::Status,
-        > {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignExperimentService/PromoteCampaignExperiment") ;
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Immediately ends a campaign experiment, changing the experiment's scheduled"]
-        #[doc = " end date and without waiting for end of day. End date is updated to be the"]
-        #[doc = " time of the request."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [CampaignExperimentError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn end_campaign_experiment(
-            &mut self,
-            request: impl tonic::IntoRequest<super::EndCampaignExperimentRequest>,
-        ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignExperimentService/EndCampaignExperiment") ;
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Returns all errors that occurred during CampaignExperiment create or"]
-        #[doc = " promote (whichever occurred last)."]
-        #[doc = " Supports standard list paging."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn list_campaign_experiment_async_errors(
-            &mut self,
-            request: impl tonic::IntoRequest<super::ListCampaignExperimentAsyncErrorsRequest>,
-        ) -> Result<tonic::Response<super::ListCampaignExperimentAsyncErrorsResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignExperimentService/ListCampaignExperimentAsyncErrors") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CampaignDraftService/ListCampaignDraftAsyncErrors") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CampaignExtensionSettingService.MutateCampaignExtensionSettings][google.ads.googleads.v11.services.CampaignExtensionSettingService.MutateCampaignExtensionSettings\].
+/// \[CampaignExtensionSettingService.MutateCampaignExtensionSettings][google.ads.googleads.v14.services.CampaignExtensionSettingService.MutateCampaignExtensionSettings\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignExtensionSettingsRequest {
-    /// Required. The ID of the customer whose campaign extension settings are being
-    /// modified.
+    /// Required. The ID of the customer whose campaign extension settings are
+    /// being modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual campaign extension
-    /// settings.
+    /// Required. The list of operations to perform on individual campaign
+    /// extension settings.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CampaignExtensionSettingOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -6968,12 +6841,13 @@ pub mod campaign_extension_setting_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignExtensionSettingService/MutateCampaignExtensionSettings") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CampaignExtensionSettingService/MutateCampaignExtensionSettings") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignFeedService.MutateCampaignFeeds][google.ads.googleads.v11.services.CampaignFeedService.MutateCampaignFeeds\].
+/// Request message for
+/// \[CampaignFeedService.MutateCampaignFeeds][google.ads.googleads.v14.services.CampaignFeedService.MutateCampaignFeeds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignFeedsRequest {
     /// Required. The ID of the customer whose campaign feeds are being modified.
@@ -7144,13 +7018,14 @@ pub mod campaign_feed_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CampaignFeedService/MutateCampaignFeeds",
+                "/google.ads.googleads.v14.services.CampaignFeedService/MutateCampaignFeeds",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignGroupService.MutateCampaignGroups][google.ads.googleads.v11.services.CampaignGroupService.MutateCampaignGroups\].
+/// Request message for
+/// \[CampaignGroupService.MutateCampaignGroups][google.ads.googleads.v14.services.CampaignGroupService.MutateCampaignGroups\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignGroupsRequest {
     /// Required. The ID of the customer whose campaign groups are being modified.
@@ -7297,19 +7172,22 @@ pub mod campaign_group_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CampaignGroupService/MutateCampaignGroups",
+                "/google.ads.googleads.v14.services.CampaignGroupService/MutateCampaignGroups",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignLabelService.MutateCampaignLabels][google.ads.googleads.v11.services.CampaignLabelService.MutateCampaignLabels\].
+/// Request message for
+/// \[CampaignLabelService.MutateCampaignLabels][google.ads.googleads.v14.services.CampaignLabelService.MutateCampaignLabels\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignLabelsRequest {
-    /// Required. ID of the customer whose campaign-label relationships are being modified.
+    /// Required. ID of the customer whose campaign-label relationships are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on campaign-label relationships.
+    /// Required. The list of operations to perform on campaign-label
+    /// relationships.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CampaignLabelOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -7444,13 +7322,14 @@ pub mod campaign_label_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CampaignLabelService/MutateCampaignLabels",
+                "/google.ads.googleads.v14.services.CampaignLabelService/MutateCampaignLabels",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignService.MutateCampaigns][google.ads.googleads.v11.services.CampaignService.MutateCampaigns\].
+/// Request message for
+/// \[CampaignService.MutateCampaigns][google.ads.googleads.v14.services.CampaignService.MutateCampaigns\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignsRequest {
     /// Required. The ID of the customer whose campaigns are being modified.
@@ -7631,19 +7510,22 @@ pub mod campaign_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CampaignService/MutateCampaigns",
+                "/google.ads.googleads.v14.services.CampaignService/MutateCampaigns",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CampaignSharedSetService.MutateCampaignSharedSets][google.ads.googleads.v11.services.CampaignSharedSetService.MutateCampaignSharedSets\].
+/// Request message for
+/// \[CampaignSharedSetService.MutateCampaignSharedSets][google.ads.googleads.v14.services.CampaignSharedSetService.MutateCampaignSharedSets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCampaignSharedSetsRequest {
-    /// Required. The ID of the customer whose campaign shared sets are being modified.
+    /// Required. The ID of the customer whose campaign shared sets are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual campaign shared sets.
+    /// Required. The list of operations to perform on individual campaign shared
+    /// sets.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CampaignSharedSetOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -7664,7 +7546,7 @@ pub struct MutateCampaignSharedSetsRequest {
     )]
     pub response_content_type: i32,
 }
-/// A single operation (create, remove) on an campaign shared set.
+/// A single operation (create, remove) on a campaign shared set.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CampaignSharedSetOperation {
     /// The mutate operation.
@@ -7800,18 +7682,21 @@ pub mod campaign_shared_set_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CampaignSharedSetService/MutateCampaignSharedSets") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CampaignSharedSetService/MutateCampaignSharedSets") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[ConversionActionService.MutateConversionActions][google.ads.googleads.v11.services.ConversionActionService.MutateConversionActions\].
+/// Request message for
+/// \[ConversionActionService.MutateConversionActions][google.ads.googleads.v14.services.ConversionActionService.MutateConversionActions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionActionsRequest {
-    /// Required. The ID of the customer whose conversion actions are being modified.
+    /// Required. The ID of the customer whose conversion actions are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual conversion actions.
+    /// Required. The list of operations to perform on individual conversion
+    /// actions.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<ConversionActionOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -7863,7 +7748,8 @@ pub mod conversion_action_operation {
         Remove(::prost::alloc::string::String),
     }
 }
-/// Response message for \[ConversionActionService.MutateConversionActions][google.ads.googleads.v11.services.ConversionActionService.MutateConversionActions\].
+/// Response message for
+/// \[ConversionActionService.MutateConversionActions][google.ads.googleads.v14.services.ConversionActionService.MutateConversionActions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionActionsResponse {
     /// Errors that pertain to operation failures in the partial failure mode.
@@ -7970,17 +7856,17 @@ pub mod conversion_action_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.ConversionActionService/MutateConversionActions") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.ConversionActionService/MutateConversionActions") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[ConversionCustomVariableService.MutateConversionCustomVariables][google.ads.googleads.v11.services.ConversionCustomVariableService.MutateConversionCustomVariables\].
+/// \[ConversionCustomVariableService.MutateConversionCustomVariables][google.ads.googleads.v14.services.ConversionCustomVariableService.MutateConversionCustomVariables\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionCustomVariablesRequest {
-    /// Required. The ID of the customer whose conversion custom variables are being
-    /// modified.
+    /// Required. The ID of the customer whose conversion custom variables are
+    /// being modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
     /// Required. The list of operations to perform on individual conversion custom
@@ -8034,7 +7920,7 @@ pub mod conversion_custom_variable_operation {
     }
 }
 /// Response message for
-/// \[ConversionCustomVariableService.MutateConversionCustomVariables][google.ads.googleads.v11.services.ConversionCustomVariableService.MutateConversionCustomVariables\].
+/// \[ConversionCustomVariableService.MutateConversionCustomVariables][google.ads.googleads.v14.services.ConversionCustomVariableService.MutateConversionCustomVariables\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionCustomVariablesResponse {
     /// Errors that pertain to operation failures in the partial failure mode.
@@ -8134,7 +8020,7 @@ pub mod conversion_custom_variable_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.ConversionCustomVariableService/MutateConversionCustomVariables") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.ConversionCustomVariableService/MutateConversionCustomVariables") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
@@ -8143,11 +8029,12 @@ pub mod conversion_custom_variable_service_client {
 /// \[ConversionGoalCampaignConfigService.MutateConversionGoalCampaignConfig][\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionGoalCampaignConfigsRequest {
-    /// Required. The ID of the customer whose custom conversion goals are being modified.
+    /// Required. The ID of the customer whose custom conversion goals are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual conversion goal campaign
-    /// config.
+    /// Required. The list of operations to perform on individual conversion goal
+    /// campaign config.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<ConversionGoalCampaignConfigOperation>,
     /// If true, the request is validated but not executed. Only errors are
@@ -8275,19 +8162,21 @@ pub mod conversion_goal_campaign_config_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.ConversionGoalCampaignConfigService/MutateConversionGoalCampaignConfigs") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.ConversionGoalCampaignConfigService/MutateConversionGoalCampaignConfigs") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[ConversionValueRuleService.MutateConversionValueRules][google.ads.googleads.v11.services.ConversionValueRuleService.MutateConversionValueRules\].
+/// \[ConversionValueRuleService.MutateConversionValueRules][google.ads.googleads.v14.services.ConversionValueRuleService.MutateConversionValueRules\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionValueRulesRequest {
-    /// Required. The ID of the customer whose conversion value rules are being modified.
+    /// Required. The ID of the customer whose conversion value rules are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual conversion value rules.
+    /// Required. The list of operations to perform on individual conversion value
+    /// rules.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<ConversionValueRuleOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -8340,7 +8229,7 @@ pub mod conversion_value_rule_operation {
     }
 }
 /// Response message for
-/// \[ConversionValueRuleService.MutateConversionValueRules][google.ads.googleads.v11.services.ConversionValueRuleService.MutateConversionValueRules\].
+/// \[ConversionValueRuleService.MutateConversionValueRules][google.ads.googleads.v14.services.ConversionValueRuleService.MutateConversionValueRules\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionValueRulesResponse {
     /// All results for the mutate.
@@ -8429,19 +8318,21 @@ pub mod conversion_value_rule_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.ConversionValueRuleService/MutateConversionValueRules") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.ConversionValueRuleService/MutateConversionValueRules") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[ConversionValueRuleSetService.MutateConversionValueRuleSets][google.ads.googleads.v11.services.ConversionValueRuleSetService.MutateConversionValueRuleSets\].
+/// \[ConversionValueRuleSetService.MutateConversionValueRuleSets][google.ads.googleads.v14.services.ConversionValueRuleSetService.MutateConversionValueRuleSets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionValueRuleSetsRequest {
-    /// Required. The ID of the customer whose conversion value rule sets are being modified.
+    /// Required. The ID of the customer whose conversion value rule sets are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual conversion value rule sets.
+    /// Required. The list of operations to perform on individual conversion value
+    /// rule sets.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<ConversionValueRuleSetOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -8497,7 +8388,7 @@ pub mod conversion_value_rule_set_operation {
     }
 }
 /// Response message for
-/// \[ConversionValueRuleSetService.MutateConversionValueRuleSets][google.ads.googleads.v11.services.ConversionValueRuleSetService.MutateConversionValueRuleSets\].
+/// \[ConversionValueRuleSetService.MutateConversionValueRuleSets][google.ads.googleads.v14.services.ConversionValueRuleSetService.MutateConversionValueRuleSets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateConversionValueRuleSetsResponse {
     /// All results for the mutate.
@@ -8586,19 +8477,21 @@ pub mod conversion_value_rule_set_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.ConversionValueRuleSetService/MutateConversionValueRuleSets") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.ConversionValueRuleSetService/MutateConversionValueRuleSets") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CustomConversionGoalService.MutateCustomConversionGoals][google.ads.googleads.v11.services.CustomConversionGoalService.MutateCustomConversionGoals\].
+/// \[CustomConversionGoalService.MutateCustomConversionGoals][google.ads.googleads.v14.services.CustomConversionGoalService.MutateCustomConversionGoals\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomConversionGoalsRequest {
-    /// Required. The ID of the customer whose custom conversion goals are being modified.
+    /// Required. The ID of the customer whose custom conversion goals are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual custom conversion goal.
+    /// Required. The list of operations to perform on individual custom conversion
+    /// goal.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CustomConversionGoalOperation>,
     /// If true, the request is validated but not executed. Only errors are
@@ -8730,12 +8623,13 @@ pub mod custom_conversion_goal_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomConversionGoalService/MutateCustomConversionGoals") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomConversionGoalService/MutateCustomConversionGoals") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CustomerAssetService.MutateCustomerAssets][google.ads.googleads.v11.services.CustomerAssetService.MutateCustomerAssets\].
+/// Request message for
+/// \[CustomerAssetService.MutateCustomerAssets][google.ads.googleads.v14.services.CustomerAssetService.MutateCustomerAssets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerAssetsRequest {
     /// Required. The ID of the customer whose customer assets are being modified.
@@ -8893,20 +8787,22 @@ pub mod customer_asset_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomerAssetService/MutateCustomerAssets",
+                "/google.ads.googleads.v14.services.CustomerAssetService/MutateCustomerAssets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CustomerConversionGoalService.MutateCustomerConversionGoals][google.ads.googleads.v11.services.CustomerConversionGoalService.MutateCustomerConversionGoals\].
+/// \[CustomerConversionGoalService.MutateCustomerConversionGoals][google.ads.googleads.v14.services.CustomerConversionGoalService.MutateCustomerConversionGoals\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerConversionGoalsRequest {
-    /// Required. The ID of the customer whose customer conversion goals are being modified.
+    /// Required. The ID of the customer whose customer conversion goals are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual customer conversion goal.
+    /// Required. The list of operations to perform on individual customer
+    /// conversion goal.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CustomerConversionGoalOperation>,
     /// If true, the request is validated but not executed. Only errors are
@@ -9013,19 +8909,21 @@ pub mod customer_conversion_goal_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomerConversionGoalService/MutateCustomerConversionGoals") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerConversionGoalService/MutateCustomerConversionGoals") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CustomerCustomizerService.MutateCustomerCustomizers][google.ads.googleads.v11.services.CustomerCustomizerService.MutateCustomerCustomizers\].
+/// \[CustomerCustomizerService.MutateCustomerCustomizers][google.ads.googleads.v14.services.CustomerCustomizerService.MutateCustomerCustomizers\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerCustomizersRequest {
-    /// Required. The ID of the customer whose customer customizers are being modified.
+    /// Required. The ID of the customer whose customer customizers are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual customer customizers.
+    /// Required. The list of operations to perform on individual customer
+    /// customizers.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CustomerCustomizerOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -9046,7 +8944,7 @@ pub struct MutateCustomerCustomizersRequest {
     )]
     pub response_content_type: i32,
 }
-/// A single operation (create, remove) on an customizer attribute.
+/// A single operation (create, remove) on a customizer attribute.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CustomerCustomizerOperation {
     /// The mutate operation.
@@ -9069,7 +8967,7 @@ pub mod customer_customizer_operation {
         Remove(::prost::alloc::string::String),
     }
 }
-/// Response message for an customizer attribute mutate.
+/// Response message for a customizer attribute mutate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerCustomizersResponse {
     /// All results for the mutate.
@@ -9158,21 +9056,21 @@ pub mod customer_customizer_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomerCustomizerService/MutateCustomerCustomizers") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerCustomizerService/MutateCustomerCustomizers") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CustomerExtensionSettingService.MutateCustomerExtensionSettings][google.ads.googleads.v11.services.CustomerExtensionSettingService.MutateCustomerExtensionSettings\].
+/// \[CustomerExtensionSettingService.MutateCustomerExtensionSettings][google.ads.googleads.v14.services.CustomerExtensionSettingService.MutateCustomerExtensionSettings\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerExtensionSettingsRequest {
-    /// Required. The ID of the customer whose customer extension settings are being
-    /// modified.
+    /// Required. The ID of the customer whose customer extension settings are
+    /// being modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual customer extension
-    /// settings.
+    /// Required. The list of operations to perform on individual customer
+    /// extension settings.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CustomerExtensionSettingOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -9344,12 +9242,13 @@ pub mod customer_extension_setting_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomerExtensionSettingService/MutateCustomerExtensionSettings") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerExtensionSettingService/MutateCustomerExtensionSettings") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CustomerFeedService.MutateCustomerFeeds][google.ads.googleads.v11.services.CustomerFeedService.MutateCustomerFeeds\].
+/// Request message for
+/// \[CustomerFeedService.MutateCustomerFeeds][google.ads.googleads.v14.services.CustomerFeedService.MutateCustomerFeeds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerFeedsRequest {
     /// Required. The ID of the customer whose customer feeds are being modified.
@@ -9519,19 +9418,22 @@ pub mod customer_feed_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomerFeedService/MutateCustomerFeeds",
+                "/google.ads.googleads.v14.services.CustomerFeedService/MutateCustomerFeeds",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CustomerLabelService.MutateCustomerLabels][google.ads.googleads.v11.services.CustomerLabelService.MutateCustomerLabels\].
+/// Request message for
+/// \[CustomerLabelService.MutateCustomerLabels][google.ads.googleads.v14.services.CustomerLabelService.MutateCustomerLabels\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerLabelsRequest {
-    /// Required. ID of the customer whose customer-label relationships are being modified.
+    /// Required. ID of the customer whose customer-label relationships are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on customer-label relationships.
+    /// Required. The list of operations to perform on customer-label
+    /// relationships.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CustomerLabelOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -9664,14 +9566,14 @@ pub mod customer_label_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomerLabelService/MutateCustomerLabels",
+                "/google.ads.googleads.v14.services.CustomerLabelService/MutateCustomerLabels",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CustomerNegativeCriterionService.MutateCustomerNegativeCriteria][google.ads.googleads.v11.services.CustomerNegativeCriterionService.MutateCustomerNegativeCriteria\].
+/// \[CustomerNegativeCriterionService.MutateCustomerNegativeCriteria][google.ads.googleads.v14.services.CustomerNegativeCriterionService.MutateCustomerNegativeCriteria\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerNegativeCriteriaRequest {
     /// Required. The ID of the customer whose criteria are being modified.
@@ -9824,12 +9726,13 @@ pub mod customer_negative_criterion_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomerNegativeCriterionService/MutateCustomerNegativeCriteria") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerNegativeCriterionService/MutateCustomerNegativeCriteria") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CustomerService.MutateCustomer][google.ads.googleads.v11.services.CustomerService.MutateCustomer\].
+/// Request message for
+/// \[CustomerService.MutateCustomer][google.ads.googleads.v14.services.CustomerService.MutateCustomer\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerRequest {
     /// Required. The ID of the customer being modified.
@@ -9850,14 +9753,16 @@ pub struct MutateCustomerRequest {
     )]
     pub response_content_type: i32,
 }
-/// Request message for \[CustomerService.CreateCustomerClient][google.ads.googleads.v11.services.CustomerService.CreateCustomerClient\].
+/// Request message for
+/// \[CustomerService.CreateCustomerClient][google.ads.googleads.v14.services.CustomerService.CreateCustomerClient\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateCustomerClientRequest {
-    /// Required. The ID of the Manager under whom client customer is being created.
+    /// Required. The ID of the Manager under whom client customer is being
+    /// created.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The new client customer to create. The resource name on this customer
-    /// will be ignored.
+    /// Required. The new client customer to create. The resource name on this
+    /// customer will be ignored.
     #[prost(message, optional, tag = "2")]
     pub customer_client: ::core::option::Option<super::resources::Customer>,
     /// Email address of the user who should be invited on the created client
@@ -9913,10 +9818,12 @@ pub struct MutateCustomerResult {
     #[prost(message, optional, tag = "2")]
     pub customer: ::core::option::Option<super::resources::Customer>,
 }
-/// Request message for \[CustomerService.ListAccessibleCustomers][google.ads.googleads.v11.services.CustomerService.ListAccessibleCustomers\].
+/// Request message for
+/// \[CustomerService.ListAccessibleCustomers][google.ads.googleads.v14.services.CustomerService.ListAccessibleCustomers\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAccessibleCustomersRequest {}
-/// Response message for \[CustomerService.ListAccessibleCustomers][google.ads.googleads.v11.services.CustomerService.ListAccessibleCustomers\].
+/// Response message for
+/// \[CustomerService.ListAccessibleCustomers][google.ads.googleads.v14.services.CustomerService.ListAccessibleCustomers\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAccessibleCustomersResponse {
     /// Resource name of customers directly accessible by the
@@ -9998,7 +9905,7 @@ pub mod customer_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomerService/MutateCustomer",
+                "/google.ads.googleads.v14.services.CustomerService/MutateCustomer",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -10025,7 +9932,7 @@ pub mod customer_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomerService/ListAccessibleCustomers",
+                "/google.ads.googleads.v14.services.CustomerService/ListAccessibleCustomers",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -10055,20 +9962,22 @@ pub mod customer_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomerService/CreateCustomerClient",
+                "/google.ads.googleads.v14.services.CustomerService/CreateCustomerClient",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[CustomizerAttributeService.MutateCustomizerAttributes][google.ads.googleads.v11.services.CustomizerAttributeService.MutateCustomizerAttributes\].
+/// \[CustomizerAttributeService.MutateCustomizerAttributes][google.ads.googleads.v14.services.CustomizerAttributeService.MutateCustomizerAttributes\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomizerAttributesRequest {
-    /// Required. The ID of the customer whose customizer attributes are being modified.
+    /// Required. The ID of the customer whose customizer attributes are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual customizer attributes.
+    /// Required. The list of operations to perform on individual customizer
+    /// attributes.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CustomizerAttributeOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -10089,7 +9998,7 @@ pub struct MutateCustomizerAttributesRequest {
     )]
     pub response_content_type: i32,
 }
-/// A single operation (create, remove) on an customizer attribute.
+/// A single operation (create, remove) on a customizer attribute.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CustomizerAttributeOperation {
     /// FieldMask that determines which resource fields are modified in an update.
@@ -10115,7 +10024,7 @@ pub mod customizer_attribute_operation {
         Remove(::prost::alloc::string::String),
     }
 }
-/// Response message for an customizer attribute mutate.
+/// Response message for a customizer attribute mutate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomizerAttributesResponse {
     /// All results for the mutate.
@@ -10204,12 +10113,13 @@ pub mod customizer_attribute_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomizerAttributeService/MutateCustomizerAttributes") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomizerAttributeService/MutateCustomizerAttributes") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[ExperimentArmService.MutateExperimentArms][google.ads.googleads.v11.services.ExperimentArmService.MutateExperimentArms\].
+/// Request message for
+/// \[ExperimentArmService.MutateExperimentArms][google.ads.googleads.v14.services.ExperimentArmService.MutateExperimentArms\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateExperimentArmsRequest {
     /// Required. The ID of the customer whose experiments are being modified.
@@ -10364,13 +10274,14 @@ pub mod experiment_arm_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ExperimentArmService/MutateExperimentArms",
+                "/google.ads.googleads.v14.services.ExperimentArmService/MutateExperimentArms",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[ExperimentService.MutateExperiments][google.ads.googleads.v11.services.ExperimentService.MutateExperiments\].
+/// Request message for
+/// \[ExperimentService.MutateExperiments][google.ads.googleads.v14.services.ExperimentService.MutateExperiments\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateExperimentsRequest {
     /// Required. The ID of the customer whose experiments are being modified.
@@ -10440,7 +10351,8 @@ pub struct MutateExperimentResult {
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[ExperimentService.EndExperiment][google.ads.googleads.v11.services.ExperimentService.EndExperiment\].
+/// Request message for
+/// \[ExperimentService.EndExperiment][google.ads.googleads.v14.services.ExperimentService.EndExperiment\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EndExperimentRequest {
     /// Required. The resource name of the campaign experiment to end.
@@ -10452,7 +10364,7 @@ pub struct EndExperimentRequest {
     pub validate_only: bool,
 }
 /// Request message for
-/// \[ExperimentService.ListExperimentAsyncErrors][google.ads.googleads.v11.services.ExperimentService.ListExperimentAsyncErrors\].
+/// \[ExperimentService.ListExperimentAsyncErrors][google.ads.googleads.v14.services.ExperimentService.ListExperimentAsyncErrors\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListExperimentAsyncErrorsRequest {
     /// Required. The name of the experiment from which to retrieve the async
@@ -10473,7 +10385,7 @@ pub struct ListExperimentAsyncErrorsRequest {
     pub page_size: i32,
 }
 /// Response message for
-/// \[ExperimentService.ListExperimentAsyncErrors][google.ads.googleads.v11.services.ExperimentService.ListExperimentAsyncErrors\].
+/// \[ExperimentService.ListExperimentAsyncErrors][google.ads.googleads.v14.services.ExperimentService.ListExperimentAsyncErrors\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListExperimentAsyncErrorsResponse {
     /// details of the errors when performing the asynchronous operation.
@@ -10486,14 +10398,15 @@ pub struct ListExperimentAsyncErrorsResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
-/// Request message for \[ExperimentService.GraduateExperiment][google.ads.googleads.v11.services.ExperimentService.GraduateExperiment\].
+/// Request message for
+/// \[ExperimentService.GraduateExperiment][google.ads.googleads.v14.services.ExperimentService.GraduateExperiment\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GraduateExperimentRequest {
     /// Required. The experiment to be graduated.
     #[prost(string, tag = "1")]
     pub experiment: ::prost::alloc::string::String,
-    /// Required. List of campaign budget mappings for graduation. Each campaign that
-    /// appears here will graduate, and will be assigned a new budget that is
+    /// Required. List of campaign budget mappings for graduation. Each campaign
+    /// that appears here will graduate, and will be assigned a new budget that is
     /// paired with it in the mapping. The maximum size is one.
     #[prost(message, repeated, tag = "2")]
     pub campaign_budget_mappings: ::prost::alloc::vec::Vec<CampaignBudgetMapping>,
@@ -10508,11 +10421,13 @@ pub struct CampaignBudgetMapping {
     /// Required. The experiment campaign to graduate.
     #[prost(string, tag = "1")]
     pub experiment_campaign: ::prost::alloc::string::String,
-    /// Required. The budget that should be attached to the graduating experiment campaign.
+    /// Required. The budget that should be attached to the graduating experiment
+    /// campaign.
     #[prost(string, tag = "2")]
     pub campaign_budget: ::prost::alloc::string::String,
 }
-/// Request message for \[ExperimentService.ScheduleExperiment][google.ads.googleads.v11.services.ExperimentService.ScheduleExperiment\].
+/// Request message for
+/// \[ExperimentService.ScheduleExperiment][google.ads.googleads.v14.services.ExperimentService.ScheduleExperiment\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ScheduleExperimentRequest {
     /// Required. The scheduled experiment.
@@ -10530,7 +10445,8 @@ pub struct ScheduleExperimentMetadata {
     #[prost(string, tag = "1")]
     pub experiment: ::prost::alloc::string::String,
 }
-/// Request message for \[ExperimentService.PromoteExperiment][google.ads.googleads.v11.services.ExperimentService.PromoteExperiment\].
+/// Request message for
+/// \[ExperimentService.PromoteExperiment][google.ads.googleads.v14.services.ExperimentService.PromoteExperiment\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PromoteExperimentRequest {
     /// Required. The resource name of the experiment to promote.
@@ -10620,7 +10536,7 @@ pub mod experiment_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ExperimentService/MutateExperiments",
+                "/google.ads.googleads.v14.services.ExperimentService/MutateExperiments",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -10648,7 +10564,7 @@ pub mod experiment_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ExperimentService/EndExperiment",
+                "/google.ads.googleads.v14.services.ExperimentService/EndExperiment",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -10676,7 +10592,7 @@ pub mod experiment_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ExperimentService/ListExperimentAsyncErrors",
+                "/google.ads.googleads.v14.services.ExperimentService/ListExperimentAsyncErrors",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -10703,7 +10619,7 @@ pub mod experiment_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ExperimentService/GraduateExperiment",
+                "/google.ads.googleads.v14.services.ExperimentService/GraduateExperiment",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -10746,7 +10662,7 @@ pub mod experiment_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ExperimentService/ScheduleExperiment",
+                "/google.ads.googleads.v14.services.ExperimentService/ScheduleExperiment",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -10781,20 +10697,22 @@ pub mod experiment_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ExperimentService/PromoteExperiment",
+                "/google.ads.googleads.v14.services.ExperimentService/PromoteExperiment",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[ExtensionFeedItemService.MutateExtensionFeedItems][google.ads.googleads.v11.services.ExtensionFeedItemService.MutateExtensionFeedItems\].
+/// Request message for
+/// \[ExtensionFeedItemService.MutateExtensionFeedItems][google.ads.googleads.v14.services.ExtensionFeedItemService.MutateExtensionFeedItems\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateExtensionFeedItemsRequest {
     /// Required. The ID of the customer whose extension feed items are being
     /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual extension feed items.
+    /// Required. The list of operations to perform on individual extension feed
+    /// items.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<ExtensionFeedItemOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -10960,12 +10878,13 @@ pub mod extension_feed_item_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.ExtensionFeedItemService/MutateExtensionFeedItems") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.ExtensionFeedItemService/MutateExtensionFeedItems") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[FeedItemService.MutateFeedItems][google.ads.googleads.v11.services.FeedItemService.MutateFeedItems\].
+/// Request message for
+/// \[FeedItemService.MutateFeedItems][google.ads.googleads.v14.services.FeedItemService.MutateFeedItems\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateFeedItemsRequest {
     /// Required. The ID of the customer whose feed items are being modified.
@@ -11137,19 +11056,22 @@ pub mod feed_item_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.FeedItemService/MutateFeedItems",
+                "/google.ads.googleads.v14.services.FeedItemService/MutateFeedItems",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[FeedItemSetLinkService.MutateFeedItemSetLinks][google.ads.googleads.v11.services.FeedItemSetLinkService.MutateFeedItemSetLinks\].
+/// Request message for
+/// \[FeedItemSetLinkService.MutateFeedItemSetLinks][google.ads.googleads.v14.services.FeedItemSetLinkService.MutateFeedItemSetLinks\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateFeedItemSetLinksRequest {
-    /// Required. The ID of the customer whose feed item set links are being modified.
+    /// Required. The ID of the customer whose feed item set links are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual feed item set links.
+    /// Required. The list of operations to perform on individual feed item set
+    /// links.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<FeedItemSetLinkOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -11278,13 +11200,14 @@ pub mod feed_item_set_link_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.FeedItemSetLinkService/MutateFeedItemSetLinks",
+                "/google.ads.googleads.v14.services.FeedItemSetLinkService/MutateFeedItemSetLinks",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[FeedItemSetService.MutateFeedItemSets][google.ads.googleads.v11.services.FeedItemSetService.MutateFeedItemSets\].
+/// Request message for
+/// \[FeedItemSetService.MutateFeedItemSets][google.ads.googleads.v14.services.FeedItemSetService.MutateFeedItemSets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateFeedItemSetsRequest {
     /// Required. The ID of the customer whose feed item sets are being modified.
@@ -11426,19 +11349,22 @@ pub mod feed_item_set_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.FeedItemSetService/MutateFeedItemSets",
+                "/google.ads.googleads.v14.services.FeedItemSetService/MutateFeedItemSets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[FeedItemTargetService.MutateFeedItemTargets][google.ads.googleads.v11.services.FeedItemTargetService.MutateFeedItemTargets\].
+/// Request message for
+/// \[FeedItemTargetService.MutateFeedItemTargets][google.ads.googleads.v14.services.FeedItemTargetService.MutateFeedItemTargets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateFeedItemTargetsRequest {
-    /// Required. The ID of the customer whose feed item targets are being modified.
+    /// Required. The ID of the customer whose feed item targets are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual feed item targets.
+    /// Required. The list of operations to perform on individual feed item
+    /// targets.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<FeedItemTargetOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -11592,13 +11518,14 @@ pub mod feed_item_target_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.FeedItemTargetService/MutateFeedItemTargets",
+                "/google.ads.googleads.v14.services.FeedItemTargetService/MutateFeedItemTargets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[FeedMappingService.MutateFeedMappings][google.ads.googleads.v11.services.FeedMappingService.MutateFeedMappings\].
+/// Request message for
+/// \[FeedMappingService.MutateFeedMappings][google.ads.googleads.v14.services.FeedMappingService.MutateFeedMappings\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateFeedMappingsRequest {
     /// Required. The ID of the customer whose feed mappings are being modified.
@@ -11758,13 +11685,14 @@ pub mod feed_mapping_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.FeedMappingService/MutateFeedMappings",
+                "/google.ads.googleads.v14.services.FeedMappingService/MutateFeedMappings",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[FeedService.MutateFeeds][google.ads.googleads.v11.services.FeedService.MutateFeeds\].
+/// Request message for
+/// \[FeedService.MutateFeeds][google.ads.googleads.v14.services.FeedService.MutateFeeds\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateFeedsRequest {
     /// Required. The ID of the customer whose feeds are being modified.
@@ -11935,22 +11863,22 @@ pub mod feed_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.FeedService/MutateFeeds",
+                "/google.ads.googleads.v14.services.FeedService/MutateFeeds",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[KeywordPlanAdGroupKeywordService.MutateKeywordPlanAdGroupKeywords][google.ads.googleads.v11.services.KeywordPlanAdGroupKeywordService.MutateKeywordPlanAdGroupKeywords\].
+/// \[KeywordPlanAdGroupKeywordService.MutateKeywordPlanAdGroupKeywords][google.ads.googleads.v14.services.KeywordPlanAdGroupKeywordService.MutateKeywordPlanAdGroupKeywords\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateKeywordPlanAdGroupKeywordsRequest {
-    /// Required. The ID of the customer whose Keyword Plan ad group keywords are being
-    /// modified.
+    /// Required. The ID of the customer whose Keyword Plan ad group keywords are
+    /// being modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual Keyword Plan ad group
-    /// keywords.
+    /// Required. The list of operations to perform on individual Keyword Plan ad
+    /// group keywords.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<KeywordPlanAdGroupKeywordOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -12102,18 +12030,21 @@ pub mod keyword_plan_ad_group_keyword_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.KeywordPlanAdGroupKeywordService/MutateKeywordPlanAdGroupKeywords") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.KeywordPlanAdGroupKeywordService/MutateKeywordPlanAdGroupKeywords") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[KeywordPlanAdGroupService.MutateKeywordPlanAdGroups][google.ads.googleads.v11.services.KeywordPlanAdGroupService.MutateKeywordPlanAdGroups\].
+/// Request message for
+/// \[KeywordPlanAdGroupService.MutateKeywordPlanAdGroups][google.ads.googleads.v14.services.KeywordPlanAdGroupService.MutateKeywordPlanAdGroups\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateKeywordPlanAdGroupsRequest {
-    /// Required. The ID of the customer whose Keyword Plan ad groups are being modified.
+    /// Required. The ID of the customer whose Keyword Plan ad groups are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual Keyword Plan ad groups.
+    /// Required. The list of operations to perform on individual Keyword Plan ad
+    /// groups.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<KeywordPlanAdGroupOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -12260,20 +12191,21 @@ pub mod keyword_plan_ad_group_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.KeywordPlanAdGroupService/MutateKeywordPlanAdGroups") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.KeywordPlanAdGroupService/MutateKeywordPlanAdGroups") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[KeywordPlanCampaignKeywordService.MutateKeywordPlanCampaignKeywords][google.ads.googleads.v11.services.KeywordPlanCampaignKeywordService.MutateKeywordPlanCampaignKeywords\].
+/// \[KeywordPlanCampaignKeywordService.MutateKeywordPlanCampaignKeywords][google.ads.googleads.v14.services.KeywordPlanCampaignKeywordService.MutateKeywordPlanCampaignKeywords\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateKeywordPlanCampaignKeywordsRequest {
-    /// Required. The ID of the customer whose campaign keywords are being modified.
+    /// Required. The ID of the customer whose campaign keywords are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual Keyword Plan campaign
-    /// keywords.
+    /// Required. The list of operations to perform on individual Keyword Plan
+    /// campaign keywords.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<KeywordPlanCampaignKeywordOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -12426,19 +12358,21 @@ pub mod keyword_plan_campaign_keyword_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.KeywordPlanCampaignKeywordService/MutateKeywordPlanCampaignKeywords") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.KeywordPlanCampaignKeywordService/MutateKeywordPlanCampaignKeywords") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[KeywordPlanCampaignService.MutateKeywordPlanCampaigns][google.ads.googleads.v11.services.KeywordPlanCampaignService.MutateKeywordPlanCampaigns\].
+/// \[KeywordPlanCampaignService.MutateKeywordPlanCampaigns][google.ads.googleads.v14.services.KeywordPlanCampaignService.MutateKeywordPlanCampaigns\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateKeywordPlanCampaignsRequest {
-    /// Required. The ID of the customer whose Keyword Plan campaigns are being modified.
+    /// Required. The ID of the customer whose Keyword Plan campaigns are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual Keyword Plan campaigns.
+    /// Required. The list of operations to perform on individual Keyword Plan
+    /// campaigns.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<KeywordPlanCampaignOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -12585,12 +12519,13 @@ pub mod keyword_plan_campaign_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.KeywordPlanCampaignService/MutateKeywordPlanCampaigns") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.KeywordPlanCampaignService/MutateKeywordPlanCampaigns") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[KeywordPlanService.MutateKeywordPlans][google.ads.googleads.v11.services.KeywordPlanService.MutateKeywordPlans\].
+/// Request message for
+/// \[KeywordPlanService.MutateKeywordPlans][google.ads.googleads.v14.services.KeywordPlanService.MutateKeywordPlans\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateKeywordPlansRequest {
     /// Required. The ID of the customer whose keyword plans are being modified.
@@ -12660,211 +12595,6 @@ pub struct MutateKeywordPlansResult {
     /// Returned for successful operations.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
-}
-/// Request message for \[KeywordPlanService.GenerateForecastCurve][google.ads.googleads.v11.services.KeywordPlanService.GenerateForecastCurve\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateForecastCurveRequest {
-    /// Required. The resource name of the keyword plan to be forecasted.
-    #[prost(string, tag = "1")]
-    pub keyword_plan: ::prost::alloc::string::String,
-}
-/// Response message for \[KeywordPlanService.GenerateForecastCurve][google.ads.googleads.v11.services.KeywordPlanService.GenerateForecastCurve\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateForecastCurveResponse {
-    /// List of forecast curves for the keyword plan campaign.
-    /// One maximum.
-    #[prost(message, repeated, tag = "1")]
-    pub campaign_forecast_curves: ::prost::alloc::vec::Vec<KeywordPlanCampaignForecastCurve>,
-}
-/// Request message for \[KeywordPlanService.GenerateForecastTimeSeries][google.ads.googleads.v11.services.KeywordPlanService.GenerateForecastTimeSeries\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateForecastTimeSeriesRequest {
-    /// Required. The resource name of the keyword plan to be forecasted.
-    #[prost(string, tag = "1")]
-    pub keyword_plan: ::prost::alloc::string::String,
-}
-/// Response message for \[KeywordPlanService.GenerateForecastTimeSeries][google.ads.googleads.v11.services.KeywordPlanService.GenerateForecastTimeSeries\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateForecastTimeSeriesResponse {
-    /// List of weekly time series forecasts for the keyword plan campaign.
-    /// One maximum.
-    #[prost(message, repeated, tag = "1")]
-    pub weekly_time_series_forecasts: ::prost::alloc::vec::Vec<KeywordPlanWeeklyTimeSeriesForecast>,
-}
-/// Request message for \[KeywordPlanService.GenerateForecastMetrics][google.ads.googleads.v11.services.KeywordPlanService.GenerateForecastMetrics\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateForecastMetricsRequest {
-    /// Required. The resource name of the keyword plan to be forecasted.
-    #[prost(string, tag = "1")]
-    pub keyword_plan: ::prost::alloc::string::String,
-}
-/// Response message for \[KeywordPlanService.GenerateForecastMetrics][google.ads.googleads.v11.services.KeywordPlanService.GenerateForecastMetrics\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateForecastMetricsResponse {
-    /// List of campaign forecasts.
-    /// One maximum.
-    #[prost(message, repeated, tag = "1")]
-    pub campaign_forecasts: ::prost::alloc::vec::Vec<KeywordPlanCampaignForecast>,
-    /// List of ad group forecasts.
-    #[prost(message, repeated, tag = "2")]
-    pub ad_group_forecasts: ::prost::alloc::vec::Vec<KeywordPlanAdGroupForecast>,
-    /// List of keyword forecasts.
-    #[prost(message, repeated, tag = "3")]
-    pub keyword_forecasts: ::prost::alloc::vec::Vec<KeywordPlanKeywordForecast>,
-}
-/// A campaign forecast.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanCampaignForecast {
-    /// The resource name of the Keyword Plan campaign related to the forecast.
-    ///
-    /// `customers/{customer_id}/keywordPlanCampaigns/{keyword_plan_campaign_id}`
-    #[prost(string, optional, tag = "3")]
-    pub keyword_plan_campaign: ::core::option::Option<::prost::alloc::string::String>,
-    /// The forecast for the Keyword Plan campaign.
-    #[prost(message, optional, tag = "2")]
-    pub campaign_forecast: ::core::option::Option<ForecastMetrics>,
-}
-/// An ad group forecast.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanAdGroupForecast {
-    /// The resource name of the Keyword Plan ad group related to the forecast.
-    ///
-    /// `customers/{customer_id}/keywordPlanAdGroups/{keyword_plan_ad_group_id}`
-    #[prost(string, optional, tag = "3")]
-    pub keyword_plan_ad_group: ::core::option::Option<::prost::alloc::string::String>,
-    /// The forecast for the Keyword Plan ad group.
-    #[prost(message, optional, tag = "2")]
-    pub ad_group_forecast: ::core::option::Option<ForecastMetrics>,
-}
-/// A keyword forecast.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanKeywordForecast {
-    /// The resource name of the Keyword Plan keyword related to the forecast.
-    ///
-    /// `customers/{customer_id}/keywordPlanAdGroupKeywords/{keyword_plan_ad_group_keyword_id}`
-    #[prost(string, optional, tag = "3")]
-    pub keyword_plan_ad_group_keyword: ::core::option::Option<::prost::alloc::string::String>,
-    /// The forecast for the Keyword Plan keyword.
-    #[prost(message, optional, tag = "2")]
-    pub keyword_forecast: ::core::option::Option<ForecastMetrics>,
-}
-/// The forecast curve for the campaign.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanCampaignForecastCurve {
-    /// The resource name of the Keyword Plan campaign related to the forecast.
-    ///
-    /// `customers/{customer_id}/keywordPlanCampaigns/{keyword_plan_campaign_id}`
-    #[prost(string, optional, tag = "3")]
-    pub keyword_plan_campaign: ::core::option::Option<::prost::alloc::string::String>,
-    /// The max cpc bid forecast curve for the campaign.
-    #[prost(message, optional, tag = "2")]
-    pub max_cpc_bid_forecast_curve: ::core::option::Option<KeywordPlanMaxCpcBidForecastCurve>,
-}
-/// The max cpc bid forecast curve.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanMaxCpcBidForecastCurve {
-    /// The forecasts for the Keyword Plan campaign at different max CPC bids.
-    #[prost(message, repeated, tag = "1")]
-    pub max_cpc_bid_forecasts: ::prost::alloc::vec::Vec<KeywordPlanMaxCpcBidForecast>,
-}
-/// The forecast of the campaign at a specific bid.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanMaxCpcBidForecast {
-    /// The max cpc bid in micros.
-    #[prost(int64, optional, tag = "3")]
-    pub max_cpc_bid_micros: ::core::option::Option<i64>,
-    /// The forecast for the Keyword Plan campaign at the specific bid.
-    #[prost(message, optional, tag = "2")]
-    pub max_cpc_bid_forecast: ::core::option::Option<ForecastMetrics>,
-}
-/// The weekly time series forecast for the keyword plan campaign.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanWeeklyTimeSeriesForecast {
-    /// The resource name of the Keyword Plan campaign related to the forecast.
-    ///
-    /// `customers/{customer_id}/keywordPlanCampaigns/{keyword_plan_campaign_id}`
-    #[prost(string, optional, tag = "1")]
-    pub keyword_plan_campaign: ::core::option::Option<::prost::alloc::string::String>,
-    /// The forecasts for the Keyword Plan campaign at different max CPC bids.
-    #[prost(message, repeated, tag = "2")]
-    pub weekly_forecasts: ::prost::alloc::vec::Vec<KeywordPlanWeeklyForecast>,
-}
-/// The forecast of the campaign for the week starting start_date.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanWeeklyForecast {
-    /// The start date, in yyyy-mm-dd format. This date is inclusive.
-    #[prost(string, optional, tag = "1")]
-    pub start_date: ::core::option::Option<::prost::alloc::string::String>,
-    /// The forecast for the Keyword Plan campaign for the week.
-    #[prost(message, optional, tag = "2")]
-    pub forecast: ::core::option::Option<ForecastMetrics>,
-}
-/// Forecast metrics.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ForecastMetrics {
-    /// Impressions
-    #[prost(double, optional, tag = "7")]
-    pub impressions: ::core::option::Option<f64>,
-    /// Ctr
-    #[prost(double, optional, tag = "8")]
-    pub ctr: ::core::option::Option<f64>,
-    /// AVG cpc
-    #[prost(int64, optional, tag = "9")]
-    pub average_cpc: ::core::option::Option<i64>,
-    /// Clicks
-    #[prost(double, optional, tag = "10")]
-    pub clicks: ::core::option::Option<f64>,
-    /// Cost
-    #[prost(int64, optional, tag = "11")]
-    pub cost_micros: ::core::option::Option<i64>,
-}
-/// Request message for \[KeywordPlanService.GenerateHistoricalMetrics][google.ads.googleads.v11.services.KeywordPlanService.GenerateHistoricalMetrics\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateHistoricalMetricsRequest {
-    /// Required. The resource name of the keyword plan of which historical metrics are
-    /// requested.
-    #[prost(string, tag = "1")]
-    pub keyword_plan: ::prost::alloc::string::String,
-    /// The aggregate fields to include in response.
-    #[prost(message, optional, tag = "2")]
-    pub aggregate_metrics: ::core::option::Option<super::common::KeywordPlanAggregateMetrics>,
-    /// The options for historical metrics data.
-    #[prost(message, optional, tag = "3")]
-    pub historical_metrics_options: ::core::option::Option<super::common::HistoricalMetricsOptions>,
-}
-/// Response message for \[KeywordPlanService.GenerateHistoricalMetrics][google.ads.googleads.v11.services.KeywordPlanService.GenerateHistoricalMetrics\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateHistoricalMetricsResponse {
-    /// List of keyword historical metrics.
-    #[prost(message, repeated, tag = "1")]
-    pub metrics: ::prost::alloc::vec::Vec<KeywordPlanKeywordHistoricalMetrics>,
-    /// The aggregate metrics for all the keywords in the keyword planner plan.
-    #[prost(message, optional, tag = "2")]
-    pub aggregate_metric_results:
-        ::core::option::Option<super::common::KeywordPlanAggregateMetricResults>,
-}
-/// A keyword historical metrics.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordPlanKeywordHistoricalMetrics {
-    /// The text of the query associated with one or more ad_group_keywords in the
-    /// plan.
-    ///
-    /// Note that we de-dupe your keywords list, eliminating close variants before
-    /// returning the plan's keywords as text. For example, if your plan originally
-    /// contained the keywords 'car' and 'cars', the returned search query will
-    /// only contain 'cars'.
-    /// Starting V5, the list of de-duped queries will be included in
-    /// close_variants field.
-    #[prost(string, optional, tag = "4")]
-    pub search_query: ::core::option::Option<::prost::alloc::string::String>,
-    /// The list of close variant queries for search_query whose search results
-    /// are combined into the search_query.
-    #[prost(string, repeated, tag = "3")]
-    pub close_variants: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// The historical metrics for the query associated with one or more
-    /// ad_group_keywords in the plan.
-    #[prost(message, optional, tag = "2")]
-    pub keyword_metrics: ::core::option::Option<super::common::KeywordPlanHistoricalMetrics>,
 }
 #[doc = r" Generated client implementations."]
 pub mod keyword_plan_service_client {
@@ -12945,131 +12675,14 @@ pub mod keyword_plan_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.KeywordPlanService/MutateKeywordPlans",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Returns the requested Keyword Plan forecast curve."]
-        #[doc = " Only the bidding strategy is considered for generating forecast curve."]
-        #[doc = " The bidding strategy value specified in the plan is ignored."]
-        #[doc = ""]
-        #[doc = " To generate a forecast at a value specified in the plan, use"]
-        #[doc = " KeywordPlanService.GenerateForecastMetrics."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [KeywordPlanError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn generate_forecast_curve(
-            &mut self,
-            request: impl tonic::IntoRequest<super::GenerateForecastCurveRequest>,
-        ) -> Result<tonic::Response<super::GenerateForecastCurveResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.KeywordPlanService/GenerateForecastCurve",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Returns a forecast in the form of a time series for the Keyword Plan over"]
-        #[doc = " the next 52 weeks."]
-        #[doc = " (1) Forecasts closer to the current date are generally more accurate than"]
-        #[doc = " further out."]
-        #[doc = ""]
-        #[doc = " (2) The forecast reflects seasonal trends using current and"]
-        #[doc = " prior traffic patterns. The forecast period of the plan is ignored."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [KeywordPlanError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn generate_forecast_time_series(
-            &mut self,
-            request: impl tonic::IntoRequest<super::GenerateForecastTimeSeriesRequest>,
-        ) -> Result<tonic::Response<super::GenerateForecastTimeSeriesResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.KeywordPlanService/GenerateForecastTimeSeries",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Returns the requested Keyword Plan forecasts."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [KeywordPlanError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn generate_forecast_metrics(
-            &mut self,
-            request: impl tonic::IntoRequest<super::GenerateForecastMetricsRequest>,
-        ) -> Result<tonic::Response<super::GenerateForecastMetricsResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.KeywordPlanService/GenerateForecastMetrics",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Returns the requested Keyword Plan historical metrics."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [KeywordPlanError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn generate_historical_metrics(
-            &mut self,
-            request: impl tonic::IntoRequest<super::GenerateHistoricalMetricsRequest>,
-        ) -> Result<tonic::Response<super::GenerateHistoricalMetricsResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.KeywordPlanService/GenerateHistoricalMetrics",
+                "/google.ads.googleads.v14.services.KeywordPlanService/MutateKeywordPlans",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[LabelService.MutateLabels][google.ads.googleads.v11.services.LabelService.MutateLabels\].
+/// Request message for
+/// \[LabelService.MutateLabels][google.ads.googleads.v14.services.LabelService.MutateLabels\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateLabelsRequest {
     /// Required. ID of the customer whose labels are being modified.
@@ -13237,13 +12850,14 @@ pub mod label_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.LabelService/MutateLabels",
+                "/google.ads.googleads.v14.services.LabelService/MutateLabels",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[MediaFileService.MutateMediaFiles][google.ads.googleads.v11.services.MediaFileService.MutateMediaFiles\]
+/// Request message for
+/// \[MediaFileService.MutateMediaFiles][google.ads.googleads.v14.services.MediaFileService.MutateMediaFiles\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateMediaFilesRequest {
     /// Required. The ID of the customer whose media files are being modified.
@@ -13398,19 +13012,22 @@ pub mod media_file_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.MediaFileService/MutateMediaFiles",
+                "/google.ads.googleads.v14.services.MediaFileService/MutateMediaFiles",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[RemarketingActionService.MutateRemarketingActions][google.ads.googleads.v11.services.RemarketingActionService.MutateRemarketingActions\].
+/// Request message for
+/// \[RemarketingActionService.MutateRemarketingActions][google.ads.googleads.v14.services.RemarketingActionService.MutateRemarketingActions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateRemarketingActionsRequest {
-    /// Required. The ID of the customer whose remarketing actions are being modified.
+    /// Required. The ID of the customer whose remarketing actions are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual remarketing actions.
+    /// Required. The list of operations to perform on individual remarketing
+    /// actions.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<RemarketingActionOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -13541,12 +13158,13 @@ pub mod remarketing_action_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.RemarketingActionService/MutateRemarketingActions") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.RemarketingActionService/MutateRemarketingActions") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[SharedCriterionService.MutateSharedCriteria][google.ads.googleads.v11.services.SharedCriterionService.MutateSharedCriteria\].
+/// Request message for
+/// \[SharedCriterionService.MutateSharedCriteria][google.ads.googleads.v14.services.SharedCriterionService.MutateSharedCriteria\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateSharedCriteriaRequest {
     /// Required. The ID of the customer whose shared criteria are being modified.
@@ -13707,13 +13325,14 @@ pub mod shared_criterion_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.SharedCriterionService/MutateSharedCriteria",
+                "/google.ads.googleads.v14.services.SharedCriterionService/MutateSharedCriteria",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[SharedSetService.MutateSharedSets][google.ads.googleads.v11.services.SharedSetService.MutateSharedSets\].
+/// Request message for
+/// \[SharedSetService.MutateSharedSets][google.ads.googleads.v14.services.SharedSetService.MutateSharedSets\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateSharedSetsRequest {
     /// Required. The ID of the customer whose shared sets are being modified.
@@ -13883,20 +13502,124 @@ pub mod shared_set_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.SharedSetService/MutateSharedSets",
+                "/google.ads.googleads.v14.services.SharedSetService/MutateSharedSets",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
+/// \[SmartCampaignSettingService.GetSmartCampaignStatus][google.ads.googleads.v14.services.SmartCampaignSettingService.GetSmartCampaignStatus\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSmartCampaignStatusRequest {
+    /// Required. The resource name of the Smart campaign setting belonging to the
+    /// Smart campaign to fetch the status of.
+    #[prost(string, tag = "1")]
+    pub resource_name: ::prost::alloc::string::String,
+}
+/// Details related to Smart campaigns that are not eligible to serve.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignNotEligibleDetails {
+    /// The reason why the Smart campaign is not eligible to serve.
+    #[prost(
+        enumeration = "super::enums::smart_campaign_not_eligible_reason_enum::SmartCampaignNotEligibleReason",
+        optional,
+        tag = "1"
+    )]
+    pub not_eligible_reason: ::core::option::Option<i32>,
+}
+/// Details related to Smart campaigns that are eligible to serve.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignEligibleDetails {
+    /// The timestamp of the last impression observed in the last 48 hours for this
+    /// campaign.
+    /// The timestamp is in the customer’s timezone and in
+    /// “yyyy-MM-dd HH:mm:ss” format.
+    #[prost(string, optional, tag = "1")]
+    pub last_impression_date_time: ::core::option::Option<::prost::alloc::string::String>,
+    /// The timestamp of when the campaign will end, if applicable.
+    /// The timestamp is in the customer’s timezone and in
+    /// “yyyy-MM-dd HH:mm:ss” format.
+    #[prost(string, optional, tag = "2")]
+    pub end_date_time: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// Details related to paused Smart campaigns.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignPausedDetails {
+    /// The timestamp of when the campaign was last paused.
+    /// The timestamp is in the customer’s timezone and in
+    /// “yyyy-MM-dd HH:mm:ss” format.
+    #[prost(string, optional, tag = "1")]
+    pub paused_date_time: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// Details related to removed Smart campaigns.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignRemovedDetails {
+    /// The timestamp of when the campaign was removed.
+    /// The timestamp is in the customer’s timezone and in
+    /// “yyyy-MM-dd HH:mm:ss” format.
+    #[prost(string, optional, tag = "1")]
+    pub removed_date_time: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// Details related to Smart campaigns that have ended.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmartCampaignEndedDetails {
+    /// The timestamp of when the campaign ended.
+    /// The timestamp is in the customer’s timezone and in
+    /// “yyyy-MM-dd HH:mm:ss” format.
+    #[prost(string, optional, tag = "1")]
+    pub end_date_time: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// Response message for
+/// \[SmartCampaignSettingService.GetSmartCampaignStatus][google.ads.googleads.v14.services.SmartCampaignSettingService.GetSmartCampaignStatus\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSmartCampaignStatusResponse {
+    /// The status of this Smart campaign.
+    #[prost(
+        enumeration = "super::enums::smart_campaign_status_enum::SmartCampaignStatus",
+        tag = "1"
+    )]
+    pub smart_campaign_status: i32,
+    /// Additional details accompanying the status of a Smart campaign.
+    #[prost(
+        oneof = "get_smart_campaign_status_response::SmartCampaignStatusDetails",
+        tags = "2, 3, 4, 5, 6"
+    )]
+    pub smart_campaign_status_details:
+        ::core::option::Option<get_smart_campaign_status_response::SmartCampaignStatusDetails>,
+}
+/// Nested message and enum types in `GetSmartCampaignStatusResponse`.
+pub mod get_smart_campaign_status_response {
+    /// Additional details accompanying the status of a Smart campaign.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SmartCampaignStatusDetails {
+        /// Details related to Smart campaigns that are ineligible to serve.
+        #[prost(message, tag = "2")]
+        NotEligibleDetails(super::SmartCampaignNotEligibleDetails),
+        /// Details related to Smart campaigns that are eligible to serve.
+        #[prost(message, tag = "3")]
+        EligibleDetails(super::SmartCampaignEligibleDetails),
+        /// Details related to paused Smart campaigns.
+        #[prost(message, tag = "4")]
+        PausedDetails(super::SmartCampaignPausedDetails),
+        /// Details related to removed Smart campaigns.
+        #[prost(message, tag = "5")]
+        RemovedDetails(super::SmartCampaignRemovedDetails),
+        /// Details related to Smart campaigns that have ended.
+        #[prost(message, tag = "6")]
+        EndedDetails(super::SmartCampaignEndedDetails),
+    }
+}
+/// Request message for
 /// \[SmartCampaignSettingService.MutateSmartCampaignSetting][\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateSmartCampaignSettingsRequest {
-    /// Required. The ID of the customer whose Smart campaign settings are being modified.
+    /// Required. The ID of the customer whose Smart campaign settings are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual Smart campaign settings.
+    /// Required. The list of operations to perform on individual Smart campaign
+    /// settings.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<SmartCampaignSettingOperation>,
     /// If true, successful operations will be carried out and invalid
@@ -14003,6 +13726,21 @@ pub mod smart_campaign_setting_service_client {
             self.inner = self.inner.accept_gzip();
             self
         }
+        #[doc = " Returns the status of the requested Smart campaign."]
+        pub async fn get_smart_campaign_status(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSmartCampaignStatusRequest>,
+        ) -> Result<tonic::Response<super::GetSmartCampaignStatusResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.SmartCampaignSettingService/GetSmartCampaignStatus") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Updates Smart campaign settings for campaigns."]
         pub async fn mutate_smart_campaign_settings(
             &mut self,
@@ -14016,12 +13754,13 @@ pub mod smart_campaign_setting_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.SmartCampaignSettingService/MutateSmartCampaignSettings") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.SmartCampaignSettingService/MutateSmartCampaignSettings") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[UserListService.MutateUserLists][google.ads.googleads.v11.services.UserListService.MutateUserLists\].
+/// Request message for
+/// \[UserListService.MutateUserLists][google.ads.googleads.v14.services.UserListService.MutateUserLists\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateUserListsRequest {
     /// Required. The ID of the customer whose user lists are being modified.
@@ -14176,13 +13915,14 @@ pub mod user_list_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.UserListService/MutateUserLists",
+                "/google.ads.googleads.v14.services.UserListService/MutateUserLists",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[GoogleAdsService.Search][google.ads.googleads.v11.services.GoogleAdsService.Search\].
+/// Request message for
+/// \[GoogleAdsService.Search][google.ads.googleads.v14.services.GoogleAdsService.Search\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchGoogleAdsRequest {
     /// Required. The ID of the customer being queried.
@@ -14219,7 +13959,8 @@ pub struct SearchGoogleAdsRequest {
     )]
     pub summary_row_setting: i32,
 }
-/// Response message for \[GoogleAdsService.Search][google.ads.googleads.v11.services.GoogleAdsService.Search\].
+/// Response message for
+/// \[GoogleAdsService.Search][google.ads.googleads.v14.services.GoogleAdsService.Search\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchGoogleAdsResponse {
     /// The list of rows that matched the query.
@@ -14244,7 +13985,8 @@ pub struct SearchGoogleAdsResponse {
     #[prost(message, optional, tag = "6")]
     pub summary_row: ::core::option::Option<GoogleAdsRow>,
 }
-/// Request message for \[GoogleAdsService.SearchStream][google.ads.googleads.v11.services.GoogleAdsService.SearchStream\].
+/// Request message for
+/// \[GoogleAdsService.SearchStream][google.ads.googleads.v14.services.GoogleAdsService.SearchStream\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchGoogleAdsStreamRequest {
     /// Required. The ID of the customer being queried.
@@ -14262,7 +14004,8 @@ pub struct SearchGoogleAdsStreamRequest {
     )]
     pub summary_row_setting: i32,
 }
-/// Response message for \[GoogleAdsService.SearchStream][google.ads.googleads.v11.services.GoogleAdsService.SearchStream\].
+/// Response message for
+/// \[GoogleAdsService.SearchStream][google.ads.googleads.v14.services.GoogleAdsService.SearchStream\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchGoogleAdsStreamResponse {
     /// The list of rows that matched the query.
@@ -14311,6 +14054,9 @@ pub struct GoogleAdsRow {
     /// The ad group asset referenced in the query.
     #[prost(message, optional, tag = "154")]
     pub ad_group_asset: ::core::option::Option<super::resources::AdGroupAsset>,
+    /// The ad group asset set referenced in the query.
+    #[prost(message, optional, tag = "196")]
+    pub ad_group_asset_set: ::core::option::Option<super::resources::AdGroupAssetSet>,
     /// The ad group audience view referenced in the query.
     #[prost(message, optional, tag = "57")]
     pub ad_group_audience_view: ::core::option::Option<super::resources::AdGroupAudienceView>,
@@ -14388,6 +14134,9 @@ pub struct GoogleAdsRow {
     /// The asset set referenced in the query.
     #[prost(message, optional, tag = "179")]
     pub asset_set: ::core::option::Option<super::resources::AssetSet>,
+    /// The asset set type view referenced in the query.
+    #[prost(message, optional, tag = "197")]
+    pub asset_set_type_view: ::core::option::Option<super::resources::AssetSetTypeView>,
     /// The batch job referenced in the query.
     #[prost(message, optional, tag = "139")]
     pub batch_job: ::core::option::Option<super::resources::BatchJob>,
@@ -14435,19 +14184,12 @@ pub struct GoogleAdsRow {
     /// The campaign criterion referenced in the query.
     #[prost(message, optional, tag = "20")]
     pub campaign_criterion: ::core::option::Option<super::resources::CampaignCriterion>,
-    /// The campaign criterion simulation referenced in the query.
-    #[prost(message, optional, tag = "111")]
-    pub campaign_criterion_simulation:
-        ::core::option::Option<super::resources::CampaignCriterionSimulation>,
     /// The campaign customizer referenced in the query.
     #[prost(message, optional, tag = "186")]
     pub campaign_customizer: ::core::option::Option<super::resources::CampaignCustomizer>,
     /// The campaign draft referenced in the query.
     #[prost(message, optional, tag = "49")]
     pub campaign_draft: ::core::option::Option<super::resources::CampaignDraft>,
-    /// The campaign experiment referenced in the query.
-    #[prost(message, optional, tag = "84")]
-    pub campaign_experiment: ::core::option::Option<super::resources::CampaignExperiment>,
     /// The campaign extension setting referenced in the query.
     #[prost(message, optional, tag = "113")]
     pub campaign_extension_setting:
@@ -14520,6 +14262,9 @@ pub struct GoogleAdsRow {
     /// The customer asset referenced in the query.
     #[prost(message, optional, tag = "155")]
     pub customer_asset: ::core::option::Option<super::resources::CustomerAsset>,
+    /// The customer asset set referenced in the query.
+    #[prost(message, optional, tag = "195")]
+    pub customer_asset_set: ::core::option::Option<super::resources::CustomerAssetSet>,
     /// The accessible bidding strategy referenced in the query.
     #[prost(message, optional, tag = "169")]
     pub accessible_bidding_strategy:
@@ -14690,9 +14435,15 @@ pub struct GoogleAdsRow {
     #[prost(message, optional, tag = "129")]
     pub paid_organic_search_term_view:
         ::core::option::Option<super::resources::PaidOrganicSearchTermView>,
+    /// The qualifying question referenced in the query.
+    #[prost(message, optional, tag = "202")]
+    pub qualifying_question: ::core::option::Option<super::resources::QualifyingQuestion>,
     /// The parental status view referenced in the query.
     #[prost(message, optional, tag = "45")]
     pub parental_status_view: ::core::option::Option<super::resources::ParentalStatusView>,
+    /// The per store view referenced in the query.
+    #[prost(message, optional, tag = "198")]
+    pub per_store_view: ::core::option::Option<super::resources::PerStoreView>,
     /// The Product Bidding Category referenced in the query.
     #[prost(message, optional, tag = "109")]
     pub product_bidding_category_constant:
@@ -14700,6 +14451,9 @@ pub struct GoogleAdsRow {
     /// The product group view referenced in the query.
     #[prost(message, optional, tag = "54")]
     pub product_group_view: ::core::option::Option<super::resources::ProductGroupView>,
+    /// The product link referenced in the query.
+    #[prost(message, optional, tag = "194")]
+    pub product_link: ::core::option::Option<super::resources::ProductLink>,
     /// The recommendation referenced in the query.
     #[prost(message, optional, tag = "22")]
     pub recommendation: ::core::option::Option<super::resources::Recommendation>,
@@ -14730,6 +14484,14 @@ pub struct GoogleAdsRow {
     /// The topic view referenced in the query.
     #[prost(message, optional, tag = "44")]
     pub topic_view: ::core::option::Option<super::resources::TopicView>,
+    /// The travel activity group view referenced in the query.
+    #[prost(message, optional, tag = "201")]
+    pub travel_activity_group_view:
+        ::core::option::Option<super::resources::TravelActivityGroupView>,
+    /// The travel activity performance view referenced in the query.
+    #[prost(message, optional, tag = "200")]
+    pub travel_activity_performance_view:
+        ::core::option::Option<super::resources::TravelActivityPerformanceView>,
     /// The experiment referenced in the query.
     #[prost(message, optional, tag = "133")]
     pub experiment: ::core::option::Option<super::resources::Experiment>,
@@ -14770,7 +14532,8 @@ pub struct GoogleAdsRow {
     #[prost(message, optional, tag = "102")]
     pub segments: ::core::option::Option<super::common::Segments>,
 }
-/// Request message for \[GoogleAdsService.Mutate][google.ads.googleads.v11.services.GoogleAdsService.Mutate\].
+/// Request message for
+/// \[GoogleAdsService.Mutate][google.ads.googleads.v14.services.GoogleAdsService.Mutate\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateGoogleAdsRequest {
     /// Required. The ID of the customer whose resources are being modified.
@@ -14799,7 +14562,8 @@ pub struct MutateGoogleAdsRequest {
     )]
     pub response_content_type: i32,
 }
-/// Response message for \[GoogleAdsService.Mutate][google.ads.googleads.v11.services.GoogleAdsService.Mutate\].
+/// Response message for
+/// \[GoogleAdsService.Mutate][google.ads.googleads.v14.services.GoogleAdsService.Mutate\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateGoogleAdsResponse {
     /// Errors that pertain to operation failures in the partial failure mode.
@@ -14818,7 +14582,7 @@ pub struct MutateOperation {
     /// The mutate operation.
     #[prost(
         oneof = "mutate_operation::Operation",
-        tags = "17, 1, 56, 2, 77, 18, 3, 75, 19, 20, 21, 5, 49, 22, 23, 65, 78, 80, 62, 71, 72, 81, 58, 59, 6, 52, 73, 7, 8, 67, 13, 76, 24, 25, 26, 27, 9, 28, 10, 11, 12, 55, 69, 63, 64, 68, 57, 66, 79, 30, 31, 32, 34, 35, 70, 82, 83, 36, 37, 53, 54, 38, 39, 40, 44, 50, 51, 45, 48, 41, 42, 43, 14, 15, 61, 16"
+        tags = "17, 1, 56, 2, 77, 18, 3, 75, 19, 20, 21, 5, 49, 22, 23, 65, 78, 80, 62, 71, 72, 81, 58, 59, 6, 52, 73, 7, 8, 67, 13, 76, 24, 26, 27, 9, 28, 10, 11, 12, 55, 69, 63, 64, 68, 57, 66, 79, 30, 31, 32, 34, 35, 70, 82, 83, 36, 37, 53, 54, 38, 39, 40, 44, 50, 51, 45, 48, 41, 42, 43, 14, 15, 61, 16"
     )]
     pub operation: ::core::option::Option<mutate_operation::Operation>,
 }
@@ -14920,15 +14684,12 @@ pub mod mutate_operation {
         /// A campaign criterion mutate operation.
         #[prost(message, tag = "13")]
         CampaignCriterionOperation(super::CampaignCriterionOperation),
-        /// An campaign customizer mutate operation.
+        /// A campaign customizer mutate operation.
         #[prost(message, tag = "76")]
         CampaignCustomizerOperation(super::CampaignCustomizerOperation),
         /// A campaign draft mutate operation.
         #[prost(message, tag = "24")]
         CampaignDraftOperation(super::CampaignDraftOperation),
-        /// A campaign experiment mutate operation.
-        #[prost(message, tag = "25")]
-        CampaignExperimentOperation(super::CampaignExperimentOperation),
         /// A campaign extension setting mutate operation.
         #[prost(message, tag = "26")]
         CampaignExtensionSettingOperation(super::CampaignExtensionSettingOperation),
@@ -14971,7 +14732,7 @@ pub mod mutate_operation {
         /// A customer conversion goal mutate operation.
         #[prost(message, tag = "66")]
         CustomerConversionGoalOperation(super::CustomerConversionGoalOperation),
-        /// An customer customizer mutate operation.
+        /// A customer customizer mutate operation.
         #[prost(message, tag = "79")]
         CustomerCustomizerOperation(super::CustomerCustomizerOperation),
         /// A customer extension setting mutate operation.
@@ -14989,7 +14750,7 @@ pub mod mutate_operation {
         /// A customer mutate operation.
         #[prost(message, tag = "35")]
         CustomerOperation(super::CustomerOperation),
-        /// An customizer attribute mutate operation.
+        /// A customizer attribute mutate operation.
         #[prost(message, tag = "70")]
         CustomizerAttributeOperation(super::CustomizerAttributeOperation),
         /// An experiment mutate operation.
@@ -15063,7 +14824,7 @@ pub struct MutateOperationResponse {
     /// The mutate response.
     #[prost(
         oneof = "mutate_operation_response::Response",
-        tags = "17, 1, 56, 2, 77, 18, 3, 75, 19, 20, 21, 5, 22, 49, 23, 65, 78, 79, 62, 71, 72, 80, 58, 59, 6, 52, 73, 7, 8, 67, 13, 76, 24, 25, 26, 27, 9, 28, 10, 11, 12, 55, 69, 63, 64, 68, 57, 66, 74, 30, 31, 32, 34, 35, 70, 81, 82, 36, 37, 53, 54, 38, 39, 40, 44, 45, 50, 51, 48, 41, 42, 43, 14, 15, 61, 16"
+        tags = "17, 1, 56, 2, 77, 18, 3, 75, 19, 20, 21, 5, 22, 49, 23, 65, 78, 79, 62, 71, 72, 80, 58, 59, 6, 52, 73, 7, 8, 67, 13, 76, 24, 26, 27, 9, 28, 10, 11, 12, 55, 69, 63, 64, 68, 57, 66, 74, 30, 31, 32, 34, 35, 70, 81, 82, 36, 37, 53, 54, 38, 39, 40, 44, 45, 50, 51, 48, 41, 42, 43, 14, 15, 61, 16"
     )]
     pub response: ::core::option::Option<mutate_operation_response::Response>,
 }
@@ -15171,9 +14932,6 @@ pub mod mutate_operation_response {
         /// The result for the campaign draft mutate.
         #[prost(message, tag = "24")]
         CampaignDraftResult(super::MutateCampaignDraftResult),
-        /// The result for the campaign experiment mutate.
-        #[prost(message, tag = "25")]
-        CampaignExperimentResult(super::MutateCampaignExperimentResult),
         /// The result for the campaign extension setting mutate.
         #[prost(message, tag = "26")]
         CampaignExtensionSettingResult(super::MutateCampaignExtensionSettingResult),
@@ -15377,7 +15135,7 @@ pub mod google_ads_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.GoogleAdsService/Search",
+                "/google.ads.googleads.v14.services.GoogleAdsService/Search",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -15409,7 +15167,7 @@ pub mod google_ads_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.GoogleAdsService/SearchStream",
+                "/google.ads.googleads.v14.services.GoogleAdsService/SearchStream",
             );
             self.inner
                 .server_streaming(request.into_request(), path, codec)
@@ -15539,13 +15297,14 @@ pub mod google_ads_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.GoogleAdsService/Mutate",
+                "/google.ads.googleads.v14.services.GoogleAdsService/Mutate",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[BatchJobService.MutateBatchJob][google.ads.googleads.v11.services.BatchJobService.MutateBatchJob\].
+/// Request message for
+/// \[BatchJobService.MutateBatchJob][google.ads.googleads.v14.services.BatchJobService.MutateBatchJob\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateBatchJobRequest {
     /// Required. The ID of the customer for which to create a batch job.
@@ -15578,7 +15337,8 @@ pub mod batch_job_operation {
         Remove(::prost::alloc::string::String),
     }
 }
-/// Response message for \[BatchJobService.MutateBatchJob][google.ads.googleads.v11.services.BatchJobService.MutateBatchJob\].
+/// Response message for
+/// \[BatchJobService.MutateBatchJob][google.ads.googleads.v14.services.BatchJobService.MutateBatchJob\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateBatchJobResponse {
     /// The result for the mutate.
@@ -15592,14 +15352,16 @@ pub struct MutateBatchJobResult {
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[BatchJobService.RunBatchJob][google.ads.googleads.v11.services.BatchJobService.RunBatchJob\].
+/// Request message for
+/// \[BatchJobService.RunBatchJob][google.ads.googleads.v14.services.BatchJobService.RunBatchJob\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RunBatchJobRequest {
     /// Required. The resource name of the BatchJob to run.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[BatchJobService.AddBatchJobOperations][google.ads.googleads.v11.services.BatchJobService.AddBatchJobOperations\].
+/// Request message for
+/// \[BatchJobService.AddBatchJobOperations][google.ads.googleads.v14.services.BatchJobService.AddBatchJobOperations\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AddBatchJobOperationsRequest {
     /// Required. The resource name of the batch job.
@@ -15625,7 +15387,8 @@ pub struct AddBatchJobOperationsRequest {
     #[prost(message, repeated, tag = "3")]
     pub mutate_operations: ::prost::alloc::vec::Vec<MutateOperation>,
 }
-/// Response message for \[BatchJobService.AddBatchJobOperations][google.ads.googleads.v11.services.BatchJobService.AddBatchJobOperations\].
+/// Response message for
+/// \[BatchJobService.AddBatchJobOperations][google.ads.googleads.v14.services.BatchJobService.AddBatchJobOperations\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AddBatchJobOperationsResponse {
     /// The total number of operations added so far for this batch job.
@@ -15637,10 +15400,12 @@ pub struct AddBatchJobOperationsResponse {
     #[prost(string, tag = "2")]
     pub next_sequence_token: ::prost::alloc::string::String,
 }
-/// Request message for \[BatchJobService.ListBatchJobResults][google.ads.googleads.v11.services.BatchJobService.ListBatchJobResults\].
+/// Request message for
+/// \[BatchJobService.ListBatchJobResults][google.ads.googleads.v14.services.BatchJobService.ListBatchJobResults\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBatchJobResultsRequest {
-    /// Required. The resource name of the batch job whose results are being listed.
+    /// Required. The resource name of the batch job whose results are being
+    /// listed.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
     /// Token of the page to retrieve. If not specified, the first
@@ -15662,7 +15427,8 @@ pub struct ListBatchJobResultsRequest {
     )]
     pub response_content_type: i32,
 }
-/// Response message for \[BatchJobService.ListBatchJobResults][google.ads.googleads.v11.services.BatchJobService.ListBatchJobResults\].
+/// Response message for
+/// \[BatchJobService.ListBatchJobResults][google.ads.googleads.v14.services.BatchJobService.ListBatchJobResults\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBatchJobResultsResponse {
     /// The list of rows that matched the query.
@@ -15761,7 +15527,7 @@ pub mod batch_job_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.BatchJobService/MutateBatchJob",
+                "/google.ads.googleads.v14.services.BatchJobService/MutateBatchJob",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -15788,7 +15554,7 @@ pub mod batch_job_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.BatchJobService/ListBatchJobResults",
+                "/google.ads.googleads.v14.services.BatchJobService/ListBatchJobResults",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -15821,7 +15587,7 @@ pub mod batch_job_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.BatchJobService/RunBatchJob",
+                "/google.ads.googleads.v14.services.BatchJobService/RunBatchJob",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -15848,7 +15614,7 @@ pub mod batch_job_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.BatchJobService/AddBatchJobOperations",
+                "/google.ads.googleads.v14.services.BatchJobService/AddBatchJobOperations",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -15857,7 +15623,8 @@ pub mod batch_job_service_client {
 /// Request message for billing setup mutate operations.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateBillingSetupRequest {
-    /// Required. Id of the customer to apply the billing setup mutate operation to.
+    /// Required. Id of the customer to apply the billing setup mutate operation
+    /// to.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
     /// Required. The operation to perform.
@@ -15988,14 +15755,14 @@ pub mod billing_setup_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.BillingSetupService/MutateBillingSetup",
+                "/google.ads.googleads.v14.services.BillingSetupService/MutateBillingSetup",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[ConversionAdjustmentUploadService.UploadConversionAdjustments][google.ads.googleads.v11.services.ConversionAdjustmentUploadService.UploadConversionAdjustments\].
+/// \[ConversionAdjustmentUploadService.UploadConversionAdjustments][google.ads.googleads.v14.services.ConversionAdjustmentUploadService.UploadConversionAdjustments\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UploadConversionAdjustmentsRequest {
     /// Required. The ID of the customer performing the upload.
@@ -16019,7 +15786,7 @@ pub struct UploadConversionAdjustmentsRequest {
     pub validate_only: bool,
 }
 /// Response message for
-/// \[ConversionAdjustmentUploadService.UploadConversionAdjustments][google.ads.googleads.v11.services.ConversionAdjustmentUploadService.UploadConversionAdjustments\].
+/// \[ConversionAdjustmentUploadService.UploadConversionAdjustments][google.ads.googleads.v14.services.ConversionAdjustmentUploadService.UploadConversionAdjustments\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UploadConversionAdjustmentsResponse {
     /// Errors that pertain to conversion adjustment failures in the partial
@@ -16035,6 +15802,9 @@ pub struct UploadConversionAdjustmentsResponse {
     /// validate_only is true.
     #[prost(message, repeated, tag = "2")]
     pub results: ::prost::alloc::vec::Vec<ConversionAdjustmentResult>,
+    /// Job ID for the upload batch.
+    #[prost(int64, tag = "3")]
+    pub job_id: i64,
 }
 /// A conversion adjustment.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -16223,12 +15993,13 @@ pub mod conversion_adjustment_upload_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.ConversionAdjustmentUploadService/UploadConversionAdjustments") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.ConversionAdjustmentUploadService/UploadConversionAdjustments") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[ConversionUploadService.UploadClickConversions][google.ads.googleads.v11.services.ConversionUploadService.UploadClickConversions\].
+/// Request message for
+/// \[ConversionUploadService.UploadClickConversions][google.ads.googleads.v14.services.ConversionUploadService.UploadClickConversions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UploadClickConversionsRequest {
     /// Required. The ID of the customer performing the upload.
@@ -16250,8 +16021,29 @@ pub struct UploadClickConversionsRequest {
     /// returned, not results.
     #[prost(bool, tag = "4")]
     pub validate_only: bool,
+    /// If true, the API will perform all upload checks and return errors if
+    /// any are found. If false, it will perform only basic input validation,
+    /// skip subsequent upload checks, and return success even if no click
+    /// was found for the provided `user_identifiers`.
+    ///
+    /// This setting only affects Enhanced conversions for leads uploads that use
+    /// `user_identifiers` instead of `GCLID`, `GBRAID`, or `WBRAID`. When
+    /// uploading enhanced conversions for leads, you should upload all conversion
+    /// events to the API, including those that may not come from Google Ads
+    /// campaigns. The upload of an event that is not from a Google Ads campaign
+    /// will result in a `CLICK_NOT_FOUND` error if this field is set to `true`.
+    /// Since these errors are expected for such events, set this field to `false`
+    /// so you can confirm your uploads are properly formatted but ignore
+    /// `CLICK_NOT_FOUND` errors from all of the conversions that are not from a
+    /// Google Ads campaign. This will allow you to focus only on errors that you
+    /// can address.
+    ///
+    /// Default is false.
+    #[prost(bool, tag = "5")]
+    pub debug_enabled: bool,
 }
-/// Response message for \[ConversionUploadService.UploadClickConversions][google.ads.googleads.v11.services.ConversionUploadService.UploadClickConversions\].
+/// Response message for
+/// \[ConversionUploadService.UploadClickConversions][google.ads.googleads.v14.services.ConversionUploadService.UploadClickConversions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UploadClickConversionsResponse {
     /// Errors that pertain to conversion failures in the partial failure mode.
@@ -16267,8 +16059,12 @@ pub struct UploadClickConversionsResponse {
     /// true.
     #[prost(message, repeated, tag = "2")]
     pub results: ::prost::alloc::vec::Vec<ClickConversionResult>,
+    /// Job ID for the upload batch.
+    #[prost(int64, tag = "3")]
+    pub job_id: i64,
 }
-/// Request message for \[ConversionUploadService.UploadCallConversions][google.ads.googleads.v11.services.ConversionUploadService.UploadCallConversions\].
+/// Request message for
+/// \[ConversionUploadService.UploadCallConversions][google.ads.googleads.v14.services.ConversionUploadService.UploadCallConversions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UploadCallConversionsRequest {
     /// Required. The ID of the customer performing the upload.
@@ -16291,7 +16087,8 @@ pub struct UploadCallConversionsRequest {
     #[prost(bool, tag = "4")]
     pub validate_only: bool,
 }
-/// Response message for \[ConversionUploadService.UploadCallConversions][google.ads.googleads.v11.services.ConversionUploadService.UploadCallConversions\].
+/// Response message for
+/// \[ConversionUploadService.UploadCallConversions][google.ads.googleads.v14.services.ConversionUploadService.UploadCallConversions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UploadCallConversionsResponse {
     /// Errors that pertain to conversion failures in the partial failure mode.
@@ -16587,7 +16384,7 @@ pub mod conversion_upload_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ConversionUploadService/UploadClickConversions",
+                "/google.ads.googleads.v14.services.ConversionUploadService/UploadClickConversions",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -16613,13 +16410,14 @@ pub mod conversion_upload_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ConversionUploadService/UploadCallConversions",
+                "/google.ads.googleads.v14.services.ConversionUploadService/UploadCallConversions",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CustomAudienceService.MutateCustomAudiences][google.ads.googleads.v11.services.CustomAudienceService.MutateCustomAudiences\].
+/// Request message for
+/// \[CustomAudienceService.MutateCustomAudiences][google.ads.googleads.v14.services.CustomAudienceService.MutateCustomAudiences\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomAudiencesRequest {
     /// Required. The ID of the customer whose custom audiences are being modified.
@@ -16756,13 +16554,14 @@ pub mod custom_audience_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomAudienceService/MutateCustomAudiences",
+                "/google.ads.googleads.v14.services.CustomAudienceService/MutateCustomAudiences",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CustomInterestService.MutateCustomInterests][google.ads.googleads.v11.services.CustomInterestService.MutateCustomInterests\].
+/// Request message for
+/// \[CustomInterestService.MutateCustomInterests][google.ads.googleads.v14.services.CustomInterestService.MutateCustomInterests\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomInterestsRequest {
     /// Required. The ID of the customer whose custom interests are being modified.
@@ -16891,13 +16690,161 @@ pub mod custom_interest_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomInterestService/MutateCustomInterests",
+                "/google.ads.googleads.v14.services.CustomInterestService/MutateCustomInterests",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CustomerClientLinkService.MutateCustomerClientLink][google.ads.googleads.v11.services.CustomerClientLinkService.MutateCustomerClientLink\].
+/// Request message for
+/// \[CustomerAssetSetService.MutateCustomerAssetSets][google.ads.googleads.v14.services.CustomerAssetSetService.MutateCustomerAssetSets\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateCustomerAssetSetsRequest {
+    /// Required. The ID of the customer whose customer asset sets are being
+    /// modified.
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    /// Required. The list of operations to perform on individual customer asset
+    /// sets.
+    #[prost(message, repeated, tag = "2")]
+    pub operations: ::prost::alloc::vec::Vec<CustomerAssetSetOperation>,
+    /// If true, successful operations will be carried out and invalid
+    /// operations will return errors. If false, all operations will be carried
+    /// out in one transaction if and only if they are all valid.
+    /// Default is false.
+    #[prost(bool, tag = "3")]
+    pub partial_failure: bool,
+    /// If true, the request is validated but not executed. Only errors are
+    /// returned, not results.
+    #[prost(bool, tag = "4")]
+    pub validate_only: bool,
+    /// The response content type setting. Determines whether the mutable resource
+    /// or just the resource name should be returned post mutation.
+    #[prost(
+        enumeration = "super::enums::response_content_type_enum::ResponseContentType",
+        tag = "5"
+    )]
+    pub response_content_type: i32,
+}
+/// A single operation (create, remove) on a customer asset set.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CustomerAssetSetOperation {
+    /// The mutate operation.
+    #[prost(oneof = "customer_asset_set_operation::Operation", tags = "1, 2")]
+    pub operation: ::core::option::Option<customer_asset_set_operation::Operation>,
+}
+/// Nested message and enum types in `CustomerAssetSetOperation`.
+pub mod customer_asset_set_operation {
+    /// The mutate operation.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Operation {
+        /// Create operation: No resource name is expected for the new customer asset
+        /// set.
+        #[prost(message, tag = "1")]
+        Create(super::super::resources::CustomerAssetSet),
+        /// Remove operation: A resource name for the removed customer asset set is
+        /// expected, in this format:
+        /// `customers/{customer_id}/customerAssetSets/{asset_set_id}`
+        #[prost(string, tag = "2")]
+        Remove(::prost::alloc::string::String),
+    }
+}
+/// Response message for a customer asset set mutate.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateCustomerAssetSetsResponse {
+    /// All results for the mutate.
+    #[prost(message, repeated, tag = "1")]
+    pub results: ::prost::alloc::vec::Vec<MutateCustomerAssetSetResult>,
+    /// Errors that pertain to operation failures in the partial failure mode.
+    /// Returned only when partial_failure = true and all errors occur inside the
+    /// operations. If any errors occur outside the operations (e.g. auth errors),
+    /// we return an RPC level error.
+    #[prost(message, optional, tag = "2")]
+    pub partial_failure_error: ::core::option::Option<super::super::super::super::rpc::Status>,
+}
+/// The result for the customer asset set mutate.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateCustomerAssetSetResult {
+    /// Returned for successful operations.
+    #[prost(string, tag = "1")]
+    pub resource_name: ::prost::alloc::string::String,
+    /// The mutated customer asset set with only mutable fields after mutate. The
+    /// field will only be returned when response_content_type is set to
+    /// "MUTABLE_RESOURCE".
+    #[prost(message, optional, tag = "2")]
+    pub customer_asset_set: ::core::option::Option<super::resources::CustomerAssetSet>,
+}
+#[doc = r" Generated client implementations."]
+pub mod customer_asset_set_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service to manage customer asset set"]
+    #[derive(Debug, Clone)]
+    pub struct CustomerAssetSetServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> CustomerAssetSetServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> CustomerAssetSetServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            CustomerAssetSetServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates, or removes customer asset sets. Operation statuses are"]
+        #[doc = " returned."]
+        pub async fn mutate_customer_asset_sets(
+            &mut self,
+            request: impl tonic::IntoRequest<super::MutateCustomerAssetSetsRequest>,
+        ) -> Result<tonic::Response<super::MutateCustomerAssetSetsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerAssetSetService/MutateCustomerAssetSets") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Request message for
+/// \[CustomerClientLinkService.MutateCustomerClientLink][google.ads.googleads.v14.services.CustomerClientLinkService.MutateCustomerClientLink\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerClientLinkRequest {
     /// Required. The ID of the customer whose customer link are being modified.
@@ -17025,18 +16972,21 @@ pub mod customer_client_link_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomerClientLinkService/MutateCustomerClientLink") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerClientLinkService/MutateCustomerClientLink") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[CustomerManagerLinkService.MutateCustomerManagerLink][google.ads.googleads.v11.services.CustomerManagerLinkService.MutateCustomerManagerLink\].
+/// Request message for
+/// \[CustomerManagerLinkService.MutateCustomerManagerLink][google.ads.googleads.v14.services.CustomerManagerLinkService.MutateCustomerManagerLink\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerManagerLinkRequest {
-    /// Required. The ID of the customer whose customer manager links are being modified.
+    /// Required. The ID of the customer whose customer manager links are being
+    /// modified.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
-    /// Required. The list of operations to perform on individual customer manager links.
+    /// Required. The list of operations to perform on individual customer manager
+    /// links.
     #[prost(message, repeated, tag = "2")]
     pub operations: ::prost::alloc::vec::Vec<CustomerManagerLinkOperation>,
     /// If true, the request is validated but not executed. Only errors are
@@ -17044,7 +16994,8 @@ pub struct MutateCustomerManagerLinkRequest {
     #[prost(bool, tag = "3")]
     pub validate_only: bool,
 }
-/// Request message for \[CustomerManagerLinkService.MoveManagerLink][google.ads.googleads.v11.services.CustomerManagerLinkService.MoveManagerLink\].
+/// Request message for
+/// \[CustomerManagerLinkService.MoveManagerLink][google.ads.googleads.v14.services.CustomerManagerLinkService.MoveManagerLink\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MoveManagerLinkRequest {
     /// Required. The ID of the client customer that is being moved.
@@ -17055,8 +17006,9 @@ pub struct MoveManagerLinkRequest {
     /// `customers/{customer_id}/customerManagerLinks/{manager_customer_id}~{manager_link_id}`
     #[prost(string, tag = "2")]
     pub previous_customer_manager_link: ::prost::alloc::string::String,
-    /// Required. The resource name of the new manager customer that the client wants to move
-    /// to. Customer resource names have the format: "customers/{customer_id}"
+    /// Required. The resource name of the new manager customer that the client
+    /// wants to move to. Customer resource names have the format:
+    /// "customers/{customer_id}"
     #[prost(string, tag = "3")]
     pub new_manager: ::prost::alloc::string::String,
     /// If true, the request is validated but not executed. Only errors are
@@ -17187,7 +17139,7 @@ pub mod customer_manager_link_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomerManagerLinkService/MutateCustomerManagerLink") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerManagerLinkService/MutateCustomerManagerLink") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Moves a client customer to a new manager customer."]
@@ -17218,8 +17170,129 @@ pub mod customer_manager_link_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.CustomerManagerLinkService/MoveManagerLink",
+                "/google.ads.googleads.v14.services.CustomerManagerLinkService/MoveManagerLink",
             );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// A single update operation for a CustomerSkAdNetworkConversionValueSchema.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CustomerSkAdNetworkConversionValueSchemaOperation {
+    /// Update operation: The schema is expected to have a valid resource name.
+    #[prost(message, optional, tag = "1")]
+    pub update: ::core::option::Option<super::resources::CustomerSkAdNetworkConversionValueSchema>,
+}
+/// Request message for
+/// \[CustomerSkAdNetworkConversionValueSchemaService.MutateCustomerSkAdNetworkConversionValueSchema][google.ads.googleads.v14.services.CustomerSkAdNetworkConversionValueSchemaService.MutateCustomerSkAdNetworkConversionValueSchema\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateCustomerSkAdNetworkConversionValueSchemaRequest {
+    /// The ID of the customer whose shared sets are being modified.
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    /// The operation to perform.
+    #[prost(message, optional, tag = "2")]
+    pub operation: ::core::option::Option<CustomerSkAdNetworkConversionValueSchemaOperation>,
+    /// If true, the request is validated but not executed. Only errors are
+    /// returned, not results.
+    #[prost(bool, tag = "3")]
+    pub validate_only: bool,
+}
+/// The result for the CustomerSkAdNetworkConversionValueSchema mutate.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateCustomerSkAdNetworkConversionValueSchemaResult {
+    /// Resource name of the customer that was modified.
+    #[prost(string, tag = "1")]
+    pub resource_name: ::prost::alloc::string::String,
+    /// App ID of the SkanConversionValue modified.
+    #[prost(string, tag = "2")]
+    pub app_id: ::prost::alloc::string::String,
+}
+/// Response message for MutateCustomerSkAdNetworkConversionValueSchema.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MutateCustomerSkAdNetworkConversionValueSchemaResponse {
+    /// All results for the mutate.
+    #[prost(message, optional, tag = "1")]
+    pub result: ::core::option::Option<MutateCustomerSkAdNetworkConversionValueSchemaResult>,
+}
+#[doc = r" Generated client implementations."]
+pub mod customer_sk_ad_network_conversion_value_schema_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service to manage CustomerSkAdNetworkConversionValueSchema."]
+    #[derive(Debug, Clone)]
+    pub struct CustomerSkAdNetworkConversionValueSchemaServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> CustomerSkAdNetworkConversionValueSchemaServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> CustomerSkAdNetworkConversionValueSchemaServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            CustomerSkAdNetworkConversionValueSchemaServiceClient::new(InterceptedService::new(
+                inner,
+                interceptor,
+            ))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates or updates the CustomerSkAdNetworkConversionValueSchema."]
+        #[doc = ""]
+        #[doc = " List of thrown errors:"]
+        #[doc = "   [AuthenticationError]()"]
+        #[doc = "   [AuthorizationError]()"]
+        #[doc = "   [FieldError]()"]
+        #[doc = "   [InternalError]()"]
+        #[doc = "   [MutateError]()"]
+        pub async fn mutate_customer_sk_ad_network_conversion_value_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::MutateCustomerSkAdNetworkConversionValueSchemaRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::MutateCustomerSkAdNetworkConversionValueSchemaResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerSkAdNetworkConversionValueSchemaService/MutateCustomerSkAdNetworkConversionValueSchema") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
@@ -17352,13 +17425,13 @@ pub mod customer_user_access_invitation_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomerUserAccessInvitationService/MutateCustomerUserAccessInvitation") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerUserAccessInvitationService/MutateCustomerUserAccessInvitation") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Mutate Request for
-/// \[CustomerUserAccessService.MutateCustomerUserAccess][google.ads.googleads.v11.services.CustomerUserAccessService.MutateCustomerUserAccess\].
+/// \[CustomerUserAccessService.MutateCustomerUserAccess][google.ads.googleads.v14.services.CustomerUserAccessService.MutateCustomerUserAccess\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateCustomerUserAccessRequest {
     /// Required. The ID of the customer being modified.
@@ -17484,13 +17557,13 @@ pub mod customer_user_access_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.CustomerUserAccessService/MutateCustomerUserAccess") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.CustomerUserAccessService/MutateCustomerUserAccess") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[GeoTargetConstantService.SuggestGeoTargetConstants][google.ads.googleads.v11.services.GeoTargetConstantService.SuggestGeoTargetConstants\].
+/// \[GeoTargetConstantService.SuggestGeoTargetConstants][google.ads.googleads.v14.services.GeoTargetConstantService.SuggestGeoTargetConstants\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuggestGeoTargetConstantsRequest {
     /// If possible, returned geo targets are translated using this locale. If not,
@@ -17532,7 +17605,8 @@ pub mod suggest_geo_target_constants_request {
         GeoTargets(GeoTargets),
     }
 }
-/// Response message for \[GeoTargetConstantService.SuggestGeoTargetConstants][google.ads.googleads.v11.services.GeoTargetConstantService.SuggestGeoTargetConstants\].
+/// Response message for
+/// \[GeoTargetConstantService.SuggestGeoTargetConstants][google.ads.googleads.v14.services.GeoTargetConstantService.SuggestGeoTargetConstants\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuggestGeoTargetConstantsResponse {
     /// Geo target constant suggestions.
@@ -17635,19 +17709,21 @@ pub mod geo_target_constant_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.GeoTargetConstantService/SuggestGeoTargetConstants") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.GeoTargetConstantService/SuggestGeoTargetConstants") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[GoogleAdsFieldService.GetGoogleAdsField][google.ads.googleads.v11.services.GoogleAdsFieldService.GetGoogleAdsField\].
+/// Request message for
+/// \[GoogleAdsFieldService.GetGoogleAdsField][google.ads.googleads.v14.services.GoogleAdsFieldService.GetGoogleAdsField\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetGoogleAdsFieldRequest {
     /// Required. The resource name of the field to get.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[GoogleAdsFieldService.SearchGoogleAdsFields][google.ads.googleads.v11.services.GoogleAdsFieldService.SearchGoogleAdsFields\].
+/// Request message for
+/// \[GoogleAdsFieldService.SearchGoogleAdsFields][google.ads.googleads.v14.services.GoogleAdsFieldService.SearchGoogleAdsFields\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchGoogleAdsFieldsRequest {
     /// Required. The query string.
@@ -17664,7 +17740,8 @@ pub struct SearchGoogleAdsFieldsRequest {
     #[prost(int32, tag = "3")]
     pub page_size: i32,
 }
-/// Response message for \[GoogleAdsFieldService.SearchGoogleAdsFields][google.ads.googleads.v11.services.GoogleAdsFieldService.SearchGoogleAdsFields\].
+/// Response message for
+/// \[GoogleAdsFieldService.SearchGoogleAdsFields][google.ads.googleads.v14.services.GoogleAdsFieldService.SearchGoogleAdsFields\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchGoogleAdsFieldsResponse {
     /// The list of fields that matched the query.
@@ -17751,7 +17828,7 @@ pub mod google_ads_field_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.GoogleAdsFieldService/GetGoogleAdsField",
+                "/google.ads.googleads.v14.services.GoogleAdsFieldService/GetGoogleAdsField",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -17777,7 +17854,7 @@ pub mod google_ads_field_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.GoogleAdsFieldService/SearchGoogleAdsFields",
+                "/google.ads.googleads.v14.services.GoogleAdsFieldService/SearchGoogleAdsFields",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -17806,7 +17883,8 @@ pub struct ListInvoicesRequest {
     )]
     pub issue_month: i32,
 }
-/// Response message for \[InvoiceService.ListInvoices][google.ads.googleads.v11.services.InvoiceService.ListInvoices\].
+/// Response message for
+/// \[InvoiceService.ListInvoices][google.ads.googleads.v14.services.InvoiceService.ListInvoices\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListInvoicesResponse {
     /// The list of invoices that match the billing setup and time period.
@@ -17886,13 +17964,14 @@ pub mod invoice_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.InvoiceService/ListInvoices",
+                "/google.ads.googleads.v14.services.InvoiceService/ListInvoices",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[KeywordPlanIdeaService.GenerateKeywordIdeas][google.ads.googleads.v11.services.KeywordPlanIdeaService.GenerateKeywordIdeas\].
+/// Request message for
+/// \[KeywordPlanIdeaService.GenerateKeywordIdeas][google.ads.googleads.v14.services.KeywordPlanIdeaService.GenerateKeywordIdeas\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateKeywordIdeasRequest {
     /// The ID of the customer with the recommendation.
@@ -18003,7 +18082,8 @@ pub struct UrlSeed {
     #[prost(string, optional, tag = "2")]
     pub url: ::core::option::Option<::prost::alloc::string::String>,
 }
-/// Response message for \[KeywordPlanIdeaService.GenerateKeywordIdeas][google.ads.googleads.v11.services.KeywordPlanIdeaService.GenerateKeywordIdeas\].
+/// Response message for
+/// \[KeywordPlanIdeaService.GenerateKeywordIdeas][google.ads.googleads.v14.services.KeywordPlanIdeaService.GenerateKeywordIdeas\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateKeywordIdeaResponse {
     /// Results of generating keyword ideas.
@@ -18047,7 +18127,7 @@ pub struct GenerateKeywordIdeaResult {
     pub close_variants: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Request message for
-/// \[KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics][google.ads.googleads.v11.services.KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics\].
+/// \[KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics][google.ads.googleads.v14.services.KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateKeywordHistoricalMetricsRequest {
     /// The ID of the customer with the recommendation.
@@ -18089,7 +18169,7 @@ pub struct GenerateKeywordHistoricalMetricsRequest {
     pub historical_metrics_options: ::core::option::Option<super::common::HistoricalMetricsOptions>,
 }
 /// Response message for
-/// \[KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics][google.ads.googleads.v11.services.KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics\].
+/// \[KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics][google.ads.googleads.v14.services.KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateKeywordHistoricalMetricsResponse {
     /// List of keywords and their historical metrics.
@@ -18120,7 +18200,7 @@ pub struct GenerateKeywordHistoricalMetricsResult {
     pub keyword_metrics: ::core::option::Option<super::common::KeywordPlanHistoricalMetrics>,
 }
 /// Request message for
-/// \[KeywordPlanIdeaService.GenerateAdGroupThemes][google.ads.googleads.v11.services.KeywordPlanIdeaService.GenerateAdGroupThemes\].
+/// \[KeywordPlanIdeaService.GenerateAdGroupThemes][google.ads.googleads.v14.services.KeywordPlanIdeaService.GenerateAdGroupThemes\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateAdGroupThemesRequest {
     /// Required. The ID of the customer.
@@ -18135,7 +18215,7 @@ pub struct GenerateAdGroupThemesRequest {
     pub ad_groups: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Response message for
-/// \[KeywordPlanIdeaService.GenerateAdGroupThemes][google.ads.googleads.v11.services.KeywordPlanIdeaService.GenerateAdGroupThemes\].
+/// \[KeywordPlanIdeaService.GenerateAdGroupThemes][google.ads.googleads.v14.services.KeywordPlanIdeaService.GenerateAdGroupThemes\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateAdGroupThemesResponse {
     /// A list of suggested AdGroup/keyword pairings.
@@ -18172,7 +18252,8 @@ pub struct AdGroupKeywordSuggestion {
 /// An AdGroup/Campaign pair that could not be used as a suggestion for keywords.
 ///
 /// AdGroups may not be usable if the AdGroup
-/// * belongs to Campaign that is not ENABLED or PAUSED
+///
+/// * belongs to a Campaign that is not ENABLED or PAUSED
 /// * is itself not ENABLED
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UnusableAdGroup {
@@ -18184,6 +18265,200 @@ pub struct UnusableAdGroup {
     /// Resource name format: `customers/{customer_id}/campaigns/{campaign_id}`
     #[prost(string, tag = "2")]
     pub campaign: ::prost::alloc::string::String,
+}
+/// Request message for \[KeywordPlanIdeaService.GenerateKeywordForecastMetrics\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenerateKeywordForecastMetricsRequest {
+    /// The ID of the customer.
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    /// The currency used for exchange rate conversion.
+    /// By default, the account currency of the customer is used.
+    /// Set this field only if the currency is different from the account currency.
+    /// The list of valid currency codes can be found at
+    /// <https://developers.google.com/google-ads/api/data/codes-formats#currency-codes.>
+    #[prost(string, optional, tag = "2")]
+    pub currency_code: ::core::option::Option<::prost::alloc::string::String>,
+    /// The date range for the forecast. The start date must be in the future and
+    /// end date must be within 1 year from today. The reference timezone used is
+    /// the one of the Google Ads account belonging to the customer. If not set, a
+    /// default date range from next Sunday to the following Saturday will be used.
+    #[prost(message, optional, tag = "3")]
+    pub forecast_period: ::core::option::Option<super::common::DateRange>,
+    /// Required. The campaign used in the forecast.
+    #[prost(message, optional, tag = "4")]
+    pub campaign: ::core::option::Option<CampaignToForecast>,
+}
+/// A campaign to do a keyword campaign forecast.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CampaignToForecast {
+    /// The list of resource names of languages to be targeted. The resource name
+    /// is of the format "languageConstants/{criterion_id}". See
+    /// <https://developers.google.com/google-ads/api/data/codes-formats#languages>
+    /// for the list of language criterion codes.
+    #[prost(string, repeated, tag = "1")]
+    pub language_constants: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Locations to be targeted. Locations must be unique.
+    #[prost(message, repeated, tag = "2")]
+    pub geo_modifiers: ::prost::alloc::vec::Vec<CriterionBidModifier>,
+    /// Required. The network used for targeting.
+    #[prost(
+        enumeration = "super::enums::keyword_plan_network_enum::KeywordPlanNetwork",
+        tag = "3"
+    )]
+    pub keyword_plan_network: i32,
+    /// The list of negative keywords to be used in the campaign when doing the
+    /// forecast.
+    #[prost(message, repeated, tag = "4")]
+    pub negative_keywords: ::prost::alloc::vec::Vec<super::common::KeywordInfo>,
+    /// Required. The bidding strategy for the campaign.
+    #[prost(message, optional, tag = "5")]
+    pub bidding_strategy: ::core::option::Option<campaign_to_forecast::CampaignBiddingStrategy>,
+    /// The expected conversion rate (number of conversions divided by number of
+    /// total clicks) as defined by the user. This value is expressed as a decimal
+    /// value, so an expected conversion rate of 2% should be entered as 0.02. If
+    /// left empty, an estimated conversion rate will be used.
+    #[prost(double, optional, tag = "6")]
+    pub conversion_rate: ::core::option::Option<f64>,
+    /// The ad groups in the new campaign to forecast.
+    #[prost(message, repeated, tag = "7")]
+    pub ad_groups: ::prost::alloc::vec::Vec<ForecastAdGroup>,
+}
+/// Nested message and enum types in `CampaignToForecast`.
+pub mod campaign_to_forecast {
+    /// Supported bidding strategies for new campaign forecasts.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CampaignBiddingStrategy {
+        /// Bidding strategies.
+        #[prost(oneof = "campaign_bidding_strategy::BiddingStrategy", tags = "1, 2, 3")]
+        pub bidding_strategy: ::core::option::Option<campaign_bidding_strategy::BiddingStrategy>,
+    }
+    /// Nested message and enum types in `CampaignBiddingStrategy`.
+    pub mod campaign_bidding_strategy {
+        /// Bidding strategies.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum BiddingStrategy {
+            /// Use manual CPC bidding strategy for forecasting.
+            #[prost(message, tag = "1")]
+            ManualCpcBiddingStrategy(super::super::ManualCpcBiddingStrategy),
+            /// Use maximize clicks bidding strategy for forecasting.
+            #[prost(message, tag = "2")]
+            MaximizeClicksBiddingStrategy(super::super::MaximizeClicksBiddingStrategy),
+            /// Use maximize conversions bidding strategy for forecasting.
+            #[prost(message, tag = "3")]
+            MaximizeConversionsBiddingStrategy(super::super::MaximizeConversionsBiddingStrategy),
+        }
+    }
+}
+/// An ad group that is part of a campaign to be forecasted.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ForecastAdGroup {
+    /// The max cpc to use for the ad group when generating forecasted traffic.
+    /// This value will override the max cpc value set in the bidding strategy.
+    /// Only specify this field for bidding strategies that max cpc values.
+    #[prost(int64, optional, tag = "1")]
+    pub max_cpc_bid_micros: ::core::option::Option<i64>,
+    /// Required. The list of biddable keywords to be used in the ad group when
+    /// doing the forecast. Requires at least one keyword.
+    #[prost(message, repeated, tag = "2")]
+    pub biddable_keywords: ::prost::alloc::vec::Vec<BiddableKeyword>,
+    /// The details of the keyword. You should specify both the keyword text and
+    /// match type.
+    #[prost(message, repeated, tag = "3")]
+    pub negative_keywords: ::prost::alloc::vec::Vec<super::common::KeywordInfo>,
+}
+/// A biddable keyword part of an ad group.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BiddableKeyword {
+    /// Required. Keyword. Must have text and match type.
+    #[prost(message, optional, tag = "1")]
+    pub keyword: ::core::option::Option<super::common::KeywordInfo>,
+    /// A max cpc bid in micros that overrides the ad group level max cpc bid in
+    /// forecast simulation. This value will override the max cpc value set in the
+    /// bidding strategy and ad group. Only specify this field for bidding
+    /// strategies that support max cpc values.
+    #[prost(int64, optional, tag = "2")]
+    pub max_cpc_bid_micros: ::core::option::Option<i64>,
+}
+/// Location Criterion bid modifier.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CriterionBidModifier {
+    /// The resource name of the geo location to target. The resource name is of
+    /// the format "geoTargetConstants/{criterion_id}".
+    #[prost(string, tag = "1")]
+    pub geo_target_constant: ::prost::alloc::string::String,
+    /// The associated multiplier for the criterion_id. If set, this value cannot
+    /// be 0.
+    #[prost(double, optional, tag = "2")]
+    pub bid_modifier: ::core::option::Option<f64>,
+}
+/// Manual CPC Bidding Strategy.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ManualCpcBiddingStrategy {
+    /// Campaign level budget in micros. If set, a minimum value
+    /// is enforced for the local currency used in the campaign. An error
+    /// will occur showing the minimum value if this field is set too low.
+    #[prost(int64, optional, tag = "1")]
+    pub daily_budget_micros: ::core::option::Option<i64>,
+    /// Required. A bid in micros to be applied to ad groups within the campaign
+    /// for a manual CPC bidding strategy.
+    #[prost(int64, tag = "2")]
+    pub max_cpc_bid_micros: i64,
+}
+/// Maximize Clicks Bidding Strategy.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MaximizeClicksBiddingStrategy {
+    /// Required. The daily target spend in micros to be used for estimation. A
+    /// minimum value is enforced for the local currency used in the campaign. An
+    /// error will occur showing the minimum value if this field is set too low.
+    #[prost(int64, tag = "1")]
+    pub daily_target_spend_micros: i64,
+    /// Ceiling on max CPC bids in micros.
+    #[prost(int64, optional, tag = "2")]
+    pub max_cpc_bid_ceiling_micros: ::core::option::Option<i64>,
+}
+/// Maximize Conversions Bidding Strategy.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MaximizeConversionsBiddingStrategy {
+    /// Required. The daily target spend in micros to be used for estimation. This
+    /// value must be greater than zero.
+    #[prost(int64, tag = "1")]
+    pub daily_target_spend_micros: i64,
+}
+/// Response message for \[KeywordPlanIdeaService.GenerateKeywordForecastMetrics\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenerateKeywordForecastMetricsResponse {
+    /// Results of the campaign forecast.
+    #[prost(message, optional, tag = "1")]
+    pub campaign_forecast_metrics: ::core::option::Option<KeywordForecastMetrics>,
+}
+/// The forecast metrics for the planless keyword campaign.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeywordForecastMetrics {
+    /// The total number of impressions.
+    #[prost(double, optional, tag = "1")]
+    pub impressions: ::core::option::Option<f64>,
+    /// The average click through rate. Available only if impressions > 0.
+    #[prost(double, optional, tag = "2")]
+    pub click_through_rate: ::core::option::Option<f64>,
+    /// The average cpc. Available only if clicks > 0.
+    #[prost(int64, optional, tag = "3")]
+    pub average_cpc_micros: ::core::option::Option<i64>,
+    /// The total number of clicks.
+    #[prost(double, optional, tag = "4")]
+    pub clicks: ::core::option::Option<f64>,
+    /// The total cost.
+    #[prost(int64, optional, tag = "5")]
+    pub cost_micros: ::core::option::Option<i64>,
+    /// Forecasted number of conversions: clicks * conversion_rate.
+    #[prost(double, optional, tag = "6")]
+    pub conversions: ::core::option::Option<f64>,
+    /// Forecasted conversion rate.
+    #[prost(double, optional, tag = "7")]
+    pub conversion_rate: ::core::option::Option<f64>,
+    /// Average cost per acquisition calculated as cost_micros / conversions.
+    #[prost(int64, optional, tag = "8")]
+    pub average_cpa_micros: ::core::option::Option<i64>,
 }
 #[doc = r" Generated client implementations."]
 pub mod keyword_plan_idea_service_client {
@@ -18258,7 +18533,7 @@ pub mod keyword_plan_idea_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.KeywordPlanIdeaService/GenerateKeywordIdeas",
+                "/google.ads.googleads.v14.services.KeywordPlanIdeaService/GenerateKeywordIdeas",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -18284,7 +18559,7 @@ pub mod keyword_plan_idea_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.KeywordPlanIdeaService/GenerateKeywordHistoricalMetrics") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.KeywordPlanIdeaService/GenerateKeywordHistoricalMetrics") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Returns a list of suggested AdGroups and suggested modifications"]
@@ -18310,14 +18585,40 @@ pub mod keyword_plan_idea_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.KeywordPlanIdeaService/GenerateAdGroupThemes",
+                "/google.ads.googleads.v14.services.KeywordPlanIdeaService/GenerateAdGroupThemes",
             );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns metrics (such as impressions, clicks, total cost) of a keyword"]
+        #[doc = " forecast for the given campaign."]
+        #[doc = ""]
+        #[doc = " List of thrown errors:"]
+        #[doc = "   [AuthenticationError]()"]
+        #[doc = "   [AuthorizationError]()"]
+        #[doc = "   [CollectionSizeError]()"]
+        #[doc = "   [HeaderError]()"]
+        #[doc = "   [InternalError]()"]
+        #[doc = "   [QuotaError]()"]
+        #[doc = "   [RequestError]()"]
+        pub async fn generate_keyword_forecast_metrics(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GenerateKeywordForecastMetricsRequest>,
+        ) -> Result<tonic::Response<super::GenerateKeywordForecastMetricsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.KeywordPlanIdeaService/GenerateKeywordForecastMetrics") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[KeywordThemeConstantService.SuggestKeywordThemeConstants][google.ads.googleads.v11.services.KeywordThemeConstantService.SuggestKeywordThemeConstants\].
+/// \[KeywordThemeConstantService.SuggestKeywordThemeConstants][google.ads.googleads.v14.services.KeywordThemeConstantService.SuggestKeywordThemeConstants\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuggestKeywordThemeConstantsRequest {
     /// The query text of a keyword theme that will be used to map to similar
@@ -18334,7 +18635,7 @@ pub struct SuggestKeywordThemeConstantsRequest {
     pub language_code: ::prost::alloc::string::String,
 }
 /// Response message for
-/// \[KeywordThemeConstantService.SuggestKeywordThemeConstants][google.ads.googleads.v11.services.KeywordThemeConstantService.SuggestKeywordThemeConstants\].
+/// \[KeywordThemeConstantService.SuggestKeywordThemeConstants][google.ads.googleads.v14.services.KeywordThemeConstantService.SuggestKeywordThemeConstants\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuggestKeywordThemeConstantsResponse {
     /// Smart Campaign keyword theme suggestions.
@@ -18412,34 +18713,38 @@ pub mod keyword_theme_constant_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.KeywordThemeConstantService/SuggestKeywordThemeConstants") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.KeywordThemeConstantService/SuggestKeywordThemeConstants") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[MerchantCenterLinkService.ListMerchantCenterLinks][google.ads.googleads.v11.services.MerchantCenterLinkService.ListMerchantCenterLinks\].
+/// Request message for
+/// \[MerchantCenterLinkService.ListMerchantCenterLinks][google.ads.googleads.v14.services.MerchantCenterLinkService.ListMerchantCenterLinks\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListMerchantCenterLinksRequest {
-    /// Required. The ID of the customer onto which to apply the Merchant Center link list
-    /// operation.
+    /// Required. The ID of the customer onto which to apply the Merchant Center
+    /// link list operation.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
 }
-/// Response message for \[MerchantCenterLinkService.ListMerchantCenterLinks][google.ads.googleads.v11.services.MerchantCenterLinkService.ListMerchantCenterLinks\].
+/// Response message for
+/// \[MerchantCenterLinkService.ListMerchantCenterLinks][google.ads.googleads.v14.services.MerchantCenterLinkService.ListMerchantCenterLinks\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListMerchantCenterLinksResponse {
     /// Merchant Center links available for the requested customer
     #[prost(message, repeated, tag = "1")]
     pub merchant_center_links: ::prost::alloc::vec::Vec<super::resources::MerchantCenterLink>,
 }
-/// Request message for \[MerchantCenterLinkService.GetMerchantCenterLink][google.ads.googleads.v11.services.MerchantCenterLinkService.GetMerchantCenterLink\].
+/// Request message for
+/// \[MerchantCenterLinkService.GetMerchantCenterLink][google.ads.googleads.v14.services.MerchantCenterLinkService.GetMerchantCenterLink\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetMerchantCenterLinkRequest {
     /// Required. Resource name of the Merchant Center link.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[MerchantCenterLinkService.MutateMerchantCenterLink][google.ads.googleads.v11.services.MerchantCenterLinkService.MutateMerchantCenterLink\].
+/// Request message for
+/// \[MerchantCenterLinkService.MutateMerchantCenterLink][google.ads.googleads.v14.services.MerchantCenterLinkService.MutateMerchantCenterLink\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutateMerchantCenterLinkRequest {
     /// Required. The ID of the customer being modified.
@@ -18566,7 +18871,7 @@ pub mod merchant_center_link_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.MerchantCenterLinkService/ListMerchantCenterLinks") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.MerchantCenterLinkService/ListMerchantCenterLinks") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Returns the Merchant Center link in full detail."]
@@ -18590,7 +18895,7 @@ pub mod merchant_center_link_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.MerchantCenterLinkService/GetMerchantCenterLink") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.MerchantCenterLinkService/GetMerchantCenterLink") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Updates status or removes a Merchant Center link."]
@@ -18615,16 +18920,17 @@ pub mod merchant_center_link_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.MerchantCenterLinkService/MutateMerchantCenterLink") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.MerchantCenterLinkService/MutateMerchantCenterLink") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[OfflineUserDataJobService.CreateOfflineUserDataJob][google.ads.googleads.v11.services.OfflineUserDataJobService.CreateOfflineUserDataJob\].
+/// \[OfflineUserDataJobService.CreateOfflineUserDataJob][google.ads.googleads.v14.services.OfflineUserDataJobService.CreateOfflineUserDataJob\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateOfflineUserDataJobRequest {
-    /// Required. The ID of the customer for which to create an offline user data job.
+    /// Required. The ID of the customer for which to create an offline user data
+    /// job.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
     /// Required. The offline user data job to be created.
@@ -18640,14 +18946,15 @@ pub struct CreateOfflineUserDataJobRequest {
     pub enable_match_rate_range_preview: bool,
 }
 /// Response message for
-/// \[OfflineUserDataJobService.CreateOfflineUserDataJob][google.ads.googleads.v11.services.OfflineUserDataJobService.CreateOfflineUserDataJob\].
+/// \[OfflineUserDataJobService.CreateOfflineUserDataJob][google.ads.googleads.v14.services.OfflineUserDataJobService.CreateOfflineUserDataJob\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateOfflineUserDataJobResponse {
     /// The resource name of the OfflineUserDataJob.
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[OfflineUserDataJobService.RunOfflineUserDataJob][google.ads.googleads.v11.services.OfflineUserDataJobService.RunOfflineUserDataJob\].
+/// Request message for
+/// \[OfflineUserDataJobService.RunOfflineUserDataJob][google.ads.googleads.v14.services.OfflineUserDataJobService.RunOfflineUserDataJob\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RunOfflineUserDataJobRequest {
     /// Required. The resource name of the OfflineUserDataJob to run.
@@ -18659,7 +18966,7 @@ pub struct RunOfflineUserDataJobRequest {
     pub validate_only: bool,
 }
 /// Request message for
-/// \[OfflineUserDataJobService.AddOfflineUserDataJobOperations][google.ads.googleads.v11.services.OfflineUserDataJobService.AddOfflineUserDataJobOperations\].
+/// \[OfflineUserDataJobService.AddOfflineUserDataJobOperations][google.ads.googleads.v14.services.OfflineUserDataJobService.AddOfflineUserDataJobOperations\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AddOfflineUserDataJobOperationsRequest {
     /// Required. The resource name of the OfflineUserDataJob.
@@ -18708,7 +19015,7 @@ pub mod offline_user_data_job_operation {
     }
 }
 /// Response message for
-/// \[OfflineUserDataJobService.AddOfflineUserDataJobOperations][google.ads.googleads.v11.services.OfflineUserDataJobService.AddOfflineUserDataJobOperations\].
+/// \[OfflineUserDataJobService.AddOfflineUserDataJobOperations][google.ads.googleads.v14.services.OfflineUserDataJobService.AddOfflineUserDataJobOperations\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AddOfflineUserDataJobOperationsResponse {
     /// Errors that pertain to operation failures in the partial failure mode.
@@ -18797,7 +19104,7 @@ pub mod offline_user_data_job_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.OfflineUserDataJobService/CreateOfflineUserDataJob") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.OfflineUserDataJobService/CreateOfflineUserDataJob") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Adds operations to the offline user data job."]
@@ -18825,7 +19132,7 @@ pub mod offline_user_data_job_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.OfflineUserDataJobService/AddOfflineUserDataJobOperations") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.OfflineUserDataJobService/AddOfflineUserDataJobOperations") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Runs the offline user data job."]
@@ -18856,7 +19163,7 @@ pub mod offline_user_data_job_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.OfflineUserDataJobService/RunOfflineUserDataJob") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.OfflineUserDataJobService/RunOfflineUserDataJob") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
@@ -18864,11 +19171,13 @@ pub mod offline_user_data_job_service_client {
 /// Request message for fetching all accessible payments accounts.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListPaymentsAccountsRequest {
-    /// Required. The ID of the customer to apply the PaymentsAccount list operation to.
+    /// Required. The ID of the customer to apply the PaymentsAccount list
+    /// operation to.
     #[prost(string, tag = "1")]
     pub customer_id: ::prost::alloc::string::String,
 }
-/// Response message for \[PaymentsAccountService.ListPaymentsAccounts][google.ads.googleads.v11.services.PaymentsAccountService.ListPaymentsAccounts\].
+/// Response message for
+/// \[PaymentsAccountService.ListPaymentsAccounts][google.ads.googleads.v14.services.PaymentsAccountService.ListPaymentsAccounts\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListPaymentsAccountsResponse {
     /// The list of accessible payments accounts.
@@ -18950,13 +19259,166 @@ pub mod payments_account_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.PaymentsAccountService/ListPaymentsAccounts",
+                "/google.ads.googleads.v14.services.PaymentsAccountService/ListPaymentsAccounts",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v11.services.ReachPlanService.ListPlannableLocations\].
+/// Request message for
+/// \[ProductLinkService.CreateProductLink][google.ads.googleads.v14.services.ProductLinkService.CreateProductLink\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateProductLinkRequest {
+    /// Required. The ID of the customer for which the product link is created.
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    /// Required. The product link to be created.
+    #[prost(message, optional, tag = "2")]
+    pub product_link: ::core::option::Option<super::resources::ProductLink>,
+}
+/// Response message for
+/// \[ProductLinkService.CreateProductLink][google.ads.googleads.v14.services.ProductLinkService.CreateProductLink\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateProductLinkResponse {
+    /// Returned for successful operations. Resource name of the product link.
+    #[prost(string, tag = "1")]
+    pub resource_name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[ProductLinkService.RemoveProductLink][google.ads.googleads.v14.services.ProductLinkService.RemoveProductLink\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveProductLinkRequest {
+    /// Required. The ID of the customer being modified.
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    /// Required. Remove operation: A resource name for the product link to remove
+    /// is expected, in this format:
+    ///
+    /// `customers/{customer_id}/productLinks/{product_link_id} `
+    #[prost(string, tag = "2")]
+    pub resource_name: ::prost::alloc::string::String,
+    /// If true, the request is validated but not executed. Only errors are
+    /// returned, not results.
+    #[prost(bool, tag = "3")]
+    pub validate_only: bool,
+}
+/// Response message for product link removal.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveProductLinkResponse {
+    /// Result for the remove request.
+    #[prost(string, tag = "1")]
+    pub resource_name: ::prost::alloc::string::String,
+}
+#[doc = r" Generated client implementations."]
+pub mod product_link_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " This service allows management of links between  a Google"]
+    #[doc = " Ads customer and another product."]
+    #[derive(Debug, Clone)]
+    pub struct ProductLinkServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> ProductLinkServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ProductLinkServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ProductLinkServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a product link."]
+        #[doc = ""]
+        #[doc = " List of thrown errors:"]
+        #[doc = "   [AuthenticationError]()"]
+        #[doc = "   [AuthorizationError]()"]
+        #[doc = "   [DatabaseError]()"]
+        #[doc = "   [FieldError]()"]
+        #[doc = "   [HeaderError]()"]
+        #[doc = "   [InternalError]()"]
+        #[doc = "   [MutateError]()"]
+        #[doc = "   [QuotaError]()"]
+        #[doc = "   [RequestError]()"]
+        pub async fn create_product_link(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateProductLinkRequest>,
+        ) -> Result<tonic::Response<super::CreateProductLinkResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.ads.googleads.v14.services.ProductLinkService/CreateProductLink",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Removes a product link."]
+        #[doc = ""]
+        #[doc = " List of thrown errors:"]
+        #[doc = "   [AuthenticationError]()"]
+        #[doc = "   [AuthorizationError]()"]
+        #[doc = "   [FieldMaskError]()"]
+        #[doc = "   [HeaderError]()"]
+        #[doc = "   [InternalError]()"]
+        #[doc = "   [MutateError]()"]
+        #[doc = "   [QuotaError]()"]
+        #[doc = "   [RequestError]()"]
+        pub async fn remove_product_link(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RemoveProductLinkRequest>,
+        ) -> Result<tonic::Response<super::RemoveProductLinkResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.ads.googleads.v14.services.ProductLinkService/RemoveProductLink",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Request message for
+/// \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v14.services.ReachPlanService.ListPlannableLocations\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListPlannableLocationsRequest {}
 /// The list of plannable locations.
@@ -18981,8 +19443,8 @@ pub struct PlannableLocation {
     /// The parent country (not present if location is a country).
     /// If present, will always be a GeoTargetConstant ID. Additional information
     /// such as country name is provided by
-    /// \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v11.services.ReachPlanService.ListPlannableLocations\] or
-    /// \[GoogleAdsService.Search/SearchStream][\].
+    /// \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v14.services.ReachPlanService.ListPlannableLocations\]
+    /// or \[GoogleAdsService.Search/SearchStream][\].
     #[prost(int64, optional, tag = "6")]
     pub parent_country_id: ::core::option::Option<i64>,
     /// The ISO-3166-1 alpha-2 country code that is associated with the location.
@@ -18996,8 +19458,9 @@ pub struct PlannableLocation {
 /// Request to list available products in a given location.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListPlannableProductsRequest {
-    /// Required. The ID of the selected location for planning. To list the available
-    /// plannable location IDs use \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v11.services.ReachPlanService.ListPlannableLocations\].
+    /// Required. The ID of the selected location for planning. To list the
+    /// available plannable location IDs use
+    /// \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v14.services.ReachPlanService.ListPlannableLocations\].
     #[prost(string, tag = "2")]
     pub plannable_location_id: ::prost::alloc::string::String,
 }
@@ -19014,7 +19477,7 @@ pub struct ProductMetadata {
     /// The code associated with the ad product (for example: BUMPER,
     /// TRUEVIEW_IN_STREAM).
     /// To list the available plannable product codes use
-    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v11.services.ReachPlanService.ListPlannableProducts\].
+    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v14.services.ReachPlanService.ListPlannableProducts\].
     #[prost(string, optional, tag = "4")]
     pub plannable_product_code: ::core::option::Option<::prost::alloc::string::String>,
     /// The name associated with the ad product.
@@ -19056,79 +19519,8 @@ pub struct PlannableTargeting {
     #[prost(message, repeated, tag = "5")]
     pub youtube_select_lineups: ::prost::alloc::vec::Vec<YouTubeSelectLineUp>,
 }
-/// Request message for \[ReachPlanService.GenerateProductMixIdeas][google.ads.googleads.v11.services.ReachPlanService.GenerateProductMixIdeas\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateProductMixIdeasRequest {
-    /// Required. The ID of the customer.
-    #[prost(string, tag = "1")]
-    pub customer_id: ::prost::alloc::string::String,
-    /// Required. The ID of the location, this is one of the IDs returned by
-    /// \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v11.services.ReachPlanService.ListPlannableLocations\].
-    #[prost(string, tag = "6")]
-    pub plannable_location_id: ::prost::alloc::string::String,
-    /// Required. Currency code.
-    /// Three-character ISO 4217 currency code.
-    #[prost(string, tag = "7")]
-    pub currency_code: ::prost::alloc::string::String,
-    /// Required. Total budget.
-    /// Amount in micros. One million is equivalent to one unit.
-    #[prost(int64, tag = "8")]
-    pub budget_micros: i64,
-    /// The preferences of the suggested product mix.
-    /// An unset preference is interpreted as all possible values are allowed,
-    /// unless explicitly specified.
-    #[prost(message, optional, tag = "5")]
-    pub preferences: ::core::option::Option<Preferences>,
-}
-/// Set of preferences about the planned mix.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Preferences {
-    /// True if ad skippable.
-    /// If not set, default is any value.
-    #[prost(bool, optional, tag = "6")]
-    pub is_skippable: ::core::option::Option<bool>,
-    /// True if ad start with sound.
-    /// If not set, default is any value.
-    #[prost(bool, optional, tag = "7")]
-    pub starts_with_sound: ::core::option::Option<bool>,
-    /// The length of the ad.
-    /// If not set, default is any value.
-    #[prost(
-        enumeration = "super::enums::reach_plan_ad_length_enum::ReachPlanAdLength",
-        tag = "3"
-    )]
-    pub ad_length: i32,
-    /// True if ad will only show on the top content.
-    /// If not set, default is false.
-    #[prost(bool, optional, tag = "8")]
-    pub top_content_only: ::core::option::Option<bool>,
-    /// True if the price is guaranteed. The cost of serving the ad is agreed
-    /// upfront and not subject to an auction.
-    /// If not set, default is any value.
-    #[prost(bool, optional, tag = "9")]
-    pub has_guaranteed_price: ::core::option::Option<bool>,
-}
-/// The suggested product mix.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenerateProductMixIdeasResponse {
-    /// A list of products (ad formats) and the associated budget allocation idea.
-    #[prost(message, repeated, tag = "1")]
-    pub product_allocation: ::prost::alloc::vec::Vec<ProductAllocation>,
-}
-/// An allocation of a part of the budget on a given product.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ProductAllocation {
-    /// Selected product for planning. The product codes returned are within the
-    /// set of the ones returned by ListPlannableProducts when using the same
-    /// location ID.
-    #[prost(string, optional, tag = "3")]
-    pub plannable_product_code: ::core::option::Option<::prost::alloc::string::String>,
-    /// The value to be allocated for the suggested product in requested currency.
-    /// Amount in micros. One million is equivalent to one unit.
-    #[prost(int64, optional, tag = "4")]
-    pub budget_micros: ::core::option::Option<i64>,
-}
-/// Request message for \[ReachPlanService.GenerateReachForecast][google.ads.googleads.v11.services.ReachPlanService.GenerateReachForecast\].
+/// Request message for
+/// \[ReachPlanService.GenerateReachForecast][google.ads.googleads.v14.services.ReachPlanService.GenerateReachForecast\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateReachForecastRequest {
     /// Required. The ID of the customer.
@@ -19196,7 +19588,6 @@ pub struct GenerateReachForecastRequest {
     #[prost(message, optional, tag = "13")]
     pub forecast_metric_options: ::core::option::Option<ForecastMetricOptions>,
     /// The name of the customer being planned for. This is a user-defined value.
-    /// Required if targeting.audience_targeting is set.
     #[prost(string, optional, tag = "14")]
     pub customer_reach_group: ::core::option::Option<::prost::alloc::string::String>,
 }
@@ -19226,10 +19617,27 @@ pub struct FrequencyCap {
 /// The targeting for which traffic metrics will be reported.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Targeting {
-    /// Required. The ID of the selected location. Plannable location IDs can be
-    /// obtained from \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v11.services.ReachPlanService.ListPlannableLocations\].
+    /// The ID of the selected location. Plannable location IDs can be
+    /// obtained from
+    /// \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v14.services.ReachPlanService.ListPlannableLocations\].
+    ///
+    /// Requests must set either this field or `plannable_location_ids`.
+    ///
+    /// This field is deprecated as of V12 and will be removed in a future release.
+    /// Use `plannable_location_ids` instead.
     #[prost(string, optional, tag = "6")]
     pub plannable_location_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// The list of plannable location IDs to target with this forecast.
+    ///
+    /// If more than one ID is provided, all IDs must have the same
+    /// `parent_country_id`. Planning for more than `parent_county` is not
+    /// supported. Plannable location IDs and their `parent_country_id` can be
+    /// obtained from
+    /// \[ReachPlanService.ListPlannableLocations][google.ads.googleads.v14.services.ReachPlanService.ListPlannableLocations\].
+    ///
+    /// Requests must set either this field or `plannable_location_id`.
+    #[prost(string, repeated, tag = "8")]
+    pub plannable_location_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Targeted age range.
     /// An unset value is equivalent to targeting all ages.
     #[prost(
@@ -19244,13 +19652,13 @@ pub struct Targeting {
     /// Targeted devices.
     /// If not specified, targets all applicable devices. Applicable devices vary
     /// by product and region and can be obtained from
-    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v11.services.ReachPlanService.ListPlannableProducts\].
+    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v14.services.ReachPlanService.ListPlannableProducts\].
     #[prost(message, repeated, tag = "4")]
     pub devices: ::prost::alloc::vec::Vec<super::common::DeviceInfo>,
     /// Targetable network for the ad product.
     /// If not specified, targets all applicable networks. Applicable networks vary
     /// by product and region and can be obtained from
-    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v11.services.ReachPlanService.ListPlannableProducts\].
+    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v14.services.ReachPlanService.ListPlannableProducts\].
     #[prost(
         enumeration = "super::enums::reach_plan_network_enum::ReachPlanNetwork",
         tag = "5"
@@ -19284,7 +19692,7 @@ pub struct PlannedProduct {
     /// Required. Selected product for planning.
     /// The code associated with the ad product (for example: Trueview, Bumper).
     /// To list the available plannable product codes use
-    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v11.services.ReachPlanService.ListPlannableProducts\].
+    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v14.services.ReachPlanService.ListPlannableProducts\].
     #[prost(string, optional, tag = "3")]
     pub plannable_product_code: ::core::option::Option<::prost::alloc::string::String>,
     /// Required. Maximum budget allocation in micros for the selected product.
@@ -19294,7 +19702,7 @@ pub struct PlannedProduct {
     pub budget_micros: ::core::option::Option<i64>,
     /// Targeting settings for the selected product.
     /// To list the available targeting for each product use
-    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v11.services.ReachPlanService.ListPlannableProducts\].
+    /// \[ReachPlanService.ListPlannableProducts][google.ads.googleads.v14.services.ReachPlanService.ListPlannableProducts\].
     #[prost(message, optional, tag = "5")]
     pub advanced_product_targeting: ::core::option::Option<AdvancedProductTargeting>,
 }
@@ -19628,7 +20036,7 @@ pub mod reach_plan_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ReachPlanService/ListPlannableLocations",
+                "/google.ads.googleads.v14.services.ReachPlanService/ListPlannableLocations",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -19654,36 +20062,7 @@ pub mod reach_plan_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ReachPlanService/ListPlannableProducts",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Generates a product mix ideas given a set of preferences. This method"]
-        #[doc = " helps the advertiser to obtain a good mix of ad formats and budget"]
-        #[doc = " allocations based on its preferences."]
-        #[doc = ""]
-        #[doc = " List of thrown errors:"]
-        #[doc = "   [AuthenticationError]()"]
-        #[doc = "   [AuthorizationError]()"]
-        #[doc = "   [HeaderError]()"]
-        #[doc = "   [InternalError]()"]
-        #[doc = "   [QuotaError]()"]
-        #[doc = "   [ReachPlanError]()"]
-        #[doc = "   [RequestError]()"]
-        pub async fn generate_product_mix_ideas(
-            &mut self,
-            request: impl tonic::IntoRequest<super::GenerateProductMixIdeasRequest>,
-        ) -> Result<tonic::Response<super::GenerateProductMixIdeasResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ReachPlanService/GenerateProductMixIdeas",
+                "/google.ads.googleads.v14.services.ReachPlanService/ListPlannableProducts",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -19711,13 +20090,14 @@ pub mod reach_plan_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.ReachPlanService/GenerateReachForecast",
+                "/google.ads.googleads.v14.services.ReachPlanService/GenerateReachForecast",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[RecommendationService.ApplyRecommendation][google.ads.googleads.v11.services.RecommendationService.ApplyRecommendation\].
+/// Request message for
+/// \[RecommendationService.ApplyRecommendation][google.ads.googleads.v14.services.RecommendationService.ApplyRecommendation\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ApplyRecommendationRequest {
     /// Required. The ID of the customer with the recommendation.
@@ -19745,7 +20125,7 @@ pub struct ApplyRecommendationOperation {
     /// Parameters to use when applying the recommendation.
     #[prost(
         oneof = "apply_recommendation_operation::ApplyParameters",
-        tags = "2, 3, 4, 5, 10, 6, 7, 8, 9, 11, 12, 13, 14"
+        tags = "2, 3, 4, 5, 10, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21"
     )]
     pub apply_parameters: ::core::option::Option<apply_recommendation_operation::ApplyParameters>,
 }
@@ -19758,6 +20138,19 @@ pub mod apply_recommendation_operation {
         /// field.
         #[prost(int64, optional, tag = "2")]
         pub new_budget_amount_micros: ::core::option::Option<i64>,
+    }
+    /// Parameters to use when applying a forecasting set target roas
+    /// recommendation.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ForecastingSetTargetRoasParameters {
+        /// New target ROAS (revenue per unit of spend) to set for a campaign
+        /// resource.
+        /// The value is between 0.01 and 1000.0, inclusive.
+        #[prost(double, optional, tag = "1")]
+        pub target_roas: ::core::option::Option<f64>,
+        /// New campaign budget amount to set for a campaign resource.
+        #[prost(int64, optional, tag = "2")]
+        pub campaign_budget_amount_micros: ::core::option::Option<i64>,
     }
     /// Parameters to use when applying a text ad recommendation.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -19821,12 +20214,85 @@ pub mod apply_recommendation_operation {
         #[prost(message, repeated, tag = "1")]
         pub call_extensions: ::prost::alloc::vec::Vec<super::super::common::CallFeedItem>,
     }
-    /// Parameters to use when applying sitelink extension recommendation.
+    /// Parameters to use when applying sitelink recommendation.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct SitelinkExtensionParameters {
-        /// Sitelink extensions to be added. This is a required field.
+        /// Sitelinks to be added. This is a required field.
         #[prost(message, repeated, tag = "1")]
         pub sitelink_extensions: ::prost::alloc::vec::Vec<super::super::common::SitelinkFeedItem>,
+    }
+    /// Parameters to use when applying callout asset recommendations.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CalloutAssetParameters {
+        /// Required. Callout assets to be added. This is a required field.
+        #[prost(message, optional, tag = "1")]
+        pub ad_asset_apply_parameters: ::core::option::Option<AdAssetApplyParameters>,
+    }
+    /// Parameters to use when applying call asset recommendations.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CallAssetParameters {
+        /// Required. Call assets to be added. This is a required field.
+        #[prost(message, optional, tag = "1")]
+        pub ad_asset_apply_parameters: ::core::option::Option<AdAssetApplyParameters>,
+    }
+    /// Parameters to use when applying sitelink asset recommendations.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SitelinkAssetParameters {
+        /// Required. Sitelink assets to be added. This is a required field.
+        #[prost(message, optional, tag = "1")]
+        pub ad_asset_apply_parameters: ::core::option::Option<AdAssetApplyParameters>,
+    }
+    /// Parameters to use when applying raise Target CPA recommendations.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct RaiseTargetCpaParameters {
+        /// Required. Target to set CPA multiplier to. This is a required field.
+        #[prost(double, tag = "1")]
+        pub target_cpa_multiplier: f64,
+    }
+    /// Parameters to use when applying lower Target ROAS recommendations.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct LowerTargetRoasParameters {
+        /// Required. Target to set ROAS multiplier to. This is a required field.
+        #[prost(double, tag = "1")]
+        pub target_roas_multiplier: f64,
+    }
+    /// Common parameters used when applying ad asset recommendations.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AdAssetApplyParameters {
+        /// The assets to create and attach to a scope. This may be combined with
+        /// existing_assets in the same call.
+        #[prost(message, repeated, tag = "1")]
+        pub new_assets: ::prost::alloc::vec::Vec<super::super::resources::Asset>,
+        /// The resource names of existing assets to attach to a scope. This may be
+        /// combined with new_assets in the same call.
+        #[prost(string, repeated, tag = "2")]
+        pub existing_assets: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Required. The scope at which to apply the assets. Assets at the campaign
+        /// scope level will be applied to the campaign associated with the
+        /// recommendation. Assets at the customer scope will apply to the entire
+        /// account. Assets at the campaign scope will override any attached at the
+        /// customer scope.
+        #[prost(enumeration = "ad_asset_apply_parameters::ApplyScope", tag = "3")]
+        pub scope: i32,
+    }
+    /// Nested message and enum types in `AdAssetApplyParameters`.
+    pub mod ad_asset_apply_parameters {
+        /// Scope to apply the assets to.
+        /// Next ID: 4
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum ApplyScope {
+            /// The apply scope has not been specified.
+            Unspecified = 0,
+            /// Unknown.
+            Unknown = 1,
+            /// Apply at the customer scope.
+            Customer = 2,
+            /// Apply at the campaign scope.
+            Campaign = 3,
+        }
     }
     /// Parameters to use when applying move unused budget recommendation.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -19858,6 +20324,16 @@ pub mod apply_recommendation_operation {
         /// Required. New ad to add to recommended ad group.
         #[prost(message, optional, tag = "1")]
         pub ad: ::core::option::Option<super::super::resources::Ad>,
+    }
+    /// Parameters to use when applying a raise target CPA bid too low
+    /// recommendation. The apply is asynchronous and can take minutes depending on
+    /// the number of ad groups there is in the related campaign..
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct RaiseTargetCpaBidTooLowParameters {
+        /// Required. A number greater than 1.0 indicating the factor by which to
+        /// increase the target CPA. This is a required field.
+        #[prost(double, tag = "1")]
+        pub target_multiplier: f64,
     }
     /// Parameters to use when applying a use broad match keyword recommendation.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -19893,7 +20369,7 @@ pub mod apply_recommendation_operation {
         /// Parameters to use when applying call extension recommendation.
         #[prost(message, tag = "7")]
         CallExtension(CallExtensionParameters),
-        /// Parameters to use when applying sitelink extension recommendation.
+        /// Parameters to use when applying sitelink recommendation.
         #[prost(message, tag = "8")]
         SitelinkExtension(SitelinkExtensionParameters),
         /// Parameters to use when applying move unused budget recommendation.
@@ -19913,9 +20389,34 @@ pub mod apply_recommendation_operation {
         /// strength recommendation.
         #[prost(message, tag = "14")]
         ResponsiveSearchAdImproveAdStrength(ResponsiveSearchAdImproveAdStrengthParameters),
+        /// Parameters to use when applying a raise target CPA bid too low
+        /// recommendation. The apply is asynchronous and can take minutes depending
+        /// on the number of ad groups there is in the related campaign.
+        #[prost(message, tag = "15")]
+        RaiseTargetCpaBidTooLow(RaiseTargetCpaBidTooLowParameters),
+        /// Parameters to use when applying a forecasting set target ROAS
+        /// recommendation.
+        #[prost(message, tag = "16")]
+        ForecastingSetTargetRoas(ForecastingSetTargetRoasParameters),
+        /// Parameters to use when applying callout asset recommendation.
+        #[prost(message, tag = "17")]
+        CalloutAsset(CalloutAssetParameters),
+        /// Parameters to use when applying call asset recommendation.
+        #[prost(message, tag = "18")]
+        CallAsset(CallAssetParameters),
+        /// Parameters to use when applying sitelink asset recommendation.
+        #[prost(message, tag = "19")]
+        SitelinkAsset(SitelinkAssetParameters),
+        /// Parameters to use when applying raise Target CPA recommendation.
+        #[prost(message, tag = "20")]
+        RaiseTargetCpa(RaiseTargetCpaParameters),
+        /// Parameters to use when applying lower Target ROAS recommendation.
+        #[prost(message, tag = "21")]
+        LowerTargetRoas(LowerTargetRoasParameters),
     }
 }
-/// Response message for \[RecommendationService.ApplyRecommendation][google.ads.googleads.v11.services.RecommendationService.ApplyRecommendation\].
+/// Response message for
+/// \[RecommendationService.ApplyRecommendation][google.ads.googleads.v14.services.RecommendationService.ApplyRecommendation\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ApplyRecommendationResponse {
     /// Results of operations to apply recommendations.
@@ -19935,7 +20436,8 @@ pub struct ApplyRecommendationResult {
     #[prost(string, tag = "1")]
     pub resource_name: ::prost::alloc::string::String,
 }
-/// Request message for \[RecommendationService.DismissRecommendation][google.ads.googleads.v11.services.RecommendationService.DismissRecommendation\].
+/// Request message for
+/// \[RecommendationService.DismissRecommendation][google.ads.googleads.v14.services.RecommendationService.DismissRecommendation\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DismissRecommendationRequest {
     /// Required. The ID of the customer with the recommendation.
@@ -19964,7 +20466,8 @@ pub mod dismiss_recommendation_request {
         pub resource_name: ::prost::alloc::string::String,
     }
 }
-/// Response message for \[RecommendationService.DismissRecommendation][google.ads.googleads.v11.services.RecommendationService.DismissRecommendation\].
+/// Response message for
+/// \[RecommendationService.DismissRecommendation][google.ads.googleads.v14.services.RecommendationService.DismissRecommendation\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DismissRecommendationResponse {
     /// Results of operations to dismiss recommendations.
@@ -20064,7 +20567,7 @@ pub mod recommendation_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.RecommendationService/ApplyRecommendation",
+                "/google.ads.googleads.v14.services.RecommendationService/ApplyRecommendation",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -20090,7 +20593,7 @@ pub mod recommendation_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.RecommendationService/DismissRecommendation",
+                "/google.ads.googleads.v14.services.RecommendationService/DismissRecommendation",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -20142,8 +20645,8 @@ pub struct SmartCampaignSuggestionInfo {
     /// Optional. The business ad schedule.
     #[prost(message, repeated, tag = "6")]
     pub ad_schedules: ::prost::alloc::vec::Vec<super::common::AdScheduleInfo>,
-    /// Optional. Smart campaign keyword themes. This field may greatly improve suggestion
-    /// accuracy and we recommend always setting it if possible.
+    /// Optional. Smart campaign keyword themes. This field may greatly improve
+    /// suggestion accuracy and we recommend always setting it if possible.
     #[prost(message, repeated, tag = "7")]
     pub keyword_themes: ::prost::alloc::vec::Vec<super::common::KeywordThemeInfo>,
     /// The business settings to consider when generating suggestions.
@@ -20250,7 +20753,7 @@ pub mod suggest_smart_campaign_budget_options_response {
     }
 }
 /// Request message for
-/// \[SmartCampaignSuggestService.SuggestSmartCampaignAd][google.ads.googleads.v11.services.SmartCampaignSuggestService.SuggestSmartCampaignAd\].
+/// \[SmartCampaignSuggestService.SuggestSmartCampaignAd][google.ads.googleads.v14.services.SmartCampaignSuggestService.SuggestSmartCampaignAd\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuggestSmartCampaignAdRequest {
     /// Required. The ID of the customer.
@@ -20264,15 +20767,16 @@ pub struct SuggestSmartCampaignAdRequest {
     pub suggestion_info: ::core::option::Option<SmartCampaignSuggestionInfo>,
 }
 /// Response message for
-/// \[SmartCampaignSuggestService.SuggestSmartCampaignAd][google.ads.googleads.v11.services.SmartCampaignSuggestService.SuggestSmartCampaignAd\].
+/// \[SmartCampaignSuggestService.SuggestSmartCampaignAd][google.ads.googleads.v14.services.SmartCampaignSuggestService.SuggestSmartCampaignAd\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuggestSmartCampaignAdResponse {
-    /// Optional. Ad info includes 3 creative headlines and 2 creative descriptions.
+    /// Optional. Ad info includes 3 creative headlines and 2 creative
+    /// descriptions.
     #[prost(message, optional, tag = "1")]
     pub ad_info: ::core::option::Option<super::common::SmartCampaignAdInfo>,
 }
 /// Request message for
-/// \[SmartCampaignSuggestService.SuggestKeywordThemes][google.ads.googleads.v11.services.SmartCampaignSuggestService.SuggestKeywordThemes\].
+/// \[SmartCampaignSuggestService.SuggestKeywordThemes][google.ads.googleads.v14.services.SmartCampaignSuggestService.SuggestKeywordThemes\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuggestKeywordThemesRequest {
     /// Required. The ID of the customer.
@@ -20280,22 +20784,47 @@ pub struct SuggestKeywordThemesRequest {
     pub customer_id: ::prost::alloc::string::String,
     /// Required. Information to get keyword theme suggestions.
     /// Required fields:
+    ///
     /// * suggestion_info.final_url
     /// * suggestion_info.language_code
     /// * suggestion_info.geo_target
     ///
     /// Recommended fields:
+    ///
     /// * suggestion_info.business_setting
     #[prost(message, optional, tag = "2")]
     pub suggestion_info: ::core::option::Option<SmartCampaignSuggestionInfo>,
 }
 /// Response message for
-/// \[SmartCampaignSuggestService.SuggestKeywordThemes][google.ads.googleads.v11.services.SmartCampaignSuggestService.SuggestKeywordThemes\].
+/// \[SmartCampaignSuggestService.SuggestKeywordThemes][google.ads.googleads.v14.services.SmartCampaignSuggestService.SuggestKeywordThemes\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuggestKeywordThemesResponse {
     /// Smart campaign keyword theme suggestions.
-    #[prost(message, repeated, tag = "1")]
-    pub keyword_themes: ::prost::alloc::vec::Vec<super::resources::KeywordThemeConstant>,
+    #[prost(message, repeated, tag = "2")]
+    pub keyword_themes: ::prost::alloc::vec::Vec<suggest_keyword_themes_response::KeywordTheme>,
+}
+/// Nested message and enum types in `SuggestKeywordThemesResponse`.
+pub mod suggest_keyword_themes_response {
+    /// A Smart campaign keyword theme suggestion.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct KeywordTheme {
+        /// A keyword theme.
+        #[prost(oneof = "keyword_theme::KeywordTheme", tags = "1, 2")]
+        pub keyword_theme: ::core::option::Option<keyword_theme::KeywordTheme>,
+    }
+    /// Nested message and enum types in `KeywordTheme`.
+    pub mod keyword_theme {
+        /// A keyword theme.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum KeywordTheme {
+            /// A Smart campaign keyword theme constant.
+            #[prost(message, tag = "1")]
+            KeywordThemeConstant(super::super::super::resources::KeywordThemeConstant),
+            /// A free-form text keyword theme.
+            #[prost(string, tag = "2")]
+            FreeFormKeywordTheme(::prost::alloc::string::String),
+        }
+    }
 }
 #[doc = r" Generated client implementations."]
 pub mod smart_campaign_suggest_service_client {
@@ -20360,7 +20889,7 @@ pub mod smart_campaign_suggest_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.SmartCampaignSuggestService/SuggestSmartCampaignBudgetOptions") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.SmartCampaignSuggestService/SuggestSmartCampaignBudgetOptions") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Suggests a Smart campaign ad compatible with the Ad family of resources,"]
@@ -20376,7 +20905,7 @@ pub mod smart_campaign_suggest_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.SmartCampaignSuggestService/SuggestSmartCampaignAd") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.SmartCampaignSuggestService/SuggestSmartCampaignAd") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Suggests keyword themes to advertise on."]
@@ -20391,13 +20920,13 @@ pub mod smart_campaign_suggest_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.SmartCampaignSuggestService/SuggestKeywordThemes") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.SmartCampaignSuggestService/SuggestKeywordThemes") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Request message for
-/// \[ThirdPartyAppAnalyticsLinkService.RegenerateShareableLinkId][google.ads.googleads.v11.services.ThirdPartyAppAnalyticsLinkService.RegenerateShareableLinkId\].
+/// \[ThirdPartyAppAnalyticsLinkService.RegenerateShareableLinkId][google.ads.googleads.v14.services.ThirdPartyAppAnalyticsLinkService.RegenerateShareableLinkId\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RegenerateShareableLinkIdRequest {
     /// Resource name of the third party app analytics link.
@@ -20405,7 +20934,7 @@ pub struct RegenerateShareableLinkIdRequest {
     pub resource_name: ::prost::alloc::string::String,
 }
 /// Response message for
-/// \[ThirdPartyAppAnalyticsLinkService.RegenerateShareableLinkId][google.ads.googleads.v11.services.ThirdPartyAppAnalyticsLinkService.RegenerateShareableLinkId\].
+/// \[ThirdPartyAppAnalyticsLinkService.RegenerateShareableLinkId][google.ads.googleads.v14.services.ThirdPartyAppAnalyticsLinkService.RegenerateShareableLinkId\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RegenerateShareableLinkIdResponse {}
 #[doc = r" Generated client implementations."]
@@ -20484,12 +21013,167 @@ pub mod third_party_app_analytics_link_service_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v11.services.ThirdPartyAppAnalyticsLinkService/RegenerateShareableLinkId") ;
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.ThirdPartyAppAnalyticsLinkService/RegenerateShareableLinkId") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
-/// Request message for \[UserDataService.UploadUserData][google.ads.googleads.v11.services.UserDataService.UploadUserData\]
+/// Request message for
+/// \[TravelSuggestAssetsService.SuggestTravelAssets][\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SuggestTravelAssetsRequest {
+    /// Required. The ID of the customer.
+    #[prost(string, tag = "1")]
+    pub customer_id: ::prost::alloc::string::String,
+    /// Required. The language specifications in BCP 47 format (for example, en-US,
+    /// zh-CN, etc.) for the asset suggestions. Text will be in this language.
+    /// Usually matches one of the campaign target languages.
+    #[prost(string, tag = "2")]
+    pub language_option: ::prost::alloc::string::String,
+    /// The Google Maps Place IDs of hotels for which assets are requested. See
+    /// <https://developers.google.com/places/web-service/place-id> for more
+    /// information.
+    #[prost(string, repeated, tag = "4")]
+    pub place_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Response message for
+/// \[TravelSuggestAssetsService.SuggestTravelAssets][\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SuggestTravelAssetsResponse {
+    /// Asset suggestions for each place ID submitted in the request.
+    #[prost(message, repeated, tag = "1")]
+    pub hotel_asset_suggestions: ::prost::alloc::vec::Vec<HotelAssetSuggestion>,
+}
+/// Message containing the asset suggestions for a hotel.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct HotelAssetSuggestion {
+    /// Google Places ID of the hotel.
+    #[prost(string, tag = "1")]
+    pub place_id: ::prost::alloc::string::String,
+    /// Suggested final URL for an AssetGroup.
+    #[prost(string, tag = "2")]
+    pub final_url: ::prost::alloc::string::String,
+    /// Hotel name in requested language.
+    #[prost(string, tag = "3")]
+    pub hotel_name: ::prost::alloc::string::String,
+    /// Call to action type.
+    #[prost(
+        enumeration = "super::enums::call_to_action_type_enum::CallToActionType",
+        tag = "4"
+    )]
+    pub call_to_action: i32,
+    /// Text assets such as headline, description, etc.
+    #[prost(message, repeated, tag = "5")]
+    pub text_assets: ::prost::alloc::vec::Vec<HotelTextAsset>,
+    /// Image assets such as landscape/portrait/square, etc.
+    #[prost(message, repeated, tag = "6")]
+    pub image_assets: ::prost::alloc::vec::Vec<HotelImageAsset>,
+    /// The status of the hotel asset suggestion.
+    #[prost(
+        enumeration = "super::enums::hotel_asset_suggestion_status_enum::HotelAssetSuggestionStatus",
+        tag = "7"
+    )]
+    pub status: i32,
+}
+/// A single text asset suggestion for a hotel.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct HotelTextAsset {
+    /// Asset text in requested language.
+    #[prost(string, tag = "1")]
+    pub text: ::prost::alloc::string::String,
+    /// The text asset type. For example, HEADLINE, DESCRIPTION, etc.
+    #[prost(
+        enumeration = "super::enums::asset_field_type_enum::AssetFieldType",
+        tag = "2"
+    )]
+    pub asset_field_type: i32,
+}
+/// A single image asset suggestion for a hotel.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct HotelImageAsset {
+    /// URI for the image.
+    #[prost(string, tag = "1")]
+    pub uri: ::prost::alloc::string::String,
+    /// The Image asset type. For example, MARKETING_IMAGE,
+    /// PORTRAIT_MARKETING_IMAGE, etc.
+    #[prost(
+        enumeration = "super::enums::asset_field_type_enum::AssetFieldType",
+        tag = "2"
+    )]
+    pub asset_field_type: i32,
+}
+#[doc = r" Generated client implementations."]
+pub mod travel_asset_suggestion_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service to retrieve Travel asset suggestions."]
+    #[derive(Debug, Clone)]
+    pub struct TravelAssetSuggestionServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> TravelAssetSuggestionServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> TravelAssetSuggestionServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            TravelAssetSuggestionServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Returns Travel Asset suggestions. Asset"]
+        #[doc = " suggestions are returned on a best-effort basis. There are no guarantees"]
+        #[doc = " that all possible asset types will be returned for any given hotel"]
+        #[doc = " property."]
+        pub async fn suggest_travel_assets(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SuggestTravelAssetsRequest>,
+        ) -> Result<tonic::Response<super::SuggestTravelAssetsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.googleads.v14.services.TravelAssetSuggestionService/SuggestTravelAssets") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Request message for
+/// \[UserDataService.UploadUserData][google.ads.googleads.v14.services.UserDataService.UploadUserData\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UploadUserDataRequest {
     /// Required. The ID of the customer for which to update the user data.
@@ -20532,7 +21216,8 @@ pub mod user_data_operation {
         Remove(super::super::common::UserData),
     }
 }
-/// Response message for \[UserDataService.UploadUserData][google.ads.googleads.v11.services.UserDataService.UploadUserData\]
+/// Response message for
+/// \[UserDataService.UploadUserData][google.ads.googleads.v14.services.UserDataService.UploadUserData\]
 /// Uploads made through this service will not be visible under the 'Segment
 /// members' section for the Customer Match List in the Google Ads UI.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -20626,7 +21311,7 @@ pub mod user_data_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.ads.googleads.v11.services.UserDataService/UploadUserData",
+                "/google.ads.googleads.v14.services.UserDataService/UploadUserData",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
