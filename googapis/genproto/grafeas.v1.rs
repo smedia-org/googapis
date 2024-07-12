@@ -139,6 +139,8 @@ pub enum NoteKind {
     DsseAttestation = 10,
     /// This represents a Vulnerability Assessment.
     VulnerabilityAssessment = 11,
+    /// This represents an SBOM Reference.
+    SbomReference = 12,
 }
 // An attestation wrapper with a PGP-compatible signature. This message only
 // supports `ATTACHED` signatures, where the payload that is signed is included
@@ -586,6 +588,94 @@ pub struct Subject {
     pub digest:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InTotoSlsaProvenanceV1 {
+    /// InToto spec defined at
+    /// <https://github.com/in-toto/attestation/tree/main/spec#statement>
+    #[prost(string, tag = "1")]
+    pub r#type: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "2")]
+    pub subject: ::prost::alloc::vec::Vec<Subject>,
+    #[prost(string, tag = "3")]
+    pub predicate_type: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "4")]
+    pub predicate: ::core::option::Option<in_toto_slsa_provenance_v1::SlsaProvenanceV1>,
+}
+/// Nested message and enum types in `InTotoSlsaProvenanceV1`.
+pub mod in_toto_slsa_provenance_v1 {
+    /// Keep in sync with schema at
+    /// <https://github.com/slsa-framework/slsa/blob/main/docs/provenance/schema/v1/provenance.proto>
+    /// Builder renamed to ProvenanceBuilder because of Java conflicts.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SlsaProvenanceV1 {
+        #[prost(message, optional, tag = "1")]
+        pub build_definition: ::core::option::Option<BuildDefinition>,
+        #[prost(message, optional, tag = "2")]
+        pub run_details: ::core::option::Option<RunDetails>,
+    }
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BuildDefinition {
+        #[prost(string, tag = "1")]
+        pub build_type: ::prost::alloc::string::String,
+        #[prost(message, optional, tag = "2")]
+        pub external_parameters: ::core::option::Option<::prost_types::Struct>,
+        #[prost(message, optional, tag = "3")]
+        pub internal_parameters: ::core::option::Option<::prost_types::Struct>,
+        #[prost(message, repeated, tag = "4")]
+        pub resolved_dependencies: ::prost::alloc::vec::Vec<ResourceDescriptor>,
+    }
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ResourceDescriptor {
+        #[prost(string, tag = "1")]
+        pub name: ::prost::alloc::string::String,
+        #[prost(string, tag = "2")]
+        pub uri: ::prost::alloc::string::String,
+        #[prost(map = "string, string", tag = "3")]
+        pub digest: ::std::collections::HashMap<
+            ::prost::alloc::string::String,
+            ::prost::alloc::string::String,
+        >,
+        #[prost(bytes = "vec", tag = "4")]
+        pub content: ::prost::alloc::vec::Vec<u8>,
+        #[prost(string, tag = "5")]
+        pub download_location: ::prost::alloc::string::String,
+        #[prost(string, tag = "6")]
+        pub media_type: ::prost::alloc::string::String,
+        #[prost(map = "string, message", tag = "7")]
+        pub annotations:
+            ::std::collections::HashMap<::prost::alloc::string::String, ::prost_types::Value>,
+    }
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct RunDetails {
+        #[prost(message, optional, tag = "1")]
+        pub builder: ::core::option::Option<ProvenanceBuilder>,
+        #[prost(message, optional, tag = "2")]
+        pub metadata: ::core::option::Option<BuildMetadata>,
+        #[prost(message, repeated, tag = "3")]
+        pub byproducts: ::prost::alloc::vec::Vec<ResourceDescriptor>,
+    }
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ProvenanceBuilder {
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+        #[prost(map = "string, string", tag = "2")]
+        pub version: ::std::collections::HashMap<
+            ::prost::alloc::string::String,
+            ::prost::alloc::string::String,
+        >,
+        #[prost(message, repeated, tag = "3")]
+        pub builder_dependencies: ::prost::alloc::vec::Vec<ResourceDescriptor>,
+    }
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BuildMetadata {
+        #[prost(string, tag = "1")]
+        pub invocation_id: ::prost::alloc::string::String,
+        #[prost(message, optional, tag = "2")]
+        pub started_on: ::core::option::Option<::prost_types::Timestamp>,
+        #[prost(message, optional, tag = "3")]
+        pub finished_on: ::core::option::Option<::prost_types::Timestamp>,
+    }
+}
 /// Provenance of a build. Contains all information needed to verify the full
 /// details about the build from source to completion.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -915,6 +1005,12 @@ pub struct BuildOccurrence {
     /// envelope.
     #[prost(message, optional, tag = "4")]
     pub intoto_statement: ::core::option::Option<InTotoStatement>,
+    /// In-Toto Slsa Provenance V1 represents a slsa provenance meeting the slsa
+    /// spec, wrapped in an in-toto statement. This allows for direct
+    /// jsonification of a to-spec in-toto slsa statement with a to-spec
+    /// slsa provenance.
+    #[prost(message, optional, tag = "5")]
+    pub in_toto_slsa_provenance_v1: ::core::option::Option<InTotoSlsaProvenanceV1>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ComplianceNote {
@@ -938,6 +1034,9 @@ pub struct ComplianceNote {
     pub scan_instructions: ::prost::alloc::vec::Vec<u8>,
     #[prost(oneof = "compliance_note::ComplianceType", tags = "6")]
     pub compliance_type: ::core::option::Option<compliance_note::ComplianceType>,
+    /// Potential impact of the suggested remediation
+    #[prost(oneof = "compliance_note::PotentialImpact", tags = "8")]
+    pub potential_impact: ::core::option::Option<compliance_note::PotentialImpact>,
 }
 /// Nested message and enum types in `ComplianceNote`.
 pub mod compliance_note {
@@ -953,6 +1052,12 @@ pub mod compliance_note {
     pub enum ComplianceType {
         #[prost(message, tag = "6")]
         CisBenchmark(CisBenchmark),
+    }
+    /// Potential impact of the suggested remediation
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum PotentialImpact {
+        #[prost(string, tag = "8")]
+        Impact(::prost::alloc::string::String),
     }
 }
 /// Describes the CIS benchmark version that is applicable to a given OS and
@@ -1269,6 +1374,9 @@ pub struct DiscoveryOccurrence {
     /// The time occurrences related to this discovery occurrence were archived.
     #[prost(message, optional, tag = "6")]
     pub archive_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The status of an SBOM generation.
+    #[prost(message, optional, tag = "9")]
+    pub sbom_status: ::core::option::Option<discovery_occurrence::SbomStatus>,
 }
 /// Nested message and enum types in `DiscoveryOccurrence`.
 pub mod discovery_occurrence {
@@ -1278,6 +1386,33 @@ pub mod discovery_occurrence {
     pub struct AnalysisCompleted {
         #[prost(string, repeated, tag = "1")]
         pub analysis_type: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+    /// The status of an SBOM generation.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SbomStatus {
+        /// The progress of the SBOM generation.
+        #[prost(enumeration = "sbom_status::SbomState", tag = "1")]
+        pub sbom_state: i32,
+        /// If there was an error generating an SBOM, this will indicate what that
+        /// error was.
+        #[prost(string, tag = "2")]
+        pub error: ::prost::alloc::string::String,
+    }
+    /// Nested message and enum types in `SBOMStatus`.
+    pub mod sbom_status {
+        /// An enum indicating the progress of the SBOM generation.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum SbomState {
+            /// Default unknown state.
+            Unspecified = 0,
+            /// SBOM scanning is pending.
+            Pending = 1,
+            /// SBOM scanning has completed.
+            Complete = 2,
+        }
     }
     /// Whether the resource is continuously analyzed.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1588,6 +1723,73 @@ pub enum Architecture {
     /// X64 architecture.
     X64 = 2,
 }
+/// The note representing an SBOM reference.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SbomReferenceNote {
+    /// The format that SBOM takes. E.g. may be spdx, cyclonedx, etc...
+    #[prost(string, tag = "1")]
+    pub format: ::prost::alloc::string::String,
+    /// The version of the format that the SBOM takes. E.g. if the format
+    /// is spdx, the version may be 2.3.
+    #[prost(string, tag = "2")]
+    pub version: ::prost::alloc::string::String,
+}
+/// The occurrence representing an SBOM reference as applied to a specific
+/// resource. The occurrence follows the DSSE specification. See
+/// <https://github.com/secure-systems-lab/dsse/blob/master/envelope.md> for more
+/// details.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SbomReferenceOccurrence {
+    /// The actual payload that contains the SBOM reference data.
+    #[prost(message, optional, tag = "1")]
+    pub payload: ::core::option::Option<SbomReferenceIntotoPayload>,
+    /// The kind of payload that SbomReferenceIntotoPayload takes. Since it's in
+    /// the intoto format, this value is expected to be
+    /// 'application/vnd.in-toto+json'.
+    #[prost(string, tag = "2")]
+    pub payload_type: ::prost::alloc::string::String,
+    /// The signatures over the payload.
+    #[prost(message, repeated, tag = "3")]
+    pub signatures: ::prost::alloc::vec::Vec<EnvelopeSignature>,
+}
+/// The actual payload that contains the SBOM Reference data.
+/// The payload follows the intoto statement specification. See
+/// <https://github.com/in-toto/attestation/blob/main/spec/v1.0/statement.md>
+/// for more details.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SbomReferenceIntotoPayload {
+    /// Identifier for the schema of the Statement.
+    #[prost(string, tag = "1")]
+    pub r#type: ::prost::alloc::string::String,
+    /// URI identifying the type of the Predicate.
+    #[prost(string, tag = "2")]
+    pub predicate_type: ::prost::alloc::string::String,
+    /// Set of software artifacts that the attestation applies to. Each element
+    /// represents a single software artifact.
+    #[prost(message, repeated, tag = "3")]
+    pub subject: ::prost::alloc::vec::Vec<Subject>,
+    /// Additional parameters of the Predicate. Includes the actual data about the
+    /// SBOM.
+    #[prost(message, optional, tag = "4")]
+    pub predicate: ::core::option::Option<SbomReferenceIntotoPredicate>,
+}
+/// A predicate which describes the SBOM being referenced.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SbomReferenceIntotoPredicate {
+    /// The person or system referring this predicate to the consumer.
+    #[prost(string, tag = "1")]
+    pub referrer_id: ::prost::alloc::string::String,
+    /// The location of the SBOM.
+    #[prost(string, tag = "2")]
+    pub location: ::prost::alloc::string::String,
+    /// The mime type of the SBOM.
+    #[prost(string, tag = "3")]
+    pub mime_type: ::prost::alloc::string::String,
+    /// A map of algorithm to digest of the contents of the SBOM.
+    #[prost(map = "string, string", tag = "4")]
+    pub digest:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
 /// An Upgrade Note represents a potential upgrade of a package to a given
 /// version. For each package version combination (i.e. bash 4.0, bash 4.1,
 /// bash 4.1.2), there will be an Upgrade Note. For Windows, windows_update field
@@ -1789,8 +1991,14 @@ pub mod vulnerability_assessment_note {
     pub struct Assessment {
         /// Holds the MITRE standard Common Vulnerabilities and Exposures (CVE)
         /// tracking number for the vulnerability.
+        /// Deprecated: Use vulnerability_id instead to denote CVEs.
+        #[deprecated]
         #[prost(string, tag = "1")]
         pub cve: ::prost::alloc::string::String,
+        /// The vulnerability identifier for this Assessment. Will hold one of
+        /// common identifiers e.g. CVE, GHSA etc.
+        #[prost(string, tag = "9")]
+        pub vulnerability_id: ::prost::alloc::string::String,
         /// A one sentence description of this Vex.
         #[prost(string, tag = "2")]
         pub short_description: ::prost::alloc::string::String,
@@ -2111,6 +2319,9 @@ pub struct VulnerabilityOccurrence {
     pub cvss_v2: ::core::option::Option<Cvss>,
     #[prost(message, optional, tag = "13")]
     pub vex_assessment: ::core::option::Option<vulnerability_occurrence::VexAssessment>,
+    /// Occurrence-specific extra details about the vulnerability.
+    #[prost(string, tag = "14")]
+    pub extra_details: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `VulnerabilityOccurrence`.
 pub mod vulnerability_occurrence {
@@ -2163,8 +2374,14 @@ pub mod vulnerability_occurrence {
     pub struct VexAssessment {
         /// Holds the MITRE standard Common Vulnerabilities and Exposures (CVE)
         /// tracking number for the vulnerability.
+        /// Deprecated: Use vulnerability_id instead to denote CVEs.
+        #[deprecated]
         #[prost(string, tag = "1")]
         pub cve: ::prost::alloc::string::String,
+        /// The vulnerability identifier for this Assessment. Will hold one of
+        /// common identifiers e.g. CVE, GHSA etc.
+        #[prost(string, tag = "8")]
+        pub vulnerability_id: ::prost::alloc::string::String,
         /// Holds a list of references associated with this vulnerability item and
         /// assessment.
         #[prost(message, repeated, tag = "2")]
@@ -2234,7 +2451,7 @@ pub struct Occurrence {
     /// resource.
     #[prost(
         oneof = "occurrence::Details",
-        tags = "8, 9, 10, 11, 12, 13, 14, 15, 16, 17"
+        tags = "8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19"
     )]
     pub details: ::core::option::Option<occurrence::Details>,
 }
@@ -2275,6 +2492,9 @@ pub mod occurrence {
         /// Describes an attestation of an artifact using dsse.
         #[prost(message, tag = "17")]
         DsseAttestation(super::DsseAttestationOccurrence),
+        /// Describes a specific SBOM reference occurrences.
+        #[prost(message, tag = "19")]
+        SbomReference(super::SbomReferenceOccurrence),
     }
 }
 /// A type of analysis that can be done for a resource.
@@ -2314,7 +2534,7 @@ pub struct Note {
     /// Required. Immutable. The type of analysis this note represents.
     #[prost(
         oneof = "note::Type",
-        tags = "10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20"
+        tags = "10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21"
     )]
     pub r#type: ::core::option::Option<note::Type>,
 }
@@ -2356,6 +2576,9 @@ pub mod note {
         /// A note describing a vulnerability assessment.
         #[prost(message, tag = "20")]
         VulnerabilityAssessment(super::VulnerabilityAssessmentNote),
+        /// A note describing an SBOM reference.
+        #[prost(message, tag = "21")]
+        SbomReference(super::SbomReferenceNote),
     }
 }
 /// Request to get an occurrence.

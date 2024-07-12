@@ -258,9 +258,9 @@ pub struct ContinuousBackupConfig {
     /// Whether ContinuousBackup is enabled.
     #[prost(bool, optional, tag = "1")]
     pub enabled: ::core::option::Option<bool>,
-    /// The number of days backups and logs will be retained, which determines the
-    /// window of time that data is recoverable for. If not set, it defaults to 14
-    /// days.
+    /// The number of days that are eligible to restore from using PITR. To support
+    /// the entire recovery window, backups and logs are retained for one day more
+    /// than the recovery window. If not set, defaults to 14 days.
     #[prost(int32, tag = "4")]
     pub recovery_window_days: i32,
     /// The encryption config can be specified to encrypt the
@@ -363,9 +363,10 @@ pub struct Cluster {
     /// the cluster (i.e. `CreateCluster` vs. `CreateSecondaryCluster`
     #[prost(enumeration = "cluster::ClusterType", tag = "24")]
     pub cluster_type: i32,
-    /// Output only. The database engine major version. This is an output-only
-    /// field and it's populated at the Cluster creation time. This field cannot be
-    /// changed after cluster creation.
+    /// Optional. The database engine major version. This is an optional field and
+    /// it is populated at the Cluster creation time. If a database version is not
+    /// supplied at cluster creation time, then a default database version will
+    /// be used.
     #[prost(enumeration = "DatabaseVersion", tag = "9")]
     pub database_version: i32,
     #[prost(message, optional, tag = "29")]
@@ -373,8 +374,9 @@ pub struct Cluster {
     /// Required. The resource link for the VPC network in which cluster resources
     /// are created and from which they are accessible via Private IP. The network
     /// must belong to the same project as the cluster. It is specified in the
-    /// form: "projects/{project_number}/global/networks/{network_id}". This is
-    /// required to create a cluster. It can be updated, but it cannot be removed.
+    /// form: "projects/{project}/global/networks/{network_id}". This is required
+    /// to create a cluster. Deprecated, use network_config.network instead.
+    #[deprecated]
     #[prost(string, tag = "10")]
     pub network: ::prost::alloc::string::String,
     /// For Resource freshness validation (<https://google.aip.dev/154>)
@@ -432,6 +434,9 @@ pub struct Cluster {
     /// Output only. Cross Region replication config specific to PRIMARY cluster.
     #[prost(message, optional, tag = "23")]
     pub primary_config: ::core::option::Option<cluster::PrimaryConfig>,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "30")]
+    pub satisfies_pzs: bool,
     /// In case of an imported cluster, this field contains information about the
     /// source this cluster was imported from.
     #[prost(oneof = "cluster::Source", tags = "15, 16")]
@@ -442,22 +447,21 @@ pub mod cluster {
     /// Metadata related to network configuration.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct NetworkConfig {
-        /// Required. The resource link for the VPC network in which cluster
+        /// Optional. The resource link for the VPC network in which cluster
         /// resources are created and from which they are accessible via Private IP.
         /// The network must belong to the same project as the cluster. It is
         /// specified in the form:
         /// "projects/{project_number}/global/networks/{network_id}". This is
-        /// required to create a cluster. It can be updated, but it cannot be
-        /// removed.
+        /// required to create a cluster.
         #[prost(string, tag = "1")]
         pub network: ::prost::alloc::string::String,
-        /// Optional. The name of the allocated IP range for the private IP AlloyDB
-        /// cluster. For example: "google-managed-services-default". If set, the
+        /// Optional. Name of the allocated IP range for the private IP AlloyDB
+        /// cluster, for example: "google-managed-services-default". If set, the
         /// instance IPs for this cluster will be created in the allocated range. The
         /// range name must comply with RFC 1035. Specifically, the name must be 1-63
         /// characters long and match the regular expression
-        /// \[a-z]([-a-z0-9]*[a-z0-9\])?.
-        /// Field name is intended to be consistent with CloudSQL.
+        /// `\[a-z]([-a-z0-9]*[a-z0-9\])?`.
+        /// Field name is intended to be consistent with Cloud SQL.
         #[prost(string, tag = "2")]
         pub allocated_ip_range: ::prost::alloc::string::String,
     }
@@ -626,13 +630,19 @@ pub struct Instance {
     /// Configuration for query insights.
     #[prost(message, optional, tag = "21")]
     pub query_insights_config: ::core::option::Option<instance::QueryInsightsInstanceConfig>,
-    /// Read pool specific config.
+    /// Read pool instance configuration.
+    /// This is required if the value of instanceType is READ_POOL.
     #[prost(message, optional, tag = "14")]
     pub read_pool_config: ::core::option::Option<instance::ReadPoolConfig>,
     /// Output only. The IP address for the Instance.
     /// This is the connection endpoint for an end-user application.
     #[prost(string, tag = "15")]
     pub ip_address: ::prost::alloc::string::String,
+    /// Output only. The public IP addresses for the Instance. This is available
+    /// ONLY when enable_public_ip is set. This is the connection endpoint for an
+    /// end-user application.
+    #[prost(string, tag = "27")]
+    pub public_ip_address: ::prost::alloc::string::String,
     /// Output only. Reconciling (<https://google.aip.dev/128#reconciliation>).
     /// Set to true if the current state of Instance does not match the user's
     /// intended state, and the service is actively updating the resource to
@@ -655,6 +665,19 @@ pub struct Instance {
     /// specify explicitly specify the value in each update request.
     #[prost(message, optional, tag = "22")]
     pub update_policy: ::core::option::Option<instance::UpdatePolicy>,
+    /// Optional. Client connection specific configurations
+    #[prost(message, optional, tag = "23")]
+    pub client_connection_config: ::core::option::Option<instance::ClientConnectionConfig>,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "24")]
+    pub satisfies_pzs: bool,
+    /// Optional. The configuration for Private Service Connect (PSC) for the
+    /// instance.
+    #[prost(message, optional, tag = "28")]
+    pub psc_instance_config: ::core::option::Option<instance::PscInstanceConfig>,
+    /// Optional. Instance level network configuration.
+    #[prost(message, optional, tag = "29")]
+    pub network_config: ::core::option::Option<instance::InstanceNetworkConfig>,
 }
 /// Nested message and enum types in `Instance`.
 pub mod instance {
@@ -738,6 +761,93 @@ pub mod instance {
             ForceApply = 2,
         }
     }
+    /// Client connection configuration
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ClientConnectionConfig {
+        /// Optional. Configuration to enforce connectors only (ex: AuthProxy)
+        /// connections to the database.
+        #[prost(bool, tag = "1")]
+        pub require_connectors: bool,
+        /// Optional. SSL config option for this instance.
+        #[prost(message, optional, tag = "2")]
+        pub ssl_config: ::core::option::Option<super::SslConfig>,
+    }
+    /// Configuration for setting up a PSC interface. This information needs to be
+    /// provided by the customer.
+    /// PSC interfaces will be created and added to VMs via SLM (adding a network
+    /// interface will require recreating the VM). For HA instances this will be
+    /// done via LDTM.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PscInterfaceConfig {
+        /// A list of endpoints in the consumer VPC the interface might initiate
+        /// outbound connections to. This list has to be provided when the PSC
+        /// interface is created.
+        #[prost(string, repeated, tag = "1")]
+        pub consumer_endpoint_ips: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// The NetworkAttachment resource created in the consumer VPC to which the
+        /// PSC interface will be linked, in the form of:
+        /// `projects/${CONSUMER_PROJECT}/regions/${REGION}/networkAttachments/${NETWORK_ATTACHMENT_NAME}`.
+        /// NetworkAttachment has to be provided when the PSC interface is created.
+        #[prost(string, tag = "2")]
+        pub network_attachment: ::prost::alloc::string::String,
+    }
+    /// PscInstanceConfig contains PSC related configuration at an
+    /// instance level.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PscInstanceConfig {
+        /// Output only. The service attachment created when Private
+        /// Service Connect (PSC) is enabled for the instance.
+        /// The name of the resource will be in the format of
+        /// `projects/<alloydb-tenant-project-number>/regions/<region-name>/serviceAttachments/<service-attachment-name>`
+        #[prost(string, tag = "1")]
+        pub service_attachment_link: ::prost::alloc::string::String,
+        /// Optional. List of consumer projects that are allowed to create
+        /// PSC endpoints to service-attachments to this instance.
+        #[prost(string, repeated, tag = "2")]
+        pub allowed_consumer_projects: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Optional. List of consumer networks that are allowed to create
+        /// PSC endpoints to service-attachments to this instance.
+        #[prost(string, repeated, tag = "3")]
+        pub allowed_consumer_networks: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Optional. Configurations for setting up PSC interfaces attached to the
+        /// instance which are used for outbound connectivity. Only primary instances
+        /// can have PSC interface attached. All the VMs created for the primary
+        /// instance will share the same configurations. Currently we only support 0
+        /// or 1 PSC interface.
+        #[prost(message, repeated, tag = "4")]
+        pub psc_interface_configs: ::prost::alloc::vec::Vec<PscInterfaceConfig>,
+        /// Optional. List of service attachments that this instance has created
+        /// endpoints to connect with. Currently, only a single outgoing service
+        /// attachment is supported per instance.
+        #[prost(string, repeated, tag = "5")]
+        pub outgoing_service_attachment_links:
+            ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Optional. Whether PSC connectivity is enabled for this instance.
+        /// This is populated by referencing the value from the parent cluster.
+        #[prost(bool, tag = "6")]
+        pub psc_enabled: bool,
+    }
+    /// Metadata related to instance level network configuration.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InstanceNetworkConfig {
+        /// Optional. A list of external network authorized to access this instance.
+        #[prost(message, repeated, tag = "1")]
+        pub authorized_external_networks:
+            ::prost::alloc::vec::Vec<instance_network_config::AuthorizedNetwork>,
+        /// Optional. Enabling public ip for the instance.
+        #[prost(bool, tag = "2")]
+        pub enable_public_ip: bool,
+    }
+    /// Nested message and enum types in `InstanceNetworkConfig`.
+    pub mod instance_network_config {
+        /// AuthorizedNetwork contains metadata for an authorized network.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct AuthorizedNetwork {
+            /// CIDR range for one authorzied network of the instance.
+            #[prost(string, tag = "1")]
+            pub cidr_range: ::prost::alloc::string::String,
+        }
+    }
     /// Instance State
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -811,10 +921,16 @@ pub struct ConnectionInfo {
     /// This field currently has no semantic meaning.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Output only. The IP address for the Instance.
-    /// This is the connection endpoint for an end-user application.
+    /// Output only. The private network IP address for the Instance. This is the
+    /// default IP for the instance and is always created (even if enable_public_ip
+    /// is set). This is the connection endpoint for an end-user application.
     #[prost(string, tag = "2")]
     pub ip_address: ::prost::alloc::string::String,
+    /// Output only. The public IP addresses for the Instance. This is available
+    /// ONLY when enable_public_ip is set. This is the connection endpoint for an
+    /// end-user application.
+    #[prost(string, tag = "5")]
+    pub public_ip_address: ::prost::alloc::string::String,
     /// Output only. The pem-encoded chain that may be used to verify the X.509
     /// certificate. Expected to be in issuer-to-root order according to RFC 5246.
     #[deprecated]
@@ -823,6 +939,9 @@ pub struct ConnectionInfo {
     /// Output only. The unique ID of the Instance.
     #[prost(string, tag = "4")]
     pub instance_uid: ::prost::alloc::string::String,
+    /// Output only. The DNS name to use with PSC for the Instance.
+    #[prost(string, tag = "6")]
+    pub psc_dns_name: ::prost::alloc::string::String,
 }
 /// Message describing Backup object
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -907,9 +1026,46 @@ pub struct Backup {
     /// added to the backup's create_time.
     #[prost(message, optional, tag = "19")]
     pub expiry_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The QuantityBasedExpiry of the backup, specified by the
+    /// backup's retention policy. Once the expiry quantity is over retention, the
+    /// backup is eligible to be garbage collected.
+    #[prost(message, optional, tag = "20")]
+    pub expiry_quantity: ::core::option::Option<backup::QuantityBasedExpiry>,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "21")]
+    pub satisfies_pzs: bool,
+    /// Output only. The database engine major version of the cluster this backup
+    /// was created from. Any restored cluster created from this backup will have
+    /// the same database version.
+    #[prost(enumeration = "DatabaseVersion", tag = "22")]
+    pub database_version: i32,
 }
 /// Nested message and enum types in `Backup`.
 pub mod backup {
+    /// A backup's position in a quantity-based retention queue, of backups with
+    /// the same source cluster and type, with length, retention, specified by the
+    /// backup's retention policy.
+    /// Once the position is greater than the retention, the backup is eligible to
+    /// be garbage collected.
+    ///
+    /// Example: 5 backups from the same source cluster and type with a
+    /// quantity-based retention of 3 and denoted by backup_id (position,
+    /// retention).
+    ///
+    /// Safe: backup_5 (1, 3), backup_4, (2, 3), backup_3 (3, 3).
+    /// Awaiting garbage collection: backup_2 (4, 3), backup_1 (5, 3)
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QuantityBasedExpiry {
+        /// Output only. The backup's position among its backups with the same source
+        /// cluster and type, by descending chronological order create time(i.e.
+        /// newest first).
+        #[prost(int32, tag = "1")]
+        pub retention_count: i32,
+        /// Output only. The length of the quantity-based queue, specified by the
+        /// backup's retention policy.
+        #[prost(int32, tag = "2")]
+        pub total_retention_count: i32,
+    }
     /// Backup State
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -1058,6 +1214,24 @@ pub mod user {
         AlloydbIamUser = 2,
     }
 }
+/// Message describing Database object.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Database {
+    /// Identifier. Name of the resource in the form of
+    /// `projects/{project}/locations/{location}/clusters/{cluster}/databases/{database}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. Charset for the database.
+    /// This field can contain any PostgreSQL supported charset name.
+    /// Example values include "UTF8", "SQL_ASCII", etc.
+    #[prost(string, tag = "2")]
+    pub charset: ::prost::alloc::string::String,
+    /// Optional. Collation for the database.
+    /// Name of the custom or native collation for postgres.
+    /// Example values include "C", "POSIX", etc
+    #[prost(string, tag = "3")]
+    pub collation: ::prost::alloc::string::String,
+}
 /// View on Instance. Pass this enum to rpcs that returns an Instance message to
 /// control which subsets of fields to get.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1099,6 +1273,8 @@ pub enum DatabaseVersion {
     Postgres13 = 1,
     /// The database version is Postgres 14.
     Postgres14 = 2,
+    /// The database version is Postgres 15.
+    Postgres15 = 3,
 }
 /// Message for requesting list of Clusters
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1977,7 +2153,8 @@ pub struct GenerateClientCertificateRequest {
     /// not supported (00000000-0000-0000-0000-000000000000).
     #[prost(string, tag = "2")]
     pub request_id: ::prost::alloc::string::String,
-    /// Optional. A pem-encoded X.509 certificate signing request (CSR).
+    /// Optional. A pem-encoded X.509 certificate signing request (CSR). It is
+    /// recommended to use public_key instead.
     #[deprecated]
     #[prost(string, tag = "3")]
     pub pem_csr: ::prost::alloc::string::String,
@@ -1991,11 +2168,17 @@ pub struct GenerateClientCertificateRequest {
     /// Optional. The public key from the client.
     #[prost(string, tag = "5")]
     pub public_key: ::prost::alloc::string::String,
+    /// Optional. An optional hint to the endpoint to generate a client
+    /// ceritificate that can be used by AlloyDB connectors to exchange additional
+    /// metadata with the server after TLS handshake.
+    #[prost(bool, tag = "6")]
+    pub use_metadata_exchange: bool,
 }
 /// Message returned by a GenerateClientCertificate operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateClientCertificateResponse {
     /// Output only. The pem-encoded, signed X.509 certificate.
+    #[deprecated]
     #[prost(string, tag = "1")]
     pub pem_certificate: ::prost::alloc::string::String,
     /// Output only. The pem-encoded chain that may be used to verify the X.509
@@ -2206,6 +2389,39 @@ pub struct DeleteUserRequest {
     /// execute it.
     #[prost(bool, tag = "3")]
     pub validate_only: bool,
+}
+/// Message for requesting list of Databases.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDatabasesRequest {
+    /// Required. Parent value for ListDatabasesRequest.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of databases to return. The service may return
+    /// fewer than this value. If unspecified, an appropriate number of databases
+    /// will be returned. The max value will be 2000, values above max will be
+    /// coerced to max.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token, received from a previous `ListDatabases` call.
+    /// This should be provided to retrieve the subsequent page.
+    /// This field is currently not supported, its value will be ignored if passed.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. Filtering results.
+    /// This field is currently not supported, its value will be ignored if passed.
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Message for response to listing Databases.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDatabasesResponse {
+    /// The list of databases
+    #[prost(message, repeated, tag = "1")]
+    pub databases: ::prost::alloc::vec::Vec<Database>,
+    /// A token identifying the next page of results the server should return.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod alloy_db_admin_client {
@@ -2737,10 +2953,10 @@ pub mod alloy_db_admin_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Generate a client certificate signed by a Cluster CA."]
-        #[doc = " The sole purpose of this endpoint is to support the Auth Proxy client and"]
-        #[doc = " the endpoint's behavior is subject to change without notice, so do not rely"]
-        #[doc = " on its behavior remaining constant. Future changes will not break the Auth"]
-        #[doc = " Proxy client."]
+        #[doc = " The sole purpose of this endpoint is to support AlloyDB connectors and the"]
+        #[doc = " Auth Proxy client. The endpoint's behavior is subject to change without"]
+        #[doc = " notice, so do not rely on its behavior remaining constant. Future changes"]
+        #[doc = " will not break AlloyDB connectors or the Auth Proxy client."]
         pub async fn generate_client_certificate(
             &mut self,
             request: impl tonic::IntoRequest<super::GenerateClientCertificateRequest>,
@@ -2857,6 +3073,23 @@ pub mod alloy_db_admin_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.alloydb.v1beta.AlloyDBAdmin/DeleteUser",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists Databases in a given project and location."]
+        pub async fn list_databases(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListDatabasesRequest>,
+        ) -> Result<tonic::Response<super::ListDatabasesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.alloydb.v1beta.AlloyDBAdmin/ListDatabases",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

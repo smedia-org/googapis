@@ -2,7 +2,7 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAssessmentRequest {
     /// Required. The name of the project in which the assessment will be created,
-    /// in the format "projects/{project_number}".
+    /// in the format `projects/{project_number}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The assessment details.
@@ -118,7 +118,7 @@ pub mod transaction_event {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AnnotateAssessmentRequest {
     /// Required. The resource name of the Assessment, in the format
-    /// "projects/{project_number}/assessments/{assessment_id}".
+    /// `projects/{project_number}/assessments/{assessment_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Optional. The annotation that will be assigned to the Event. This field can
@@ -126,8 +126,7 @@ pub struct AnnotateAssessmentRequest {
     /// whether the event is legitimate or fraudulent.
     #[prost(enumeration = "annotate_assessment_request::Annotation", tag = "2")]
     pub annotation: i32,
-    /// Optional. Optional reasons for the annotation that will be assigned to the
-    /// Event.
+    /// Optional. Reasons for the annotation that are assigned to the event.
     #[prost(
         enumeration = "annotate_assessment_request::Reason",
         repeated,
@@ -135,11 +134,11 @@ pub struct AnnotateAssessmentRequest {
         tag = "3"
     )]
     pub reasons: ::prost::alloc::vec::Vec<i32>,
-    /// Optional. Optional unique stable hashed user identifier to apply to the
-    /// assessment. This is an alternative to setting the hashed_account_id in
-    /// CreateAssessment, for example when the account identifier is not yet known
-    /// in the initial request. It is recommended that the identifier is hashed
-    /// using hmac-sha256 with stable secret.
+    /// Optional. Unique stable hashed user identifier to apply to the assessment.
+    /// This is an alternative to setting the `hashed_account_id` in
+    /// `CreateAssessment`, for example, when the account identifier is not yet
+    /// known in the initial request. It is recommended that the identifier is
+    /// hashed using hmac-sha256 with stable secret.
     #[prost(bytes = "vec", tag = "4")]
     pub hashed_account_id: ::prost::alloc::vec::Vec<u8>,
     /// Optional. If the assessment is part of a payment transaction, provide
@@ -245,7 +244,7 @@ pub struct PasswordLeakVerification {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Assessment {
     /// Output only. The resource name for the Assessment in the format
-    /// "projects/{project_number}/assessments/{assessment_id}".
+    /// `projects/{project_number}/assessments/{assessment_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The event being assessed.
@@ -339,9 +338,31 @@ pub struct Event {
     /// FraudPreventionAssessment component in the response.
     #[prost(message, optional, tag = "13")]
     pub transaction_data: ::core::option::Option<TransactionData>,
+    /// Optional. The Fraud Prevention setting for this Assessment.
+    #[prost(enumeration = "event::FraudPrevention", tag = "17")]
+    pub fraud_prevention: i32,
+}
+/// Nested message and enum types in `Event`.
+pub mod event {
+    /// Setting that controls Fraud Prevention assessments.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum FraudPrevention {
+        /// Default, unspecified setting. If opted in for automatic detection,
+        /// `fraud_prevention_assessment` is returned based on the request.
+        /// Otherwise, `fraud_prevention_assessment` is returned if
+        /// `transaction_data` is present in the `Event` and Fraud Prevention is
+        /// enabled in the Google Cloud console.
+        Unspecified = 0,
+        /// Enable Fraud Prevention for this assessment, if Fraud Prevention is
+        /// enabled in the Google Cloud console.
+        Enabled = 1,
+        /// Disable Fraud Prevention for this assessment, regardless of opt-in
+        /// status or the Google Cloud console settings.
+        Disabled = 2,
+    }
 }
 /// Transaction data associated with a payment protected by reCAPTCHA Enterprise.
-/// All fields are optional.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransactionData {
     /// Unique identifier for the transaction. This custom identifier can be used
@@ -551,6 +572,10 @@ pub struct FraudPreventionAssessment {
     #[prost(message, optional, tag = "3")]
     pub card_testing_verdict:
         ::core::option::Option<fraud_prevention_assessment::CardTestingVerdict>,
+    /// Assessment of this transaction for behavioral trust.
+    #[prost(message, optional, tag = "4")]
+    pub behavioral_trust_verdict:
+        ::core::option::Option<fraud_prevention_assessment::BehavioralTrustVerdict>,
 }
 /// Nested message and enum types in `FraudPreventionAssessment`.
 pub mod fraud_prevention_assessment {
@@ -571,6 +596,14 @@ pub mod fraud_prevention_assessment {
         /// testing attack.
         #[prost(float, tag = "1")]
         pub risk: f32,
+    }
+    /// Information about behavioral trust of the transaction.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BehavioralTrustVerdict {
+        /// Probability (0-1) of this transaction attempt being executed in a
+        /// behaviorally trustworthy way.
+        #[prost(float, tag = "1")]
+        pub trust: f32,
     }
 }
 /// Account defender risk assessment.

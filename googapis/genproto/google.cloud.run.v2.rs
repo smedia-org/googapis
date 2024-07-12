@@ -144,19 +144,21 @@ pub mod condition {
         Cancelled = 3,
         /// The execution is in the process of being cancelled.
         Cancelling = 4,
+        /// The execution was deleted.
+        Deleted = 5,
     }
     /// The reason for this condition. Depending on the condition type,
     /// it will populate one of these fields.
     /// Successful conditions cannot have a reason.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Reasons {
-        /// A common (service-level) reason for this condition.
+        /// Output only. A common (service-level) reason for this condition.
         #[prost(enumeration = "CommonReason", tag = "6")]
         Reason(i32),
-        /// A reason for the revision condition.
+        /// Output only. A reason for the revision condition.
         #[prost(enumeration = "RevisionReason", tag = "9")]
         RevisionReason(i32),
-        /// A reason for the execution condition.
+        /// Output only. A reason for the execution condition.
         #[prost(enumeration = "ExecutionReason", tag = "11")]
         ExecutionReason(i32),
     }
@@ -164,7 +166,7 @@ pub mod condition {
 /// A single application container.
 /// This specifies both the container to run, the command to run in the container
 /// and the arguments to supply to it.
-/// Note that additional arguments may be supplied by the system to the container
+/// Note that additional arguments can be supplied by the system to the container
 /// at runtime.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Container {
@@ -216,11 +218,14 @@ pub struct Container {
     /// fails.
     #[prost(message, optional, tag = "11")]
     pub startup_probe: ::core::option::Option<Probe>,
+    /// Names of the containers that must start before this container.
+    #[prost(string, repeated, tag = "12")]
+    pub depends_on: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// ResourceRequirements describes the compute resource requirements.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ResourceRequirements {
-    /// Only ´memory´ and 'cpu' are supported.
+    /// Only `memory` and `cpu` keys in the map are supported.
     ///
     /// <p>Notes:
     ///  * The only supported values for CPU are '1', '2', '4', and '8'. Setting 4
@@ -231,7 +236,9 @@ pub struct ResourceRequirements {
     #[prost(map = "string, string", tag = "1")]
     pub limits:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Determines whether CPU should be throttled or not outside of requests.
+    /// Determines whether CPU is only allocated during requests (true by default).
+    /// However, if ResourceRequirements is set, the caller must explicitly
+    /// set this field to true to preserve the default behavior.
     #[prost(bool, tag = "2")]
     pub cpu_idle: bool,
     /// Determines whether CPU should be boosted on startup of a new container
@@ -243,8 +250,8 @@ pub struct ResourceRequirements {
 /// EnvVar represents an environment variable present in a Container.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EnvVar {
-    /// Required. Name of the environment variable. Must be a C_IDENTIFIER, and
-    /// mnay not exceed 32768 characters.
+    /// Required. Name of the environment variable. Must not exceed 32768
+    /// characters.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     #[prost(oneof = "env_var::Values", tags = "2, 3")]
@@ -323,7 +330,7 @@ pub struct Volume {
     /// Required. Volume's name.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    #[prost(oneof = "volume::VolumeType", tags = "2, 3")]
+    #[prost(oneof = "volume::VolumeType", tags = "2, 3, 4, 5, 6")]
     pub volume_type: ::core::option::Option<volume::VolumeType>,
 }
 /// Nested message and enum types in `Volume`.
@@ -338,6 +345,15 @@ pub mod volume {
         /// more information on how to connect Cloud SQL and Cloud Run.
         #[prost(message, tag = "3")]
         CloudSqlInstance(super::CloudSqlInstance),
+        /// Ephemeral storage used as a shared volume.
+        #[prost(message, tag = "4")]
+        EmptyDir(super::EmptyDirVolumeSource),
+        /// For NFS Voumes, contains the path to the nfs Volume
+        #[prost(message, tag = "5")]
+        Nfs(super::NfsVolumeSource),
+        /// Persistent storage backed by a Google Cloud Storage bucket.
+        #[prost(message, tag = "6")]
+        Gcs(super::GcsVolumeSource),
     }
 }
 /// The secret's value will be presented as the content of a file whose
@@ -423,29 +439,87 @@ pub struct CloudSqlInstance {
     #[prost(string, repeated, tag = "1")]
     pub instances: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
+/// In memory (tmpfs) ephemeral storage.
+/// It is ephemeral in the sense that when the sandbox is taken down, the data is
+/// destroyed with it (it does not persist across sandbox runs).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EmptyDirVolumeSource {
+    /// The medium on which the data is stored. Acceptable values today is only
+    /// MEMORY or none. When none, the default will currently be backed by memory
+    /// but could change over time. +optional
+    #[prost(enumeration = "empty_dir_volume_source::Medium", tag = "1")]
+    pub medium: i32,
+    /// Limit on the storage usable by this EmptyDir volume.
+    /// The size limit is also applicable for memory medium.
+    /// The maximum usage on memory medium EmptyDir would be the minimum value
+    /// between the SizeLimit specified here and the sum of memory limits of all
+    /// containers. The default is nil which means that the limit is undefined.
+    /// More info:
+    /// <https://cloud.google.com/run/docs/configuring/in-memory-volumes#configure-volume.>
+    /// Info in Kubernetes:
+    /// <https://kubernetes.io/docs/concepts/storage/volumes/#emptydir>
+    #[prost(string, tag = "2")]
+    pub size_limit: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `EmptyDirVolumeSource`.
+pub mod empty_dir_volume_source {
+    /// The different types of medium supported for EmptyDir.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Medium {
+        /// When not specified, falls back to the default implementation which
+        /// is currently in memory (this may change over time).
+        Unspecified = 0,
+        /// Explicitly set the EmptyDir to be in memory. Uses tmpfs.
+        Memory = 1,
+    }
+}
+/// Represents an NFS mount.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NfsVolumeSource {
+    /// Hostname or IP address of the NFS server
+    #[prost(string, tag = "1")]
+    pub server: ::prost::alloc::string::String,
+    /// Path that is exported by the NFS server.
+    #[prost(string, tag = "2")]
+    pub path: ::prost::alloc::string::String,
+    /// If true, the volume will be mounted as read only for all mounts.
+    #[prost(bool, tag = "3")]
+    pub read_only: bool,
+}
+/// Represents a volume backed by a Cloud Storage bucket using Cloud Storage
+/// FUSE.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GcsVolumeSource {
+    /// Cloud Storage Bucket name.
+    #[prost(string, tag = "1")]
+    pub bucket: ::prost::alloc::string::String,
+    /// If true, the volume will be mounted as read only for all mounts.
+    #[prost(bool, tag = "2")]
+    pub read_only: bool,
+}
 /// Probe describes a health check to be performed against a container to
 /// determine whether it is alive or ready to receive traffic.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Probe {
-    /// Number of seconds after the container has started before the probe is
-    /// initiated.
-    /// Defaults to 0 seconds. Minimum value is 0. Maximum value for liveness probe
-    /// is 3600. Maximum value for startup probe is 240.
+    /// Optional. Number of seconds after the container has started before the
+    /// probe is initiated. Defaults to 0 seconds. Minimum value is 0. Maximum
+    /// value for liveness probe is 3600. Maximum value for startup probe is 240.
     #[prost(int32, tag = "1")]
     pub initial_delay_seconds: i32,
-    /// Number of seconds after which the probe times out.
+    /// Optional. Number of seconds after which the probe times out.
     /// Defaults to 1 second. Minimum value is 1. Maximum value is 3600.
     /// Must be smaller than period_seconds.
     #[prost(int32, tag = "2")]
     pub timeout_seconds: i32,
-    /// How often (in seconds) to perform the probe.
+    /// Optional. How often (in seconds) to perform the probe.
     /// Default to 10 seconds. Minimum value is 1. Maximum value for liveness probe
     /// is 3600. Maximum value for startup probe is 240.
     /// Must be greater or equal than timeout_seconds.
     #[prost(int32, tag = "3")]
     pub period_seconds: i32,
-    /// Minimum consecutive failures for the probe to be considered failed after
-    /// having succeeded. Defaults to 3. Minimum value is 1.
+    /// Optional. Minimum consecutive failures for the probe to be considered
+    /// failed after having succeeded. Defaults to 3. Minimum value is 1.
     #[prost(int32, tag = "4")]
     pub failure_threshold: i32,
     #[prost(oneof = "probe::ProbeType", tags = "5, 6, 7")]
@@ -455,15 +529,15 @@ pub struct Probe {
 pub mod probe {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ProbeType {
-        /// HTTPGet specifies the http request to perform.
+        /// Optional. HTTPGet specifies the http request to perform.
         /// Exactly one of httpGet, tcpSocket, or grpc must be specified.
         #[prost(message, tag = "5")]
         HttpGet(super::HttpGetAction),
-        /// TCPSocket specifies an action involving a TCP port.
+        /// Optional. TCPSocket specifies an action involving a TCP port.
         /// Exactly one of httpGet, tcpSocket, or grpc must be specified.
         #[prost(message, tag = "6")]
         TcpSocket(super::TcpSocketAction),
-        /// GRPC specifies an action involving a gRPC port.
+        /// Optional. GRPC specifies an action involving a gRPC port.
         /// Exactly one of httpGet, tcpSocket, or grpc must be specified.
         #[prost(message, tag = "7")]
         Grpc(super::GrpcAction),
@@ -472,15 +546,16 @@ pub mod probe {
 /// HTTPGetAction describes an action based on HTTP Get requests.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HttpGetAction {
-    /// Path to access on the HTTP server. Defaults to '/'.
+    /// Optional. Path to access on the HTTP server. Defaults to '/'.
     #[prost(string, tag = "1")]
     pub path: ::prost::alloc::string::String,
-    /// Custom headers to set in the request. HTTP allows repeated headers.
+    /// Optional. Custom headers to set in the request. HTTP allows repeated
+    /// headers.
     #[prost(message, repeated, tag = "4")]
     pub http_headers: ::prost::alloc::vec::Vec<HttpHeader>,
-    /// Port number to access on the container. Must be in the range 1 to 65535.
-    /// If not specified, defaults to the exposed port of the container, which is
-    /// the value of container.ports\[0\].containerPort.
+    /// Optional. Port number to access on the container. Must be in the range 1 to
+    /// 65535. If not specified, defaults to the exposed port of the container,
+    /// which is the value of container.ports\[0\].containerPort.
     #[prost(int32, tag = "5")]
     pub port: i32,
 }
@@ -490,50 +565,77 @@ pub struct HttpHeader {
     /// Required. The header field name
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The header field value
+    /// Optional. The header field value
     #[prost(string, tag = "2")]
     pub value: ::prost::alloc::string::String,
 }
 /// TCPSocketAction describes an action based on opening a socket
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TcpSocketAction {
-    /// Port number to access on the container. Must be in the range 1 to 65535.
-    /// If not specified, defaults to the exposed port of the container, which is
-    /// the value of container.ports\[0\].containerPort.
+    /// Optional. Port number to access on the container. Must be in the range 1 to
+    /// 65535. If not specified, defaults to the exposed port of the container,
+    /// which is the value of container.ports\[0\].containerPort.
     #[prost(int32, tag = "1")]
     pub port: i32,
 }
 /// GRPCAction describes an action involving a GRPC port.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GrpcAction {
-    /// Port number of the gRPC service. Number must be in the range 1 to 65535.
-    /// If not specified, defaults to the exposed port of the container, which is
-    /// the value of container.ports\[0\].containerPort.
+    /// Optional. Port number of the gRPC service. Number must be in the range 1 to
+    /// 65535. If not specified, defaults to the exposed port of the container,
+    /// which is the value of container.ports\[0\].containerPort.
     #[prost(int32, tag = "1")]
     pub port: i32,
-    /// Service is the name of the service to place in the gRPC HealthCheckRequest
-    /// (see <https://github.com/grpc/grpc/blob/master/doc/health-checking.md>). If
-    /// this is not specified, the default behavior is defined by gRPC.
+    /// Optional. Service is the name of the service to place in the gRPC
+    /// HealthCheckRequest (see
+    /// <https://github.com/grpc/grpc/blob/master/doc/health-checking.md> ). If this
+    /// is not specified, the default behavior is defined by gRPC.
     #[prost(string, tag = "2")]
     pub service: ::prost::alloc::string::String,
 }
-/// VPC Access settings. For more information on creating a VPC Connector, visit
-/// <https://cloud.google.com/vpc/docs/configure-serverless-vpc-access> For
-/// information on how to configure Cloud Run with an existing VPC Connector,
-/// visit <https://cloud.google.com/run/docs/configuring/connecting-vpc>
+/// VPC Access settings. For more information on sending traffic to a VPC
+/// network, visit <https://cloud.google.com/run/docs/configuring/connecting-vpc.>
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VpcAccess {
     /// VPC Access connector name.
     /// Format: projects/{project}/locations/{location}/connectors/{connector},
     /// where {project} can be project id or number.
+    /// For more information on sending traffic to a VPC network via a connector,
+    /// visit <https://cloud.google.com/run/docs/configuring/vpc-connectors.>
     #[prost(string, tag = "1")]
     pub connector: ::prost::alloc::string::String,
-    /// Traffic VPC egress settings.
+    /// Optional. Traffic VPC egress settings. If not provided, it defaults to
+    /// PRIVATE_RANGES_ONLY.
     #[prost(enumeration = "vpc_access::VpcEgress", tag = "2")]
     pub egress: i32,
+    /// Optional. Direct VPC egress settings. Currently only single network
+    /// interface is supported.
+    #[prost(message, repeated, tag = "3")]
+    pub network_interfaces: ::prost::alloc::vec::Vec<vpc_access::NetworkInterface>,
 }
 /// Nested message and enum types in `VpcAccess`.
 pub mod vpc_access {
+    /// Direct VPC egress settings.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct NetworkInterface {
+        /// Optional. The VPC network that the Cloud Run resource will be able to
+        /// send traffic to. At least one of network or subnetwork must be specified.
+        /// If both network and subnetwork are specified, the given VPC subnetwork
+        /// must belong to the given VPC network. If network is not specified, it
+        /// will be looked up from the subnetwork.
+        #[prost(string, tag = "1")]
+        pub network: ::prost::alloc::string::String,
+        /// Optional. The VPC subnetwork that the Cloud Run resource will get IPs
+        /// from. At least one of network or subnetwork must be specified. If both
+        /// network and subnetwork are specified, the given VPC subnetwork must
+        /// belong to the given VPC network. If subnetwork is not specified, the
+        /// subnetwork with the same name with the network will be used.
+        #[prost(string, tag = "2")]
+        pub subnetwork: ::prost::alloc::string::String,
+        /// Optional. Network tags applied to this Cloud Run resource.
+        #[prost(string, repeated, tag = "3")]
+        pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
     /// Egress options for VPC access.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -549,34 +651,50 @@ pub mod vpc_access {
 /// Settings for Binary Authorization feature.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BinaryAuthorization {
-    /// If present, indicates to use Breakglass using this justification.
+    /// Optional. If present, indicates to use Breakglass using this justification.
     /// If use_default is False, then it must be empty.
     /// For more information on breakglass, see
     /// <https://cloud.google.com/binary-authorization/docs/using-breakglass>
     #[prost(string, tag = "2")]
     pub breakglass_justification: ::prost::alloc::string::String,
-    #[prost(oneof = "binary_authorization::BinauthzMethod", tags = "1")]
+    #[prost(oneof = "binary_authorization::BinauthzMethod", tags = "1, 3")]
     pub binauthz_method: ::core::option::Option<binary_authorization::BinauthzMethod>,
 }
 /// Nested message and enum types in `BinaryAuthorization`.
 pub mod binary_authorization {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum BinauthzMethod {
-        /// If True, indicates to use the default project's binary authorization
-        /// policy. If False, binary authorization will be disabled.
+        /// Optional. If True, indicates to use the default project's binary
+        /// authorization policy. If False, binary authorization will be disabled.
         #[prost(bool, tag = "1")]
         UseDefault(bool),
+        /// Optional. The path to a binary authorization policy.
+        /// Format: projects/{project}/platforms/cloudRun/{policy-name}
+        #[prost(string, tag = "3")]
+        Policy(::prost::alloc::string::String),
     }
 }
 /// Settings for revision-level scaling settings.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RevisionScaling {
-    /// Minimum number of serving instances that this resource should have.
+    /// Optional. Minimum number of serving instances that this resource should
+    /// have.
     #[prost(int32, tag = "1")]
     pub min_instance_count: i32,
-    /// Maximum number of serving instances that this resource should have.
+    /// Optional. Maximum number of serving instances that this resource should
+    /// have.
     #[prost(int32, tag = "2")]
     pub max_instance_count: i32,
+}
+/// Scaling settings applied at the service level rather than
+/// at the revision level.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ServiceScaling {
+    /// Optional. total min instances for the service. This number of instances is
+    /// divided among all revisions with specified traffic based on the percent
+    /// of traffic they are receiving. (BETA)
+    #[prost(int32, tag = "1")]
+    pub min_instance_count: i32,
 }
 /// Allowed ingress traffic for the Container.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -621,22 +739,22 @@ pub struct TaskTemplate {
     /// task.
     #[prost(message, repeated, tag = "1")]
     pub containers: ::prost::alloc::vec::Vec<Container>,
-    /// A list of Volumes to make available to containers.
+    /// Optional. A list of Volumes to make available to containers.
     #[prost(message, repeated, tag = "2")]
     pub volumes: ::prost::alloc::vec::Vec<Volume>,
-    /// Max allowed time duration the Task may be active before the system will
-    /// actively try to mark it failed and kill associated containers. This applies
-    /// per attempt of a task, meaning each retry can run for the full timeout.
-    /// Defaults to 600 seconds.
+    /// Optional. Max allowed time duration the Task may be active before the
+    /// system will actively try to mark it failed and kill associated containers.
+    /// This applies per attempt of a task, meaning each retry can run for the full
+    /// timeout. Defaults to 600 seconds.
     #[prost(message, optional, tag = "4")]
     pub timeout: ::core::option::Option<::prost_types::Duration>,
-    /// Email address of the IAM service account associated with the Task of a
-    /// Job. The service account represents the identity of the
-    /// running task, and determines what permissions the task has. If
-    /// not provided, the task will use the project's default service account.
+    /// Optional. Email address of the IAM service account associated with the Task
+    /// of a Job. The service account represents the identity of the running task,
+    /// and determines what permissions the task has. If not provided, the task
+    /// will use the project's default service account.
     #[prost(string, tag = "5")]
     pub service_account: ::prost::alloc::string::String,
-    /// The execution environment being used to host this Task.
+    /// Optional. The execution environment being used to host this Task.
     #[prost(enumeration = "ExecutionEnvironment", tag = "6")]
     pub execution_environment: i32,
     /// A reference to a customer managed encryption key (CMEK) to use to encrypt
@@ -644,8 +762,9 @@ pub struct TaskTemplate {
     /// <https://cloud.google.com/run/docs/securing/using-cmek>
     #[prost(string, tag = "7")]
     pub encryption_key: ::prost::alloc::string::String,
-    /// VPC Access configuration to use for this Task. For more information,
-    /// visit <https://cloud.google.com/run/docs/configuring/connecting-vpc.>
+    /// Optional. VPC Access configuration to use for this Task. For more
+    /// information, visit
+    /// <https://cloud.google.com/run/docs/configuring/connecting-vpc.>
     #[prost(message, optional, tag = "8")]
     pub vpc_access: ::core::option::Option<VpcAccess>,
     #[prost(oneof = "task_template::Retries", tags = "3")]
@@ -666,8 +785,8 @@ pub mod task_template {
 pub struct GetExecutionRequest {
     /// Required. The full name of the Execution.
     /// Format:
-    /// projects/{project}/locations/{location}/jobs/{job}/executions/{execution},
-    /// where {project} can be project id or number.
+    /// `projects/{project}/locations/{location}/jobs/{job}/executions/{execution}`,
+    /// where `{project}` can be project id or number.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -676,8 +795,8 @@ pub struct GetExecutionRequest {
 pub struct ListExecutionsRequest {
     /// Required. The Execution from which the Executions should be listed.
     /// To list all Executions across Jobs, use "-" instead of Job name.
-    /// Format: projects/{project}/locations/{location}/jobs/{job}, where {project}
-    /// can be project id or number.
+    /// Format: `projects/{project}/locations/{location}/jobs/{job}`, where
+    /// `{project}` can be project id or number.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number of Executions to return in this call.
@@ -707,12 +826,30 @@ pub struct ListExecutionsResponse {
 pub struct DeleteExecutionRequest {
     /// Required. The name of the Execution to delete.
     /// Format:
-    /// projects/{project}/locations/{location}/jobs/{job}/executions/{execution},
-    /// where {project} can be project id or number.
+    /// `projects/{project}/locations/{location}/jobs/{job}/executions/{execution}`,
+    /// where `{project}` can be project id or number.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Indicates that the request should be validated without actually
     /// deleting any resources.
+    #[prost(bool, tag = "2")]
+    pub validate_only: bool,
+    /// A system-generated fingerprint for this version of the resource.
+    /// This may be used to detect modification conflict during updates.
+    #[prost(string, tag = "3")]
+    pub etag: ::prost::alloc::string::String,
+}
+/// Request message for deleting an Execution.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CancelExecutionRequest {
+    /// Required. The name of the Execution to cancel.
+    /// Format:
+    /// `projects/{project}/locations/{location}/jobs/{job}/executions/{execution}`,
+    /// where `{project}` can be project id or number.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Indicates that the request should be validated without actually
+    /// cancelling any resources.
     #[prost(bool, tag = "2")]
     pub validate_only: bool,
     /// A system-generated fingerprint for this version of the resource.
@@ -916,7 +1053,8 @@ pub mod executions_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists Executions from a Job."]
+        #[doc = " Lists Executions from a Job. Results are sorted by creation time,"]
+        #[doc = " descending."]
         pub async fn list_executions(
             &mut self,
             request: impl tonic::IntoRequest<super::ListExecutionsRequest>,
@@ -950,6 +1088,26 @@ pub mod executions_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.run.v2.Executions/DeleteExecution",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Cancels an Execution."]
+        pub async fn cancel_execution(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CancelExecutionRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.run.v2.Executions/CancelExecution",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -1046,9 +1204,9 @@ pub struct UpdateJobRequest {
     /// populated, without persisting the request or updating any resources.
     #[prost(bool, tag = "3")]
     pub validate_only: bool,
-    /// If set to true, and if the Job does not exist, it will create a new
-    /// one. Caller must have both create and update permissions for this call if
-    /// this is set to true.
+    /// Optional. If set to true, and if the Job does not exist, it will create a
+    /// new one. Caller must have both create and update permissions for this call
+    /// if this is set to true.
     #[prost(bool, tag = "4")]
     pub allow_missing: bool,
 }
@@ -1115,6 +1273,50 @@ pub struct RunJobRequest {
     /// resource. May be used to detect modification conflict during updates.
     #[prost(string, tag = "3")]
     pub etag: ::prost::alloc::string::String,
+    /// Overrides specification for a given execution of a job. If provided,
+    /// overrides will be applied to update the execution or task spec.
+    #[prost(message, optional, tag = "4")]
+    pub overrides: ::core::option::Option<run_job_request::Overrides>,
+}
+/// Nested message and enum types in `RunJobRequest`.
+pub mod run_job_request {
+    /// RunJob Overrides that contains Execution fields to be overridden.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Overrides {
+        /// Per container override specification.
+        #[prost(message, repeated, tag = "1")]
+        pub container_overrides: ::prost::alloc::vec::Vec<overrides::ContainerOverride>,
+        /// Optional. The desired number of tasks the execution should run. Will
+        /// replace existing task_count value.
+        #[prost(int32, tag = "2")]
+        pub task_count: i32,
+        /// Duration in seconds the task may be active before the system will
+        /// actively try to mark it failed and kill associated containers. Will
+        /// replace existing timeout_seconds value.
+        #[prost(message, optional, tag = "4")]
+        pub timeout: ::core::option::Option<::prost_types::Duration>,
+    }
+    /// Nested message and enum types in `Overrides`.
+    pub mod overrides {
+        /// Per-container override specification.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct ContainerOverride {
+            /// The name of the container specified as a DNS_LABEL.
+            #[prost(string, tag = "1")]
+            pub name: ::prost::alloc::string::String,
+            /// Optional. Arguments to the entrypoint. Will replace existing args for
+            /// override.
+            #[prost(string, repeated, tag = "2")]
+            pub args: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// List of environment variables to set in the container. Will be merged
+            /// with existing env for override.
+            #[prost(message, repeated, tag = "3")]
+            pub env: ::prost::alloc::vec::Vec<super::super::EnvVar>,
+            /// Optional. True if the intention is to clear out existing args list.
+            #[prost(bool, tag = "4")]
+            pub clear_args: bool,
+        }
+    }
 }
 /// Job represents the configuration of a single job, which references a
 /// container image that is run to completion.
@@ -1171,7 +1373,8 @@ pub struct Job {
     /// Output only. The last-modified time.
     #[prost(message, optional, tag = "7")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. The deletion time.
+    /// Output only. The deletion time. It is only populated as a response to a
+    /// Delete request.
     #[prost(message, optional, tag = "8")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Output only. For a deleted resource, the time after which it will be
@@ -1258,6 +1461,24 @@ pub struct Job {
     /// resource. May be used to detect modification conflict during updates.
     #[prost(string, tag = "99")]
     pub etag: ::prost::alloc::string::String,
+    #[prost(oneof = "job::CreateExecution", tags = "26, 27")]
+    pub create_execution: ::core::option::Option<job::CreateExecution>,
+}
+/// Nested message and enum types in `Job`.
+pub mod job {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum CreateExecution {
+        /// A unique string used as a suffix creating a new execution. The Job will
+        /// become ready when the execution is successfully started.
+        /// The sum of job name and token length must be fewer than 63 characters.
+        #[prost(string, tag = "26")]
+        StartExecutionToken(::prost::alloc::string::String),
+        /// A unique string used as a suffix for creating a new execution. The Job
+        /// will become ready when the execution is successfully completed.
+        /// The sum of job name and token length must be fewer than 63 characters.
+        #[prost(string, tag = "27")]
+        RunExecutionToken(::prost::alloc::string::String),
+    }
 }
 /// Reference to an Execution. Use /Executions.GetExecution with the given name
 /// to get full execution including the latest status.
@@ -1272,6 +1493,33 @@ pub struct ExecutionReference {
     /// Creation timestamp of the execution.
     #[prost(message, optional, tag = "3")]
     pub completion_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The deletion time of the execution. It is only
+    /// populated as a response to a Delete request.
+    #[prost(message, optional, tag = "5")]
+    pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Status for the execution completion.
+    #[prost(enumeration = "execution_reference::CompletionStatus", tag = "4")]
+    pub completion_status: i32,
+}
+/// Nested message and enum types in `ExecutionReference`.
+pub mod execution_reference {
+    /// Possible execution completion status.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CompletionStatus {
+        /// The default value. This value is used if the state is omitted.
+        Unspecified = 0,
+        /// Job execution has succeeded.
+        ExecutionSucceeded = 1,
+        /// Job execution has failed.
+        ExecutionFailed = 2,
+        /// Job execution is running normally.
+        ExecutionRunning = 3,
+        /// Waiting for backing resources to be provisioned.
+        ExecutionPending = 4,
+        /// Job execution has been cancelled by the user.
+        ExecutionCancelled = 5,
+    }
 }
 #[doc = r" Generated client implementations."]
 pub mod jobs_client {
@@ -1353,7 +1601,7 @@ pub mod jobs_client {
             let path = http::uri::PathAndQuery::from_static("/google.cloud.run.v2.Jobs/GetJob");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists Jobs."]
+        #[doc = " Lists Jobs. Results are sorted by creation time, descending."]
         pub async fn list_jobs(
             &mut self,
             request: impl tonic::IntoRequest<super::ListJobsRequest>,
@@ -1483,6 +1731,13 @@ pub mod jobs_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
+}
+/// Effective settings for the current revision
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RevisionScalingStatus {
+    /// The current number of min instances provisioned for this revision.
+    #[prost(int32, tag = "1")]
+    pub desired_min_instance_count: i32,
 }
 /// Request message for obtaining a Revision by its full name.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1668,6 +1923,9 @@ pub struct Revision {
     /// Enable session affinity.
     #[prost(bool, tag = "38")]
     pub session_affinity: bool,
+    /// Output only. The current effective scaling settings for the revision.
+    #[prost(message, optional, tag = "39")]
+    pub scaling_status: ::core::option::Option<RevisionScalingStatus>,
     /// Output only. A system-generated fingerprint for this version of the
     /// resource. May be used to detect modification conflict during updates.
     #[prost(string, tag = "99")]
@@ -1739,7 +1997,8 @@ pub mod revisions_client {
                 http::uri::PathAndQuery::from_static("/google.cloud.run.v2.Revisions/GetRevision");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists Revisions from a given Service, or from a given location."]
+        #[doc = " Lists Revisions from a given Service, or from a given location.  Results"]
+        #[doc = " are sorted by creation time, descending."]
         pub async fn list_revisions(
             &mut self,
             request: impl tonic::IntoRequest<super::ListRevisionsRequest>,
@@ -1782,15 +2041,14 @@ pub mod revisions_client {
 /// a template.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RevisionTemplate {
-    /// The unique name for the revision. If this field is omitted, it will be
-    /// automatically generated based on the Service name.
+    /// Optional. The unique name for the revision. If this field is omitted, it
+    /// will be automatically generated based on the Service name.
     #[prost(string, tag = "1")]
     pub revision: ::prost::alloc::string::String,
-    /// Unstructured key value map that can be used to organize and categorize
-    /// objects.
-    /// User-provided labels are shared with Google's billing system, so they can
-    /// be used to filter, or break down billing charges by team, component,
-    /// environment, state, etc. For more information, visit
+    /// Optional. Unstructured key value map that can be used to organize and
+    /// categorize objects. User-provided labels are shared with Google's billing
+    /// system, so they can be used to filter, or break down billing charges by
+    /// team, component, environment, state, etc. For more information, visit
     /// <https://cloud.google.com/resource-manager/docs/creating-managing-labels> or
     /// <https://cloud.google.com/run/docs/configuring/labels.>
     ///
@@ -1801,9 +2059,9 @@ pub struct RevisionTemplate {
     #[prost(map = "string, string", tag = "2")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Unstructured key value map that may be set by external tools to store and
-    /// arbitrary metadata. They are not queryable and should be preserved
-    /// when modifying objects.
+    /// Optional. Unstructured key value map that may be set by external tools to
+    /// store and arbitrary metadata. They are not queryable and should be
+    /// preserved when modifying objects.
     ///
     /// <p>Cloud Run API v2 does not support annotations with `run.googleapis.com`,
     /// `cloud.googleapis.com`, `serving.knative.dev`, or `autoscaling.knative.dev`
@@ -1815,19 +2073,20 @@ pub struct RevisionTemplate {
     #[prost(map = "string, string", tag = "3")]
     pub annotations:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Scaling settings for this Revision.
+    /// Optional. Scaling settings for this Revision.
     #[prost(message, optional, tag = "4")]
     pub scaling: ::core::option::Option<RevisionScaling>,
-    /// VPC Access configuration to use for this Revision. For more information,
-    /// visit <https://cloud.google.com/run/docs/configuring/connecting-vpc.>
+    /// Optional. VPC Access configuration to use for this Revision. For more
+    /// information, visit
+    /// <https://cloud.google.com/run/docs/configuring/connecting-vpc.>
     #[prost(message, optional, tag = "6")]
     pub vpc_access: ::core::option::Option<VpcAccess>,
-    /// Max allowed time for an instance to respond to a request.
+    /// Optional. Max allowed time for an instance to respond to a request.
     #[prost(message, optional, tag = "8")]
     pub timeout: ::core::option::Option<::prost_types::Duration>,
-    /// Email address of the IAM service account associated with the revision of
-    /// the service. The service account represents the identity of the running
-    /// revision, and determines what permissions the revision has. If not
+    /// Optional. Email address of the IAM service account associated with the
+    /// revision of the service. The service account represents the identity of the
+    /// running revision, and determines what permissions the revision has. If not
     /// provided, the revision will use the project's default service account.
     #[prost(string, tag = "9")]
     pub service_account: ::prost::alloc::string::String,
@@ -1835,10 +2094,10 @@ pub struct RevisionTemplate {
     /// Revision.
     #[prost(message, repeated, tag = "10")]
     pub containers: ::prost::alloc::vec::Vec<Container>,
-    /// A list of Volumes to make available to containers.
+    /// Optional. A list of Volumes to make available to containers.
     #[prost(message, repeated, tag = "11")]
     pub volumes: ::prost::alloc::vec::Vec<Volume>,
-    /// The sandbox environment to host this Revision.
+    /// Optional. The sandbox environment to host this Revision.
     #[prost(enumeration = "ExecutionEnvironment", tag = "13")]
     pub execution_environment: i32,
     /// A reference to a customer managed encryption key (CMEK) to use to encrypt
@@ -1846,12 +2105,16 @@ pub struct RevisionTemplate {
     /// <https://cloud.google.com/run/docs/securing/using-cmek>
     #[prost(string, tag = "14")]
     pub encryption_key: ::prost::alloc::string::String,
-    /// Sets the maximum number of requests that each serving instance can receive.
+    /// Optional. Sets the maximum number of requests that each serving instance
+    /// can receive.
     #[prost(int32, tag = "15")]
     pub max_instance_request_concurrency: i32,
-    /// Enable session affinity.
+    /// Optional. Enable session affinity.
     #[prost(bool, tag = "19")]
     pub session_affinity: bool,
+    /// Optional. Disables health checking containers during deployment.
+    #[prost(bool, tag = "20")]
+    pub health_check_disabled: bool,
 }
 /// Holds a single traffic routing entry for the Service. Allocations can be done
 /// to a specific Revision name, or pointing to the latest Ready Revision.
@@ -1927,6 +2190,9 @@ pub struct CreateServiceRequest {
 /// Request message for updating a service.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateServiceRequest {
+    /// Optional. The list of fields to be updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
     /// Required. The Service to be updated.
     #[prost(message, optional, tag = "1")]
     pub service: ::core::option::Option<Service>,
@@ -1934,9 +2200,9 @@ pub struct UpdateServiceRequest {
     /// populated, without persisting the request or updating any resources.
     #[prost(bool, tag = "3")]
     pub validate_only: bool,
-    /// If set to true, and if the Service does not exist, it will create a new
-    /// one. The caller must have 'run.services.create' permissions if this is set
-    /// to true and the Service does not exist.
+    /// Optional. If set to true, and if the Service does not exist, it will create
+    /// a new one. The caller must have 'run.services.create' permissions if this
+    /// is set to true and the Service does not exist.
     #[prost(bool, tag = "4")]
     pub allow_missing: bool,
 }
@@ -2027,11 +2293,10 @@ pub struct Service {
     /// APIs, its JSON representation will be a `string` instead of an `integer`.
     #[prost(int64, tag = "4")]
     pub generation: i64,
-    /// Unstructured key value map that can be used to organize and categorize
-    /// objects.
-    /// User-provided labels are shared with Google's billing system, so they can
-    /// be used to filter, or break down billing charges by team, component,
-    /// environment, state, etc. For more information, visit
+    /// Optional. Unstructured key value map that can be used to organize and
+    /// categorize objects. User-provided labels are shared with Google's billing
+    /// system, so they can be used to filter, or break down billing charges by
+    /// team, component, environment, state, etc. For more information, visit
     /// <https://cloud.google.com/resource-manager/docs/creating-managing-labels> or
     /// <https://cloud.google.com/run/docs/configuring/labels.>
     ///
@@ -2042,9 +2307,9 @@ pub struct Service {
     #[prost(map = "string, string", tag = "5")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Unstructured key value map that may be set by external tools to store and
-    /// arbitrary metadata. They are not queryable and should be preserved
-    /// when modifying objects.
+    /// Optional. Unstructured key value map that may be set by external tools to
+    /// store and arbitrary metadata. They are not queryable and should be
+    /// preserved when modifying objects.
     ///
     /// <p>Cloud Run API v2 does not support annotations with `run.googleapis.com`,
     /// `cloud.googleapis.com`, `serving.knative.dev`, or `autoscaling.knative.dev`
@@ -2062,7 +2327,8 @@ pub struct Service {
     /// Output only. The last-modified time.
     #[prost(message, optional, tag = "8")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. The deletion time.
+    /// Output only. The deletion time. It is only populated as a response to a
+    /// Delete request.
     #[prost(message, optional, tag = "9")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Output only. For a deleted resource, the time after which it will be
@@ -2081,12 +2347,12 @@ pub struct Service {
     /// Arbitrary version identifier for the API client.
     #[prost(string, tag = "14")]
     pub client_version: ::prost::alloc::string::String,
-    /// Provides the ingress settings for this Service. On output, returns the
-    /// currently observed ingress settings, or INGRESS_TRAFFIC_UNSPECIFIED if no
-    /// revision is active.
+    /// Optional. Provides the ingress settings for this Service. On output,
+    /// returns the currently observed ingress settings, or
+    /// INGRESS_TRAFFIC_UNSPECIFIED if no revision is active.
     #[prost(enumeration = "IngressTraffic", tag = "15")]
     pub ingress: i32,
-    /// The launch stage as defined by [Google Cloud Platform
+    /// Optional. The launch stage as defined by [Google Cloud Platform
     /// Launch Stages](<https://cloud.google.com/terms/launch-stages>).
     /// Cloud Run supports `ALPHA`, `BETA`, and `GA`. If no value is specified, GA
     /// is assumed.
@@ -2098,17 +2364,23 @@ pub struct Service {
     /// features are used, this field will be BETA on output.
     #[prost(enumeration = "super::super::super::api::LaunchStage", tag = "16")]
     pub launch_stage: i32,
-    /// Settings for the Binary Authorization feature.
+    /// Optional. Settings for the Binary Authorization feature.
     #[prost(message, optional, tag = "17")]
     pub binary_authorization: ::core::option::Option<BinaryAuthorization>,
     /// Required. The template used to create revisions for this Service.
     #[prost(message, optional, tag = "18")]
     pub template: ::core::option::Option<RevisionTemplate>,
-    /// Specifies how to distribute traffic over a collection of Revisions
-    /// belonging to the Service. If traffic is empty or not provided, defaults to
-    /// 100% traffic to the latest `Ready` Revision.
+    /// Optional. Specifies how to distribute traffic over a collection of
+    /// Revisions belonging to the Service. If traffic is empty or not provided,
+    /// defaults to 100% traffic to the latest `Ready` Revision.
     #[prost(message, repeated, tag = "19")]
     pub traffic: ::prost::alloc::vec::Vec<TrafficTarget>,
+    /// Optional. Specifies service-level scaling settings
+    #[prost(message, optional, tag = "20")]
+    pub scaling: ::core::option::Option<ServiceScaling>,
+    /// Optional. Disables public resolution of the default URI of this service.
+    #[prost(bool, tag = "22")]
+    pub default_uri_disabled: bool,
     /// Output only. The generation of this Service currently serving traffic. See
     /// comments in `reconciling` for additional information on reconciliation
     /// process in Cloud Run. Please note that unlike v1, this is an int64 value.
@@ -2146,6 +2418,13 @@ pub struct Service {
     /// Output only. The main URI in which this Service is serving traffic.
     #[prost(string, tag = "36")]
     pub uri: ::prost::alloc::string::String,
+    /// One or more custom audiences that you want this service to support. Specify
+    /// each custom audience as the full URL in a string. The custom audiences are
+    /// encoded in the token and used to authenticate requests. For more
+    /// information, see
+    /// <https://cloud.google.com/run/docs/configuring/custom-audiences.>
+    #[prost(string, repeated, tag = "37")]
+    pub custom_audiences: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Output only. Reserved for future use.
     #[prost(bool, tag = "38")]
     pub satisfies_pzs: bool,
@@ -2263,7 +2542,7 @@ pub mod services_client {
                 http::uri::PathAndQuery::from_static("/google.cloud.run.v2.Services/GetService");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists Services."]
+        #[doc = " Lists Services. Results are sorted by creation time, descending."]
         pub async fn list_services(
             &mut self,
             request: impl tonic::IntoRequest<super::ListServicesRequest>,
@@ -2452,11 +2731,16 @@ pub struct Task {
     #[prost(map = "string, string", tag = "5")]
     pub annotations:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Output only. Represents time when the task was created by the job
-    /// controller. It is not guaranteed to be set in happens-before order across
-    /// separate operations.
+    /// Output only. Represents time when the task was created by the system.
+    /// It is not guaranteed to be set in happens-before order across separate
+    /// operations.
     #[prost(message, optional, tag = "6")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Represents time when the task was scheduled to run by the
+    /// system. It is not guaranteed to be set in happens-before order across
+    /// separate operations.
+    #[prost(message, optional, tag = "34")]
+    pub scheduled_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Output only. Represents time when the task started to run.
     /// It is not guaranteed to be set in happens-before order across separate
     /// operations.

@@ -109,6 +109,98 @@ pub mod custom_column_service_client {
     }
 }
 /// Request message for
+/// \[CustomerService.ListAccessibleCustomers][google.ads.searchads360.v0.services.CustomerService.ListAccessibleCustomers\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAccessibleCustomersRequest {}
+/// Response message for
+/// \[CustomerService.ListAccessibleCustomers][google.ads.searchads360.v0.services.CustomerService.ListAccessibleCustomers\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAccessibleCustomersResponse {
+    /// Resource name of customers directly accessible by the
+    /// user authenticating the call.
+    #[prost(string, repeated, tag = "1")]
+    pub resource_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[doc = r" Generated client implementations."]
+pub mod customer_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service to manage customers."]
+    #[derive(Debug, Clone)]
+    pub struct CustomerServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> CustomerServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> CustomerServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            CustomerServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Returns resource names of customers directly accessible by the"]
+        #[doc = " user authenticating the call."]
+        #[doc = ""]
+        #[doc = " List of thrown errors:"]
+        #[doc = "   [AuthenticationError]()"]
+        #[doc = "   [AuthorizationError]()"]
+        #[doc = "   [HeaderError]()"]
+        #[doc = "   [InternalError]()"]
+        #[doc = "   [QuotaError]()"]
+        #[doc = "   [RequestError]()"]
+        pub async fn list_accessible_customers(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListAccessibleCustomersRequest>,
+        ) -> Result<tonic::Response<super::ListAccessibleCustomersResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.ads.searchads360.v0.services.CustomerService/ListAccessibleCustomers",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Request message for
 /// \[SearchAds360FieldService.GetSearchAds360Field][google.ads.searchads360.v0.services.SearchAds360FieldService.GetSearchAds360Field\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSearchAds360FieldRequest {
@@ -224,7 +316,8 @@ pub mod search_ads360_field_service_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.ads.searchads360.v0.services.SearchAds360FieldService/GetSearchAds360Field") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Returns all fields that match the search query."]
+        #[doc = " Returns all fields that match the search"]
+        #[doc = " [query](/search-ads/reporting/concepts/field-service#use_a_query_to_get_field_details)."]
         #[doc = ""]
         #[doc = " List of thrown errors:"]
         #[doc = "   [AuthenticationError]()"]
@@ -317,6 +410,21 @@ pub struct SearchSearchAds360Response {
     /// The headers of the custom columns in the results.
     #[prost(message, repeated, tag = "7")]
     pub custom_column_headers: ::prost::alloc::vec::Vec<CustomColumnHeader>,
+    /// The headers of the conversion custom metrics in the results.
+    #[prost(message, repeated, tag = "9")]
+    pub conversion_custom_metric_headers: ::prost::alloc::vec::Vec<ConversionCustomMetricHeader>,
+    /// The headers of the conversion custom dimensions in the results.
+    #[prost(message, repeated, tag = "10")]
+    pub conversion_custom_dimension_headers:
+        ::prost::alloc::vec::Vec<ConversionCustomDimensionHeader>,
+    /// The headers of the raw event conversion metrics in the results.
+    #[prost(message, repeated, tag = "11")]
+    pub raw_event_conversion_metric_headers:
+        ::prost::alloc::vec::Vec<RawEventConversionMetricHeader>,
+    /// The headers of the raw event conversion dimensions in the results.
+    #[prost(message, repeated, tag = "12")]
+    pub raw_event_conversion_dimension_headers:
+        ::prost::alloc::vec::Vec<RawEventConversionDimensionHeader>,
 }
 /// Request message for
 /// \[SearchAds360Service.SearchStream][google.ads.searchads360.v0.services.SearchAds360Service.SearchStream\].
@@ -360,6 +468,21 @@ pub struct SearchSearchAds360StreamResponse {
     /// The headers of the custom columns in the results.
     #[prost(message, repeated, tag = "5")]
     pub custom_column_headers: ::prost::alloc::vec::Vec<CustomColumnHeader>,
+    /// The headers of the conversion custom metrics in the results.
+    #[prost(message, repeated, tag = "7")]
+    pub conversion_custom_metric_headers: ::prost::alloc::vec::Vec<ConversionCustomMetricHeader>,
+    /// The headers of the conversion custom dimension in the results.
+    #[prost(message, repeated, tag = "8")]
+    pub conversion_custom_dimension_headers:
+        ::prost::alloc::vec::Vec<ConversionCustomDimensionHeader>,
+    /// The headers of the raw event conversion metrics in the results.
+    #[prost(message, repeated, tag = "9")]
+    pub raw_event_conversion_metric_headers:
+        ::prost::alloc::vec::Vec<RawEventConversionMetricHeader>,
+    /// The headers of the raw event conversion dimensions in the results.
+    #[prost(message, repeated, tag = "10")]
+    pub raw_event_conversion_dimension_headers:
+        ::prost::alloc::vec::Vec<RawEventConversionDimensionHeader>,
     /// The unique id of the request that is used for debugging purposes.
     #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
@@ -376,6 +499,12 @@ pub struct SearchAds360Row {
     /// The ad group ad label referenced in the query.
     #[prost(message, optional, tag = "120")]
     pub ad_group_ad_label: ::core::option::Option<super::resources::AdGroupAdLabel>,
+    /// The ad group asset referenced in the query.
+    #[prost(message, optional, tag = "154")]
+    pub ad_group_asset: ::core::option::Option<super::resources::AdGroupAsset>,
+    /// The ad group asset set referenced in the query.
+    #[prost(message, optional, tag = "196")]
+    pub ad_group_asset_set: ::core::option::Option<super::resources::AdGroupAssetSet>,
     /// The ad group audience view referenced in the query.
     #[prost(message, optional, tag = "57")]
     pub ad_group_audience_view: ::core::option::Option<super::resources::AdGroupAudienceView>,
@@ -394,6 +523,32 @@ pub struct SearchAds360Row {
     /// The age range view referenced in the query.
     #[prost(message, optional, tag = "48")]
     pub age_range_view: ::core::option::Option<super::resources::AgeRangeView>,
+    /// The asset referenced in the query.
+    #[prost(message, optional, tag = "105")]
+    pub asset: ::core::option::Option<super::resources::Asset>,
+    /// The asset group asset referenced in the query.
+    #[prost(message, optional, tag = "173")]
+    pub asset_group_asset: ::core::option::Option<super::resources::AssetGroupAsset>,
+    /// The asset group signal referenced in the query.
+    #[prost(message, optional, tag = "191")]
+    pub asset_group_signal: ::core::option::Option<super::resources::AssetGroupSignal>,
+    /// The asset group listing group filter referenced in the query.
+    #[prost(message, optional, tag = "182")]
+    pub asset_group_listing_group_filter:
+        ::core::option::Option<super::resources::AssetGroupListingGroupFilter>,
+    /// The asset group top combination view referenced in the query.
+    #[prost(message, optional, tag = "199")]
+    pub asset_group_top_combination_view:
+        ::core::option::Option<super::resources::AssetGroupTopCombinationView>,
+    /// The asset group referenced in the query.
+    #[prost(message, optional, tag = "172")]
+    pub asset_group: ::core::option::Option<super::resources::AssetGroup>,
+    /// The asset set asset referenced in the query.
+    #[prost(message, optional, tag = "180")]
+    pub asset_set_asset: ::core::option::Option<super::resources::AssetSetAsset>,
+    /// The asset set referenced in the query.
+    #[prost(message, optional, tag = "179")]
+    pub asset_set: ::core::option::Option<super::resources::AssetSet>,
     /// The bidding strategy referenced in the query.
     #[prost(message, optional, tag = "18")]
     pub bidding_strategy: ::core::option::Option<super::resources::BiddingStrategy>,
@@ -403,6 +558,12 @@ pub struct SearchAds360Row {
     /// The campaign referenced in the query.
     #[prost(message, optional, tag = "2")]
     pub campaign: ::core::option::Option<super::resources::Campaign>,
+    /// The campaign asset referenced in the query.
+    #[prost(message, optional, tag = "142")]
+    pub campaign_asset: ::core::option::Option<super::resources::CampaignAsset>,
+    /// The campaign asset set referenced in the query.
+    #[prost(message, optional, tag = "181")]
+    pub campaign_asset_set: ::core::option::Option<super::resources::CampaignAssetSet>,
     /// The campaign audience view referenced in the query.
     #[prost(message, optional, tag = "69")]
     pub campaign_audience_view: ::core::option::Option<super::resources::CampaignAudienceView>,
@@ -412,12 +573,32 @@ pub struct SearchAds360Row {
     /// The campaign label referenced in the query.
     #[prost(message, optional, tag = "108")]
     pub campaign_label: ::core::option::Option<super::resources::CampaignLabel>,
+    /// The cart data sales view referenced in the query.
+    #[prost(message, optional, tag = "221")]
+    pub cart_data_sales_view: ::core::option::Option<super::resources::CartDataSalesView>,
+    /// The Audience referenced in the query.
+    #[prost(message, optional, tag = "190")]
+    pub audience: ::core::option::Option<super::resources::Audience>,
     /// The conversion action referenced in the query.
     #[prost(message, optional, tag = "103")]
     pub conversion_action: ::core::option::Option<super::resources::ConversionAction>,
+    /// The conversion custom variable referenced in the query.
+    #[prost(message, optional, tag = "153")]
+    pub conversion_custom_variable:
+        ::core::option::Option<super::resources::ConversionCustomVariable>,
     /// The customer referenced in the query.
     #[prost(message, optional, tag = "1")]
     pub customer: ::core::option::Option<super::resources::Customer>,
+    /// The customer asset referenced in the query.
+    #[prost(message, optional, tag = "155")]
+    pub customer_asset: ::core::option::Option<super::resources::CustomerAsset>,
+    /// The customer asset set referenced in the query.
+    #[prost(message, optional, tag = "195")]
+    pub customer_asset_set: ::core::option::Option<super::resources::CustomerAssetSet>,
+    /// The accessible bidding strategy referenced in the query.
+    #[prost(message, optional, tag = "169")]
+    pub accessible_bidding_strategy:
+        ::core::option::Option<super::resources::AccessibleBiddingStrategy>,
     /// The CustomerManagerLink referenced in the query.
     #[prost(message, optional, tag = "61")]
     pub customer_manager_link: ::core::option::Option<super::resources::CustomerManagerLink>,
@@ -431,24 +612,44 @@ pub struct SearchAds360Row {
     /// The gender view referenced in the query.
     #[prost(message, optional, tag = "40")]
     pub gender_view: ::core::option::Option<super::resources::GenderView>,
+    /// The geo target constant referenced in the query.
+    #[prost(message, optional, tag = "23")]
+    pub geo_target_constant: ::core::option::Option<super::resources::GeoTargetConstant>,
     /// The keyword view referenced in the query.
     #[prost(message, optional, tag = "21")]
     pub keyword_view: ::core::option::Option<super::resources::KeywordView>,
     /// The label referenced in the query.
     #[prost(message, optional, tag = "52")]
     pub label: ::core::option::Option<super::resources::Label>,
+    /// The language constant referenced in the query.
+    #[prost(message, optional, tag = "55")]
+    pub language_constant: ::core::option::Option<super::resources::LanguageConstant>,
     /// The location view referenced in the query.
     #[prost(message, optional, tag = "123")]
     pub location_view: ::core::option::Option<super::resources::LocationView>,
+    /// The Product Bidding Category referenced in the query.
+    #[prost(message, optional, tag = "109")]
+    pub product_bidding_category_constant:
+        ::core::option::Option<super::resources::ProductBiddingCategoryConstant>,
     /// The product group view referenced in the query.
     #[prost(message, optional, tag = "54")]
     pub product_group_view: ::core::option::Option<super::resources::ProductGroupView>,
+    /// The shopping performance view referenced in the query.
+    #[prost(message, optional, tag = "117")]
+    pub shopping_performance_view:
+        ::core::option::Option<super::resources::ShoppingPerformanceView>,
     /// The user list referenced in the query.
     #[prost(message, optional, tag = "38")]
     pub user_list: ::core::option::Option<super::resources::UserList>,
     /// The webpage view referenced in the query.
     #[prost(message, optional, tag = "162")]
     pub webpage_view: ::core::option::Option<super::resources::WebpageView>,
+    /// The event level visit referenced in the query.
+    #[prost(message, optional, tag = "203")]
+    pub visit: ::core::option::Option<super::resources::Visit>,
+    /// The event level conversion referenced in the query.
+    #[prost(message, optional, tag = "206")]
+    pub conversion: ::core::option::Option<super::resources::Conversion>,
     /// The metrics.
     #[prost(message, optional, tag = "4")]
     pub metrics: ::core::option::Option<super::common::Metrics>,
@@ -471,6 +672,46 @@ pub struct CustomColumnHeader {
     /// True when the custom column references metrics.
     #[prost(bool, tag = "3")]
     pub references_metrics: bool,
+}
+/// Message for conversion custom metric header.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConversionCustomMetricHeader {
+    /// The conversion custom metric ID.
+    #[prost(int64, tag = "1")]
+    pub id: i64,
+    /// The user defined name of the conversion custom metric.
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Message for conversion custom dimension header.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConversionCustomDimensionHeader {
+    /// The conversion custom dimension ID.
+    #[prost(int64, tag = "1")]
+    pub id: i64,
+    /// The user defined name of the conversion custom dimension.
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Message for raw event conversion metric header.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RawEventConversionMetricHeader {
+    /// The conversion custom variable ID.
+    #[prost(int64, tag = "1")]
+    pub id: i64,
+    /// The user defined name of the raw event metric.
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Message for raw event conversion dimension header.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RawEventConversionDimensionHeader {
+    /// The conversion custom variable ID.
+    #[prost(int64, tag = "1")]
+    pub id: i64,
+    /// The user defined name of the raw event dimension.
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod search_ads360_service_client {

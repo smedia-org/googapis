@@ -1,5 +1,5 @@
 /// An insight along with the information used to derive the insight. The insight
-/// may have associated recomendations as well.
+/// may have associated recommendations as well.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Insight {
     /// Name of the insight.
@@ -68,6 +68,10 @@ pub mod insight {
         Performance = 3,
         /// This insight is related to manageability.
         Manageability = 4,
+        /// The insight is related to sustainability.
+        Sustainability = 5,
+        /// This insight is related to reliability.
+        Reliability = 6,
     }
     /// Insight severity levels.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -355,6 +359,9 @@ pub struct CostProjection {
     /// Duration for which this cost applies.
     #[prost(message, optional, tag = "2")]
     pub duration: ::core::option::Option<::prost_types::Duration>,
+    /// The approximate cost savings in the billing account's local currency.
+    #[prost(message, optional, tag = "3")]
+    pub cost_in_local_currency: ::core::option::Option<super::super::super::r#type::Money>,
 }
 /// Contains various ways of describing the impact on Security.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -363,6 +370,45 @@ pub struct SecurityProjection {
     #[prost(message, optional, tag = "2")]
     pub details: ::core::option::Option<::prost_types::Struct>,
 }
+/// Contains metadata about how much sustainability a recommendation can save or
+/// incur.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SustainabilityProjection {
+    /// Carbon Footprint generated in kg of CO2 equivalent.
+    /// Chose kg_c_o2e so that the name renders correctly in camelCase (kgCO2e).
+    #[prost(double, tag = "1")]
+    pub kg_c_o2e: f64,
+    /// Duration for which this sustainability applies.
+    #[prost(message, optional, tag = "2")]
+    pub duration: ::core::option::Option<::prost_types::Duration>,
+}
+/// Contains information on the impact of a reliability recommendation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReliabilityProjection {
+    /// Reliability risks mitigated by this recommendation.
+    #[prost(enumeration = "reliability_projection::RiskType", repeated, tag = "1")]
+    pub risks: ::prost::alloc::vec::Vec<i32>,
+    /// Per-recommender projection.
+    #[prost(message, optional, tag = "2")]
+    pub details: ::core::option::Option<::prost_types::Struct>,
+}
+/// Nested message and enum types in `ReliabilityProjection`.
+pub mod reliability_projection {
+    /// The risk associated with the reliability issue.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RiskType {
+        /// Default unspecified risk. Don't use directly.
+        Unspecified = 0,
+        /// Potential service downtime.
+        ServiceDisruption = 1,
+        /// Potential data loss.
+        DataLoss = 2,
+        /// Potential access denial. The service is still up but some or all clients
+        /// can't access it.
+        AccessDeny = 3,
+    }
+}
 /// Contains the impact a recommendation can have for a given category.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Impact {
@@ -370,7 +416,7 @@ pub struct Impact {
     #[prost(enumeration = "impact::Category", tag = "1")]
     pub category: i32,
     /// Contains projections (if any) for this category.
-    #[prost(oneof = "impact::Projection", tags = "100, 101")]
+    #[prost(oneof = "impact::Projection", tags = "100, 101, 102, 103")]
     pub projection: ::core::option::Option<impact::Projection>,
 }
 /// Nested message and enum types in `Impact`.
@@ -389,6 +435,10 @@ pub mod impact {
         Performance = 3,
         /// Indicates a potential increase or decrease in manageability.
         Manageability = 4,
+        /// Indicates a potential increase or decrease in sustainability.
+        Sustainability = 5,
+        /// Indicates a potential increase or decrease in reliability.
+        Reliability = 6,
     }
     /// Contains projections (if any) for this category.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
@@ -399,6 +449,12 @@ pub mod impact {
         /// Use with CategoryType.SECURITY
         #[prost(message, tag = "101")]
         SecurityProjection(super::SecurityProjection),
+        /// Use with CategoryType.SUSTAINABILITY
+        #[prost(message, tag = "102")]
+        SustainabilityProjection(super::SustainabilityProjection),
+        /// Use with CategoryType.RELIABILITY
+        #[prost(message, tag = "103")]
+        ReliabilityProjection(super::ReliabilityProjection),
     }
 }
 /// Information for state. Contains state and metadata.
@@ -589,6 +645,8 @@ pub struct ListInsightsRequest {
     ///
     /// * `severity`
     ///
+    /// * `targetResources`
+    ///
     /// Examples:
     ///
     /// * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED`
@@ -597,7 +655,12 @@ pub struct ListInsightsRequest {
     ///
     /// * `severity = CRITICAL OR severity = HIGH`
     ///
+    /// * `targetResources :
+    /// //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1`
+    ///
     /// * `stateInfo.state = ACTIVE AND (severity = CRITICAL OR severity = HIGH)`
+    ///
+    /// The max allowed filter length is 500 characters.
     ///
     /// (These expressions are based on the filter language described at
     /// <https://google.aip.dev/160>)
@@ -679,6 +742,8 @@ pub struct ListRecommendationsRequest {
     ///
     /// * `priority`
     ///
+    /// * `targetResources`
+    ///
     /// Examples:
     ///
     /// * `stateInfo.state = ACTIVE OR stateInfo.state = DISMISSED`
@@ -687,7 +752,12 @@ pub struct ListRecommendationsRequest {
     ///
     /// * `priority = P1 OR priority = P2`
     ///
+    /// * `targetResources :
+    /// //compute.googleapis.com/projects/1234/zones/us-central1-a/instances/instance-1`
+    ///
     /// * `stateInfo.state = ACTIVE AND (priority = P1 OR priority = P2)`
+    ///
+    /// The max allowed filter length is 500 characters.
     ///
     /// (These expressions are based on the filter language described at
     /// <https://google.aip.dev/160>)
@@ -711,6 +781,16 @@ pub struct GetRecommendationRequest {
     /// Required. Name of the recommendation.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+}
+/// Request for the `MarkRecommendationDismissed` Method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MarkRecommendationDismissedRequest {
+    /// Required. Name of the recommendation.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Fingerprint of the Recommendation. Provides optimistic locking.
+    #[prost(string, tag = "2")]
+    pub etag: ::prost::alloc::string::String,
 }
 /// Request for the `MarkRecommendationClaimed` Method.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -775,6 +855,8 @@ pub struct GetRecommenderConfigRequest {
     /// * `projects/\[PROJECT_ID]/locations/[LOCATION]/recommenders/[RECOMMENDER_ID\]/config`
     ///
     /// * `organizations/\[ORGANIZATION_ID]/locations/[LOCATION]/recommenders/[RECOMMENDER_ID\]/config`
+    ///
+    /// * `billingAccounts/\[BILLING_ACCOUNT_ID]/locations/[LOCATION]/recommenders/[RECOMMENDER_ID\]/config`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -799,11 +881,13 @@ pub struct GetInsightTypeConfigRequest {
     ///
     /// Acceptable formats:
     ///
-    /// * `projects/\[PROJECT_NUMBER]/locations/global/recommenders/[INSIGHT_TYPE_ID\]/config`
+    /// * `projects/\[PROJECT_NUMBER]/locations/[LOCATION]/insightTypes/[INSIGHT_TYPE_ID\]/config`
     ///
-    /// * `projects/\[PROJECT_ID]/locations/global/recommenders/[INSIGHT_TYPE_ID\]/config`
+    /// * `projects/\[PROJECT_ID]/locations/[LOCATION]/insightTypes/[INSIGHT_TYPE_ID\]/config`
     ///
-    /// * `organizations/\[ORGANIZATION_ID]/locations/global/recommenders/[INSIGHT_TYPE_ID\]/config`
+    /// * `organizations/\[ORGANIZATION_ID]/locations/[LOCATION]/insightTypes/[INSIGHT_TYPE_ID\]/config`
+    ///
+    /// * `billingAccounts/\[BILLING_ACCOUNT_ID]/locations/[LOCATION]/insightTypes/[INSIGHT_TYPE_ID\]/config`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -965,6 +1049,31 @@ pub mod recommender_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.recommender.v1.Recommender/GetRecommendation",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Mark the Recommendation State as Dismissed. Users can use this method to"]
+        #[doc = " indicate to the Recommender API that an ACTIVE recommendation has to"]
+        #[doc = " be marked back as DISMISSED."]
+        #[doc = ""]
+        #[doc = " MarkRecommendationDismissed can be applied to recommendations in ACTIVE"]
+        #[doc = " state."]
+        #[doc = ""]
+        #[doc = " Requires the recommender.*.update IAM permission for the specified"]
+        #[doc = " recommender."]
+        pub async fn mark_recommendation_dismissed(
+            &mut self,
+            request: impl tonic::IntoRequest<super::MarkRecommendationDismissedRequest>,
+        ) -> Result<tonic::Response<super::Recommendation>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.recommender.v1.Recommender/MarkRecommendationDismissed",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

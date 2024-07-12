@@ -79,6 +79,460 @@ pub struct SearchAds360ResponsiveSearchAdInfo {
     #[prost(int64, optional, tag = "3")]
     pub ad_tracking_id: ::core::option::Option<i64>,
 }
+// Proto file describing criteria types.
+
+/// A keyword criterion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeywordInfo {
+    /// The text of the keyword (at most 80 characters and 10 words).
+    #[prost(string, optional, tag = "3")]
+    pub text: ::core::option::Option<::prost::alloc::string::String>,
+    /// The match type of the keyword.
+    #[prost(
+        enumeration = "super::enums::keyword_match_type_enum::KeywordMatchType",
+        tag = "2"
+    )]
+    pub match_type: i32,
+}
+/// A location criterion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LocationInfo {
+    /// The geo target constant resource name.
+    #[prost(string, optional, tag = "2")]
+    pub geo_target_constant: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// A device criterion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeviceInfo {
+    /// Type of the device.
+    #[prost(enumeration = "super::enums::device_enum::Device", tag = "1")]
+    pub r#type: i32,
+}
+/// A listing group criterion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListingGroupInfo {
+    /// Type of the listing group.
+    #[prost(
+        enumeration = "super::enums::listing_group_type_enum::ListingGroupType",
+        tag = "1"
+    )]
+    pub r#type: i32,
+}
+/// Represents an AdSchedule criterion.
+///
+/// AdSchedule is specified as the day of the week and a time interval
+/// within which ads will be shown.
+///
+/// No more than six AdSchedules can be added for the same day.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdScheduleInfo {
+    /// Minutes after the start hour at which this schedule starts.
+    ///
+    /// This field is required for CREATE operations and is prohibited on UPDATE
+    /// operations.
+    #[prost(
+        enumeration = "super::enums::minute_of_hour_enum::MinuteOfHour",
+        tag = "1"
+    )]
+    pub start_minute: i32,
+    /// Minutes after the end hour at which this schedule ends. The schedule is
+    /// exclusive of the end minute.
+    ///
+    /// This field is required for CREATE operations and is prohibited on UPDATE
+    /// operations.
+    #[prost(
+        enumeration = "super::enums::minute_of_hour_enum::MinuteOfHour",
+        tag = "2"
+    )]
+    pub end_minute: i32,
+    /// Starting hour in 24 hour time.
+    /// This field must be between 0 and 23, inclusive.
+    ///
+    /// This field is required for CREATE operations and is prohibited on UPDATE
+    /// operations.
+    #[prost(int32, optional, tag = "6")]
+    pub start_hour: ::core::option::Option<i32>,
+    /// Ending hour in 24 hour time; 24 signifies end of the day.
+    /// This field must be between 0 and 24, inclusive.
+    ///
+    /// This field is required for CREATE operations and is prohibited on UPDATE
+    /// operations.
+    #[prost(int32, optional, tag = "7")]
+    pub end_hour: ::core::option::Option<i32>,
+    /// Day of the week the schedule applies to.
+    ///
+    /// This field is required for CREATE operations and is prohibited on UPDATE
+    /// operations.
+    #[prost(enumeration = "super::enums::day_of_week_enum::DayOfWeek", tag = "5")]
+    pub day_of_week: i32,
+}
+/// An age range criterion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AgeRangeInfo {
+    /// Type of the age range.
+    #[prost(
+        enumeration = "super::enums::age_range_type_enum::AgeRangeType",
+        tag = "1"
+    )]
+    pub r#type: i32,
+}
+/// A gender criterion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenderInfo {
+    /// Type of the gender.
+    #[prost(enumeration = "super::enums::gender_type_enum::GenderType", tag = "1")]
+    pub r#type: i32,
+}
+/// A User List criterion. Represents a user list that is defined by the
+/// advertiser to be targeted.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserListInfo {
+    /// The User List resource name.
+    #[prost(string, optional, tag = "2")]
+    pub user_list: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// A language criterion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LanguageInfo {
+    /// The language constant resource name.
+    #[prost(string, optional, tag = "2")]
+    pub language_constant: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// Represents a criterion for targeting webpages of an advertiser's website.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WebpageInfo {
+    /// The name of the criterion that is defined by this parameter. The name value
+    /// will be used for identifying, sorting and filtering criteria with this type
+    /// of parameters.
+    ///
+    /// This field is required for CREATE operations and is prohibited on UPDATE
+    /// operations.
+    #[prost(string, optional, tag = "3")]
+    pub criterion_name: ::core::option::Option<::prost::alloc::string::String>,
+    /// Conditions, or logical expressions, for webpage targeting. The list of
+    /// webpage targeting conditions are and-ed together when evaluated
+    /// for targeting. An empty list of conditions indicates all pages of the
+    /// campaign's website are targeted.
+    ///
+    /// This field is required for CREATE operations and is prohibited on UPDATE
+    /// operations.
+    #[prost(message, repeated, tag = "2")]
+    pub conditions: ::prost::alloc::vec::Vec<WebpageConditionInfo>,
+    /// Website criteria coverage percentage. This is the computed percentage
+    /// of website coverage based on the website target, negative website target
+    /// and negative keywords in the ad group and campaign. For instance, when
+    /// coverage returns as 1, it indicates it has 100% coverage. This field is
+    /// read-only.
+    #[prost(double, tag = "4")]
+    pub coverage_percentage: f64,
+}
+/// Logical expression for targeting webpages of an advertiser's website.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WebpageConditionInfo {
+    /// Operand of webpage targeting condition.
+    #[prost(
+        enumeration = "super::enums::webpage_condition_operand_enum::WebpageConditionOperand",
+        tag = "1"
+    )]
+    pub operand: i32,
+    /// Operator of webpage targeting condition.
+    #[prost(
+        enumeration = "super::enums::webpage_condition_operator_enum::WebpageConditionOperator",
+        tag = "2"
+    )]
+    pub operator: i32,
+    /// Argument of webpage targeting condition.
+    #[prost(string, optional, tag = "4")]
+    pub argument: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// A radius around a list of locations specified through a feed.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LocationGroupInfo {
+    /// Geo target constant(s) restricting the scope of the geographic area within
+    /// the feed. Currently only one geo target constant is allowed.
+    #[prost(string, repeated, tag = "6")]
+    pub geo_target_constants: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Distance in units specifying the radius around targeted locations.
+    /// This is required and must be set in CREATE operations.
+    #[prost(int64, optional, tag = "7")]
+    pub radius: ::core::option::Option<i64>,
+    /// Unit of the radius. Miles and meters are supported for geo target
+    /// constants. Milli miles and meters are supported for feed item sets.
+    /// This is required and must be set in CREATE operations.
+    #[prost(
+        enumeration = "super::enums::location_group_radius_units_enum::LocationGroupRadiusUnits",
+        tag = "4"
+    )]
+    pub radius_units: i32,
+    /// FeedItemSets whose FeedItems are targeted. If multiple IDs are specified,
+    /// then all items that appear in at least one set are targeted. This field
+    /// cannot be used with geo_target_constants. This is optional and can only be
+    /// set in CREATE operations.
+    #[prost(string, repeated, tag = "8")]
+    pub feed_item_sets: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// An audience criterion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AudienceInfo {
+    /// The Audience resource name.
+    #[prost(string, tag = "1")]
+    pub audience: ::prost::alloc::string::String,
+}
+// Proto file containing info messages for specific asset types.
+
+/// A YouTube asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct YoutubeVideoAsset {
+    /// YouTube video id. This is the 11 character string value used in the
+    /// YouTube video URL.
+    #[prost(string, optional, tag = "2")]
+    pub youtube_video_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// YouTube video title.
+    #[prost(string, tag = "3")]
+    pub youtube_video_title: ::prost::alloc::string::String,
+}
+/// An Image asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImageAsset {
+    /// File size of the image asset in bytes.
+    #[prost(int64, optional, tag = "6")]
+    pub file_size: ::core::option::Option<i64>,
+    /// MIME type of the image asset.
+    #[prost(enumeration = "super::enums::mime_type_enum::MimeType", tag = "3")]
+    pub mime_type: i32,
+    /// Metadata for this image at its original size.
+    #[prost(message, optional, tag = "4")]
+    pub full_size: ::core::option::Option<ImageDimension>,
+}
+/// Metadata for an image at a certain size, either original or resized.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImageDimension {
+    /// Height of the image.
+    #[prost(int64, optional, tag = "4")]
+    pub height_pixels: ::core::option::Option<i64>,
+    /// Width of the image.
+    #[prost(int64, optional, tag = "5")]
+    pub width_pixels: ::core::option::Option<i64>,
+    /// A URL that returns the image with this height and width.
+    #[prost(string, optional, tag = "6")]
+    pub url: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// A Text asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TextAsset {
+    /// Text content of the text asset.
+    #[prost(string, optional, tag = "2")]
+    pub text: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// A unified callout asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnifiedCalloutAsset {
+    /// The callout text.
+    /// The length of this string should be between 1 and 25, inclusive.
+    #[prost(string, tag = "1")]
+    pub callout_text: ::prost::alloc::string::String,
+    /// Start date of when this asset is effective and can begin serving, in
+    /// yyyy-MM-dd format.
+    #[prost(string, tag = "2")]
+    pub start_date: ::prost::alloc::string::String,
+    /// Last date of when this asset is effective and still serving, in yyyy-MM-dd
+    /// format.
+    #[prost(string, tag = "3")]
+    pub end_date: ::prost::alloc::string::String,
+    /// List of non-overlapping schedules specifying all time intervals for which
+    /// the asset may serve. There can be a maximum of 6 schedules per day, 42 in
+    /// total.
+    #[prost(message, repeated, tag = "4")]
+    pub ad_schedule_targets: ::prost::alloc::vec::Vec<AdScheduleInfo>,
+    /// Whether to show the asset in search user's time zone. Applies to Microsoft
+    /// Ads.
+    #[prost(bool, tag = "5")]
+    pub use_searcher_time_zone: bool,
+}
+/// A unified sitelink asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnifiedSitelinkAsset {
+    /// URL display text for the sitelink.
+    /// The length of this string should be between 1 and 25, inclusive.
+    #[prost(string, tag = "1")]
+    pub link_text: ::prost::alloc::string::String,
+    /// First line of the description for the sitelink.
+    /// If set, the length should be between 1 and 35, inclusive, and description2
+    /// must also be set.
+    #[prost(string, tag = "2")]
+    pub description1: ::prost::alloc::string::String,
+    /// Second line of the description for the sitelink.
+    /// If set, the length should be between 1 and 35, inclusive, and description1
+    /// must also be set.
+    #[prost(string, tag = "3")]
+    pub description2: ::prost::alloc::string::String,
+    /// Start date of when this asset is effective and can begin serving, in
+    /// yyyy-MM-dd format.
+    #[prost(string, tag = "4")]
+    pub start_date: ::prost::alloc::string::String,
+    /// Last date of when this asset is effective and still serving, in yyyy-MM-dd
+    /// format.
+    #[prost(string, tag = "5")]
+    pub end_date: ::prost::alloc::string::String,
+    /// List of non-overlapping schedules specifying all time intervals for which
+    /// the asset may serve. There can be a maximum of 6 schedules per day, 42 in
+    /// total.
+    #[prost(message, repeated, tag = "6")]
+    pub ad_schedule_targets: ::prost::alloc::vec::Vec<AdScheduleInfo>,
+    /// ID used for tracking clicks for the sitelink asset. This is a Yahoo! Japan
+    /// only field.
+    #[prost(int64, tag = "7")]
+    pub tracking_id: i64,
+    /// Whether to show the sitelink asset in search user's time zone.
+    /// Applies to Microsoft Ads.
+    #[prost(bool, tag = "8")]
+    pub use_searcher_time_zone: bool,
+    /// Whether the preference is for the sitelink asset to be displayed on mobile
+    /// devices. Applies to Microsoft Ads.
+    #[prost(bool, tag = "9")]
+    pub mobile_preferred: bool,
+}
+/// A Unified Page Feed asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnifiedPageFeedAsset {
+    /// The webpage that advertisers want to target.
+    #[prost(string, tag = "1")]
+    pub page_url: ::prost::alloc::string::String,
+    /// Labels used to group the page urls.
+    #[prost(string, repeated, tag = "2")]
+    pub labels: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// An asset representing a mobile app.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MobileAppAsset {
+    /// Required. A string that uniquely identifies a mobile application. It should
+    /// just contain the platform native id, like "com.android.ebay" for Android or
+    /// "12345689" for iOS.
+    #[prost(string, tag = "1")]
+    pub app_id: ::prost::alloc::string::String,
+    /// Required. The application store that distributes this specific app.
+    #[prost(
+        enumeration = "super::enums::mobile_app_vendor_enum::MobileAppVendor",
+        tag = "2"
+    )]
+    pub app_store: i32,
+}
+/// A unified call asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnifiedCallAsset {
+    /// Two-letter country code of the phone number. Examples: 'US', 'us'.
+    #[prost(string, tag = "1")]
+    pub country_code: ::prost::alloc::string::String,
+    /// The advertiser's raw phone number. Examples: '1234567890', '(123)456-7890'
+    #[prost(string, tag = "2")]
+    pub phone_number: ::prost::alloc::string::String,
+    /// Output only. Indicates whether this CallAsset should use its own call
+    /// conversion setting, follow the account level setting, or disable call
+    /// conversion.
+    #[prost(
+        enumeration = "super::enums::call_conversion_reporting_state_enum::CallConversionReportingState",
+        tag = "3"
+    )]
+    pub call_conversion_reporting_state: i32,
+    /// The conversion action to attribute a call conversion to. If not set, the
+    /// default conversion action is used. This field only has effect if
+    /// call_conversion_reporting_state is set to
+    /// USE_RESOURCE_LEVEL_CALL_CONVERSION_ACTION.
+    #[prost(string, tag = "4")]
+    pub call_conversion_action: ::prost::alloc::string::String,
+    /// List of non-overlapping schedules specifying all time intervals for which
+    /// the asset may serve. There can be a maximum of 6 schedules per day, 42 in
+    /// total.
+    #[prost(message, repeated, tag = "5")]
+    pub ad_schedule_targets: ::prost::alloc::vec::Vec<AdScheduleInfo>,
+    /// Whether the call only shows the phone number without a link to the website.
+    /// Applies to Microsoft Ads.
+    #[prost(bool, tag = "7")]
+    pub call_only: bool,
+    /// Whether the call should be enabled on call tracking.
+    /// Applies to Microsoft Ads.
+    #[prost(bool, tag = "8")]
+    pub call_tracking_enabled: bool,
+    /// Whether to show the call extension in search user's time zone.
+    /// Applies to Microsoft Ads.
+    #[prost(bool, tag = "9")]
+    pub use_searcher_time_zone: bool,
+    /// Start date of when this asset is effective and can begin serving, in
+    /// yyyy-MM-dd format.
+    #[prost(string, tag = "10")]
+    pub start_date: ::prost::alloc::string::String,
+    /// Last date of when this asset is effective and still serving, in yyyy-MM-dd
+    /// format.
+    #[prost(string, tag = "11")]
+    pub end_date: ::prost::alloc::string::String,
+}
+/// A call to action asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CallToActionAsset {
+    /// Call to action.
+    #[prost(
+        enumeration = "super::enums::call_to_action_type_enum::CallToActionType",
+        tag = "1"
+    )]
+    pub call_to_action: i32,
+}
+/// A unified location asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnifiedLocationAsset {
+    /// Place IDs uniquely identify a place in the Google Places database and on
+    /// Google Maps.
+    /// This field is unique for a given customer ID and asset type. See
+    /// <https://developers.google.com/places/web-service/place-id> to learn more
+    /// about Place ID.
+    #[prost(string, tag = "1")]
+    pub place_id: ::prost::alloc::string::String,
+    /// The list of business locations for the customer.
+    /// This will only be returned if the Location Asset is syncing from the
+    /// Business Profile account. It is possible to have multiple Business Profile
+    /// listings under the same account that point to the same Place ID.
+    #[prost(message, repeated, tag = "2")]
+    pub business_profile_locations: ::prost::alloc::vec::Vec<BusinessProfileLocation>,
+    /// The type of location ownership.
+    /// If the type is BUSINESS_OWNER, it will be served as a location extension.
+    /// If the type is AFFILIATE, it will be served as an affiliate location.
+    #[prost(
+        enumeration = "super::enums::location_ownership_type_enum::LocationOwnershipType",
+        tag = "3"
+    )]
+    pub location_ownership_type: i32,
+}
+/// Business Profile location data synced from the linked Business Profile
+/// account.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BusinessProfileLocation {
+    /// Advertiser specified label for the location on the Business Profile
+    /// account. This is synced from the Business Profile account.
+    #[prost(string, repeated, tag = "1")]
+    pub labels: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Business Profile store code of this location. This is synced from the
+    /// Business Profile account.
+    #[prost(string, tag = "2")]
+    pub store_code: ::prost::alloc::string::String,
+    /// Listing ID of this Business Profile location. This is synced from the
+    /// linked Business Profile account.
+    #[prost(int64, tag = "3")]
+    pub listing_id: i64,
+}
+// Proto file describing asset usage.
+
+/// Contains the usage information of the asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AssetUsage {
+    /// Resource name of the asset.
+    #[prost(string, tag = "1")]
+    pub asset: ::prost::alloc::string::String,
+    /// The served field type of the asset.
+    #[prost(
+        enumeration = "super::enums::served_asset_field_type_enum::ServedAssetFieldType",
+        tag = "2"
+    )]
+    pub served_asset_field_type: i32,
+}
 // Proto file describing bidding schemes.
 
 /// An automated bidding strategy that raises bids for clicks
@@ -258,150 +712,6 @@ pub struct PercentCpc {
     #[prost(bool, optional, tag = "4")]
     pub enhanced_cpc_enabled: ::core::option::Option<bool>,
 }
-// Proto file describing criteria types.
-
-/// A keyword criterion.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct KeywordInfo {
-    /// The text of the keyword (at most 80 characters and 10 words).
-    #[prost(string, optional, tag = "3")]
-    pub text: ::core::option::Option<::prost::alloc::string::String>,
-    /// The match type of the keyword.
-    #[prost(
-        enumeration = "super::enums::keyword_match_type_enum::KeywordMatchType",
-        tag = "2"
-    )]
-    pub match_type: i32,
-}
-/// A location criterion.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct LocationInfo {
-    /// The geo target constant resource name.
-    #[prost(string, optional, tag = "2")]
-    pub geo_target_constant: ::core::option::Option<::prost::alloc::string::String>,
-}
-/// A device criterion.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DeviceInfo {
-    /// Type of the device.
-    #[prost(enumeration = "super::enums::device_enum::Device", tag = "1")]
-    pub r#type: i32,
-}
-/// A listing group criterion.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListingGroupInfo {
-    /// Type of the listing group.
-    #[prost(
-        enumeration = "super::enums::listing_group_type_enum::ListingGroupType",
-        tag = "1"
-    )]
-    pub r#type: i32,
-}
-/// An age range criterion.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct AgeRangeInfo {
-    /// Type of the age range.
-    #[prost(
-        enumeration = "super::enums::age_range_type_enum::AgeRangeType",
-        tag = "1"
-    )]
-    pub r#type: i32,
-}
-/// A gender criterion.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenderInfo {
-    /// Type of the gender.
-    #[prost(enumeration = "super::enums::gender_type_enum::GenderType", tag = "1")]
-    pub r#type: i32,
-}
-/// A User List criterion. Represents a user list that is defined by the
-/// advertiser to be targeted.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserListInfo {
-    /// The User List resource name.
-    #[prost(string, optional, tag = "2")]
-    pub user_list: ::core::option::Option<::prost::alloc::string::String>,
-}
-/// A language criterion.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct LanguageInfo {
-    /// The language constant resource name.
-    #[prost(string, optional, tag = "2")]
-    pub language_constant: ::core::option::Option<::prost::alloc::string::String>,
-}
-/// Represents a criterion for targeting webpages of an advertiser's website.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct WebpageInfo {
-    /// The name of the criterion that is defined by this parameter. The name value
-    /// will be used for identifying, sorting and filtering criteria with this type
-    /// of parameters.
-    ///
-    /// This field is required for CREATE operations and is prohibited on UPDATE
-    /// operations.
-    #[prost(string, optional, tag = "3")]
-    pub criterion_name: ::core::option::Option<::prost::alloc::string::String>,
-    /// Conditions, or logical expressions, for webpage targeting. The list of
-    /// webpage targeting conditions are and-ed together when evaluated
-    /// for targeting. An empty list of conditions indicates all pages of the
-    /// campaign's website are targeted.
-    ///
-    /// This field is required for CREATE operations and is prohibited on UPDATE
-    /// operations.
-    #[prost(message, repeated, tag = "2")]
-    pub conditions: ::prost::alloc::vec::Vec<WebpageConditionInfo>,
-    /// Website criteria coverage percentage. This is the computed percentage
-    /// of website coverage based on the website target, negative website target
-    /// and negative keywords in the ad group and campaign. For instance, when
-    /// coverage returns as 1, it indicates it has 100% coverage. This field is
-    /// read-only.
-    #[prost(double, tag = "4")]
-    pub coverage_percentage: f64,
-}
-/// Logical expression for targeting webpages of an advertiser's website.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct WebpageConditionInfo {
-    /// Operand of webpage targeting condition.
-    #[prost(
-        enumeration = "super::enums::webpage_condition_operand_enum::WebpageConditionOperand",
-        tag = "1"
-    )]
-    pub operand: i32,
-    /// Operator of webpage targeting condition.
-    #[prost(
-        enumeration = "super::enums::webpage_condition_operator_enum::WebpageConditionOperator",
-        tag = "2"
-    )]
-    pub operator: i32,
-    /// Argument of webpage targeting condition.
-    #[prost(string, optional, tag = "4")]
-    pub argument: ::core::option::Option<::prost::alloc::string::String>,
-}
-/// A radius around a list of locations specified through a feed.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct LocationGroupInfo {
-    /// Geo target constant(s) restricting the scope of the geographic area within
-    /// the feed. Currently only one geo target constant is allowed.
-    #[prost(string, repeated, tag = "6")]
-    pub geo_target_constants: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Distance in units specifying the radius around targeted locations.
-    /// This is required and must be set in CREATE operations.
-    #[prost(int64, optional, tag = "7")]
-    pub radius: ::core::option::Option<i64>,
-    /// Unit of the radius. Miles and meters are supported for geo target
-    /// constants. Milli miles and meters are supported for feed item sets.
-    /// This is required and must be set in CREATE operations.
-    #[prost(
-        enumeration = "super::enums::location_group_radius_units_enum::LocationGroupRadiusUnits",
-        tag = "4"
-    )]
-    pub radius_units: i32,
-    /// FeedItemSets whose FeedItems are targeted. If multiple IDs are specified,
-    /// then all items that appear in at least one set are targeted. This field
-    /// cannot be used with geo_target_constants. This is optional and can only be
-    /// set in CREATE operations.
-    #[prost(string, repeated, tag = "8")]
-    pub feed_item_sets: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
 // Proto file describing CustomParameter and operation
 
 /// A mapping that can be used by custom parameter tags in a
@@ -421,13 +731,44 @@ pub struct CustomParameter {
 /// be shown to a user over a particular time period.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FrequencyCapEntry {}
+// Proto file describing value types.
+
+/// A generic data container.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Value {
+    /// A value.
+    #[prost(oneof = "value::Value", tags = "1, 2, 3, 4, 5")]
+    pub value: ::core::option::Option<value::Value>,
+}
+/// Nested message and enum types in `Value`.
+pub mod value {
+    /// A value.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Value {
+        /// A boolean.
+        #[prost(bool, tag = "1")]
+        BooleanValue(bool),
+        /// An int64.
+        #[prost(int64, tag = "2")]
+        Int64Value(i64),
+        /// A float.
+        #[prost(float, tag = "3")]
+        FloatValue(f32),
+        /// A double.
+        #[prost(double, tag = "4")]
+        DoubleValue(f64),
+        /// A string.
+        #[prost(string, tag = "5")]
+        StringValue(::prost::alloc::string::String),
+    }
+}
 // Proto file describing metrics.
 
 /// Metrics data.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Metrics {
-    /// The percent of your ad impressions that are shown as the very first ad
-    /// above the organic search results.
+    /// Search absolute top impression share is the percentage of your Search ad
+    /// impressions that are shown in the most prominent Search position.
     #[prost(double, optional, tag = "183")]
     pub absolute_top_impression_percentage: ::core::option::Option<f64>,
     /// All conversions from interactions (as oppose to view through conversions)
@@ -513,10 +854,16 @@ pub struct Metrics {
     pub average_cost: ::core::option::Option<f64>,
     /// The total cost of all clicks divided by the total number of clicks
     /// received.
-    #[prost(double, optional, tag = "204")]
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(double, optional, tag = "317")]
     pub average_cpc: ::core::option::Option<f64>,
     /// Average cost-per-thousand impressions (CPM).
-    #[prost(double, optional, tag = "206")]
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(double, optional, tag = "318")]
     pub average_cpm: ::core::option::Option<f64>,
     /// The number of clicks.
     #[prost(int64, optional, tag = "131")]
@@ -533,6 +880,9 @@ pub struct Metrics {
     /// value below 0.1 is reported as 0.0999.
     #[prost(double, optional, tag = "160")]
     pub content_impression_share: ::core::option::Option<f64>,
+    /// The conversion custom metrics.
+    #[prost(message, repeated, tag = "336")]
+    pub conversion_custom_metrics: ::prost::alloc::vec::Vec<Value>,
     /// The estimated percentage of impressions on the Display Network
     /// that your ads didn't receive due to poor Ad Rank.
     /// Note: Content rank lost impression share is reported in the range of 0
@@ -581,7 +931,10 @@ pub struct Metrics {
     pub conversions_by_conversion_date: f64,
     /// The sum of your cost-per-click (CPC) and cost-per-thousand impressions
     /// (CPM) costs during this period.
-    #[prost(int64, optional, tag = "169")]
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "316")]
     pub cost_micros: ::core::option::Option<i64>,
     /// The cost of ad interactions divided by all conversions.
     #[prost(double, optional, tag = "170")]
@@ -671,14 +1024,17 @@ pub struct Metrics {
     /// The percentage of mobile clicks that go to a mobile-friendly page.
     #[prost(double, optional, tag = "229")]
     pub mobile_friendly_clicks_percentage: ::core::option::Option<f64>,
+    /// The raw event conversion metrics.
+    #[prost(message, repeated, tag = "337")]
+    pub raw_event_conversion_metrics: ::prost::alloc::vec::Vec<Value>,
     /// The percentage of the customer's Shopping or Search ad impressions that are
     /// shown in the most prominent Shopping position. See
     /// <https://support.google.com/sa360/answer/9566729>
     /// for details. Any value below 0.1 is reported as 0.0999.
     #[prost(double, optional, tag = "136")]
     pub search_absolute_top_impression_share: ::core::option::Option<f64>,
-    /// The number estimating how often your ad wasn't the very first ad above the
-    /// organic search results due to a low budget. Note: Search
+    /// The number estimating how often your ad wasn't the very first ad among the
+    /// top ads in the search results due to a low budget. Note: Search
     /// budget lost absolute top impression share is reported in the range of 0 to
     /// 0.9. Any value above 0.9 is reported as 0.9001.
     #[prost(double, optional, tag = "137")]
@@ -689,7 +1045,7 @@ pub struct Metrics {
     /// value above 0.9 is reported as 0.9001.
     #[prost(double, optional, tag = "138")]
     pub search_budget_lost_impression_share: ::core::option::Option<f64>,
-    /// The number estimating how often your ad didn't show anywhere above the
+    /// The number estimating how often your ad didn't show adjacent to the top
     /// organic search results due to a low budget. Note: Search
     /// budget lost top impression share is reported in the range of 0 to 0.9. Any
     /// value above 0.9 is reported as 0.9001.
@@ -715,8 +1071,8 @@ pub struct Metrics {
     /// value below 0.1 is reported as 0.0999.
     #[prost(double, optional, tag = "142")]
     pub search_impression_share: ::core::option::Option<f64>,
-    /// The number estimating how often your ad wasn't the very first ad above the
-    /// organic search results due to poor Ad Rank.
+    /// The number estimating how often your ad wasn't the very first ad among the
+    /// top ads in the search results due to poor Ad Rank.
     /// Note: Search rank lost absolute top impression share is reported in the
     /// range of 0 to 0.9. Any value above 0.9 is reported as 0.9001.
     #[prost(double, optional, tag = "143")]
@@ -727,20 +1083,22 @@ pub struct Metrics {
     /// 0.9. Any value above 0.9 is reported as 0.9001.
     #[prost(double, optional, tag = "144")]
     pub search_rank_lost_impression_share: ::core::option::Option<f64>,
-    /// The number estimating how often your ad didn't show anywhere above the
+    /// The number estimating how often your ad didn't show adjacent to the top
     /// organic search results due to poor Ad Rank.
     /// Note: Search rank lost top impression share is reported in the range of 0
     /// to 0.9. Any value above 0.9 is reported as 0.9001.
     #[prost(double, optional, tag = "145")]
     pub search_rank_lost_top_impression_share: ::core::option::Option<f64>,
-    /// The impressions you've received in the top location (anywhere above the
-    /// organic search results) compared to the estimated number of impressions you
-    /// were eligible to receive in the top location.
+    /// The impressions you've received among the top ads compared to the estimated
+    /// number of impressions you were eligible to receive among the top ads.
     /// Note: Search top impression share is reported in the range of 0.1 to 1. Any
     /// value below 0.1 is reported as 0.0999.
+    ///
+    /// Top ads are generally above the top organic results, although they may show
+    /// below the top organic results on certain queries.
     #[prost(double, optional, tag = "146")]
     pub search_top_impression_share: ::core::option::Option<f64>,
-    /// The percent of your ad impressions that are shown anywhere above the
+    /// The percent of your ad impressions that are shown adjacent to the top
     /// organic search results.
     #[prost(double, optional, tag = "148")]
     pub top_impression_percentage: ::core::option::Option<f64>,
@@ -770,6 +1128,272 @@ pub struct Metrics {
     /// clicking on) another ad.
     #[prost(int64, optional, tag = "155")]
     pub client_account_view_through_conversions: ::core::option::Option<i64>,
+    /// Client account cross-sell cost of goods sold (COGS) is the total cost
+    /// of products sold as a result of advertising a different product.
+    /// How it works: You report conversions with cart data for
+    /// completed purchases on your website. If the ad that was interacted with
+    /// before the purchase has an associated product (see Shopping Ads) then this
+    /// product is considered the advertised product. Any product included in the
+    /// order the customer places is a sold product. If these products don't match
+    /// then this is considered cross-sell. Cross-sell cost of goods sold is the
+    /// total cost of the products sold that weren't advertised. Example: Someone
+    /// clicked on a Shopping ad for a hat then bought the same hat and a shirt.
+    /// The hat has a cost of goods sold value of $3, the shirt has a cost of goods
+    /// sold value of $5. The cross-sell cost of goods sold for this order is $5.
+    /// This metric is only available if you report conversions with cart data.
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "321")]
+    pub client_account_cross_sell_cost_of_goods_sold_micros: ::core::option::Option<i64>,
+    /// Cross-sell cost of goods sold (COGS) is the total cost of products sold as
+    /// a result of advertising a different product.
+    /// How it works: You report conversions with cart data for
+    /// completed purchases on your website. If the ad that was interacted with
+    /// before the purchase has an associated product (see Shopping Ads) then this
+    /// product is considered the advertised product. Any product included in the
+    /// order the customer places is a sold product. If these products don't match
+    /// then this is considered cross-sell. Cross-sell cost of goods sold is the
+    /// total cost of the products sold that weren't advertised. Example: Someone
+    /// clicked on a Shopping ad for a hat then bought the same hat and a shirt.
+    /// The hat has a cost of goods sold value of $3, the shirt has a cost of goods
+    /// sold value of $5. The cross-sell cost of goods sold for this order is $5.
+    /// This metric is only available if you report conversions with cart data.
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "327")]
+    pub cross_sell_cost_of_goods_sold_micros: ::core::option::Option<i64>,
+    /// Client account cross-sell gross profit is the profit you made from
+    /// products sold as a result of advertising a different product, minus cost of
+    /// goods sold (COGS).
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the purchase is a sold
+    /// product. If these products don't match then this is considered cross-sell.
+    /// Cross-sell gross profit is the revenue you made from cross-sell attributed
+    /// to your ads minus the cost of the goods sold. Example: Someone clicked on a
+    /// Shopping ad for a hat then bought the same hat and a shirt. The shirt is
+    /// priced $20 and has a cost of goods sold value of $5. The cross-sell gross
+    /// profit of this order is $15 = $20 - $5. This metric is only available if
+    /// you report conversions with cart data. This metric is a monetary value and
+    /// returned in the customer's currency by default. See the metrics_currency
+    /// parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "322")]
+    pub client_account_cross_sell_gross_profit_micros: ::core::option::Option<i64>,
+    /// Cross-sell gross profit is the profit you made from products sold as a
+    /// result of advertising a different product, minus cost of goods sold (COGS).
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the purchase is a sold
+    /// product. If these products don't match then this is considered cross-sell.
+    /// Cross-sell gross profit is the revenue you made from cross-sell attributed
+    /// to your ads minus the cost of the goods sold.
+    /// Example: Someone clicked on a Shopping ad for a hat then bought the same
+    /// hat and a shirt. The shirt is priced $20 and has a cost of goods sold value
+    /// of $5. The cross-sell gross profit of this order is $15 = $20 - $5.
+    /// This metric is only available if you report conversions with cart data.
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "328")]
+    pub cross_sell_gross_profit_micros: ::core::option::Option<i64>,
+    /// Client account cross-sell revenue is the total amount you made from
+    /// products sold as a result of advertising a different product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If these products don't match then this is
+    /// considered cross-sell. Cross-sell revenue is the total value you made from
+    /// cross-sell attributed to your ads. Example: Someone clicked on a Shopping
+    /// ad for a hat then bought the same hat and a shirt. The hat is priced $10
+    /// and the shirt is priced $20. The cross-sell revenue of this order is $20.
+    /// This metric is only available if you report conversions with cart data.
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "323")]
+    pub client_account_cross_sell_revenue_micros: ::core::option::Option<i64>,
+    /// Cross-sell revenue is the total amount you made from products sold as a
+    /// result of advertising a different product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If these products don't match then this is
+    /// considered cross-sell. Cross-sell revenue is the total value you made from
+    /// cross-sell attributed to your ads. Example: Someone clicked on a Shopping
+    /// ad for a hat then bought the same hat and a shirt. The hat is priced $10
+    /// and the shirt is priced $20. The cross-sell revenue of this order is $20.
+    /// This metric is only available if you report conversions with cart data.
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "329")]
+    pub cross_sell_revenue_micros: ::core::option::Option<i64>,
+    /// Client account cross-sell units sold is
+    /// the total number of products sold as a result of advertising a different
+    /// product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If these products don't match then this is
+    /// considered cross-sell. Cross-sell units sold is the total number of
+    /// cross-sold products from all orders attributed to your ads.
+    /// Example: Someone clicked on a Shopping ad for a hat then bought the same
+    /// hat, a shirt and a jacket. The cross-sell units sold in this order is 2.
+    /// This metric is only available if you report conversions with cart data.
+    #[prost(double, optional, tag = "307")]
+    pub client_account_cross_sell_units_sold: ::core::option::Option<f64>,
+    /// Cross-sell units sold is the total number of products sold as a result of
+    /// advertising a different product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If these products don't match then this is
+    /// considered cross-sell. Cross-sell units sold is the total number of
+    /// cross-sold products from all orders attributed to your ads.
+    /// Example: Someone clicked on a Shopping ad for a hat then bought the same
+    /// hat, a shirt and a jacket. The cross-sell units sold in this order is 2.
+    /// This metric is only available if you report conversions with cart data.
+    #[prost(double, optional, tag = "330")]
+    pub cross_sell_units_sold: ::core::option::Option<f64>,
+    /// Client account lead cost of goods sold (COGS) is the total cost of
+    /// products sold as a result of advertising the same product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with has an associated
+    /// product (see Shopping Ads) then this product is considered the advertised
+    /// product. Any product included in the order the customer places is a sold
+    /// product. If the advertised and sold products match, then the cost of these
+    /// goods is counted under lead cost of goods sold. Example: Someone clicked on
+    /// a Shopping ad for a hat then bought the same hat and a shirt. The hat has a
+    /// cost of goods sold value of $3, the shirt has a cost of goods sold value of
+    /// $5. The lead cost of goods sold for this order is $3. This metric is only
+    /// available if you report conversions with cart data. This metric is a
+    /// monetary value and returned in the customer's currency by default. See the
+    /// metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "324")]
+    pub client_account_lead_cost_of_goods_sold_micros: ::core::option::Option<i64>,
+    /// Lead cost of goods sold (COGS) is the total cost of products sold as a
+    /// result of advertising the same product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with has an associated
+    /// product (see Shopping Ads) then this product is considered the advertised
+    /// product. Any product included in the order the customer places is a sold
+    /// product. If the advertised and sold products match, then the cost of these
+    /// goods is counted under lead cost of goods sold. Example: Someone clicked on
+    /// a Shopping ad for a hat then bought the same hat and a shirt. The hat has a
+    /// cost of goods sold value of $3, the shirt has a cost of goods sold value of
+    /// $5. The lead cost of goods sold for this order is $3. This metric is only
+    /// available if you report conversions with cart data. This metric is a
+    /// monetary value and returned in the customer's currency by default. See the
+    /// metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "332")]
+    pub lead_cost_of_goods_sold_micros: ::core::option::Option<i64>,
+    /// Client account lead gross profit is the profit you made from products
+    /// sold as a result of advertising the same product, minus cost of goods sold
+    /// (COGS).
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If the advertised and sold products match, then
+    /// the revenue you made from these sales minus the cost of goods sold is your
+    /// lead gross profit. Example: Someone clicked on a Shopping ad for a hat then
+    /// bought the same hat and a shirt. The hat is priced $10 and has a cost of
+    /// goods sold value of $3. The lead gross profit of this order is $7 = $10 -
+    /// $3. This metric is only available if you report conversions with cart data.
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "325")]
+    pub client_account_lead_gross_profit_micros: ::core::option::Option<i64>,
+    /// Lead gross profit is the profit you made from products sold as a result of
+    /// advertising the same product, minus cost of goods sold (COGS).
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If the advertised and sold products match, then
+    /// the revenue you made from these sales minus the cost of goods sold is your
+    /// lead gross profit. Example: Someone clicked on a Shopping ad for a hat then
+    /// bought the same hat and a shirt. The hat is priced $10 and has a cost of
+    /// goods sold value of $3. The lead gross profit of this order is $7 = $10 -
+    /// $3. This metric is only available if you report conversions with cart data.
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "333")]
+    pub lead_gross_profit_micros: ::core::option::Option<i64>,
+    /// Client account lead revenue is the total amount you made from
+    /// products sold as a result of advertising the same product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If the advertised and sold products match, then
+    /// the total value you made from the sales of these products is shown under
+    /// lead revenue. Example: Someone clicked on a Shopping ad for a hat then
+    /// bought the same hat and a shirt. The hat is priced $10 and the shirt is
+    /// priced $20. The lead revenue of this order is $10. This metric is only
+    /// available if you report conversions with cart data. This metric is a
+    /// monetary value and returned in the customer's currency by default. See the
+    /// metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "326")]
+    pub client_account_lead_revenue_micros: ::core::option::Option<i64>,
+    /// Lead revenue is the total amount you made from products sold as a result of
+    /// advertising the same product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If the advertised and sold products match, then
+    /// the total value you made from the sales of these products is shown under
+    /// lead revenue.
+    /// Example: Someone clicked on a Shopping ad for a hat then bought the same
+    /// hat and a shirt. The hat is priced $10 and the shirt is priced $20. The
+    /// lead revenue of this order is $10.
+    /// This metric is only available if you report conversions with cart data.
+    /// This metric is a monetary value and returned in the customer's currency by
+    /// default. See the metrics_currency parameter at
+    /// <https://developers.google.com/search-ads/reporting/query/query-structure#parameters_clause>
+    #[prost(int64, optional, tag = "334")]
+    pub lead_revenue_micros: ::core::option::Option<i64>,
+    /// Client account lead units sold is the total number of
+    /// products sold as a result of advertising the same product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If the advertised and sold products match, then
+    /// the total number of these products sold is shown under lead units sold.
+    /// Example: Someone clicked on a Shopping ad for a hat then bought the same
+    /// hat, a shirt and a jacket. The lead units sold in this order is 1.
+    /// This metric is only available if you report conversions with cart data.
+    #[prost(double, optional, tag = "311")]
+    pub client_account_lead_units_sold: ::core::option::Option<f64>,
+    /// Lead units sold is the total number of products sold as a result of
+    /// advertising the same product.
+    /// How it works: You report conversions with cart data for completed purchases
+    /// on your website. If the ad that was interacted with before the purchase has
+    /// an associated product (see Shopping Ads) then this product is considered
+    /// the advertised product. Any product included in the order the customer
+    /// places is a sold product. If the advertised and sold products match, then
+    /// the total number of these products sold is shown under lead units sold.
+    /// Example: Someone clicked on a Shopping ad for a hat then bought the same
+    /// hat, a shirt and a jacket. The lead units sold in this order is 1.
+    /// This metric is only available if you report conversions with cart data.
+    #[prost(double, optional, tag = "335")]
+    pub lead_units_sold: ::core::option::Option<f64>,
 }
 // Proto file describing RealTimeBiddingSetting
 
@@ -786,6 +1410,12 @@ pub struct RealTimeBiddingSetting {
 /// Segment only fields.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Segments {
+    /// Ad network type.
+    #[prost(
+        enumeration = "super::enums::ad_network_type_enum::AdNetworkType",
+        tag = "3"
+    )]
+    pub ad_network_type: i32,
     /// Resource name of the conversion action.
     #[prost(string, optional, tag = "146")]
     pub conversion_action: ::core::option::Option<::prost::alloc::string::String>,
@@ -798,6 +1428,9 @@ pub struct Segments {
     /// Conversion action name.
     #[prost(string, optional, tag = "114")]
     pub conversion_action_name: ::core::option::Option<::prost::alloc::string::String>,
+    /// The conversion custom dimensions.
+    #[prost(message, repeated, tag = "188")]
+    pub conversion_custom_dimensions: ::prost::alloc::vec::Vec<Value>,
     /// Date to which metrics apply.
     /// yyyy-MM-dd format, for example, 2018-04-17.
     #[prost(string, optional, tag = "79")]
@@ -815,11 +1448,161 @@ pub struct Segments {
     /// yyyy-MM-dd.
     #[prost(string, optional, tag = "90")]
     pub month: ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 1) of the product.
+    #[prost(string, optional, tag = "92")]
+    pub product_bidding_category_level1: ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 2) of the product.
+    #[prost(string, optional, tag = "93")]
+    pub product_bidding_category_level2: ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 3) of the product.
+    #[prost(string, optional, tag = "94")]
+    pub product_bidding_category_level3: ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 4) of the product.
+    #[prost(string, optional, tag = "95")]
+    pub product_bidding_category_level4: ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 5) of the product.
+    #[prost(string, optional, tag = "96")]
+    pub product_bidding_category_level5: ::core::option::Option<::prost::alloc::string::String>,
+    /// Brand of the product.
+    #[prost(string, optional, tag = "97")]
+    pub product_brand: ::core::option::Option<::prost::alloc::string::String>,
+    /// Channel of the product.
+    #[prost(
+        enumeration = "super::enums::product_channel_enum::ProductChannel",
+        tag = "30"
+    )]
+    pub product_channel: i32,
+    /// Channel exclusivity of the product.
+    #[prost(
+        enumeration = "super::enums::product_channel_exclusivity_enum::ProductChannelExclusivity",
+        tag = "31"
+    )]
+    pub product_channel_exclusivity: i32,
+    /// Condition of the product.
+    #[prost(
+        enumeration = "super::enums::product_condition_enum::ProductCondition",
+        tag = "32"
+    )]
+    pub product_condition: i32,
+    /// Resource name of the geo target constant for the country of sale of the
+    /// product.
+    #[prost(string, optional, tag = "98")]
+    pub product_country: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 0 of the product.
+    #[prost(string, optional, tag = "99")]
+    pub product_custom_attribute0: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 1 of the product.
+    #[prost(string, optional, tag = "100")]
+    pub product_custom_attribute1: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 2 of the product.
+    #[prost(string, optional, tag = "101")]
+    pub product_custom_attribute2: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 3 of the product.
+    #[prost(string, optional, tag = "102")]
+    pub product_custom_attribute3: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 4 of the product.
+    #[prost(string, optional, tag = "103")]
+    pub product_custom_attribute4: ::core::option::Option<::prost::alloc::string::String>,
+    /// Item ID of the product.
+    #[prost(string, optional, tag = "104")]
+    pub product_item_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// Resource name of the language constant for the language of the product.
+    #[prost(string, optional, tag = "105")]
+    pub product_language: ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 1) of the product sold.
+    #[prost(string, optional, tag = "166")]
+    pub product_sold_bidding_category_level1:
+        ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 2) of the product sold.
+    #[prost(string, optional, tag = "167")]
+    pub product_sold_bidding_category_level2:
+        ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 3) of the product sold.
+    #[prost(string, optional, tag = "168")]
+    pub product_sold_bidding_category_level3:
+        ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 4) of the product sold.
+    #[prost(string, optional, tag = "169")]
+    pub product_sold_bidding_category_level4:
+        ::core::option::Option<::prost::alloc::string::String>,
+    /// Bidding category (level 5) of the product sold.
+    #[prost(string, optional, tag = "170")]
+    pub product_sold_bidding_category_level5:
+        ::core::option::Option<::prost::alloc::string::String>,
+    /// Brand of the product sold.
+    #[prost(string, optional, tag = "171")]
+    pub product_sold_brand: ::core::option::Option<::prost::alloc::string::String>,
+    /// Condition of the product sold.
+    #[prost(
+        enumeration = "super::enums::product_condition_enum::ProductCondition",
+        tag = "172"
+    )]
+    pub product_sold_condition: i32,
+    /// Custom attribute 0 of the product sold.
+    #[prost(string, optional, tag = "173")]
+    pub product_sold_custom_attribute0: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 1 of the product sold.
+    #[prost(string, optional, tag = "174")]
+    pub product_sold_custom_attribute1: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 2 of the product sold.
+    #[prost(string, optional, tag = "175")]
+    pub product_sold_custom_attribute2: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 3 of the product sold.
+    #[prost(string, optional, tag = "176")]
+    pub product_sold_custom_attribute3: ::core::option::Option<::prost::alloc::string::String>,
+    /// Custom attribute 4 of the product sold.
+    #[prost(string, optional, tag = "177")]
+    pub product_sold_custom_attribute4: ::core::option::Option<::prost::alloc::string::String>,
+    /// Item ID of the product sold.
+    #[prost(string, optional, tag = "178")]
+    pub product_sold_item_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// Title of the product sold.
+    #[prost(string, optional, tag = "179")]
+    pub product_sold_title: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 1) of the product sold.
+    #[prost(string, optional, tag = "180")]
+    pub product_sold_type_l1: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 2) of the product sold.
+    #[prost(string, optional, tag = "181")]
+    pub product_sold_type_l2: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 3) of the product sold.
+    #[prost(string, optional, tag = "182")]
+    pub product_sold_type_l3: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 4) of the product sold.
+    #[prost(string, optional, tag = "183")]
+    pub product_sold_type_l4: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 5) of the product sold.
+    #[prost(string, optional, tag = "184")]
+    pub product_sold_type_l5: ::core::option::Option<::prost::alloc::string::String>,
+    /// Store ID of the product.
+    #[prost(string, optional, tag = "106")]
+    pub product_store_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// Title of the product.
+    #[prost(string, optional, tag = "107")]
+    pub product_title: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 1) of the product.
+    #[prost(string, optional, tag = "108")]
+    pub product_type_l1: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 2) of the product.
+    #[prost(string, optional, tag = "109")]
+    pub product_type_l2: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 3) of the product.
+    #[prost(string, optional, tag = "110")]
+    pub product_type_l3: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 4) of the product.
+    #[prost(string, optional, tag = "111")]
+    pub product_type_l4: ::core::option::Option<::prost::alloc::string::String>,
+    /// Type (level 5) of the product.
+    #[prost(string, optional, tag = "112")]
+    pub product_type_l5: ::core::option::Option<::prost::alloc::string::String>,
     /// Quarter as represented by the date of the first day of a quarter.
     /// Uses the calendar year for quarters, for example, the second quarter of
     /// 2018 starts on 2018-04-01. Formatted as yyyy-MM-dd.
     #[prost(string, optional, tag = "128")]
     pub quarter: ::core::option::Option<::prost::alloc::string::String>,
+    /// The raw event conversion dimensions.
+    #[prost(message, repeated, tag = "189")]
+    pub raw_event_conversion_dimensions: ::prost::alloc::vec::Vec<Value>,
     /// Week as defined as Monday through Sunday, and represented by the date of
     /// Monday. Formatted as yyyy-MM-dd.
     #[prost(string, optional, tag = "130")]
@@ -827,6 +1610,18 @@ pub struct Segments {
     /// Year, formatted as yyyy.
     #[prost(int32, optional, tag = "131")]
     pub year: ::core::option::Option<i32>,
+    /// Only used with CustomerAsset, CampaignAsset and AdGroupAsset metrics.
+    /// Indicates whether the interaction metrics occurred on the asset itself
+    /// or a different asset or ad unit.
+    /// Interactions (for example, clicks) are counted across all the parts of the
+    /// served ad (for example, Ad itself and other components like Sitelinks) when
+    /// they are served together. When interaction_on_this_asset is true, it means
+    /// the interactions are on this specific asset and when
+    /// interaction_on_this_asset is false, it means the interactions is not on
+    /// this specific asset but on other parts of the served ad this asset is
+    /// served with.
+    #[prost(message, optional, tag = "139")]
+    pub asset_interaction_target: ::core::option::Option<AssetInteractionTarget>,
 }
 /// A Keyword criterion segment.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -837,6 +1632,18 @@ pub struct Keyword {
     /// Keyword info.
     #[prost(message, optional, tag = "2")]
     pub info: ::core::option::Option<KeywordInfo>,
+}
+/// An AssetInteractionTarget segment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AssetInteractionTarget {
+    /// The asset resource name.
+    #[prost(string, tag = "1")]
+    pub asset: ::prost::alloc::string::String,
+    /// Only used with CustomerAsset, CampaignAsset and AdGroupAsset metrics.
+    /// Indicates whether the interaction metrics occurred on the asset itself or a
+    /// different asset or ad unit.
+    #[prost(bool, tag = "2")]
+    pub interaction_on_this_asset: bool,
 }
 // Proto file describing TargetingSetting
 
@@ -881,35 +1688,4 @@ pub struct TextLabel {
     /// characters.
     #[prost(string, optional, tag = "4")]
     pub description: ::core::option::Option<::prost::alloc::string::String>,
-}
-// Proto file describing value types.
-
-/// A generic data container.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Value {
-    /// A value.
-    #[prost(oneof = "value::Value", tags = "1, 2, 3, 4, 5")]
-    pub value: ::core::option::Option<value::Value>,
-}
-/// Nested message and enum types in `Value`.
-pub mod value {
-    /// A value.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Value {
-        /// A boolean.
-        #[prost(bool, tag = "1")]
-        BooleanValue(bool),
-        /// An int64.
-        #[prost(int64, tag = "2")]
-        Int64Value(i64),
-        /// A float.
-        #[prost(float, tag = "3")]
-        FloatValue(f32),
-        /// A double.
-        #[prost(double, tag = "4")]
-        DoubleValue(f64),
-        /// A string.
-        #[prost(string, tag = "5")]
-        StringValue(::prost::alloc::string::String),
-    }
 }

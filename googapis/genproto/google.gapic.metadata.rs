@@ -1,5 +1,5 @@
-/// Metadata about a GAPIC library for a specific combination of API, version, and
-/// computer language.
+/// Metadata about a GAPIC library for a specific combination of API, version,
+/// and computer language.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GapicMetadata {
     /// Schema version of this proto. Current value: 1.0
@@ -56,7 +56,7 @@ pub mod gapic_metadata {
         /// than one library_client method for each RPC. RPCs with no
         /// library_client methods need not be included.
         ///
-        /// The key name is the name of the RPC as defined and formated in
+        /// The key name is the name of the RPC as defined and formatted in
         /// the proto file.
         #[prost(map = "string, message", tag = "2")]
         pub rpcs: ::std::collections::HashMap<::prost::alloc::string::String, MethodList>,

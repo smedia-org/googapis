@@ -87,6 +87,18 @@ pub struct Geolocation {
     #[prost(string, tag = "1")]
     pub region_code: ::prost::alloc::string::String,
 }
+/// Represents an application associated with a finding.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Application {
+    /// The base URI that identifies the network location of the application in
+    /// which the vulnerability was detected. For example, `<http://example.com`.>
+    #[prost(string, tag = "1")]
+    pub base_uri: ::prost::alloc::string::String,
+    /// The full URI with payload that can be used to reproduce the
+    /// vulnerability. For example, `<http://example.com?p=aMmYgI6H`.>
+    #[prost(string, tag = "2")]
+    pub full_uri: ::prost::alloc::string::String,
+}
 /// Message that contains the resource name and display name of a folder
 /// resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -238,6 +250,226 @@ pub mod asset {
         pub policy_blob: ::prost::alloc::string::String,
     }
 }
+/// An attack exposure contains the results of an attack path simulation run.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttackExposure {
+    /// A number between 0 (inclusive) and infinity that represents how important
+    /// this finding is to remediate. The higher the score, the more important it
+    /// is to remediate.
+    #[prost(double, tag = "1")]
+    pub score: f64,
+    /// The most recent time the attack exposure was updated on this finding.
+    #[prost(message, optional, tag = "2")]
+    pub latest_calculation_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The resource name of the attack path simulation result that contains the
+    /// details regarding this attack exposure score.
+    /// Example: `organizations/123/simulations/456/attackExposureResults/789`
+    #[prost(string, tag = "3")]
+    pub attack_exposure_result: ::prost::alloc::string::String,
+    /// What state this AttackExposure is in. This captures whether or not an
+    /// attack exposure has been calculated or not.
+    #[prost(enumeration = "attack_exposure::State", tag = "4")]
+    pub state: i32,
+    /// The number of high value resources that are exposed as a result of this
+    /// finding.
+    #[prost(int32, tag = "5")]
+    pub exposed_high_value_resources_count: i32,
+    /// The number of medium value resources that are exposed as a result of this
+    /// finding.
+    #[prost(int32, tag = "6")]
+    pub exposed_medium_value_resources_count: i32,
+    /// The number of high value resources that are exposed as a result of this
+    /// finding.
+    #[prost(int32, tag = "7")]
+    pub exposed_low_value_resources_count: i32,
+}
+/// Nested message and enum types in `AttackExposure`.
+pub mod attack_exposure {
+    /// This enum defines the various states an AttackExposure can be in.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The state is not specified.
+        Unspecified = 0,
+        /// The attack exposure has been calculated.
+        Calculated = 1,
+        /// The attack exposure has not been calculated.
+        NotCalculated = 2,
+    }
+}
+/// A path that an attacker could take to reach an exposed resource.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AttackPath {
+    /// The attack path name, for example,
+    ///  `organizations/12/simulation/34/valuedResources/56/attackPaths/78`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// A list of nodes that exist in this attack path.
+    #[prost(message, repeated, tag = "2")]
+    pub path_nodes: ::prost::alloc::vec::Vec<attack_path::AttackPathNode>,
+    /// A list of the edges between nodes in this attack path.
+    #[prost(message, repeated, tag = "3")]
+    pub edges: ::prost::alloc::vec::Vec<attack_path::AttackPathEdge>,
+}
+/// Nested message and enum types in `AttackPath`.
+pub mod attack_path {
+    /// Represents one point that an attacker passes through in this attack path.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AttackPathNode {
+        /// The name of the resource at this point in the attack path.
+        /// The format of the name follows the Cloud Asset Inventory [resource
+        /// name
+        /// format](<https://cloud.google.com/asset-inventory/docs/resource-name-format>)
+        #[prost(string, tag = "1")]
+        pub resource: ::prost::alloc::string::String,
+        /// The [supported resource
+        /// type](<https://cloud.google.com/asset-inventory/docs/supported-asset-types>)
+        #[prost(string, tag = "2")]
+        pub resource_type: ::prost::alloc::string::String,
+        /// Human-readable name of this resource.
+        #[prost(string, tag = "3")]
+        pub display_name: ::prost::alloc::string::String,
+        /// The findings associated with this node in the attack path.
+        #[prost(message, repeated, tag = "4")]
+        pub associated_findings:
+            ::prost::alloc::vec::Vec<attack_path_node::PathNodeAssociatedFinding>,
+        /// Unique id of the attack path node.
+        #[prost(string, tag = "5")]
+        pub uuid: ::prost::alloc::string::String,
+        /// A list of attack step nodes that exist in this attack path node.
+        #[prost(message, repeated, tag = "6")]
+        pub attack_steps: ::prost::alloc::vec::Vec<attack_path_node::AttackStepNode>,
+    }
+    /// Nested message and enum types in `AttackPathNode`.
+    pub mod attack_path_node {
+        /// A finding that is associated with this node in the attack path.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct PathNodeAssociatedFinding {
+            /// Canonical name of the associated findings. Example:
+            /// `organizations/123/sources/456/findings/789`
+            #[prost(string, tag = "1")]
+            pub canonical_finding: ::prost::alloc::string::String,
+            /// The additional taxonomy group within findings from a given source.
+            #[prost(string, tag = "2")]
+            pub finding_category: ::prost::alloc::string::String,
+            /// Full resource name of the finding.
+            #[prost(string, tag = "3")]
+            pub name: ::prost::alloc::string::String,
+        }
+        /// Detailed steps the attack can take between path nodes.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct AttackStepNode {
+            /// Unique ID for one Node
+            #[prost(string, tag = "1")]
+            pub uuid: ::prost::alloc::string::String,
+            /// Attack step type. Can be either AND, OR or DEFENSE
+            #[prost(enumeration = "NodeType", tag = "2")]
+            pub r#type: i32,
+            /// User friendly name of the attack step
+            #[prost(string, tag = "3")]
+            pub display_name: ::prost::alloc::string::String,
+            /// Attack step labels for metadata
+            #[prost(map = "string, string", tag = "4")]
+            pub labels: ::std::collections::HashMap<
+                ::prost::alloc::string::String,
+                ::prost::alloc::string::String,
+            >,
+            /// Attack step description
+            #[prost(string, tag = "5")]
+            pub description: ::prost::alloc::string::String,
+        }
+        /// The type of the incoming attack step node.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum NodeType {
+            /// Type not specified
+            Unspecified = 0,
+            /// Incoming edge joined with AND
+            And = 1,
+            /// Incoming edge joined with OR
+            Or = 2,
+            /// Incoming edge is defense
+            Defense = 3,
+            /// Incoming edge is attacker
+            Attacker = 4,
+        }
+    }
+    /// Represents a connection between a source node and a destination node in
+    /// this attack path.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AttackPathEdge {
+        /// The attack node uuid of the source node.
+        #[prost(string, tag = "1")]
+        pub source: ::prost::alloc::string::String,
+        /// The attack node uuid of the destination node.
+        #[prost(string, tag = "2")]
+        pub destination: ::prost::alloc::string::String,
+    }
+}
+/// Information related to Google Cloud Backup and DR Service findings.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BackupDisasterRecovery {
+    /// The name of a Backup and DR template which comprises one or more backup
+    /// policies. See the [Backup and DR
+    /// documentation](<https://cloud.google.com/backup-disaster-recovery/docs/concepts/backup-plan#temp>)
+    /// for more information. For example, `snap-ov`.
+    #[prost(string, tag = "1")]
+    pub backup_template: ::prost::alloc::string::String,
+    /// The names of Backup and DR policies that are associated with a template
+    /// and that define when to run a backup, how frequently to run a backup, and
+    /// how long to retain the backup image. For example, `onvaults`.
+    #[prost(string, repeated, tag = "2")]
+    pub policies: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The name of a Backup and DR host, which is managed by the backup and
+    /// recovery appliance and known to the management console. The host can be of
+    /// type Generic (for example, Compute Engine, SQL Server, Oracle DB, SMB file
+    /// system, etc.), vCenter, or an ESX server. See the [Backup and DR
+    /// documentation on
+    /// hosts](<https://cloud.google.com/backup-disaster-recovery/docs/configuration/manage-hosts-and-their-applications>)
+    /// for more information. For example, `centos7-01`.
+    #[prost(string, tag = "3")]
+    pub host: ::prost::alloc::string::String,
+    /// The names of Backup and DR applications. An application is a VM, database,
+    /// or file system on a managed host monitored by a backup and recovery
+    /// appliance. For example, `centos7-01-vol00`, `centos7-01-vol01`,
+    /// `centos7-01-vol02`.
+    #[prost(string, repeated, tag = "4")]
+    pub applications: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The name of the Backup and DR storage pool that the backup and recovery
+    /// appliance is storing data in. The storage pool could be of type Cloud,
+    /// Primary, Snapshot, or OnVault. See the [Backup and DR documentation on
+    /// storage
+    /// pools](<https://cloud.google.com/backup-disaster-recovery/docs/concepts/storage-pools>).
+    /// For example, `DiskPoolOne`.
+    #[prost(string, tag = "5")]
+    pub storage_pool: ::prost::alloc::string::String,
+    /// The names of Backup and DR advanced policy options of a policy applying to
+    /// an application. See the [Backup and DR documentation on policy
+    /// options](<https://cloud.google.com/backup-disaster-recovery/docs/create-plan/policy-settings>).
+    /// For example, `skipofflineappsincongrp, nounmap`.
+    #[prost(string, repeated, tag = "6")]
+    pub policy_options: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The name of the Backup and DR resource profile that specifies the storage
+    /// media for backups of application and VM data. See the [Backup and DR
+    /// documentation on
+    /// profiles](<https://cloud.google.com/backup-disaster-recovery/docs/concepts/backup-plan#profile>).
+    /// For example, `GCP`.
+    #[prost(string, tag = "7")]
+    pub profile: ::prost::alloc::string::String,
+    /// The name of the Backup and DR appliance that captures, moves, and manages
+    /// the lifecycle of backup data. For example, `backup-server-57137`.
+    #[prost(string, tag = "8")]
+    pub appliance: ::prost::alloc::string::String,
+    /// The backup type of the Backup and DR image.
+    /// For example, `Snapshot`, `Remote Snapshot`, `OnVault`.
+    #[prost(string, tag = "9")]
+    pub backup_type: ::prost::alloc::string::String,
+    /// The timestamp at which the Backup and DR backup was created.
+    #[prost(message, optional, tag = "10")]
+    pub backup_create_time: ::core::option::Option<::prost_types::Timestamp>,
+}
 /// Configures how to deliver Findings to BigQuery Instance.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BigQueryExport {
@@ -301,6 +533,98 @@ pub struct BigQueryExport {
     /// upload data to the BigQuery dataset.
     #[prost(string, tag = "8")]
     pub principal: ::prost::alloc::string::String,
+}
+/// Fields related to Google Cloud Armor findings.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudArmor {
+    /// Information about the [Google Cloud Armor security
+    /// policy](<https://cloud.google.com/armor/docs/security-policy-overview>)
+    /// relevant to the finding.
+    #[prost(message, optional, tag = "1")]
+    pub security_policy: ::core::option::Option<SecurityPolicy>,
+    /// Information about incoming requests evaluated by [Google Cloud Armor
+    /// security
+    /// policies](<https://cloud.google.com/armor/docs/security-policy-overview>).
+    #[prost(message, optional, tag = "2")]
+    pub requests: ::core::option::Option<Requests>,
+    /// Information about potential Layer 7 DDoS attacks identified by [Google
+    /// Cloud Armor Adaptive
+    /// Protection](<https://cloud.google.com/armor/docs/adaptive-protection-overview>).
+    #[prost(message, optional, tag = "3")]
+    pub adaptive_protection: ::core::option::Option<AdaptiveProtection>,
+    /// Information about DDoS attack volume and classification.
+    #[prost(message, optional, tag = "4")]
+    pub attack: ::core::option::Option<Attack>,
+    /// Distinguish between volumetric & protocol DDoS attack and
+    /// application layer attacks. For example, "L3_4" for Layer 3 and Layer 4 DDoS
+    /// attacks, or "L_7" for Layer 7 DDoS attacks.
+    #[prost(string, tag = "5")]
+    pub threat_vector: ::prost::alloc::string::String,
+    /// Duration of attack from the start until the current moment (updated every 5
+    /// minutes).
+    #[prost(message, optional, tag = "6")]
+    pub duration: ::core::option::Option<::prost_types::Duration>,
+}
+/// Information about the [Google Cloud Armor security
+/// policy](<https://cloud.google.com/armor/docs/security-policy-overview>)
+/// relevant to the finding.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SecurityPolicy {
+    /// The name of the Google Cloud Armor security policy, for example,
+    /// "my-security-policy".
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The type of Google Cloud Armor security policy for example, 'backend
+    /// security policy', 'edge security policy', 'network edge security policy',
+    /// or 'always-on DDoS protection'.
+    #[prost(string, tag = "2")]
+    pub r#type: ::prost::alloc::string::String,
+    /// Whether or not the associated rule or policy is in preview mode.
+    #[prost(bool, tag = "3")]
+    pub preview: bool,
+}
+/// Information about the requests relevant to the finding.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Requests {
+    /// For 'Increasing deny ratio', the ratio is the denied traffic divided by the
+    /// allowed traffic. For 'Allowed traffic spike', the ratio is the allowed
+    /// traffic in the short term divided by allowed traffic in the long term.
+    #[prost(double, tag = "1")]
+    pub ratio: f64,
+    /// Allowed RPS (requests per second) in the short term.
+    #[prost(int32, tag = "2")]
+    pub short_term_allowed: i32,
+    /// Allowed RPS (requests per second) over the long term.
+    #[prost(int32, tag = "3")]
+    pub long_term_allowed: i32,
+    /// Denied RPS (requests per second) over the long term.
+    #[prost(int32, tag = "4")]
+    pub long_term_denied: i32,
+}
+/// Information about [Google Cloud Armor Adaptive
+/// Protection](<https://cloud.google.com/armor/docs/cloud-armor-overview#google-cloud-armor-adaptive-protection>).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdaptiveProtection {
+    /// A score of 0 means that there is low confidence that the detected event is
+    /// an actual attack. A score of 1 means that there is high confidence that the
+    /// detected event is an attack. See the [Adaptive Protection
+    /// documentation](<https://cloud.google.com/armor/docs/adaptive-protection-overview#configure-alert-tuning>)
+    /// for further explanation.
+    #[prost(double, tag = "1")]
+    pub confidence: f64,
+}
+/// Information about DDoS attack volume and classification.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Attack {
+    /// Total PPS (packets per second) volume of attack.
+    #[prost(int32, tag = "1")]
+    pub volume_pps: i32,
+    /// Total BPS (bytes per second) volume of attack.
+    #[prost(int32, tag = "2")]
+    pub volume_bps: i32,
+    /// Type of attack, for example, 'SYN-flood', 'NTP-udp', or 'CHARGEN-udp'.
+    #[prost(string, tag = "3")]
+    pub classification: ::prost::alloc::string::String,
 }
 /// The [data profile](<https://cloud.google.com/dlp/docs/data-profiles>)
 /// associated with the finding.
@@ -450,6 +774,9 @@ pub struct Container {
     /// Container labels, as provided by the container runtime.
     #[prost(message, repeated, tag = "4")]
     pub labels: ::prost::alloc::vec::Vec<Label>,
+    /// The time that the container was created.
+    #[prost(message, optional, tag = "5")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Represents database access information, such as queries. A database may be a
 /// sub-resource of an instance (as in the case of Cloud SQL instances or Cloud
@@ -458,13 +785,13 @@ pub struct Container {
 /// name](<https://google.aip.dev/122#full-resource-names>) populated because these
 /// resource types, such as Cloud SQL databases, are not yet supported by Cloud
 /// Asset Inventory. In these cases only the display name is provided.
-/// Some database resources may not have the [full resource
-/// name](<https://google.aip.dev/122#full-resource-names>) populated because
-/// these resource types are not yet supported by Cloud Asset Inventory (e.g.
-/// Cloud SQL databases). In these cases only the display name will be
-/// provided.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Database {
+    /// Some database resources may not have the [full resource
+    /// name](<https://google.aip.dev/122#full-resource-names>) populated because
+    /// these resource types are not yet supported by Cloud Asset Inventory (e.g.
+    /// Cloud SQL databases). In these cases only the display name will be
+    /// provided.
     /// The [full resource name](<https://google.aip.dev/122#full-resource-names>) of
     /// the database that the user connected to, if it is supported by Cloud Asset
     /// Inventory.
@@ -484,6 +811,65 @@ pub struct Database {
     /// not an IAM policy change.
     #[prost(string, repeated, tag = "5")]
     pub grantees: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The version of the database, for example, POSTGRES_14.
+    /// See [the complete
+    /// list](<https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1/SqlDatabaseVersion>).
+    #[prost(string, tag = "6")]
+    pub version: ::prost::alloc::string::String,
+}
+/// An EffectiveEventThreatDetectionCustomModule is the representation of
+/// an Event Threat Detection custom module at a specified level of the
+/// resource hierarchy: organization, folder, or project. If a custom module is
+/// inherited from a parent organization or folder, the value of the
+/// `enablement_state` property in EffectiveEventThreatDetectionCustomModule is
+/// set to the value that is effective in the parent, instead of `INHERITED`.
+/// For example, if the module is enabled in a parent organization or folder, the
+/// effective `enablement_state` for the module in all child folders or projects
+/// is also `enabled`. EffectiveEventThreatDetectionCustomModule is read-only.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EffectiveEventThreatDetectionCustomModule {
+    /// Output only. The resource name of the effective ETD custom module.
+    ///
+    /// Its format is:
+    ///
+    ///   * `organizations/{organization}/eventThreatDetectionSettings/effectiveCustomModules/{module}`.
+    ///   * `folders/{folder}/eventThreatDetectionSettings/effectiveCustomModules/{module}`.
+    ///   * `projects/{project}/eventThreatDetectionSettings/effectiveCustomModules/{module}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Config for the effective module.
+    #[prost(message, optional, tag = "2")]
+    pub config: ::core::option::Option<::prost_types::Struct>,
+    /// Output only. The effective state of enablement for the module at the given
+    /// level of the hierarchy.
+    #[prost(
+        enumeration = "effective_event_threat_detection_custom_module::EnablementState",
+        tag = "3"
+    )]
+    pub enablement_state: i32,
+    /// Output only. Type for the module. e.g. CONFIGURABLE_BAD_IP.
+    #[prost(string, tag = "4")]
+    pub r#type: ::prost::alloc::string::String,
+    /// Output only. The human readable name to be displayed for the module.
+    #[prost(string, tag = "5")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Output only. The description for the module.
+    #[prost(string, tag = "6")]
+    pub description: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `EffectiveEventThreatDetectionCustomModule`.
+pub mod effective_event_threat_detection_custom_module {
+    /// The enablement state of the module.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum EnablementState {
+        /// Unspecified enablement state.
+        Unspecified = 0,
+        /// The module is enabled at the given level.
+        Enabled = 1,
+        /// The module is disabled at the given level.
+        Disabled = 2,
+    }
 }
 /// Defines the properties in a custom module configuration for Security
 /// Health Analytics. Use the custom module configuration to create custom
@@ -617,6 +1003,107 @@ pub mod effective_security_health_analytics_custom_module {
         Disabled = 2,
     }
 }
+/// Represents an instance of an Event Threat Detection custom module,
+/// including its full module name, display name, enablement state, and last
+/// updated time. You can create a custom module at the organization, folder, or
+/// project level. Custom modules that you create at the organization or folder
+/// level are inherited by child folders and projects.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventThreatDetectionCustomModule {
+    /// Immutable. The resource name of the Event Threat Detection custom module.
+    ///
+    /// Its format is:
+    ///
+    ///   * `organizations/{organization}/eventThreatDetectionSettings/customModules/{module}`.
+    ///   * `folders/{folder}/eventThreatDetectionSettings/customModules/{module}`.
+    ///   * `projects/{project}/eventThreatDetectionSettings/customModules/{module}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Config for the module. For the resident module, its config value is defined
+    /// at this level. For the inherited module, its config value is inherited from
+    /// the ancestor module.
+    #[prost(message, optional, tag = "2")]
+    pub config: ::core::option::Option<::prost_types::Struct>,
+    /// Output only. The closest ancestor module that this module inherits the
+    /// enablement state from. The format is the same as the
+    /// EventThreatDetectionCustomModule resource name.
+    #[prost(string, tag = "3")]
+    pub ancestor_module: ::prost::alloc::string::String,
+    /// The state of enablement for the module at the given level of the hierarchy.
+    #[prost(
+        enumeration = "event_threat_detection_custom_module::EnablementState",
+        tag = "4"
+    )]
+    pub enablement_state: i32,
+    /// Type for the module. e.g. CONFIGURABLE_BAD_IP.
+    #[prost(string, tag = "5")]
+    pub r#type: ::prost::alloc::string::String,
+    /// The human readable name to be displayed for the module.
+    #[prost(string, tag = "6")]
+    pub display_name: ::prost::alloc::string::String,
+    /// The description for the module.
+    #[prost(string, tag = "7")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. The time the module was last updated.
+    #[prost(message, optional, tag = "8")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The editor the module was last updated by.
+    #[prost(string, tag = "9")]
+    pub last_editor: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `EventThreatDetectionCustomModule`.
+pub mod event_threat_detection_custom_module {
+    /// The enablement state of the module.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum EnablementState {
+        /// Unspecified enablement state.
+        Unspecified = 0,
+        /// The module is enabled at the given level.
+        Enabled = 1,
+        /// The module is disabled at the given level.
+        Disabled = 2,
+        /// When the enablement state is inherited.
+        Inherited = 3,
+    }
+}
+/// A list of zero or more errors encountered while validating the uploaded
+/// configuration of an Event Threat Detection Custom Module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CustomModuleValidationErrors {
+    #[prost(message, repeated, tag = "1")]
+    pub errors: ::prost::alloc::vec::Vec<CustomModuleValidationError>,
+}
+/// An error encountered while validating the uploaded configuration of an
+/// Event Threat Detection Custom Module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CustomModuleValidationError {
+    /// A description of the error, suitable for human consumption. Required.
+    #[prost(string, tag = "1")]
+    pub description: ::prost::alloc::string::String,
+    /// The path, in RFC 8901 JSON Pointer format, to the field that failed
+    /// validation. This may be left empty if no specific field is affected.
+    #[prost(string, tag = "2")]
+    pub field_path: ::prost::alloc::string::String,
+    /// The initial position of the error in the uploaded text version of the
+    /// module. This field may be omitted if no specific position applies, or if
+    /// one could not be computed.
+    #[prost(message, optional, tag = "3")]
+    pub start: ::core::option::Option<Position>,
+    /// The end position of the error in the uploaded text version of the
+    /// module. This field may be omitted if no specific position applies, or if
+    /// one could not be computed..
+    #[prost(message, optional, tag = "4")]
+    pub end: ::core::option::Option<Position>,
+}
+/// A position in the uploaded text version of a module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Position {
+    #[prost(int32, tag = "1")]
+    pub line_number: i32,
+    #[prost(int32, tag = "2")]
+    pub column_number: i32,
+}
 /// Exfiltration represents a data exfiltration attempt from one or more sources
 /// to one or more targets. The `sources` attribute lists the sources of the
 /// exfiltrated data. The `targets` attribute lists the destinations the data was
@@ -632,6 +1119,9 @@ pub struct Exfiltration {
     /// "joined" source data.
     #[prost(message, repeated, tag = "2")]
     pub targets: ::prost::alloc::vec::Vec<ExfilResource>,
+    /// Total exfiltrated bytes processed for the entire job.
+    #[prost(int64, tag = "3")]
+    pub total_exfiltrated_bytes: i64,
 }
 /// Resource where data was exfiltrated from or exfiltrated to.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -660,17 +1150,64 @@ pub struct ExternalSystem {
     /// References primary/secondary etc assignees in the external system.
     #[prost(string, repeated, tag = "2")]
     pub assignees: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Identifier that's used to track the given finding in the external system.
+    /// The identifier that's used to track the finding's corresponding case in the
+    /// external system.
     #[prost(string, tag = "3")]
     pub external_uid: ::prost::alloc::string::String,
-    /// Most recent status of the corresponding finding's ticket/tracker in the
-    /// external system.
+    /// The most recent status of the finding's corresponding case, as reported by
+    /// the external system.
     #[prost(string, tag = "4")]
     pub status: ::prost::alloc::string::String,
-    /// The most recent time when the corresponding finding's ticket/tracker was
-    /// updated in the external system.
+    /// The time when the case was last updated, as reported by the external
+    /// system.
     #[prost(message, optional, tag = "5")]
     pub external_system_update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The link to the finding's corresponding case in the external system.
+    #[prost(string, tag = "6")]
+    pub case_uri: ::prost::alloc::string::String,
+    /// The priority of the finding's corresponding case in the external system.
+    #[prost(string, tag = "7")]
+    pub case_priority: ::prost::alloc::string::String,
+    /// The SLA of the finding's corresponding case in the external system.
+    #[prost(message, optional, tag = "9")]
+    pub case_sla: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time when the case was created, as reported by the external system.
+    #[prost(message, optional, tag = "10")]
+    pub case_create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time when the case was closed, as reported by the external system.
+    #[prost(message, optional, tag = "11")]
+    pub case_close_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Information about the ticket, if any, that is being used to track the
+    /// resolution of the issue that is identified by this finding.
+    #[prost(message, optional, tag = "8")]
+    pub ticket_info: ::core::option::Option<external_system::TicketInfo>,
+}
+/// Nested message and enum types in `ExternalSystem`.
+pub mod external_system {
+    /// Information about the ticket, if any, that is being used to track the
+    /// resolution of the issue that is identified by this finding.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct TicketInfo {
+        /// The identifier of the ticket in the ticket system.
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+        /// The assignee of the ticket in the ticket system.
+        #[prost(string, tag = "2")]
+        pub assignee: ::prost::alloc::string::String,
+        /// The description of the ticket in the ticket system.
+        #[prost(string, tag = "3")]
+        pub description: ::prost::alloc::string::String,
+        /// The link to the ticket in the ticket system.
+        #[prost(string, tag = "4")]
+        pub uri: ::prost::alloc::string::String,
+        /// The latest status of the ticket, as reported by the ticket system.
+        #[prost(string, tag = "5")]
+        pub status: ::prost::alloc::string::String,
+        /// The time when the ticket was last updated, as reported by the ticket
+        /// system.
+        #[prost(message, optional, tag = "6")]
+        pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    }
 }
 /// File information about the related binary/library used by an executable, or
 /// the script used by a script interpreter
@@ -698,6 +1235,47 @@ pub struct File {
     /// Prefix of the file contents as a JSON-encoded string.
     #[prost(string, tag = "6")]
     pub contents: ::prost::alloc::string::String,
+    /// Path of the file in terms of underlying disk/partition identifiers.
+    #[prost(message, optional, tag = "7")]
+    pub disk_path: ::core::option::Option<file::DiskPath>,
+}
+/// Nested message and enum types in `File`.
+pub mod file {
+    /// Path of the file in terms of underlying disk/partition identifiers.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DiskPath {
+        /// UUID of the partition (format
+        /// <https://wiki.archlinux.org/title/persistent_block_device_naming#by-uuid>)
+        #[prost(string, tag = "1")]
+        pub partition_uuid: ::prost::alloc::string::String,
+        /// Relative path of the file in the partition as a JSON encoded string.
+        /// Example: /home/user1/executable_file.sh
+        #[prost(string, tag = "2")]
+        pub relative_path: ::prost::alloc::string::String,
+    }
+}
+/// Contains details about groups of which this finding is a member. A group is a
+/// collection of findings that are related in some way.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroupMembership {
+    /// Type of group.
+    #[prost(enumeration = "group_membership::GroupType", tag = "1")]
+    pub group_type: i32,
+    /// ID of the group.
+    #[prost(string, tag = "2")]
+    pub group_id: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `GroupMembership`.
+pub mod group_membership {
+    /// Possible types of groups.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum GroupType {
+        /// Default value.
+        Unspecified = 0,
+        /// Group represents a toxic combination.
+        ToxicCombination = 1,
+    }
 }
 /// Represents a particular IAM binding, which captures a member's role addition,
 /// removal, or state.
@@ -755,6 +1333,9 @@ pub mod indicator {
     /// Indicates what signature matched this process.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ProcessSignature {
+        /// Describes the type of resource associated with the signature.
+        #[prost(enumeration = "process_signature::SignatureType", tag = "8")]
+        pub signature_type: i32,
         #[prost(oneof = "process_signature::Signature", tags = "6, 7")]
         pub signature: ::core::option::Option<process_signature::Signature>,
     }
@@ -792,6 +1373,19 @@ pub mod indicator {
             /// The name of the YARA rule.
             #[prost(string, tag = "5")]
             pub yara_rule: ::prost::alloc::string::String,
+        }
+        /// Possible resource types to be associated with a signature.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum SignatureType {
+            /// The default signature type.
+            Unspecified = 0,
+            /// Used for signatures concerning processes.
+            Process = 1,
+            /// Used for signatures concerning disks.
+            File = 2,
         }
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Signature {
@@ -875,6 +1469,9 @@ pub struct Kubernetes {
     /// relevant to the finding.
     #[prost(message, repeated, tag = "6")]
     pub access_reviews: ::prost::alloc::vec::Vec<kubernetes::AccessReview>,
+    /// Kubernetes objects related to the finding.
+    #[prost(message, repeated, tag = "7")]
+    pub objects: ::prost::alloc::vec::Vec<kubernetes::Object>,
 }
 /// Nested message and enum types in `Kubernetes`.
 pub mod kubernetes {
@@ -1021,6 +1618,74 @@ pub mod kubernetes {
         #[prost(string, tag = "7")]
         pub version: ::prost::alloc::string::String,
     }
+    /// Kubernetes object related to the finding, uniquely identified by GKNN.
+    /// Used if the object Kind is not one of Pod, Node, NodePool, Binding, or
+    /// AccessReview.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Object {
+        /// Kubernetes object group, such as "policy.k8s.io/v1".
+        #[prost(string, tag = "1")]
+        pub group: ::prost::alloc::string::String,
+        /// Kubernetes object kind, such as "Namespace".
+        #[prost(string, tag = "2")]
+        pub kind: ::prost::alloc::string::String,
+        /// Kubernetes object namespace. Must be a valid DNS label. Named
+        /// "ns" to avoid collision with C++ namespace keyword. For details see
+        /// <https://kubernetes.io/docs/tasks/administer-cluster/namespaces/.>
+        #[prost(string, tag = "3")]
+        pub ns: ::prost::alloc::string::String,
+        /// Kubernetes object name. For details see
+        /// <https://kubernetes.io/docs/concepts/overview/working-with-objects/names/.>
+        #[prost(string, tag = "4")]
+        pub name: ::prost::alloc::string::String,
+        /// Pod containers associated with this finding, if any.
+        #[prost(message, repeated, tag = "5")]
+        pub containers: ::prost::alloc::vec::Vec<super::Container>,
+    }
+}
+/// Contains information related to the load balancer associated with the
+/// finding.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LoadBalancer {
+    /// The name of the load balancer associated with the finding.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// An individual entry in a log.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LogEntry {
+    #[prost(oneof = "log_entry::LogEntry", tags = "1")]
+    pub log_entry: ::core::option::Option<log_entry::LogEntry>,
+}
+/// Nested message and enum types in `LogEntry`.
+pub mod log_entry {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum LogEntry {
+        /// An individual entry in a log stored in Cloud Logging.
+        #[prost(message, tag = "1")]
+        CloudLoggingEntry(super::CloudLoggingEntry),
+    }
+}
+/// Metadata taken from a [Cloud Logging
+/// LogEntry](<https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry>)
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudLoggingEntry {
+    /// A unique identifier for the log entry.
+    #[prost(string, tag = "1")]
+    pub insert_id: ::prost::alloc::string::String,
+    /// The type of the log (part of `log_name`. `log_name` is the resource name of
+    /// the log to which this log entry belongs). For example:
+    /// `cloudresourcemanager.googleapis.com/activity`. Note that this field is not
+    /// URL-encoded, unlike the `LOG_ID` field in `LogEntry`.
+    #[prost(string, tag = "2")]
+    pub log_id: ::prost::alloc::string::String,
+    /// The organization, folder, or project of the monitored resource that
+    /// produced this log entry.
+    #[prost(string, tag = "3")]
+    pub resource_container: ::prost::alloc::string::String,
+    /// The time the event described by the log entry occurred.
+    #[prost(message, optional, tag = "4")]
+    pub timestamp: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// MITRE ATT&CK tactics and techniques related to this finding.
 /// See: <https://attack.mitre.org>
@@ -1088,82 +1753,164 @@ pub mod mitre_attack {
     }
     /// MITRE ATT&CK techniques that can be referenced by SCC findings.
     /// See: <https://attack.mitre.org/techniques/enterprise/>
+    /// Next ID: 63
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum Technique {
         /// Unspecified value.
         Unspecified = 0,
-        /// T1595
-        ActiveScanning = 1,
-        /// T1595.001
-        ScanningIpBlocks = 2,
-        /// T1105
-        IngressToolTransfer = 3,
-        /// T1106
-        NativeApi = 4,
-        /// T1129
-        SharedModules = 5,
+        /// T1036
+        Masquerading = 49,
+        /// T1036.005
+        MatchLegitimateNameOrLocation = 50,
+        /// T1037
+        BootOrLogonInitializationScripts = 37,
+        /// T1037.005
+        StartupItems = 38,
+        /// T1046
+        NetworkServiceDiscovery = 32,
+        /// T1057
+        ProcessDiscovery = 56,
         /// T1059
         CommandAndScriptingInterpreter = 6,
         /// T1059.004
         UnixShell = 7,
-        /// T1496
-        ResourceHijacking = 8,
+        /// T1059.006
+        Python = 59,
+        /// T1069
+        PermissionGroupsDiscovery = 18,
+        /// T1069.003
+        CloudGroups = 19,
+        /// T1071
+        ApplicationLayerProtocol = 45,
+        /// T1071.004
+        Dns = 46,
+        /// T1072
+        SoftwareDeploymentTools = 47,
+        /// T1078
+        ValidAccounts = 14,
+        /// T1078.001
+        DefaultAccounts = 35,
+        /// T1078.003
+        LocalAccounts = 15,
+        /// T1078.004
+        CloudAccounts = 16,
         /// T1090
         Proxy = 9,
         /// T1090.002
         ExternalProxy = 10,
         /// T1090.003
         MultiHopProxy = 11,
-        /// T1568
-        DynamicResolution = 12,
-        /// T1552
-        UnsecuredCredentials = 13,
-        /// T1078
-        ValidAccounts = 14,
-        /// T1078.003
-        LocalAccounts = 15,
-        /// T1078.004
-        CloudAccounts = 16,
+        /// T1098
+        AccountManipulation = 22,
+        /// T1098.001
+        AdditionalCloudCredentials = 40,
+        /// T1098.004
+        SshAuthorizedKeys = 23,
+        /// T1098.006
+        AdditionalContainerClusterRoles = 58,
+        /// T1105
+        IngressToolTransfer = 3,
+        /// T1106
+        NativeApi = 4,
+        /// T1110
+        BruteForce = 44,
+        /// T1129
+        SharedModules = 5,
+        /// T1134
+        AccessTokenManipulation = 33,
+        /// T1134.001
+        TokenImpersonationOrTheft = 39,
+        /// T1190
+        ExploitPublicFacingApplication = 27,
+        /// T1484
+        DomainPolicyModification = 30,
+        /// T1485
+        DataDestruction = 29,
+        /// T1489
+        ServiceStop = 52,
+        /// T1490
+        InhibitSystemRecovery = 36,
+        /// T1496
+        ResourceHijacking = 8,
         /// T1498
         NetworkDenialOfService = 17,
-        /// T1069
-        PermissionGroupsDiscovery = 18,
-        /// T1069.003
-        CloudGroups = 19,
+        /// T1526
+        CloudServiceDiscovery = 48,
+        /// T1528
+        StealApplicationAccessToken = 42,
+        /// T1531
+        AccountAccessRemoval = 51,
+        /// T1539
+        StealWebSessionCookie = 25,
+        /// T1543
+        CreateOrModifySystemProcess = 24,
+        /// T1548
+        AbuseElevationControlMechanism = 34,
+        /// T1552
+        UnsecuredCredentials = 13,
+        /// T1556
+        ModifyAuthenticationProcess = 28,
+        /// T1562
+        ImpairDefenses = 31,
+        /// T1562.001
+        DisableOrModifyTools = 55,
         /// T1567
         ExfiltrationOverWebService = 20,
         /// T1567.002
         ExfiltrationToCloudStorage = 21,
-        /// T1098
-        AccountManipulation = 22,
-        /// T1098.004
-        SshAuthorizedKeys = 23,
-        /// T1543
-        CreateOrModifySystemProcess = 24,
-        /// T1539
-        StealWebSessionCookie = 25,
+        /// T1568
+        DynamicResolution = 12,
+        /// T1570
+        LateralToolTransfer = 41,
         /// T1578
         ModifyCloudComputeInfrastructure = 26,
-        /// T1190
-        ExploitPublicFacingApplication = 27,
-        /// T1556
-        ModifyAuthenticationProcess = 28,
-        /// T1485
-        DataDestruction = 29,
-        /// T1484
-        DomainPolicyModification = 30,
-        /// T1562
-        ImpairDefenses = 31,
-        /// T1046
-        NetworkServiceDiscovery = 32,
-        /// T1134
-        AccessTokenManipulation = 33,
-        /// T1548
-        AbuseElevationControlMechanism = 34,
-        /// T1078.001
-        DefaultAccounts = 35,
+        /// T1578.001
+        CreateSnapshot = 54,
+        /// T1580
+        CloudInfrastructureDiscovery = 53,
+        /// T1588
+        ObtainCapabilities = 43,
+        /// T1595
+        ActiveScanning = 1,
+        /// T1595.001
+        ScanningIpBlocks = 2,
+        /// T1609
+        ContainerAdministrationCommand = 60,
+        /// T1611
+        EscapeToHost = 61,
+        /// T1613
+        ContainerAndResourceDiscovery = 57,
+        /// T1649
+        StealOrForgeAuthenticationCertificates = 62,
     }
+}
+/// Represents a Jupyter notebook IPYNB file, such as a [Colab Enterprise
+/// notebook](<https://cloud.google.com/colab/docs/introduction>) file, that is
+/// associated with a finding.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Notebook {
+    /// The name of the notebook.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The source notebook service, for example, "Colab Enterprise".
+    #[prost(string, tag = "2")]
+    pub service: ::prost::alloc::string::String,
+    /// The user ID of the latest author to modify the notebook.
+    #[prost(string, tag = "3")]
+    pub last_author: ::prost::alloc::string::String,
+    /// The most recent time the notebook was updated.
+    #[prost(message, optional, tag = "4")]
+    pub notebook_update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Contains information about the org policies associated with the finding.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OrgPolicy {
+    /// The resource name of the org policy.
+    /// Example:
+    /// "organizations/{organization_id}/policies/{constraint_name}"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
 }
 /// Represents an operating system process.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1214,6 +1961,79 @@ pub struct EnvironmentVariable {
     #[prost(string, tag = "2")]
     pub val: ::prost::alloc::string::String,
 }
+/// Represents a posture that is deployed on Google Cloud by the
+/// Security Command Center Posture Management service.
+/// A posture contains one or more policy sets. A policy set is a
+/// group of policies that enforce a set of security rules on Google
+/// Cloud.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SecurityPosture {
+    /// Name of the posture, for example, `CIS-Posture`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The version of the posture, for example, `c7cfa2a8`.
+    #[prost(string, tag = "2")]
+    pub revision_id: ::prost::alloc::string::String,
+    /// The project, folder, or organization on which the posture is deployed,
+    /// for example, `projects/{project_number}`.
+    #[prost(string, tag = "3")]
+    pub posture_deployment_resource: ::prost::alloc::string::String,
+    /// The name of the posture deployment, for example,
+    /// `organizations/{org_id}/posturedeployments/{posture_deployment_id}`.
+    #[prost(string, tag = "4")]
+    pub posture_deployment: ::prost::alloc::string::String,
+    /// The name of the updated policy, for example,
+    /// `projects/{project_id}/policies/{constraint_name}`.
+    #[prost(string, tag = "5")]
+    pub changed_policy: ::prost::alloc::string::String,
+    /// The name of the updated policyset, for example, `cis-policyset`.
+    #[prost(string, tag = "6")]
+    pub policy_set: ::prost::alloc::string::String,
+    /// The ID of the updated policy, for example, `compute-policy-1`.
+    #[prost(string, tag = "7")]
+    pub policy: ::prost::alloc::string::String,
+    /// The details about a change in an updated policy that violates the deployed
+    /// posture.
+    #[prost(message, repeated, tag = "8")]
+    pub policy_drift_details: ::prost::alloc::vec::Vec<security_posture::PolicyDriftDetails>,
+}
+/// Nested message and enum types in `SecurityPosture`.
+pub mod security_posture {
+    /// The policy field that violates the deployed posture and its expected and
+    /// detected values.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PolicyDriftDetails {
+        /// The name of the updated field, for example
+        /// constraint.implementation.policy_rules\[0\].enforce
+        #[prost(string, tag = "1")]
+        pub field: ::prost::alloc::string::String,
+        /// The value of this field that was configured in a posture, for example,
+        /// `true` or `allowed_values={"projects/29831892"}`.
+        #[prost(string, tag = "2")]
+        pub expected_value: ::prost::alloc::string::String,
+        /// The detected value that violates the deployed posture, for example,
+        /// `false` or `allowed_values={"projects/22831892"}`.
+        #[prost(string, tag = "3")]
+        pub detected_value: ::prost::alloc::string::String,
+    }
+}
+/// Contains details about a group of security issues that, when the issues
+/// occur together, represent a greater risk than when the issues occur
+/// independently. A group of such issues is referred to as a toxic combination.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ToxicCombination {
+    /// The
+    /// [Attack exposure
+    /// score](<https://cloud.google.com/security-command-center/docs/attack-exposure-learn#attack_exposure_scores>)
+    /// of this toxic combination. The score is a measure of how much this toxic
+    /// combination exposes one or more high-value resources to potential attack.
+    #[prost(double, tag = "1")]
+    pub attack_exposure_score: f64,
+    /// List of resource names of findings associated with this toxic combination.
+    /// For example, `organizations/123/sources/456/findings/789`.
+    #[prost(string, repeated, tag = "2")]
+    pub related_findings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
 /// Refers to common vulnerability fields e.g. cve, cvss, cwe etc.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Vulnerability {
@@ -1221,9 +2041,20 @@ pub struct Vulnerability {
     /// (<https://cve.mitre.org/about/>)
     #[prost(message, optional, tag = "1")]
     pub cve: ::core::option::Option<Cve>,
+    /// The offending package is relevant to the finding.
+    #[prost(message, optional, tag = "2")]
+    pub offending_package: ::core::option::Option<Package>,
+    /// The fixed package is relevant to the finding.
+    #[prost(message, optional, tag = "3")]
+    pub fixed_package: ::core::option::Option<Package>,
+    /// The security bulletin is relevant to this finding.
+    #[prost(message, optional, tag = "4")]
+    pub security_bulletin: ::core::option::Option<SecurityBulletin>,
 }
 /// CVE stands for Common Vulnerabilities and Exposures.
-/// More information: <https://cve.mitre.org>
+/// Information from the [CVE
+/// record](<https://www.cve.org/ResourcesSupport/Glossary>) that describes this
+/// vulnerability.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Cve {
     /// The unique identifier for the vulnerability. e.g. CVE-2021-34527
@@ -1240,6 +2071,61 @@ pub struct Cve {
     /// Whether upstream fix is available for the CVE.
     #[prost(bool, tag = "4")]
     pub upstream_fix_available: bool,
+    /// The potential impact of the vulnerability if it was to be exploited.
+    #[prost(enumeration = "cve::RiskRating", tag = "5")]
+    pub impact: i32,
+    /// The exploitation activity of the vulnerability in the wild.
+    #[prost(enumeration = "cve::ExploitationActivity", tag = "6")]
+    pub exploitation_activity: i32,
+    /// Whether or not the vulnerability has been observed in the wild.
+    #[prost(bool, tag = "7")]
+    pub observed_in_the_wild: bool,
+    /// Whether or not the vulnerability was zero day when the finding was
+    /// published.
+    #[prost(bool, tag = "8")]
+    pub zero_day: bool,
+}
+/// Nested message and enum types in `Cve`.
+pub mod cve {
+    /// The possible values of impact of the vulnerability if it was to be
+    /// exploited.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RiskRating {
+        /// Invalid or empty value.
+        Unspecified = 0,
+        /// Exploitation would have little to no security impact.
+        Low = 1,
+        /// Exploitation would enable attackers to perform activities, or could allow
+        /// attackers to have a direct impact, but would require additional steps.
+        Medium = 2,
+        /// Exploitation would enable attackers to have a notable direct impact
+        /// without needing to overcome any major mitigating factors.
+        High = 3,
+        /// Exploitation would fundamentally undermine the security of affected
+        /// systems, enable actors to perform significant attacks with minimal
+        /// effort, with little to no mitigating factors to overcome.
+        Critical = 4,
+    }
+    /// The possible values of exploitation activity of the vulnerability in the
+    /// wild.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ExploitationActivity {
+        /// Invalid or empty value.
+        Unspecified = 0,
+        /// Exploitation has been reported or confirmed to widely occur.
+        Wide = 1,
+        /// Limited reported or confirmed exploitation activities.
+        Confirmed = 2,
+        /// Exploit is publicly available.
+        Available = 3,
+        /// No known exploitation activity, but has a high potential for
+        /// exploitation.
+        Anticipated = 4,
+        /// No known exploitation activity.
+        NoKnown = 5,
+    }
 }
 /// Additional Links
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1401,6 +2287,36 @@ pub mod cvssv3 {
         /// No impact.
         None = 3,
     }
+}
+/// Package is a generic definition of a package.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Package {
+    /// The name of the package where the vulnerability was detected.
+    #[prost(string, tag = "1")]
+    pub package_name: ::prost::alloc::string::String,
+    /// The CPE URI where the vulnerability was detected.
+    #[prost(string, tag = "2")]
+    pub cpe_uri: ::prost::alloc::string::String,
+    /// Type of package, for example, os, maven, or go.
+    #[prost(string, tag = "3")]
+    pub package_type: ::prost::alloc::string::String,
+    /// The version of the package.
+    #[prost(string, tag = "4")]
+    pub package_version: ::prost::alloc::string::String,
+}
+/// SecurityBulletin are notifications of vulnerabilities of Google products.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SecurityBulletin {
+    /// ID of the bulletin corresponding to the vulnerability.
+    #[prost(string, tag = "1")]
+    pub bulletin_id: ::prost::alloc::string::String,
+    /// Submission time of this Security Bulletin.
+    #[prost(message, optional, tag = "2")]
+    pub submission_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// This represents a version that the cluster receiving this notification
+    /// should be upgraded to, based on its current version. For example, 1.15.0
+    #[prost(string, tag = "3")]
+    pub suggested_upgrade_version: ::prost::alloc::string::String,
 }
 /// Security Command Center finding.
 ///
@@ -1584,6 +2500,9 @@ pub struct Finding {
     /// Database associated with the finding.
     #[prost(message, optional, tag = "44")]
     pub database: ::core::option::Option<Database>,
+    /// The results of an attack path simulation relevant to this finding.
+    #[prost(message, optional, tag = "45")]
+    pub attack_exposure: ::core::option::Option<AttackExposure>,
     /// File associated with the finding.
     #[prost(message, repeated, tag = "46")]
     pub files: ::prost::alloc::vec::Vec<File>,
@@ -1597,6 +2516,42 @@ pub struct Finding {
     /// Signature of the kernel rootkit.
     #[prost(message, optional, tag = "50")]
     pub kernel_rootkit: ::core::option::Option<KernelRootkit>,
+    /// Contains information about the org policies associated with the finding.
+    #[prost(message, repeated, tag = "51")]
+    pub org_policies: ::prost::alloc::vec::Vec<OrgPolicy>,
+    /// Represents an application associated with the finding.
+    #[prost(message, optional, tag = "53")]
+    pub application: ::core::option::Option<Application>,
+    /// Fields related to Backup and DR findings.
+    #[prost(message, optional, tag = "55")]
+    pub backup_disaster_recovery: ::core::option::Option<BackupDisasterRecovery>,
+    /// The security posture associated with the finding.
+    #[prost(message, optional, tag = "56")]
+    pub security_posture: ::core::option::Option<SecurityPosture>,
+    /// Log entries that are relevant to the finding.
+    #[prost(message, repeated, tag = "57")]
+    pub log_entries: ::prost::alloc::vec::Vec<LogEntry>,
+    /// The load balancers associated with the finding.
+    #[prost(message, repeated, tag = "58")]
+    pub load_balancers: ::prost::alloc::vec::Vec<LoadBalancer>,
+    /// Fields related to Cloud Armor findings.
+    #[prost(message, optional, tag = "59")]
+    pub cloud_armor: ::core::option::Option<CloudArmor>,
+    /// Notebook associated with the finding.
+    #[prost(message, optional, tag = "63")]
+    pub notebook: ::core::option::Option<Notebook>,
+    /// Contains details about a group of security issues that, when the issues
+    /// occur together, represent a greater risk than when the issues occur
+    /// independently. A group of such issues is referred to as a toxic
+    /// combination.
+    /// This field cannot be updated. Its value is ignored in all update requests.
+    #[prost(message, optional, tag = "64")]
+    pub toxic_combination: ::core::option::Option<ToxicCombination>,
+    /// Contains details about groups of which this finding is a member. A group is
+    /// a collection of findings that are related in some way.
+    /// This field cannot be updated. Its value is ignored in all update requests.
+    #[prost(message, repeated, tag = "65")]
+    pub group_memberships: ::prost::alloc::vec::Vec<GroupMembership>,
 }
 /// Nested message and enum types in `Finding`.
 pub mod finding {
@@ -1700,6 +2655,14 @@ pub mod finding {
         Observation = 4,
         /// Describes an error that prevents some SCC functionality.
         SccError = 5,
+        /// Describes a potential security risk due to a change in the security
+        /// posture.
+        PostureViolation = 6,
+        /// Describes a group of security issues that, when the issues
+        /// occur together, represent a greater risk than when the issues occur
+        /// independently. A group of such issues is referred to as a toxic
+        /// combination.
+        ToxicCombination = 7,
     }
 }
 /// A mute config is a Cloud SCC resource that contains the configuration
@@ -1707,9 +2670,12 @@ pub mod finding {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MuteConfig {
     /// This field will be ignored if provided on config creation. Format
-    /// "organizations/{organization}/muteConfigs/{mute_config}"
-    /// "folders/{folder}/muteConfigs/{mute_config}"
-    /// "projects/{project}/muteConfigs/{mute_config}"
+    /// `organizations/{organization}/muteConfigs/{mute_config}`
+    /// `folders/{folder}/muteConfigs/{mute_config}`
+    /// `projects/{project}/muteConfigs/{mute_config}`
+    /// `organizations/{organization}/locations/global/muteConfigs/{mute_config}`
+    /// `folders/{folder}/locations/global/muteConfigs/{mute_config}`
+    /// `projects/{project}/locations/global/muteConfigs/{mute_config}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The human readable name to be displayed for the mute config.
@@ -1854,6 +2820,216 @@ pub struct Resource {
     /// folder is the folder directly under the Organization.
     #[prost(message, repeated, tag = "7")]
     pub folders: ::prost::alloc::vec::Vec<Folder>,
+    /// Indicates which cloud provider the resource resides in.
+    #[prost(enumeration = "CloudProvider", tag = "9")]
+    pub cloud_provider: i32,
+    /// Indicates which organization or tenant in the cloud provider the finding
+    /// applies to.
+    #[prost(string, tag = "10")]
+    pub organization: ::prost::alloc::string::String,
+    /// The parent service or product from which the resource is provided, for
+    /// example, GKE or SNS.
+    #[prost(string, tag = "11")]
+    pub service: ::prost::alloc::string::String,
+    /// The region or location of the service (if applicable).
+    #[prost(string, tag = "12")]
+    pub location: ::prost::alloc::string::String,
+    /// Provides the path to the resource within the resource hierarchy.
+    #[prost(message, optional, tag = "18")]
+    pub resource_path: ::core::option::Option<ResourcePath>,
+    /// A string representation of the resource path.
+    /// For Google Cloud, it has the format of
+    /// `organizations/{organization_id}/folders/{folder_id}/folders/{folder_id}/projects/{project_id}`
+    /// where there can be any number of folders.
+    /// For AWS, it has the format of
+    /// `org/{organization_id}/ou/{organizational_unit_id}/ou/{organizational_unit_id}/account/{account_id}`
+    /// where there can be any number of organizational units.
+    /// For Azure, it has the format of
+    /// `mg/{management_group_id}/mg/{management_group_id}/subscription/{subscription_id}/rg/{resource_group_name}`
+    /// where there can be any number of management groups.
+    #[prost(string, tag = "19")]
+    pub resource_path_string: ::prost::alloc::string::String,
+    #[prost(oneof = "resource::CloudProviderMetadata", tags = "16, 17")]
+    pub cloud_provider_metadata: ::core::option::Option<resource::CloudProviderMetadata>,
+}
+/// Nested message and enum types in `Resource`.
+pub mod resource {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum CloudProviderMetadata {
+        /// The AWS metadata associated with the finding.
+        #[prost(message, tag = "16")]
+        AwsMetadata(super::AwsMetadata),
+        /// The Azure metadata associated with the finding.
+        #[prost(message, tag = "17")]
+        AzureMetadata(super::AzureMetadata),
+    }
+}
+/// AWS metadata associated with the resource, only applicable if the finding's
+/// cloud provider is Amazon Web Services.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AwsMetadata {
+    /// The AWS organization associated with the resource.
+    #[prost(message, optional, tag = "2")]
+    pub organization: ::core::option::Option<aws_metadata::AwsOrganization>,
+    /// A list of AWS organizational units associated with the resource, ordered
+    /// from lowest level (closest to the account) to highest level.
+    #[prost(message, repeated, tag = "3")]
+    pub organizational_units: ::prost::alloc::vec::Vec<aws_metadata::AwsOrganizationalUnit>,
+    /// The AWS account associated with the resource.
+    #[prost(message, optional, tag = "4")]
+    pub account: ::core::option::Option<aws_metadata::AwsAccount>,
+}
+/// Nested message and enum types in `AwsMetadata`.
+pub mod aws_metadata {
+    /// An organization is a collection of accounts that are centrally managed
+    /// together using consolidated billing, organized hierarchically with
+    /// organizational units (OUs), and controlled with policies.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AwsOrganization {
+        /// The unique identifier (ID) for the organization. The regex pattern for an
+        /// organization ID string requires "o-" followed by from 10 to 32 lowercase
+        /// letters or digits.
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+    }
+    /// An Organizational Unit (OU) is a container of AWS accounts within a root of
+    /// an organization. Policies that are attached to an OU apply to all accounts
+    /// contained in that OU and in any child OUs.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AwsOrganizationalUnit {
+        /// The unique identifier (ID) associated with this OU. The regex pattern for
+        /// an organizational unit ID string requires "ou-" followed by from 4 to 32
+        /// lowercase letters or digits (the ID of the root that contains the OU).
+        /// This string is followed by a second "-" dash and from 8 to 32 additional
+        /// lowercase letters or digits. For example, "ou-ab12-cd34ef56".
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+        /// The friendly name of the OU.
+        #[prost(string, tag = "2")]
+        pub name: ::prost::alloc::string::String,
+    }
+    /// An AWS account that is a member of an organization.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AwsAccount {
+        /// The unique identifier (ID) of the account, containing exactly 12 digits.
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+        /// The friendly name of this account.
+        #[prost(string, tag = "2")]
+        pub name: ::prost::alloc::string::String,
+    }
+}
+/// Azure metadata associated with the resource, only applicable if the finding's
+/// cloud provider is Microsoft Azure.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AzureMetadata {
+    /// A list of Azure management groups associated with the resource, ordered
+    /// from lowest level (closest to the subscription) to highest level.
+    #[prost(message, repeated, tag = "4")]
+    pub management_groups: ::prost::alloc::vec::Vec<azure_metadata::AzureManagementGroup>,
+    /// The Azure subscription associated with the resource.
+    #[prost(message, optional, tag = "5")]
+    pub subscription: ::core::option::Option<azure_metadata::AzureSubscription>,
+    /// The Azure resource group associated with the resource.
+    #[prost(message, optional, tag = "6")]
+    pub resource_group: ::core::option::Option<azure_metadata::AzureResourceGroup>,
+}
+/// Nested message and enum types in `AzureMetadata`.
+pub mod azure_metadata {
+    /// Represents an Azure management group.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AzureManagementGroup {
+        /// The UUID of the Azure management group, for example,
+        /// `20000000-0001-0000-0000-000000000000`.
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+        /// The display name of the Azure management group.
+        #[prost(string, tag = "2")]
+        pub display_name: ::prost::alloc::string::String,
+    }
+    /// Represents an Azure subscription.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AzureSubscription {
+        /// The UUID of the Azure subscription, for example,
+        /// `291bba3f-e0a5-47bc-a099-3bdcb2a50a05`.
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+        /// The display name of the Azure subscription.
+        #[prost(string, tag = "2")]
+        pub display_name: ::prost::alloc::string::String,
+    }
+    /// Represents an Azure resource group.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AzureResourceGroup {
+        /// The name of the Azure resource group. This is not a UUID.
+        #[prost(string, tag = "1")]
+        pub name: ::prost::alloc::string::String,
+    }
+}
+/// Represents the path of resources leading up to the resource this finding is
+/// about.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourcePath {
+    /// The list of nodes that make the up resource path, ordered from lowest
+    /// level to highest level.
+    #[prost(message, repeated, tag = "1")]
+    pub nodes: ::prost::alloc::vec::Vec<resource_path::ResourcePathNode>,
+}
+/// Nested message and enum types in `ResourcePath`.
+pub mod resource_path {
+    /// A node within the resource path. Each node represents a resource within the
+    /// resource hierarchy.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ResourcePathNode {
+        /// The type of resource this node represents.
+        #[prost(enumeration = "ResourcePathNodeType", tag = "1")]
+        pub node_type: i32,
+        /// The ID of the resource this node represents.
+        #[prost(string, tag = "2")]
+        pub id: ::prost::alloc::string::String,
+        /// The display name of the resource this node represents.
+        #[prost(string, tag = "3")]
+        pub display_name: ::prost::alloc::string::String,
+    }
+    /// The type of resource the node represents.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ResourcePathNodeType {
+        /// Node type is unspecified.
+        Unspecified = 0,
+        /// The node represents a Google Cloud organization.
+        GcpOrganization = 1,
+        /// The node represents a Google Cloud folder.
+        GcpFolder = 2,
+        /// The node represents a Google Cloud project.
+        GcpProject = 3,
+        /// The node represents an AWS organization.
+        AwsOrganization = 4,
+        /// The node represents an AWS organizational unit.
+        AwsOrganizationalUnit = 5,
+        /// The node represents an AWS account.
+        AwsAccount = 6,
+        /// The node represents an Azure management group.
+        AzureManagementGroup = 7,
+        /// The node represents an Azure subscription.
+        AzureSubscription = 8,
+        /// The node represents an Azure resource group.
+        AzureResourceGroup = 9,
+    }
+}
+/// Enumeration representing the various cloud providers a finding's resource
+/// could reside in.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum CloudProvider {
+    /// The cloud provider is unspecified.
+    Unspecified = 0,
+    /// The cloud provider is Google Cloud Platform.
+    GoogleCloudPlatform = 1,
+    /// The cloud provider is Amazon Web Services.
+    AmazonWebServices = 2,
+    /// The cloud provider is Microsoft Azure.
+    MicrosoftAzure = 3,
 }
 /// Cloud SCC's Notification
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1941,6 +3117,94 @@ pub mod organization_settings {
             Exclude = 2,
         }
     }
+}
+/// A resource value configuration (RVC) is a mapping configuration of user's
+/// resources to resource values. Used in Attack path simulations.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourceValueConfig {
+    /// Name for the resource value configuration
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Resource value level this expression represents
+    #[prost(enumeration = "ResourceValue", tag = "2")]
+    pub resource_value: i32,
+    /// Required. Tag values combined with `AND` to check against.
+    /// Values in the form "tagValues/123"
+    /// Example: `[ "tagValues/123", "tagValues/456", "tagValues/789" ]`
+    /// <https://cloud.google.com/resource-manager/docs/tags/tags-creating-and-managing>
+    #[prost(string, repeated, tag = "3")]
+    pub tag_values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Apply resource_value only to resources that match resource_type.
+    /// resource_type will be checked with `AND` of other resources.
+    /// For example, "storage.googleapis.com/Bucket" with resource_value "HIGH"
+    /// will apply "HIGH" value only to "storage.googleapis.com/Bucket" resources.
+    #[prost(string, tag = "4")]
+    pub resource_type: ::prost::alloc::string::String,
+    /// Project or folder to scope this configuration to.
+    /// For example, "project/456" would apply this configuration only to resources
+    /// in "project/456" scope will be checked with `AND` of other
+    /// resources.
+    #[prost(string, tag = "5")]
+    pub scope: ::prost::alloc::string::String,
+    /// List of resource labels to search for, evaluated with `AND`.
+    /// For example, `"resource_labels_selector": {"key": "value", "env": "prod"}`
+    /// will match resources with labels "key": "value" `AND` "env":
+    /// "prod"
+    /// <https://cloud.google.com/resource-manager/docs/creating-managing-labels>
+    #[prost(map = "string, string", tag = "6")]
+    pub resource_labels_selector:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Description of the resource value configuration.
+    #[prost(string, tag = "7")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. Timestamp this resource value configuration was created.
+    #[prost(message, optional, tag = "8")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Timestamp this resource value configuration was last updated.
+    #[prost(message, optional, tag = "9")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Cloud provider this configuration applies to
+    #[prost(enumeration = "CloudProvider", tag = "10")]
+    pub cloud_provider: i32,
+    /// A mapping of the sensitivity on Sensitive Data Protection finding to
+    /// resource values. This mapping can only be used in combination with a
+    /// resource_type that is related to BigQuery, e.g.
+    /// "bigquery.googleapis.com/Dataset".
+    #[prost(message, optional, tag = "11")]
+    pub sensitive_data_protection_mapping:
+        ::core::option::Option<resource_value_config::SensitiveDataProtectionMapping>,
+}
+/// Nested message and enum types in `ResourceValueConfig`.
+pub mod resource_value_config {
+    /// Resource value mapping for Sensitive Data Protection findings.
+    /// If any of these mappings have a resource value that is not unspecified,
+    /// the resource_value field will be ignored when reading this configuration.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SensitiveDataProtectionMapping {
+        /// Resource value mapping for high-sensitivity Sensitive Data Protection
+        /// findings
+        #[prost(enumeration = "super::ResourceValue", tag = "1")]
+        pub high_sensitivity_mapping: i32,
+        /// Resource value mapping for medium-sensitivity Sensitive Data Protection
+        /// findings
+        #[prost(enumeration = "super::ResourceValue", tag = "2")]
+        pub medium_sensitivity_mapping: i32,
+    }
+}
+/// Value enum to map to a resource
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ResourceValue {
+    /// Unspecific value
+    Unspecified = 0,
+    /// High resource value
+    High = 1,
+    /// Medium resource value
+    Medium = 2,
+    /// Low resource value
+    Low = 3,
+    /// No resource value, e.g. ignore these resources
+    None = 4,
 }
 /// Response of asset discovery run
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2035,6 +3299,81 @@ pub mod security_health_analytics_custom_module {
         Inherited = 3,
     }
 }
+/// A resource that is determined to have value to a user's system
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValuedResource {
+    /// Valued resource name, for example,
+    ///  e.g.:
+    ///  `organizations/123/simulations/456/valuedResources/789`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The
+    /// [full resource
+    /// name](<https://cloud.google.com/apis/design/resource_names#full_resource_name>)
+    /// of the valued resource.
+    #[prost(string, tag = "2")]
+    pub resource: ::prost::alloc::string::String,
+    /// The [resource
+    /// type](<https://cloud.google.com/asset-inventory/docs/supported-asset-types>)
+    /// of the valued resource.
+    #[prost(string, tag = "3")]
+    pub resource_type: ::prost::alloc::string::String,
+    /// Human-readable name of the valued resource.
+    #[prost(string, tag = "4")]
+    pub display_name: ::prost::alloc::string::String,
+    /// How valuable this resource is.
+    #[prost(enumeration = "valued_resource::ResourceValue", tag = "5")]
+    pub resource_value: i32,
+    /// Exposed score for this valued resource. A value of 0 means no exposure was
+    /// detected exposure.
+    #[prost(double, tag = "6")]
+    pub exposed_score: f64,
+    /// List of resource value configurations' metadata used to determine the value
+    /// of this resource. Maximum of 100.
+    #[prost(message, repeated, tag = "7")]
+    pub resource_value_configs_used: ::prost::alloc::vec::Vec<ResourceValueConfigMetadata>,
+}
+/// Nested message and enum types in `ValuedResource`.
+pub mod valued_resource {
+    /// How valuable the resource is.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ResourceValue {
+        /// The resource value isn't specified.
+        Unspecified = 0,
+        /// This is a low-value resource.
+        Low = 1,
+        /// This is a medium-value resource.
+        Medium = 2,
+        /// This is a high-value resource.
+        High = 3,
+    }
+}
+/// Metadata about a ResourceValueConfig. For example, id and name.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourceValueConfigMetadata {
+    /// Resource value config name
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Attack path simulation
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Simulation {
+    /// Full resource name of the Simulation:
+    /// `organizations/123/simulations/456`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Time simulation was created
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Resource value configurations' metadata used in this simulation. Maximum of
+    /// 100.
+    #[prost(message, repeated, tag = "3")]
+    pub resource_value_configs_metadata: ::prost::alloc::vec::Vec<ResourceValueConfigMetadata>,
+    /// Indicates which cloud provider was used in this simulation.
+    #[prost(enumeration = "CloudProvider", tag = "4")]
+    pub cloud_provider: i32,
+}
 /// Security Command Center finding source. A finding source
 /// is an entity or a mechanism that can produce a finding. A source is like a
 /// container of findings that come from the same scanner, logger, monitor, and
@@ -2063,9 +3402,9 @@ pub struct Source {
     /// outdated or insecure libraries."
     #[prost(string, tag = "3")]
     pub description: ::prost::alloc::string::String,
-    /// The canonical name of the finding. It's either
+    /// The canonical name of the finding source. It's either
     /// "organizations/{organization_id}/sources/{source_id}",
-    /// "folders/{folder_id}/sources/{source_id}" or
+    /// "folders/{folder_id}/sources/{source_id}", or
     /// "projects/{project_number}/sources/{source_id}",
     /// depending on the closest CRM ancestor of the resource associated with the
     /// finding.
@@ -2081,8 +3420,8 @@ pub struct Source {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BulkMuteFindingsRequest {
     /// Required. The parent, at which bulk action needs to be applied. Its format
-    /// is "organizations/\[organization_id\]", "folders/\[folder_id\]",
-    /// "projects/\[project_id\]".
+    /// is `organizations/\[organization_id\]`, `folders/\[folder_id\]`,
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Expression that identifies findings that should be updated.
@@ -2120,7 +3459,7 @@ pub struct BulkMuteFindingsResponse {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateFindingRequest {
     /// Required. Resource name of the new finding's parent. Its format should be
-    /// "organizations/\[organization_id]/sources/[source_id\]".
+    /// `organizations/\[organization_id]/sources/[source_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. Unique identifier provided by the client within the parent scope.
@@ -2137,8 +3476,8 @@ pub struct CreateFindingRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateMuteConfigRequest {
     /// Required. Resource name of the new mute configs's parent. Its format is
-    /// "organizations/\[organization_id\]", "folders/\[folder_id\]", or
-    /// "projects/\[project_id\]".
+    /// `organizations/\[organization_id\]`, `folders/\[folder_id\]`, or
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The mute config being created.
@@ -2151,12 +3490,103 @@ pub struct CreateMuteConfigRequest {
     #[prost(string, tag = "3")]
     pub mute_config_id: ::prost::alloc::string::String,
 }
+/// Request message to create single resource value config
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateResourceValueConfigRequest {
+    /// Required. Resource name of the new ResourceValueConfig's parent.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The resource value config being created.
+    #[prost(message, optional, tag = "2")]
+    pub resource_value_config: ::core::option::Option<ResourceValueConfig>,
+}
+/// Request message to create multiple resource value configs
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchCreateResourceValueConfigsRequest {
+    /// Required. Resource name of the new ResourceValueConfig's parent.
+    /// The parent field in the CreateResourceValueConfigRequest
+    /// messages must either be empty or match this field.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The resource value configs to be created.
+    #[prost(message, repeated, tag = "2")]
+    pub requests: ::prost::alloc::vec::Vec<CreateResourceValueConfigRequest>,
+}
+/// Response message for BatchCreateResourceValueConfigs
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchCreateResourceValueConfigsResponse {
+    /// The resource value configs created
+    #[prost(message, repeated, tag = "1")]
+    pub resource_value_configs: ::prost::alloc::vec::Vec<ResourceValueConfig>,
+}
+/// Request message to delete resource value config
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteResourceValueConfigRequest {
+    /// Required. Name of the ResourceValueConfig to delete
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message to get resource value config
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetResourceValueConfigRequest {
+    /// Required. Name of the resource value config to retrieve. Its format is
+    /// `organizations/{organization}/resourceValueConfigs/{config_id}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message to list resource value configs of a parent
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListResourceValueConfigsRequest {
+    /// Required. The parent, which owns the collection of resource value configs.
+    /// Its format is
+    /// `organizations/\[organization_id\]`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The number of results to return. The service may return fewer than
+    /// this value.
+    /// If unspecified, at most 10 configs will be returned.
+    /// The maximum value is 1000; values above 1000 will be coerced to 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListResourceValueConfigs` call.
+    /// Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListResourceValueConfigs` must match the call that provided the
+    /// page token.
+    ///
+    /// page_size can be specified, and the new page_size will be used.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message to list resource value configs
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListResourceValueConfigsResponse {
+    /// The resource value configs from the specified parent.
+    #[prost(message, repeated, tag = "1")]
+    pub resource_value_configs: ::prost::alloc::vec::Vec<ResourceValueConfig>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is empty, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message to update resource value config
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateResourceValueConfigRequest {
+    /// Required. The resource value config being updated.
+    #[prost(message, optional, tag = "1")]
+    pub resource_value_config: ::core::option::Option<ResourceValueConfig>,
+    /// The list of fields to be updated.
+    /// If empty all mutable fields will be updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
 /// Request message for creating a notification config.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateNotificationConfigRequest {
     /// Required. Resource name of the new notification config's parent. Its format
-    /// is "organizations/\[organization_id\]", "folders/\[folder_id\]", or
-    /// "projects/\[project_id\]".
+    /// is `organizations/\[organization_id\]`, `folders/\[folder_id\]`, or
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required.
@@ -2175,9 +3605,9 @@ pub struct CreateNotificationConfigRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateSecurityHealthAnalyticsCustomModuleRequest {
     /// Required. Resource name of the new custom module's parent. Its format is
-    /// "organizations/{organization}/securityHealthAnalyticsSettings",
-    /// "folders/{folder}/securityHealthAnalyticsSettings", or
-    /// "projects/{project}/securityHealthAnalyticsSettings"
+    /// `organizations/{organization}/securityHealthAnalyticsSettings`,
+    /// `folders/{folder}/securityHealthAnalyticsSettings`, or
+    /// `projects/{project}/securityHealthAnalyticsSettings`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. SecurityHealthAnalytics custom module to create. The provided
@@ -2191,7 +3621,7 @@ pub struct CreateSecurityHealthAnalyticsCustomModuleRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateSourceRequest {
     /// Required. Resource name of the new source's parent. Its format should be
-    /// "organizations/\[organization_id\]".
+    /// `organizations/\[organization_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The Source being created, only the display_name and description
@@ -2203,9 +3633,12 @@ pub struct CreateSourceRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteMuteConfigRequest {
     /// Required. Name of the mute config to delete. Its format is
-    /// organizations/{organization}/muteConfigs/{config_id},
-    /// folders/{folder}/muteConfigs/{config_id}, or
-    /// projects/{project}/muteConfigs/{config_id}
+    /// `organizations/{organization}/muteConfigs/{config_id}`,
+    /// `folders/{folder}/muteConfigs/{config_id}`,
+    /// `projects/{project}/muteConfigs/{config_id}`,
+    /// `organizations/{organization}/locations/global/muteConfigs/{config_id}`,
+    /// `folders/{folder}/locations/global/muteConfigs/{config_id}`, or
+    /// `projects/{project}/locations/global/muteConfigs/{config_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2213,9 +3646,9 @@ pub struct DeleteMuteConfigRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteNotificationConfigRequest {
     /// Required. Name of the notification config to delete. Its format is
-    /// "organizations/\[organization_id]/notificationConfigs/[config_id\]",
-    /// "folders/\[folder_id]/notificationConfigs/[config_id\]",
-    /// or "projects/\[project_id]/notificationConfigs/[config_id\]".
+    /// `organizations/\[organization_id]/notificationConfigs/[config_id\]`,
+    /// `folders/\[folder_id]/notificationConfigs/[config_id\]`,
+    /// or `projects/\[project_id]/notificationConfigs/[config_id\]`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2223,10 +3656,10 @@ pub struct DeleteNotificationConfigRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteSecurityHealthAnalyticsCustomModuleRequest {
     /// Required. Name of the custom module to delete. Its format is
-    /// "organizations/{organization}/securityHealthAnalyticsSettings/customModules/{customModule}",
-    /// "folders/{folder}/securityHealthAnalyticsSettings/customModules/{customModule}",
+    /// `organizations/{organization}/securityHealthAnalyticsSettings/customModules/{customModule}`,
+    /// `folders/{folder}/securityHealthAnalyticsSettings/customModules/{customModule}`,
     /// or
-    /// "projects/{project}/securityHealthAnalyticsSettings/customModules/{customModule}"
+    /// `projects/{project}/securityHealthAnalyticsSettings/customModules/{customModule}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2234,9 +3667,9 @@ pub struct DeleteSecurityHealthAnalyticsCustomModuleRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetBigQueryExportRequest {
     /// Required. Name of the BigQuery export to retrieve. Its format is
-    /// organizations/{organization}/bigQueryExports/{export_id},
-    /// folders/{folder}/bigQueryExports/{export_id}, or
-    /// projects/{project}/bigQueryExports/{export_id}
+    /// `organizations/{organization}/bigQueryExports/{export_id}`,
+    /// `folders/{folder}/bigQueryExports/{export_id}`, or
+    /// `projects/{project}/bigQueryExports/{export_id}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2244,9 +3677,12 @@ pub struct GetBigQueryExportRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetMuteConfigRequest {
     /// Required. Name of the mute config to retrieve. Its format is
-    /// organizations/{organization}/muteConfigs/{config_id},
-    /// folders/{folder}/muteConfigs/{config_id}, or
-    /// projects/{project}/muteConfigs/{config_id}
+    /// `organizations/{organization}/muteConfigs/{config_id}`,
+    /// `folders/{folder}/muteConfigs/{config_id}`,
+    /// `projects/{project}/muteConfigs/{config_id}`,
+    /// `organizations/{organization}/locations/global/muteConfigs/{config_id}`,
+    /// `folders/{folder}/locations/global/muteConfigs/{config_id}`, or
+    /// `projects/{project}/locations/global/muteConfigs/{config_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2254,9 +3690,9 @@ pub struct GetMuteConfigRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetNotificationConfigRequest {
     /// Required. Name of the notification config to get. Its format is
-    /// "organizations/\[organization_id]/notificationConfigs/[config_id\]",
-    /// "folders/\[folder_id]/notificationConfigs/[config_id\]",
-    /// or "projects/\[project_id]/notificationConfigs/[config_id\]".
+    /// `organizations/\[organization_id]/notificationConfigs/[config_id\]`,
+    /// `folders/\[folder_id]/notificationConfigs/[config_id\]`,
+    /// or `projects/\[project_id]/notificationConfigs/[config_id\]`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2264,7 +3700,7 @@ pub struct GetNotificationConfigRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetOrganizationSettingsRequest {
     /// Required. Name of the organization to get organization settings for. Its
-    /// format is "organizations/\[organization_id\]/organizationSettings".
+    /// format is `organizations/\[organization_id\]/organizationSettings`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2273,10 +3709,10 @@ pub struct GetOrganizationSettingsRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetEffectiveSecurityHealthAnalyticsCustomModuleRequest {
     /// Required. Name of the effective custom module to get. Its format is
-    /// "organizations/{organization}/securityHealthAnalyticsSettings/effectiveCustomModules/{customModule}",
-    /// "folders/{folder}/securityHealthAnalyticsSettings/effectiveCustomModules/{customModule}",
+    /// `organizations/{organization}/securityHealthAnalyticsSettings/effectiveCustomModules/{customModule}`,
+    /// `folders/{folder}/securityHealthAnalyticsSettings/effectiveCustomModules/{customModule}`,
     /// or
-    /// "projects/{project}/securityHealthAnalyticsSettings/effectiveCustomModules/{customModule}"
+    /// `projects/{project}/securityHealthAnalyticsSettings/effectiveCustomModules/{customModule}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2284,10 +3720,10 @@ pub struct GetEffectiveSecurityHealthAnalyticsCustomModuleRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSecurityHealthAnalyticsCustomModuleRequest {
     /// Required. Name of the custom module to get. Its format is
-    /// "organizations/{organization}/securityHealthAnalyticsSettings/customModules/{customModule}",
-    /// "folders/{folder}/securityHealthAnalyticsSettings/customModules/{customModule}",
+    /// `organizations/{organization}/securityHealthAnalyticsSettings/customModules/{customModule}`,
+    /// `folders/{folder}/securityHealthAnalyticsSettings/customModules/{customModule}`,
     /// or
-    /// "projects/{project}/securityHealthAnalyticsSettings/customModules/{customModule}"
+    /// `projects/{project}/securityHealthAnalyticsSettings/customModules/{customModule}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2295,7 +3731,7 @@ pub struct GetSecurityHealthAnalyticsCustomModuleRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSourceRequest {
     /// Required. Relative resource name of the source. Its format is
-    /// "organizations/\[organization_id]/source/[source_id\]".
+    /// `organizations/\[organization_id]/source/[source_id\]`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -2303,8 +3739,8 @@ pub struct GetSourceRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupAssetsRequest {
     /// Required. The name of the parent to group the assets by. Its format is
-    /// "organizations/\[organization_id\]", "folders/\[folder_id\]", or
-    /// "projects/\[project_id\]".
+    /// `organizations/\[organization_id\]`, `folders/\[folder_id\]`, or
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Expression that defines the filter to apply across assets.
@@ -2459,12 +3895,12 @@ pub struct GroupAssetsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GroupFindingsRequest {
     /// Required. Name of the source to groupBy. Its format is
-    /// "organizations/\[organization_id]/sources/[source_id\]",
-    /// folders/\[folder_id]/sources/[source_id\], or
-    /// projects/\[project_id]/sources/[source_id\]. To groupBy across all sources
+    /// `organizations/\[organization_id]/sources/[source_id\]`,
+    /// `folders/\[folder_id]/sources/[source_id\]`, or
+    /// `projects/\[project_id]/sources/[source_id\]`. To groupBy across all sources
     /// provide a source_id of `-`. For example:
-    /// organizations/{organization_id}/sources/-, folders/{folder_id}/sources/-,
-    /// or projects/{project_id}/sources/-
+    /// `organizations/{organization_id}/sources/-, folders/{folder_id}/sources/-`,
+    /// or `projects/{project_id}/sources/-`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Expression that defines the filter to apply across findings.
@@ -2531,14 +3967,6 @@ pub struct GroupFindingsRequest {
     /// Required. Expression that defines what assets fields to use for grouping
     /// (including `state_change`). The string value should follow SQL syntax:
     /// comma separated list of fields. For example: "parent,resource_name".
-    ///
-    /// The following fields are supported:
-    ///
-    /// * resource_name
-    /// * category
-    /// * state
-    /// * parent
-    /// * severity
     ///
     /// The following fields are supported when compare_duration is set:
     ///
@@ -2630,9 +4058,9 @@ pub struct GroupResult {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListDescendantSecurityHealthAnalyticsCustomModulesRequest {
     /// Required. Name of parent to list descendant custom modules. Its format is
-    /// "organizations/{organization}/securityHealthAnalyticsSettings",
-    /// "folders/{folder}/securityHealthAnalyticsSettings", or
-    /// "projects/{project}/securityHealthAnalyticsSettings"
+    /// `organizations/{organization}/securityHealthAnalyticsSettings`,
+    /// `folders/{folder}/securityHealthAnalyticsSettings`, or
+    /// `projects/{project}/securityHealthAnalyticsSettings`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of results to return in a single response. Default is
@@ -2656,13 +4084,141 @@ pub struct ListDescendantSecurityHealthAnalyticsCustomModulesResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
+/// Request message for listing the valued resources for a given simulation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListValuedResourcesRequest {
+    /// Required. Name of parent to list valued resources.
+    ///
+    /// Valid formats:
+    /// `organizations/{organization}`,
+    /// `organizations/{organization}/simulations/{simulation}`
+    /// `organizations/{organization}/simulations/{simulation}/attackExposureResults/{attack_exposure_result_v2}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The filter expression that filters the valued resources in the response.
+    /// Supported fields:
+    ///
+    ///   * `resource_value` supports =
+    ///   * `resource_type` supports =
+    #[prost(string, tag = "2")]
+    pub filter: ::prost::alloc::string::String,
+    /// The value returned by the last `ListValuedResourcesResponse`; indicates
+    /// that this is a continuation of a prior `ListValuedResources` call, and
+    /// that the system should return the next page of data.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// The maximum number of results to return in a single response. Default is
+    /// 10, minimum is 1, maximum is 1000.
+    #[prost(int32, tag = "4")]
+    pub page_size: i32,
+    /// Optional. The fields by which to order the valued resources response.
+    ///
+    /// Supported fields:
+    ///
+    ///   * `exposed_score`
+    ///
+    ///   * `resource_value`
+    ///
+    ///   * `resource_type`
+    ///
+    ///   * `resource`
+    ///
+    ///   * `display_name`
+    ///
+    /// Values should be a comma separated list of fields. For example:
+    /// `exposed_score,resource_value`.
+    ///
+    /// The default sorting order is descending. To specify ascending or descending
+    /// order for a field, append a ` ASC` or a ` DESC` suffix, respectively; for
+    /// example: `exposed_score DESC`.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for listing the valued resources for a given simulation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListValuedResourcesResponse {
+    /// The valued resources that the attack path simulation identified.
+    #[prost(message, repeated, tag = "1")]
+    pub valued_resources: ::prost::alloc::vec::Vec<ValuedResource>,
+    /// Token to retrieve the next page of results, or empty if there are no more
+    /// results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// The estimated total number of results matching the query.
+    #[prost(int32, tag = "3")]
+    pub total_size: i32,
+}
+/// Request message for listing the attack paths for a given simulation or valued
+/// resource.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAttackPathsRequest {
+    /// Required. Name of parent to list attack paths.
+    ///
+    /// Valid formats:
+    /// `organizations/{organization}`,
+    /// `organizations/{organization}/simulations/{simulation}`
+    /// `organizations/{organization}/simulations/{simulation}/attackExposureResults/{attack_exposure_result_v2}`
+    /// `organizations/{organization}/simulations/{simulation}/valuedResources/{valued_resource}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The filter expression that filters the attack path in the response.
+    /// Supported fields:
+    ///
+    ///   * `valued_resources` supports =
+    #[prost(string, tag = "2")]
+    pub filter: ::prost::alloc::string::String,
+    /// The value returned by the last `ListAttackPathsResponse`; indicates
+    /// that this is a continuation of a prior `ListAttackPaths` call, and
+    /// that the system should return the next page of data.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// The maximum number of results to return in a single response. Default is
+    /// 10, minimum is 1, maximum is 1000.
+    #[prost(int32, tag = "4")]
+    pub page_size: i32,
+}
+/// Response message for listing the attack paths for a given simulation or
+/// valued resource.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAttackPathsResponse {
+    /// The attack paths that the attack path simulation identified.
+    #[prost(message, repeated, tag = "1")]
+    pub attack_paths: ::prost::alloc::vec::Vec<AttackPath>,
+    /// Token to retrieve the next page of results, or empty if there are no more
+    /// results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for getting simulation.
+/// Simulation name can include "latest" to retrieve the latest simulation
+/// For example, "organizations/123/simulations/latest"
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSimulationRequest {
+    /// Required. The organization name or simulation name of this simulation
+    ///
+    /// Valid format:
+    /// `organizations/{organization}/simulations/latest`
+    /// `organizations/{organization}/simulations/{simulation}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for getting a valued resource.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetValuedResourceRequest {
+    /// Required. The name of this valued resource
+    ///
+    /// Valid format:
+    /// `organizations/{organization}/simulations/{simulation}/valuedResources/{valued_resource}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
 /// Request message for listing  mute configs at a given scope e.g. organization,
 /// folder or project.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListMuteConfigsRequest {
     /// Required. The parent, which owns the collection of mute configs. Its format
-    /// is "organizations/\[organization_id\]", "folders/\[folder_id\]",
-    /// "projects/\[project_id\]".
+    /// is `organizations/\[organization_id\]`, `folders/\[folder_id\]`,
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of configs to return. The service may return fewer than
@@ -2724,9 +4280,9 @@ pub struct ListNotificationConfigsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListEffectiveSecurityHealthAnalyticsCustomModulesRequest {
     /// Required. Name of parent to list effective custom modules. Its format is
-    /// "organizations/{organization}/securityHealthAnalyticsSettings",
-    /// "folders/{folder}/securityHealthAnalyticsSettings", or
-    /// "projects/{project}/securityHealthAnalyticsSettings"
+    /// `organizations/{organization}/securityHealthAnalyticsSettings`,
+    /// `folders/{folder}/securityHealthAnalyticsSettings`, or
+    /// `projects/{project}/securityHealthAnalyticsSettings`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of results to return in a single response. Default is
@@ -2754,9 +4310,9 @@ pub struct ListEffectiveSecurityHealthAnalyticsCustomModulesResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSecurityHealthAnalyticsCustomModulesRequest {
     /// Required. Name of parent to list custom modules. Its format is
-    /// "organizations/{organization}/securityHealthAnalyticsSettings",
-    /// "folders/{folder}/securityHealthAnalyticsSettings", or
-    /// "projects/{project}/securityHealthAnalyticsSettings"
+    /// `organizations/{organization}/securityHealthAnalyticsSettings`,
+    /// `folders/{folder}/securityHealthAnalyticsSettings`, or
+    /// `projects/{project}/securityHealthAnalyticsSettings`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of results to return in a single response. Default is
@@ -2783,8 +4339,8 @@ pub struct ListSecurityHealthAnalyticsCustomModulesResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSourcesRequest {
     /// Required. Resource name of the parent of sources to list. Its format should
-    /// be "organizations/\[organization_id\]", "folders/\[folder_id\]", or
-    /// "projects/\[project_id\]".
+    /// be `organizations/\[organization_id\]`, `folders/\[folder_id\]`, or
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The value returned by the last `ListSourcesResponse`; indicates
@@ -2814,8 +4370,8 @@ pub struct ListAssetsRequest {
     /// Required. The name of the parent resource that contains the assets. The
     /// value that you can specify on parent depends on the method in which you
     /// specify parent. You can specify one of the following values:
-    /// "organizations/\[organization_id\]", "folders/\[folder_id\]", or
-    /// "projects/\[project_id\]".
+    /// `organizations/\[organization_id\]`, `folders/\[folder_id\]`, or
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Expression that defines the filter to apply across assets.
@@ -3009,12 +4565,12 @@ pub mod list_assets_response {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListFindingsRequest {
     /// Required. Name of the source the findings belong to. Its format is
-    /// "organizations/\[organization_id]/sources/[source_id\],
-    /// folders/\[folder_id]/sources/[source_id\], or
-    /// projects/\[project_id]/sources/[source_id\]". To list across all sources
+    /// `organizations/\[organization_id]/sources/[source_id\]`,
+    /// `folders/\[folder_id]/sources/[source_id\]`, or
+    /// `projects/\[project_id]/sources/[source_id\]`. To list across all sources
     /// provide a source_id of `-`. For example:
-    /// organizations/{organization_id}/sources/-, folders/{folder_id}/sources/- or
-    /// projects/{projects_id}/sources/-
+    /// `organizations/{organization_id}/sources/-`,
+    /// `folders/{folder_id}/sources/-` or `projects/{projects_id}/sources/-`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Expression that defines the filter to apply across findings.
@@ -3217,6 +4773,47 @@ pub mod list_findings_response {
             /// the folder directly under the Organization.
             #[prost(message, repeated, tag = "7")]
             pub folders: ::prost::alloc::vec::Vec<super::super::Folder>,
+            /// Indicates which cloud provider the finding is from.
+            #[prost(enumeration = "super::super::CloudProvider", tag = "9")]
+            pub cloud_provider: i32,
+            /// Indicates which organization / tenant the finding is for.
+            #[prost(string, tag = "10")]
+            pub organization: ::prost::alloc::string::String,
+            /// The service or resource provider associated with the resource.
+            #[prost(string, tag = "11")]
+            pub service: ::prost::alloc::string::String,
+            /// The region or location of the service (if applicable).
+            #[prost(string, tag = "12")]
+            pub location: ::prost::alloc::string::String,
+            /// Provides the path to the resource within the resource hierarchy.
+            #[prost(message, optional, tag = "18")]
+            pub resource_path: ::core::option::Option<super::super::ResourcePath>,
+            /// A string representation of the resource path.
+            /// For Google Cloud, it has the format of
+            /// `org/{organization_id}/folder/{folder_id}/folder/{folder_id}/project/{project_id}`
+            /// where there can be any number of folders.
+            /// For AWS, it has the format of
+            /// `org/{organization_id}/ou/{organizational_unit_id}/ou/{organizational_unit_id}/account/{account_id}`
+            /// where there can be any number of organizational units.
+            /// For Azure, it has the format of
+            /// `mg/{management_group_id}/mg/{management_group_id}/subscription/{subscription_id}/rg/{resource_group_name}`
+            /// where there can be any number of management groups.
+            #[prost(string, tag = "19")]
+            pub resource_path_string: ::prost::alloc::string::String,
+            #[prost(oneof = "resource::CloudProviderMetadata", tags = "16, 17")]
+            pub cloud_provider_metadata: ::core::option::Option<resource::CloudProviderMetadata>,
+        }
+        /// Nested message and enum types in `Resource`.
+        pub mod resource {
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum CloudProviderMetadata {
+                /// The AWS metadata associated with the finding.
+                #[prost(message, tag = "16")]
+                AwsMetadata(super::super::super::AwsMetadata),
+                /// The Azure metadata associated with the finding.
+                #[prost(message, tag = "17")]
+                AzureMetadata(super::super::super::AzureMetadata),
+            }
         }
         /// The change in state of the finding.
         ///
@@ -3253,9 +4850,9 @@ pub struct SetFindingStateRequest {
     /// Required. The [relative resource
     /// name](<https://cloud.google.com/apis/design/resource_names#relative_resource_name>)
     /// of the finding. Example:
-    /// "organizations/{organization_id}/sources/{source_id}/findings/{finding_id}",
-    /// "folders/{folder_id}/sources/{source_id}/findings/{finding_id}",
-    /// "projects/{project_id}/sources/{source_id}/findings/{finding_id}".
+    /// `organizations/{organization_id}/sources/{source_id}/findings/{finding_id}`,
+    /// `folders/{folder_id}/sources/{source_id}/findings/{finding_id}`,
+    /// `projects/{project_id}/sources/{source_id}/findings/{finding_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Required. The desired State of the finding.
@@ -3271,9 +4868,9 @@ pub struct SetMuteRequest {
     /// Required. The [relative resource
     /// name](<https://cloud.google.com/apis/design/resource_names#relative_resource_name>)
     /// of the finding. Example:
-    /// "organizations/{organization_id}/sources/{source_id}/findings/{finding_id}",
-    /// "folders/{folder_id}/sources/{source_id}/findings/{finding_id}",
-    /// "projects/{project_id}/sources/{source_id}/findings/{finding_id}".
+    /// `organizations/{organization_id}/sources/{source_id}/findings/{finding_id}`,
+    /// `folders/{folder_id}/sources/{source_id}/findings/{finding_id}`,
+    /// `projects/{project_id}/sources/{source_id}/findings/{finding_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Required. The desired state of the Mute.
@@ -3284,9 +4881,84 @@ pub struct SetMuteRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RunAssetDiscoveryRequest {
     /// Required. Name of the organization to run asset discovery for. Its format
-    /// is "organizations/\[organization_id\]".
+    /// is `organizations/\[organization_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
+}
+/// Request message to simulate a CustomConfig against a given test resource.
+/// Maximum size of the request is 4 MB by default.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SimulateSecurityHealthAnalyticsCustomModuleRequest {
+    /// Required. The relative resource name of the organization, project, or
+    /// folder. For more information about relative resource names, see [Relative
+    /// Resource
+    /// Name](<https://cloud.google.com/apis/design/resource_names#relative_resource_name>)
+    /// Example: `organizations/{organization_id}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The custom configuration that you need to test.
+    #[prost(message, optional, tag = "2")]
+    pub custom_config: ::core::option::Option<CustomConfig>,
+    /// Required. Resource data to simulate custom module against.
+    #[prost(message, optional, tag = "3")]
+    pub resource: ::core::option::Option<
+        simulate_security_health_analytics_custom_module_request::SimulatedResource,
+    >,
+}
+/// Nested message and enum types in `SimulateSecurityHealthAnalyticsCustomModuleRequest`.
+pub mod simulate_security_health_analytics_custom_module_request {
+    /// Manually constructed resource name. If the custom module evaluates against
+    /// only the resource data, you can omit the `iam_policy_data` field. If it
+    /// evaluates only the `iam_policy_data` field, you can omit the resource data.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SimulatedResource {
+        /// Required. The type of the resource, for example,
+        /// `compute.googleapis.com/Disk`.
+        #[prost(string, tag = "1")]
+        pub resource_type: ::prost::alloc::string::String,
+        /// Optional. A representation of the Google Cloud resource. Should match the
+        /// Google Cloud resource JSON format.
+        #[prost(message, optional, tag = "2")]
+        pub resource_data: ::core::option::Option<::prost_types::Struct>,
+        /// Optional. A representation of the IAM policy.
+        #[prost(message, optional, tag = "3")]
+        pub iam_policy_data: ::core::option::Option<super::super::super::super::iam::v1::Policy>,
+    }
+}
+/// Response message for simulating a `SecurityHealthAnalyticsCustomModule`
+/// against a given resource.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SimulateSecurityHealthAnalyticsCustomModuleResponse {
+    /// Result for test case in the corresponding request.
+    #[prost(message, optional, tag = "1")]
+    pub result: ::core::option::Option<
+        simulate_security_health_analytics_custom_module_response::SimulatedResult,
+    >,
+}
+/// Nested message and enum types in `SimulateSecurityHealthAnalyticsCustomModuleResponse`.
+pub mod simulate_security_health_analytics_custom_module_response {
+    /// Possible test result.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SimulatedResult {
+        #[prost(oneof = "simulated_result::Result", tags = "1, 2, 3")]
+        pub result: ::core::option::Option<simulated_result::Result>,
+    }
+    /// Nested message and enum types in `SimulatedResult`.
+    pub mod simulated_result {
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Result {
+            /// Finding that would be published for the test case,
+            /// if a violation is detected.
+            #[prost(message, tag = "1")]
+            Finding(super::super::Finding),
+            /// Indicates that the test case does not trigger any violation.
+            #[prost(message, tag = "2")]
+            NoViolation(()),
+            /// Error encountered during the test.
+            #[prost(message, tag = "3")]
+            Error(super::super::super::super::super::rpc::Status),
+        }
+    }
 }
 /// Request message for updating a ExternalSystem resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -3363,7 +5035,9 @@ pub struct UpdateSecurityHealthAnalyticsCustomModuleRequest {
     #[prost(message, optional, tag = "1")]
     pub security_health_analytics_custom_module:
         ::core::option::Option<SecurityHealthAnalyticsCustomModule>,
-    /// The list of fields to update.
+    /// The list of fields to be updated. The only fields that can be updated are
+    /// `enablement_state` and `custom_config`. If empty or set to the wildcard
+    /// value `*`, both `enablement_state` and `custom_config` are updated.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
@@ -3403,8 +5077,8 @@ pub struct UpdateSecurityMarksRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateBigQueryExportRequest {
     /// Required. The name of the parent resource of the new BigQuery export. Its
-    /// format is "organizations/\[organization_id\]", "folders/\[folder_id\]", or
-    /// "projects/\[project_id\]".
+    /// format is `organizations/\[organization_id\]`, `folders/\[folder_id\]`, or
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The BigQuery export being created.
@@ -3433,8 +5107,8 @@ pub struct UpdateBigQueryExportRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBigQueryExportsRequest {
     /// Required. The parent, which owns the collection of BigQuery exports. Its
-    /// format is "organizations/\[organization_id\]", "folders/\[folder_id\]",
-    /// "projects/\[project_id\]".
+    /// format is `organizations/\[organization_id\]`, `folders/\[folder_id\]`,
+    /// `projects/\[project_id\]`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of configs to return. The service may return fewer than
@@ -3465,11 +5139,232 @@ pub struct ListBigQueryExportsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteBigQueryExportRequest {
     /// Required. The name of the BigQuery export to delete. Its format is
-    /// organizations/{organization}/bigQueryExports/{export_id},
-    /// folders/{folder}/bigQueryExports/{export_id}, or
-    /// projects/{project}/bigQueryExports/{export_id}
+    /// `organizations/{organization}/bigQueryExports/{export_id}`,
+    /// `folders/{folder}/bigQueryExports/{export_id}`, or
+    /// `projects/{project}/bigQueryExports/{export_id}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+}
+/// Request to create an Event Threat Detection custom module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateEventThreatDetectionCustomModuleRequest {
+    /// Required. The new custom module's parent.
+    ///
+    /// Its format is:
+    ///
+    ///   * `organizations/{organization}/eventThreatDetectionSettings`.
+    ///   * `folders/{folder}/eventThreatDetectionSettings`.
+    ///   * `projects/{project}/eventThreatDetectionSettings`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The module to create. The
+    /// event_threat_detection_custom_module.name will be ignored and server
+    /// generated.
+    #[prost(message, optional, tag = "2")]
+    pub event_threat_detection_custom_module:
+        ::core::option::Option<EventThreatDetectionCustomModule>,
+}
+/// Request to validate an Event Threat Detection custom module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValidateEventThreatDetectionCustomModuleRequest {
+    /// Required. Resource name of the parent to validate the Custom Module under.
+    ///
+    /// Its format is:
+    ///
+    ///   * `organizations/{organization}/eventThreatDetectionSettings`.
+    ///   * `folders/{folder}/eventThreatDetectionSettings`.
+    ///   * `projects/{project}/eventThreatDetectionSettings`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The raw text of the module's contents. Used to generate error
+    /// messages.
+    #[prost(string, tag = "2")]
+    pub raw_text: ::prost::alloc::string::String,
+    /// Required. The type of the module (e.g. CONFIGURABLE_BAD_IP).
+    #[prost(string, tag = "3")]
+    pub r#type: ::prost::alloc::string::String,
+}
+/// Response to validating an Event Threat Detection custom module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValidateEventThreatDetectionCustomModuleResponse {
+    /// A list of errors returned by the validator. If the list is empty, there
+    /// were no errors.
+    #[prost(message, optional, tag = "2")]
+    pub errors: ::core::option::Option<CustomModuleValidationErrors>,
+}
+/// Request to delete an Event Threat Detection custom module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteEventThreatDetectionCustomModuleRequest {
+    /// Required. Name of the custom module to delete.
+    ///
+    /// Its format is:
+    ///
+    /// * "organizations/{organization}/eventThreatDetectionSettings/customModules/{module}".
+    /// * "folders/{folder}/eventThreatDetectionSettings/customModules/{module}".
+    /// * "projects/{project}/eventThreatDetectionSettings/customModules/{module}".
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request to get an Event Threat Detection custom module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetEventThreatDetectionCustomModuleRequest {
+    /// Required. Name of the custom module to get.
+    ///
+    /// Its format is:
+    ///
+    /// * `organizations/{organization}/eventThreatDetectionSettings/customModules/{module}`.
+    /// * `folders/{folder}/eventThreatDetectionSettings/customModules/{module}`.
+    /// * `projects/{project}/eventThreatDetectionSettings/customModules/{module}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request to list current and descendant resident Event Threat Detection custom
+/// modules.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDescendantEventThreatDetectionCustomModulesRequest {
+    /// Required. Name of the parent to list custom modules under.
+    ///
+    /// Its format is:
+    ///
+    ///   * `organizations/{organization}/eventThreatDetectionSettings`.
+    ///   * `folders/{folder}/eventThreatDetectionSettings`.
+    ///   * `projects/{project}/eventThreatDetectionSettings`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// A page token, received from a previous
+    /// `ListDescendantEventThreatDetectionCustomModules` call. Provide this to
+    /// retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListDescendantEventThreatDetectionCustomModules` must match the call that
+    /// provided the page token.
+    #[prost(string, tag = "2")]
+    pub page_token: ::prost::alloc::string::String,
+    /// The maximum number of modules to return. The service may return fewer than
+    /// this value.
+    /// If unspecified, at most 10 configs will be returned.
+    /// The maximum value is 1000; values above 1000 will be coerced to 1000.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+}
+/// Response for listing current and descendant resident
+/// Event Threat Detection custom modules.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDescendantEventThreatDetectionCustomModulesResponse {
+    /// Custom modules belonging to the requested parent.
+    #[prost(message, repeated, tag = "1")]
+    pub event_threat_detection_custom_modules:
+        ::prost::alloc::vec::Vec<EventThreatDetectionCustomModule>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request to list Event Threat Detection custom modules.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListEventThreatDetectionCustomModulesRequest {
+    /// Required. Name of the parent to list custom modules under.
+    ///
+    /// Its format is:
+    ///
+    ///   * `organizations/{organization}/eventThreatDetectionSettings`.
+    ///   * `folders/{folder}/eventThreatDetectionSettings`.
+    ///   * `projects/{project}/eventThreatDetectionSettings`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// A page token, received from a previous
+    /// `ListEventThreatDetectionCustomModules` call. Provide this to retrieve the
+    /// subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListEventThreatDetectionCustomModules` must match the call that provided
+    /// the page token.
+    #[prost(string, tag = "2")]
+    pub page_token: ::prost::alloc::string::String,
+    /// The maximum number of modules to return. The service may return fewer than
+    /// this value.
+    /// If unspecified, at most 10 configs will be returned.
+    /// The maximum value is 1000; values above 1000 will be coerced to 1000.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+}
+/// Response for listing Event Threat Detection custom modules.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListEventThreatDetectionCustomModulesResponse {
+    /// Custom modules belonging to the requested parent.
+    #[prost(message, repeated, tag = "1")]
+    pub event_threat_detection_custom_modules:
+        ::prost::alloc::vec::Vec<EventThreatDetectionCustomModule>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request to update an Event Threat Detection custom module.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateEventThreatDetectionCustomModuleRequest {
+    /// Required. The module being updated.
+    #[prost(message, optional, tag = "1")]
+    pub event_threat_detection_custom_module:
+        ::core::option::Option<EventThreatDetectionCustomModule>,
+    /// The list of fields to be updated.
+    /// If empty all mutable fields will be updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request to get an EffectiveEventThreatDetectionCustomModule.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetEffectiveEventThreatDetectionCustomModuleRequest {
+    /// Required. The resource name of the effective Event Threat Detection custom
+    /// module.
+    ///
+    /// Its format is:
+    ///
+    ///   * `organizations/{organization}/eventThreatDetectionSettings/effectiveCustomModules/{module}`.
+    ///   * `folders/{folder}/eventThreatDetectionSettings/effectiveCustomModules/{module}`.
+    ///   * `projects/{project}/eventThreatDetectionSettings/effectiveCustomModules/{module}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request to list effective Event Threat Detection custom modules.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListEffectiveEventThreatDetectionCustomModulesRequest {
+    /// Required. Name of the parent to list custom modules for.
+    ///
+    /// Its format is:
+    ///
+    ///   * `organizations/{organization}/eventThreatDetectionSettings`.
+    ///   * `folders/{folder}/eventThreatDetectionSettings`.
+    ///   * `projects/{project}/eventThreatDetectionSettings`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// A page token, received from a previous
+    /// `ListEffectiveEventThreatDetectionCustomModules` call. Provide this to
+    /// retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListEffectiveEventThreatDetectionCustomModules` must match the call that
+    /// provided the page token.
+    #[prost(string, tag = "2")]
+    pub page_token: ::prost::alloc::string::String,
+    /// The maximum number of modules to return. The service may return fewer than
+    /// this value.
+    /// If unspecified, at most 10 configs will be returned.
+    /// The maximum value is 1000; values above 1000 will be coerced to 1000.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+}
+/// Response for listing EffectiveEventThreatDetectionCustomModules.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListEffectiveEventThreatDetectionCustomModulesResponse {
+    /// Effective custom modules belonging to the requested parent.
+    #[prost(message, repeated, tag = "1")]
+    pub effective_event_threat_detection_custom_modules:
+        ::prost::alloc::vec::Vec<EffectiveEventThreatDetectionCustomModule>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod security_center_client {
@@ -3680,6 +5575,41 @@ pub mod security_center_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/DeleteSecurityHealthAnalyticsCustomModule") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Get the simulation by name or the latest simulation for the given"]
+        #[doc = " organization."]
+        pub async fn get_simulation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSimulationRequest>,
+        ) -> Result<tonic::Response<super::Simulation>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/GetSimulation",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Get the valued resource by name"]
+        pub async fn get_valued_resource(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetValuedResourceRequest>,
+        ) -> Result<tonic::Response<super::ValuedResource>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/GetValuedResource",
+            );
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Gets a BigQuery export."]
@@ -4113,6 +6043,24 @@ pub mod security_center_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Simulates a given SecurityHealthAnalyticsCustomModule and Resource."]
+        pub async fn simulate_security_health_analytics_custom_module(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SimulateSecurityHealthAnalyticsCustomModuleRequest>,
+        ) -> Result<
+            tonic::Response<super::SimulateSecurityHealthAnalyticsCustomModuleResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/SimulateSecurityHealthAnalyticsCustomModule") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Updates external system. This is for a given finding."]
         pub async fn update_external_system(
             &mut self,
@@ -4324,6 +6272,299 @@ pub mod security_center_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.securitycenter.v1.SecurityCenter/ListBigQueryExports",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a resident Event Threat Detection custom module at the scope of the"]
+        #[doc = " given Resource Manager parent, and also creates inherited custom modules"]
+        #[doc = " for all descendants of the given parent. These modules are enabled by"]
+        #[doc = " default."]
+        pub async fn create_event_threat_detection_custom_module(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateEventThreatDetectionCustomModuleRequest>,
+        ) -> Result<tonic::Response<super::EventThreatDetectionCustomModule>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/CreateEventThreatDetectionCustomModule") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes the specified Event Threat Detection custom module and all of its"]
+        #[doc = " descendants in the Resource Manager hierarchy. This method is only"]
+        #[doc = " supported for resident custom modules."]
+        pub async fn delete_event_threat_detection_custom_module(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteEventThreatDetectionCustomModuleRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/DeleteEventThreatDetectionCustomModule") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets an Event Threat Detection custom module."]
+        pub async fn get_event_threat_detection_custom_module(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetEventThreatDetectionCustomModuleRequest>,
+        ) -> Result<tonic::Response<super::EventThreatDetectionCustomModule>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/GetEventThreatDetectionCustomModule") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all resident Event Threat Detection custom modules under the"]
+        #[doc = " given Resource Manager parent and its descendants."]
+        pub async fn list_descendant_event_threat_detection_custom_modules(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::ListDescendantEventThreatDetectionCustomModulesRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::ListDescendantEventThreatDetectionCustomModulesResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/ListDescendantEventThreatDetectionCustomModules") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all Event Threat Detection custom modules for the given"]
+        #[doc = " Resource Manager parent. This includes resident modules defined at the"]
+        #[doc = " scope of the parent along with modules inherited from ancestors."]
+        pub async fn list_event_threat_detection_custom_modules(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListEventThreatDetectionCustomModulesRequest>,
+        ) -> Result<
+            tonic::Response<super::ListEventThreatDetectionCustomModulesResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/ListEventThreatDetectionCustomModules") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the Event Threat Detection custom module with the given name based"]
+        #[doc = " on the given update mask. Updating the enablement state is supported for"]
+        #[doc = " both resident and inherited modules (though resident modules cannot have an"]
+        #[doc = " enablement state of \"inherited\"). Updating the display name or"]
+        #[doc = " configuration of a module is supported for resident modules only. The type"]
+        #[doc = " of a module cannot be changed."]
+        pub async fn update_event_threat_detection_custom_module(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateEventThreatDetectionCustomModuleRequest>,
+        ) -> Result<tonic::Response<super::EventThreatDetectionCustomModule>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/UpdateEventThreatDetectionCustomModule") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Validates the given Event Threat Detection custom module."]
+        pub async fn validate_event_threat_detection_custom_module(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ValidateEventThreatDetectionCustomModuleRequest>,
+        ) -> Result<
+            tonic::Response<super::ValidateEventThreatDetectionCustomModuleResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/ValidateEventThreatDetectionCustomModule") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets an effective Event Threat Detection custom module at the given level."]
+        pub async fn get_effective_event_threat_detection_custom_module(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetEffectiveEventThreatDetectionCustomModuleRequest>,
+        ) -> Result<tonic::Response<super::EffectiveEventThreatDetectionCustomModule>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/GetEffectiveEventThreatDetectionCustomModule") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all effective Event Threat Detection custom modules for the"]
+        #[doc = " given parent. This includes resident modules defined at the scope of the"]
+        #[doc = " parent along with modules inherited from its ancestors."]
+        pub async fn list_effective_event_threat_detection_custom_modules(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::ListEffectiveEventThreatDetectionCustomModulesRequest,
+            >,
+        ) -> Result<
+            tonic::Response<super::ListEffectiveEventThreatDetectionCustomModulesResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.securitycenter.v1.SecurityCenter/ListEffectiveEventThreatDetectionCustomModules") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a ResourceValueConfig for an organization. Maps user's tags to"]
+        #[doc = " difference resource values for use by the attack path simulation."]
+        pub async fn batch_create_resource_value_configs(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BatchCreateResourceValueConfigsRequest>,
+        ) -> Result<tonic::Response<super::BatchCreateResourceValueConfigsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/BatchCreateResourceValueConfigs",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a ResourceValueConfig."]
+        pub async fn delete_resource_value_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteResourceValueConfigRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/DeleteResourceValueConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a ResourceValueConfig."]
+        pub async fn get_resource_value_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetResourceValueConfigRequest>,
+        ) -> Result<tonic::Response<super::ResourceValueConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/GetResourceValueConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all ResourceValueConfigs."]
+        pub async fn list_resource_value_configs(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListResourceValueConfigsRequest>,
+        ) -> Result<tonic::Response<super::ListResourceValueConfigsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/ListResourceValueConfigs",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates an existing ResourceValueConfigs with new rules."]
+        pub async fn update_resource_value_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateResourceValueConfigRequest>,
+        ) -> Result<tonic::Response<super::ResourceValueConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/UpdateResourceValueConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists the valued resources for a set of simulation results and filter."]
+        pub async fn list_valued_resources(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListValuedResourcesRequest>,
+        ) -> Result<tonic::Response<super::ListValuedResourcesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/ListValuedResources",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists the attack paths for a set of simulation results or valued resources"]
+        #[doc = " and filter."]
+        pub async fn list_attack_paths(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListAttackPathsRequest>,
+        ) -> Result<tonic::Response<super::ListAttackPathsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.securitycenter.v1.SecurityCenter/ListAttackPaths",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

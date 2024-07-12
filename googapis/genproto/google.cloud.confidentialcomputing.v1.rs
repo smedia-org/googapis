@@ -48,6 +48,68 @@ pub struct VerifyAttestationRequest {
     /// populate any of the claims regarding platform state.
     #[prost(message, optional, tag = "3")]
     pub tpm_attestation: ::core::option::Option<TpmAttestation>,
+    /// Optional. Optional information related to the Confidential Space TEE.
+    #[prost(message, optional, tag = "4")]
+    pub confidential_space_info: ::core::option::Option<ConfidentialSpaceInfo>,
+    /// Optional. A collection of optional, workload-specified claims that modify
+    /// the token output.
+    #[prost(message, optional, tag = "5")]
+    pub token_options: ::core::option::Option<TokenOptions>,
+    /// An optional tee attestation report, used to populate hardware rooted
+    /// claims.
+    #[prost(oneof = "verify_attestation_request::TeeAttestation", tags = "6, 7")]
+    pub tee_attestation: ::core::option::Option<verify_attestation_request::TeeAttestation>,
+}
+/// Nested message and enum types in `VerifyAttestationRequest`.
+pub mod verify_attestation_request {
+    /// An optional tee attestation report, used to populate hardware rooted
+    /// claims.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum TeeAttestation {
+        /// Optional. A TDX with CCEL and RTMR Attestation Quote.
+        #[prost(message, tag = "6")]
+        TdCcel(super::TdxCcelAttestation),
+        /// Optional. An SEV-SNP Attestation Report.
+        #[prost(message, tag = "7")]
+        SevSnpAttestation(super::SevSnpAttestation),
+    }
+}
+/// A TDX Attestation quote.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TdxCcelAttestation {
+    /// Optional. The Confidential Computing Event Log (CCEL) ACPI table. Formatted
+    /// as described in the ACPI Specification 6.5.
+    #[prost(bytes = "vec", tag = "1")]
+    pub ccel_acpi_table: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. The CCEL event log. Formatted as described in the UEFI 2.10.
+    #[prost(bytes = "vec", tag = "2")]
+    pub ccel_data: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. An Event Log containing additional events measured into the RTMR
+    /// that are not already present in the CCEL.
+    #[prost(bytes = "vec", tag = "3")]
+    pub canonical_event_log: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. The TDX attestation quote from the guest. It contains the RTMR
+    /// values.
+    #[prost(bytes = "vec", tag = "4")]
+    pub td_quote: ::prost::alloc::vec::Vec<u8>,
+}
+/// An SEV-SNP Attestation Report.
+/// Contains the attestation report and the certificate bundle that the client
+/// collects.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SevSnpAttestation {
+    /// Optional. The SEV-SNP Attestation Report
+    /// Format is in revision 1.55, §7.3 Attestation, Table 22. ATTESTATION_REPORT
+    /// Structure in this document:
+    /// <https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/specifications/56860.pdf>
+    #[prost(bytes = "vec", tag = "1")]
+    pub report: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. Certificate bundle defined in the GHCB protocol definition
+    /// Format is documented in GHCB revision 2.03, section 4.1.8.1 struct
+    /// cert_table in this document:
+    /// <https://www.amd.com/content/dam/amd/en/documents/epyc-technical-docs/specifications/56421.pdf>
+    #[prost(bytes = "vec", tag = "2")]
+    pub aux_blob: ::prost::alloc::vec::Vec<u8>,
 }
 /// A response once an attestation has been successfully verified, containing a
 /// signed OIDC token.
@@ -56,6 +118,10 @@ pub struct VerifyAttestationResponse {
     /// Output only. Same as claims_token, but as a string.
     #[prost(string, tag = "2")]
     pub oidc_claims_token: ::prost::alloc::string::String,
+    /// Output only. A list of messages that carry the partial error details
+    /// related to VerifyAttestation.
+    #[prost(message, repeated, tag = "3")]
+    pub partial_errors: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
 }
 /// Credentials issued by GCP which are linked to the platform attestation. These
 /// will be verified server-side as part of attestaion verification.
@@ -64,6 +130,22 @@ pub struct GcpCredentials {
     /// Same as id_tokens, but as a string.
     #[prost(string, repeated, tag = "2")]
     pub service_account_id_tokens: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Options to modify claims in the token to generate custom-purpose tokens.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TokenOptions {
+    /// Optional. Optional string to issue the token with a custom audience claim.
+    /// Required if one or more nonces are specified.
+    #[prost(string, tag = "1")]
+    pub audience: ::prost::alloc::string::String,
+    /// Optional. Optional parameter to place one or more nonces in the eat_nonce
+    /// claim in the output token. The minimum size for JSON-encoded EATs is 10
+    /// bytes and the maximum size is 74 bytes.
+    #[prost(string, repeated, tag = "2")]
+    pub nonce: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Optional token type to select what type of token to return.
+    #[prost(enumeration = "TokenType", tag = "3")]
+    pub token_type: i32,
 }
 /// TPM2 data containing everything necessary to validate any platform state
 /// measured into the TPM.
@@ -110,6 +192,76 @@ pub mod tpm_attestation {
         #[prost(bytes = "vec", tag = "4")]
         pub raw_signature: ::prost::alloc::vec::Vec<u8>,
     }
+}
+/// ConfidentialSpaceInfo contains information related to the Confidential Space
+/// TEE.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConfidentialSpaceInfo {
+    /// Optional. A list of signed entities containing container image signatures
+    /// that can be used for server-side signature verification.
+    #[prost(message, repeated, tag = "1")]
+    pub signed_entities: ::prost::alloc::vec::Vec<SignedEntity>,
+}
+/// SignedEntity represents an OCI image object containing everything necessary
+/// to verify container image signatures.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SignedEntity {
+    /// Optional. A list of container image signatures attached to an OCI image
+    /// object.
+    #[prost(message, repeated, tag = "1")]
+    pub container_image_signatures: ::prost::alloc::vec::Vec<ContainerImageSignature>,
+}
+/// ContainerImageSignature holds necessary metadata to verify a container image
+/// signature.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ContainerImageSignature {
+    /// Optional. The binary signature payload following the SimpleSigning format
+    /// <https://github.com/sigstore/cosign/blob/main/specs/SIGNATURE_SPEC.md#simple-signing.>
+    /// This payload includes the container image digest.
+    #[prost(bytes = "vec", tag = "1")]
+    pub payload: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. A signature over the payload.
+    /// The container image digest is incorporated into the signature as follows:
+    /// 1. Generate a SimpleSigning format payload that includes the container
+    /// image digest.
+    /// 2. Generate a signature over SHA256 digest of the payload.
+    /// The signature generation process can be represented as follows:
+    /// `Sign(sha256(SimpleSigningPayload(sha256(Image Manifest))))`
+    #[prost(bytes = "vec", tag = "2")]
+    pub signature: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. Reserved for future use.
+    #[prost(bytes = "vec", tag = "3")]
+    pub public_key: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. Reserved for future use.
+    #[prost(enumeration = "SigningAlgorithm", tag = "4")]
+    pub sig_alg: i32,
+}
+/// SigningAlgorithm enumerates all the supported signing algorithms.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SigningAlgorithm {
+    /// Unspecified signing algorithm.
+    Unspecified = 0,
+    /// RSASSA-PSS with a SHA256 digest.
+    RsassaPssSha256 = 1,
+    /// RSASSA-PKCS1 v1.5 with a SHA256 digest.
+    RsassaPkcs1v15Sha256 = 2,
+    /// ECDSA on the P-256 Curve with a SHA256 digest.
+    EcdsaP256Sha256 = 3,
+}
+/// Token type enum contains the different types of token responses Confidential
+/// Space supports
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum TokenType {
+    /// Unspecified token type
+    Unspecified = 0,
+    /// OpenID Connect (OIDC) token type
+    Oidc = 1,
+    /// Public Key Infrastructure (PKI) token type
+    Pki = 2,
+    /// Limited claim token type for AWS integration
+    LimitedAws = 3,
 }
 #[doc = r" Generated client implementations."]
 pub mod confidential_computing_client {

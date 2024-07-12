@@ -4,15 +4,19 @@ pub struct Volume {
     /// The mount path for the volume, e.g. /mnt/disks/share.
     #[prost(string, tag = "4")]
     pub mount_path: ::prost::alloc::string::String,
-    /// For Google Cloud Storage (GCS), mount options are the options supported by
-    /// the gcsfuse tool (<https://github.com/GoogleCloudPlatform/gcsfuse>).
-    /// For existing persistent disks, mount options provided by the
-    /// mount command (<https://man7.org/linux/man-pages/man8/mount.8.html>) except
-    /// writing are supported. This is due to restrictions of multi-writer mode
-    /// (<https://cloud.google.com/compute/docs/disks/sharing-disks-between-vms>).
-    /// For other attached disks and Network File System (NFS), mount options are
-    /// these supported by the mount command
-    /// (<https://man7.org/linux/man-pages/man8/mount.8.html>).
+    /// Mount options vary based on the type of storage volume:
+    ///
+    /// * For a Cloud Storage bucket, all the mount options provided
+    /// by
+    ///   the [`gcsfuse` tool](<https://cloud.google.com/storage/docs/gcsfuse-cli>)
+    ///   are supported.
+    /// * For an existing persistent disk, all mount options provided by the
+    ///   [`mount` command](<https://man7.org/linux/man-pages/man8/mount.8.html>)
+    ///   except writing are supported. This is due to restrictions of
+    ///   [multi-writer
+    ///   mode](<https://cloud.google.com/compute/docs/disks/sharing-disks-between-vms>).
+    /// * For any other disk or a Network File System (NFS), all the
+    ///   mount options provided by the `mount` command are supported.
     #[prost(string, repeated, tag = "5")]
     pub mount_options: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// The source for the volume.
@@ -78,13 +82,51 @@ pub struct Gcs {
     #[prost(string, tag = "1")]
     pub remote_path: ::prost::alloc::string::String,
 }
-/// Compute resource requirements
+/// Compute resource requirements.
+///
+/// ComputeResource defines the amount of resources required for each task.
+/// Make sure your tasks have enough resources to successfully run.
+/// If you also define the types of resources for a job to use with the
+/// \[InstancePolicyOrTemplate\](<https://cloud.google.com/batch/docs/reference/rest/v1/projects.locations.jobs#instancepolicyortemplate>)
+/// field, make sure both fields are compatible with each other.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ComputeResource {
     /// The milliCPU count.
+    ///
+    /// `cpuMilli` defines the amount of CPU resources per task in milliCPU units.
+    /// For example, `1000` corresponds to 1 vCPU per task. If undefined, the
+    /// default value is `2000`.
+    ///
+    /// If you also define the VM's machine type using the `machineType` in
+    /// \[InstancePolicy\](<https://cloud.google.com/batch/docs/reference/rest/v1/projects.locations.jobs#instancepolicy>)
+    /// field or inside the `instanceTemplate` in the
+    /// \[InstancePolicyOrTemplate\](<https://cloud.google.com/batch/docs/reference/rest/v1/projects.locations.jobs#instancepolicyortemplate>)
+    /// field, make sure the CPU resources for both fields are compatible with each
+    /// other and with how many tasks you want to allow to run on the same VM at
+    /// the same time.
+    ///
+    /// For example, if you specify the `n2-standard-2` machine type, which has 2
+    /// vCPUs each, you are recommended to set `cpuMilli` no more than `2000`, or
+    /// you are recommended to run two tasks on the same VM if you set `cpuMilli`
+    /// to `1000` or less.
     #[prost(int64, tag = "1")]
     pub cpu_milli: i64,
     /// Memory in MiB.
+    ///
+    /// `memoryMib` defines the amount of memory per task in MiB units.
+    /// If undefined, the default value is `2000`.
+    /// If you also define the VM's machine type using the `machineType` in
+    /// \[InstancePolicy\](<https://cloud.google.com/batch/docs/reference/rest/v1/projects.locations.jobs#instancepolicy>)
+    /// field or inside the `instanceTemplate` in the
+    /// \[InstancePolicyOrTemplate\](<https://cloud.google.com/batch/docs/reference/rest/v1/projects.locations.jobs#instancepolicyortemplate>)
+    /// field, make sure the memory resources for both fields are compatible with
+    /// each other and with how many tasks you want to allow to run on the same VM
+    /// at the same time.
+    ///
+    /// For example, if you specify the `n2-standard-2` machine type, which has 8
+    /// GiB each, you are recommended to set `memoryMib` to no more than `8192`,
+    /// or you are recommended to run two tasks on the same VM if you set
+    /// `memoryMib` to `4096` or less.
     #[prost(int64, tag = "2")]
     pub memory_mib: i64,
     /// The GPU count.
@@ -119,10 +161,23 @@ pub struct StatusEvent {
 /// task execution procedures, based on StatusEvent types.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TaskExecution {
-    /// When task is completed as the status of FAILED or SUCCEEDED,
-    /// exit code is for one task execution result, default is 0 as success.
+    /// The exit code of a finished task.
+    ///
+    /// If the task succeeded, the exit code will be 0. If the task failed but not
+    /// due to the following reasons, the exit code will be 50000.
+    ///
+    /// Otherwise, it can be from different sources:
+    /// * Batch known failures:
+    /// <https://cloud.google.com/batch/docs/troubleshooting#reserved-exit-codes.>
+    /// * Batch runnable execution failures; you can rely on Batch logs to further
+    /// diagnose: <https://cloud.google.com/batch/docs/analyze-job-using-logs.> If
+    /// there are multiple runnables failures, Batch only exposes the first error.
     #[prost(int32, tag = "1")]
     pub exit_code: i32,
+    /// Optional. The tail end of any content written to standard error by the task
+    /// execution. This field will be populated only when the execution failed.
+    #[prost(string, tag = "2")]
+    pub stderr_snippet: ::prost::alloc::string::String,
 }
 /// Status of a task
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -171,6 +226,12 @@ pub struct TaskResourceUsage {
 /// as part of a Task.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Runnable {
+    /// Optional. DisplayName is an optional field that can be provided by the
+    /// caller. If provided, it will be used in logs and other outputs to identify
+    /// the script, making it easier for users to understand the logs. If not
+    /// provided the index of the runnable will be used for outputs.
+    #[prost(string, tag = "10")]
+    pub display_name: ::prost::alloc::string::String,
     /// Normally, a non-zero exit status causes the Task to fail. This flag allows
     /// execution of other Runnables to continue instead.
     #[prost(bool, tag = "3")]
@@ -224,6 +285,14 @@ pub mod runnable {
         /// Volumes to mount (bind mount) from the host machine files or directories
         /// into the container, formatted to match docker run's --volume option,
         /// e.g. /foo:/bar, or /foo:/bar:ro
+        ///
+        /// If the `TaskSpec.Volumes` field is specified but this field is not, Batch
+        /// will mount each volume from the host machine to the container with the
+        /// same mount path by default. In this case, the default mount option for
+        /// containers will be read-only (ro) for existing persistent disks and
+        /// read-write (rw) for other volume types, regardless of the original mount
+        /// options specified in `TaskSpec.Volumes`. If you need different mount
+        /// settings, you can explicitly configure them in this field.
         #[prost(string, repeated, tag = "7")]
         pub volumes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
         /// Arbitrary additional options to include in the "docker run" command when
@@ -236,16 +305,60 @@ pub mod runnable {
         /// `container.options` field.
         #[prost(bool, tag = "9")]
         pub block_external_network: bool,
-        /// Optional username for logging in to a docker registry. If username
-        /// matches `projects/*/secrets/*/versions/*` then Batch will read the
-        /// username from the Secret Manager.
+        /// Required if the container image is from a private Docker registry. The
+        /// username to login to the Docker registry that contains the image.
+        ///
+        /// You can either specify the username directly by using plain text or
+        /// specify an encrypted username by using a Secret Manager secret:
+        /// `projects/*/secrets/*/versions/*`. However, using a secret is
+        /// recommended for enhanced security.
+        ///
+        /// Caution: If you specify the username using plain text, you risk the
+        /// username being exposed to any users who can view the job or its logs.
+        /// To avoid this risk, specify a secret that contains the username instead.
+        ///
+        /// Learn more about [Secret
+        /// Manager](<https://cloud.google.com/secret-manager/docs/>) and [using
+        /// Secret Manager with
+        /// Batch](<https://cloud.google.com/batch/docs/create-run-job-secret-manager>).
         #[prost(string, tag = "10")]
         pub username: ::prost::alloc::string::String,
-        /// Optional password for logging in to a docker registry. If password
-        /// matches `projects/*/secrets/*/versions/*` then Batch will read the
-        /// password from the Secret Manager;
+        /// Required if the container image is from a private Docker registry. The
+        /// password to login to the Docker registry that contains the image.
+        ///
+        /// For security, it is strongly recommended to specify an
+        /// encrypted password by using a Secret Manager secret:
+        /// `projects/*/secrets/*/versions/*`.
+        ///
+        /// Warning: If you specify the password using plain text, you risk the
+        /// password being exposed to any users who can view the job or its logs.
+        /// To avoid this risk, specify a secret that contains the password instead.
+        ///
+        /// Learn more about [Secret
+        /// Manager](<https://cloud.google.com/secret-manager/docs/>) and [using
+        /// Secret Manager with
+        /// Batch](<https://cloud.google.com/batch/docs/create-run-job-secret-manager>).
         #[prost(string, tag = "11")]
         pub password: ::prost::alloc::string::String,
+        /// Optional. If set to true, this container runnable uses Image streaming.
+        ///
+        /// Use Image streaming to allow the runnable to initialize without
+        /// waiting for the entire container image to download, which can
+        /// significantly reduce startup time for large container images.
+        ///
+        /// When `enableImageStreaming` is set to true, the container
+        /// runtime is \[containerd\](<https://containerd.io/>) instead of Docker.
+        /// Additionally, this container runnable only supports the following
+        /// `container` subfields: `imageUri`,
+        /// `commands[]`, `entrypoint`, and
+        /// `volumes[]`; any other `container` subfields are ignored.
+        ///
+        /// For more information about the requirements and limitations for using
+        /// Image streaming with Batch, see the [`image-streaming`
+        /// sample on
+        /// GitHub](<https://github.com/GoogleCloudPlatform/batch-samples/tree/main/api-samples/image-streaming>).
+        #[prost(bool, tag = "12")]
+        pub enable_image_streaming: bool,
     }
     /// Script runnable.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -264,7 +377,7 @@ pub mod runnable {
             /// first line of the file.(For example, to execute the script using bash,
             /// `#!/bin/bash` should be the first line of the file. To execute the
             /// script using`Python3`, `#!/usr/bin/env python3` should be the first
-            /// line of the file.) Otherwise, the file will by default be excuted by
+            /// line of the file.) Otherwise, the file will by default be executed by
             /// `/bin/sh`.
             #[prost(string, tag = "1")]
             Path(::prost::alloc::string::String),
@@ -274,7 +387,7 @@ pub mod runnable {
             /// beginning of the text.(For example, to execute the script using bash,
             /// `#!/bin/bash\n` should be added. To execute the script using`Python3`,
             /// `#!/usr/bin/env python3\n` should be added.) Otherwise, the script will
-            /// by default be excuted by `/bin/sh`.
+            /// by default be executed by `/bin/sh`.
             #[prost(string, tag = "2")]
             Text(::prost::alloc::string::String),
         }
@@ -319,8 +432,15 @@ pub struct TaskSpec {
     /// ComputeResource requirements.
     #[prost(message, optional, tag = "3")]
     pub compute_resource: ::core::option::Option<ComputeResource>,
-    /// Maximum duration the task should run.
-    /// The task will be killed and marked as FAILED if over this limit.
+    /// Maximum duration the task should run before being automatically retried
+    /// (if enabled) or automatically failed. Format the value of this field
+    /// as a time limit in seconds followed by `s`&mdash;for example, `3600s`
+    /// for 1 hour. The field accepts any value between 0 and the maximum listed
+    /// for the `Duration` field type at
+    /// <https://protobuf.dev/reference/protobuf/google.protobuf/#duration;> however,
+    /// the actual maximum run time for a job will be limited to the maximum run
+    /// time for a job listed at
+    /// <https://cloud.google.com/batch/quotas#max-job-duration.>
     #[prost(message, optional, tag = "4")]
     pub max_run_duration: ::core::option::Option<::prost_types::Duration>,
     /// Maximum number of retries on failures.
@@ -439,7 +559,7 @@ pub struct Job {
     /// For example: "projects/123456/locations/us-central1/jobs/job01".
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Output only. A system generated unique ID (in UUID4 format) for the Job.
+    /// Output only. A system generated unique ID for the Job.
     #[prost(string, tag = "2")]
     pub uid: ::prost::alloc::string::String,
     /// Priority of the Job.
@@ -523,9 +643,28 @@ pub struct LogsPolicy {
     /// Filestore, or a Cloud Storage path.
     #[prost(string, tag = "2")]
     pub logs_path: ::prost::alloc::string::String,
+    /// Optional. Additional settings for Cloud Logging. It will only take effect
+    /// when the destination of `LogsPolicy` is set to `CLOUD_LOGGING`.
+    #[prost(message, optional, tag = "3")]
+    pub cloud_logging_option: ::core::option::Option<logs_policy::CloudLoggingOption>,
 }
 /// Nested message and enum types in `LogsPolicy`.
 pub mod logs_policy {
+    /// `CloudLoggingOption` contains additional settings for Cloud Logging logs
+    /// generated by Batch job.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CloudLoggingOption {
+        /// Optional. Set this flag to true to change the [monitored resource
+        /// type](<https://cloud.google.com/monitoring/api/resources>) for
+        /// Cloud Logging logs generated by this Batch job from
+        /// the
+        /// \[`batch.googleapis.com/Job`\](<https://cloud.google.com/monitoring/api/resources#tag_batch.googleapis.com/Job>)
+        /// type to the formerly used
+        /// \[`generic_task`\](<https://cloud.google.com/monitoring/api/resources#tag_generic_task>)
+        /// type.
+        #[prost(bool, tag = "1")]
+        pub use_generic_task_monitored_resource: bool,
+    }
     /// The destination (if any) for logs.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -621,6 +760,7 @@ pub mod job_status {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum State {
+        /// Job state unspecified.
         Unspecified = 0,
         /// Job is admitted (validated and persisted) and waiting for resources.
         Queued = 1,
@@ -650,11 +790,19 @@ pub struct ResourceUsage {
 /// Notification configurations.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobNotification {
-    /// The Pub/Sub topic where notifications like the job state changes
-    /// will be published. This topic exist in the same project as the job
-    /// and billings will be charged to this project.
-    /// If not specified, no Pub/Sub messages will be sent.
-    /// Topic format: `projects/{project}/topics/{topic}`.
+    /// The Pub/Sub topic where notifications for the job, like state
+    /// changes, will be published. If undefined, no Pub/Sub notifications
+    /// are sent for this job.
+    ///
+    /// Specify the topic using the following format:
+    /// `projects/{project}/topics/{topic}`.
+    /// Notably, if you want to specify a Pub/Sub topic that is in a
+    /// different project than the job, your administrator must grant your
+    /// project's Batch service agent permission to publish to that topic.
+    ///
+    /// For more information about configuring Pub/Sub notifications for
+    /// a job, see
+    /// <https://cloud.google.com/batch/docs/enable-notifications.>
     #[prost(string, tag = "1")]
     pub pubsub_topic: ::prost::alloc::string::String,
     /// The attribute requirements of messages to be sent to this Pub/Sub topic.
@@ -665,8 +813,12 @@ pub struct JobNotification {
 /// Nested message and enum types in `JobNotification`.
 pub mod job_notification {
     /// Message details.
-    /// Describe the attribute that a message should have.
-    /// Without specified message attributes, no message will be sent by default.
+    /// Describe the conditions under which messages will be sent.
+    /// If no attribute is defined, no message will be sent by default.
+    /// One message should specify either the job or the task level attributes,
+    /// but not both. For example,
+    /// job level: JOB_STATE_CHANGED and/or a specified new_job_state;
+    /// task level: TASK_STATE_CHANGED and/or a specified new_task_state.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Message {
         /// The message type.
@@ -723,7 +875,17 @@ pub struct AllocationPolicy {
     #[deprecated]
     #[prost(string, tag = "5")]
     pub service_account_email: ::prost::alloc::string::String,
-    /// Service account that VMs will run as.
+    /// Defines the service account for Batch-created VMs. If omitted, the [default
+    /// Compute Engine service
+    /// account](<https://cloud.google.com/compute/docs/access/service-accounts#default_service_account>)
+    /// is used. Must match the service account specified in any used instance
+    /// template configured in the Batch job.
+    ///
+    /// Includes the following fields:
+    ///  * email: The service account's email address. If not set, the default
+    ///  Compute Engine service account is used.
+    ///  * scopes: Additional OAuth scopes to grant the service account, beyond the
+    ///  default cloud-platform scope. (list of strings)
     #[prost(message, optional, tag = "9")]
     pub service_account: ::core::option::Option<ServiceAccount>,
     /// Labels applied to all VM instances and other resources
@@ -737,11 +899,22 @@ pub struct AllocationPolicy {
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     /// The network policy.
+    ///
+    /// If you define an instance template in the `InstancePolicyOrTemplate` field,
+    /// Batch will use the network settings in the instance template instead of
+    /// this field.
     #[prost(message, optional, tag = "7")]
     pub network: ::core::option::Option<allocation_policy::NetworkPolicy>,
     /// The placement policy.
     #[prost(message, optional, tag = "10")]
     pub placement: ::core::option::Option<allocation_policy::PlacementPolicy>,
+    /// Optional. Tags applied to the VM instances.
+    ///
+    /// The tags identify valid sources or targets for network firewalls.
+    /// Each tag must be 1-63 characters long, and comply with
+    /// \[RFC1035\](<https://www.ietf.org/rfc/rfc1035.txt>).
+    #[prost(string, repeated, tag = "11")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Nested message and enum types in `AllocationPolicy`.
 pub mod allocation_policy {
@@ -756,11 +929,11 @@ pub mod allocation_policy {
         /// ["zones/us-central1-a", "zones/us-central1-c"] only allow VMs
         /// in zones us-central1-a and us-central1-c.
         ///
-        /// All locations end up in different regions would cause errors.
+        /// Mixing locations from different regions would cause errors.
         /// For example,
         /// ["regions/us-central1", "zones/us-central1-a", "zones/us-central1-b",
-        /// "zones/us-west1-a"] contains 2 regions "us-central1" and
-        /// "us-west1". An error is expected in this case.
+        /// "zones/us-west1-a"] contains locations from two distinct regions:
+        /// us-central1 and us-west1. This combination will trigger an error.
         #[prost(string, repeated, tag = "1")]
         pub allowed_locations: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
         /// A list of denied location names.
@@ -778,24 +951,37 @@ pub mod allocation_policy {
         /// Disk type as shown in `gcloud compute disk-types list`.
         /// For example, local SSD uses type "local-ssd".
         /// Persistent disks and boot disks use "pd-balanced", "pd-extreme", "pd-ssd"
-        /// or "pd-standard".
+        /// or "pd-standard". If not specified, "pd-standard" will be used as the
+        /// default type for non-boot disks, "pd-balanced" will be used as the
+        /// default type for boot disks.
         #[prost(string, tag = "1")]
         pub r#type: ::prost::alloc::string::String,
         /// Disk size in GB.
         ///
-        /// For persistent disk, this field is ignored if `data_source` is `image` or
-        /// `snapshot`.
-        /// For local SSD, size_gb should be a multiple of 375GB,
-        /// otherwise, the final size will be the next greater multiple of 375 GB.
-        /// For boot disk, Batch will calculate the boot disk size based on source
+        /// **Non-Boot Disk**:
+        /// If the `type` specifies a persistent disk, this field
+        /// is ignored if `data_source` is set as `image` or `snapshot`.
+        /// If the `type` specifies a local SSD, this field should be a multiple of
+        /// 375 GB, otherwise, the final size will be the next greater multiple of
+        /// 375 GB.
+        ///
+        /// **Boot Disk**:
+        /// Batch will calculate the boot disk size based on source
         /// image and task requirements if you do not speicify the size.
-        /// If both this field and the boot_disk_mib field in task spec's
-        /// compute_resource are defined, Batch will only honor this field.
+        /// If both this field and the `boot_disk_mib` field in task spec's
+        /// `compute_resource` are defined, Batch will only honor this field.
+        /// Also, this field should be no smaller than the source disk's
+        /// size when the `data_source` is set as `snapshot` or `image`.
+        /// For example, if you set an image as the `data_source` field and the
+        /// image's default disk size 30 GB, you can only use this field to make the
+        /// disk larger or equal to 30 GB.
         #[prost(int64, tag = "2")]
         pub size_gb: i64,
         /// Local SSDs are available through both "SCSI" and "NVMe" interfaces.
         /// If not indicated, "NVMe" will be the default one for local ssds.
-        /// We only support "SCSI" for persistent disks now.
+        /// This field is ignored for persistent disks as the interface is chosen
+        /// automatically. See
+        /// <https://cloud.google.com/compute/docs/disks/persistent-disks#choose_an_interface.>
         #[prost(string, tag = "6")]
         pub disk_interface: ::prost::alloc::string::String,
         /// A data source from which a PD will be created.
@@ -807,7 +993,7 @@ pub mod allocation_policy {
         /// A data source from which a PD will be created.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum DataSource {
-            /// Name of a public or custom image used as the data source.
+            /// URL for a VM image to use as the data source for this disk.
             /// For example, the following are all valid URLs:
             ///
             /// * Specify the image by its family name:
@@ -818,9 +1004,11 @@ pub mod allocation_policy {
             /// You can also use Batch customized image in short names.
             /// The following image values are supported for a boot disk:
             ///
-            /// * "batch-debian": use Batch Debian images.
-            /// * "batch-centos": use Batch CentOS images.
-            /// * "batch-cos": use Batch Container-Optimized images.
+            /// * `batch-debian`: use Batch Debian images.
+            /// * `batch-centos`: use Batch CentOS images.
+            /// * `batch-cos`: use Batch Container-Optimized images.
+            /// * `batch-hpc-centos`: use Batch HPC CentOS images.
+            /// * `batch-hpc-rocky`: use Batch HPC Rocky Linux images.
             #[prost(string, tag = "4")]
             Image(::prost::alloc::string::String),
             /// Name of a snapshot used as the data source.
@@ -867,6 +1055,15 @@ pub mod allocation_policy {
         #[deprecated]
         #[prost(bool, tag = "3")]
         pub install_gpu_drivers: bool,
+        /// Optional. The NVIDIA GPU driver version that should be installed for this
+        /// type.
+        ///
+        /// You can define the specific driver version such as "470.103.01",
+        /// following the driver version requirements in
+        /// <https://cloud.google.com/compute/docs/gpus/install-drivers-gpu#minimum-driver.>
+        /// Batch will install the specific accelerator driver if qualified.
+        #[prost(string, tag = "4")]
+        pub driver_version: ::prost::alloc::string::String,
     }
     /// InstancePolicy describes an instance type and resources attached to each VM
     /// created by this InstancePolicy.
@@ -897,22 +1094,38 @@ pub mod allocation_policy {
         pub boot_disk: ::core::option::Option<Disk>,
         /// Non-boot disks to be attached for each VM created by this InstancePolicy.
         /// New disks will be deleted when the VM is deleted.
+        /// A non-boot disk is a disk that can be of a device with a
+        /// file system or a raw storage drive that is not ready for data
+        /// storage and accessing.
         #[prost(message, repeated, tag = "6")]
         pub disks: ::prost::alloc::vec::Vec<AttachedDisk>,
-        /// If specified, VMs will consume only the specified reservation.
+        /// Optional. If specified, VMs will consume only the specified reservation.
         /// If not specified (default), VMs will consume any applicable reservation.
         #[prost(string, tag = "7")]
         pub reservation: ::prost::alloc::string::String,
     }
-    /// Either an InstancePolicy or an instance template.
+    /// InstancePolicyOrTemplate lets you define the type of resources to use for
+    /// this job either with an InstancePolicy or an instance template.
+    /// If undefined, Batch picks the type of VM to use and doesn't include
+    /// optional VM resources such as GPUs and extra disks.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct InstancePolicyOrTemplate {
-        /// Set this field true if users want Batch to help fetch drivers from a
-        /// third party location and install them for GPUs specified in
-        /// policy.accelerators or instance_template on their behalf. Default is
+        /// Set this field true if you want Batch to help fetch drivers from a third
+        /// party location and install them for GPUs specified in
+        /// `policy.accelerators` or `instance_template` on your behalf. Default is
         /// false.
+        ///
+        /// For Container-Optimized Image cases, Batch will install the
+        /// accelerator driver following milestones of
+        /// <https://cloud.google.com/container-optimized-os/docs/release-notes.> For
+        /// non Container-Optimized Image cases, following
+        /// <https://github.com/GoogleCloudPlatform/compute-gpu-installation/blob/main/linux/install_gpu_driver.py.>
         #[prost(bool, tag = "3")]
         pub install_gpu_drivers: bool,
+        /// Optional. Set this field true if you want Batch to install Ops Agent on
+        /// your behalf. Default is false.
+        #[prost(bool, tag = "4")]
+        pub install_ops_agent: bool,
         #[prost(oneof = "instance_policy_or_template::PolicyTemplate", tags = "1, 2")]
         pub policy_template: ::core::option::Option<instance_policy_or_template::PolicyTemplate>,
     }
@@ -1024,7 +1237,8 @@ pub struct TaskGroup {
     #[prost(int64, tag = "4")]
     pub task_count: i64,
     /// Max number of tasks that can run in parallel.
-    /// Default to min(task_count, 1000).
+    /// Default to min(task_count, parallel tasks per job limit).
+    /// See: [Job Limits](<https://cloud.google.com/batch/quotas#job_limits>).
     /// Field parallelism must be 1 if the scheduling_policy is IN_ORDER.
     #[prost(int64, tag = "5")]
     pub parallelism: i64,
@@ -1063,13 +1277,30 @@ pub struct TaskGroup {
     pub task_count_per_node: i64,
     /// When true, Batch will populate a file with a list of all VMs assigned to
     /// the TaskGroup and set the BATCH_HOSTS_FILE environment variable to the path
-    /// of that file. Defaults to false.
+    /// of that file. Defaults to false. The host file supports up to 1000 VMs.
     #[prost(bool, tag = "11")]
     pub require_hosts_file: bool,
     /// When true, Batch will configure SSH to allow passwordless login between
     /// VMs running the Batch tasks in the same TaskGroup.
     #[prost(bool, tag = "12")]
     pub permissive_ssh: bool,
+    /// Optional. If not set or set to false, Batch uses the root user to execute
+    /// runnables. If set to true, Batch runs the runnables using a non-root user.
+    /// Currently, the non-root user Batch used is generated by OS Login. For more
+    /// information, see [About OS
+    /// Login](<https://cloud.google.com/compute/docs/oslogin>).
+    #[prost(bool, tag = "14")]
+    pub run_as_non_root: bool,
+    /// Optional. ServiceAccount used by tasks within the task group for the access
+    /// to other Cloud resources. This allows tasks to operate with permissions
+    /// distinct from the service account for the VM set at `AllocationPolicy`. Use
+    /// this field when tasks require different access rights than those of the VM.
+    ///
+    /// Specify the service account's `email` field. Ensure `scopes`
+    /// include any necessary permissions for tasks, in addition to the default
+    /// 'cloud-platform' scope.
+    #[prost(message, optional, tag = "15")]
+    pub service_account: ::core::option::Option<ServiceAccount>,
 }
 /// Nested message and enum types in `TaskGroup`.
 pub mod task_group {
@@ -1091,16 +1322,207 @@ pub mod task_group {
 /// Carries information about a Google Cloud service account.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ServiceAccount {
-    /// Email address of the service account. If not specified, the default
-    /// Compute Engine service account for the project will be used. If instance
-    /// template is being used, the service account has to be specified in the
-    /// instance template and it has to match the email field here.
+    /// Email address of the service account.
     #[prost(string, tag = "1")]
     pub email: ::prost::alloc::string::String,
-    /// List of scopes to be enabled for this service account on the VM, in
-    /// addition to the cloud-platform API scope that will be added by default.
+    /// List of scopes to be enabled for this service account.
     #[prost(string, repeated, tag = "2")]
     pub scopes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Notification on resource state change.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Notification {
+    /// Required. The Pub/Sub topic where notifications like the resource allowance
+    /// state changes will be published. The topic must exist in the same project
+    /// as the job and billings will be charged to this project. If not specified,
+    /// no Pub/Sub messages will be sent. Topic format:
+    /// `projects/{project}/topics/{topic}`.
+    #[prost(string, tag = "1")]
+    pub pubsub_topic: ::prost::alloc::string::String,
+}
+/// The Resource Allowance description for Cloud Batch.
+/// Only one Resource Allowance is supported now under a specific location and
+/// project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourceAllowance {
+    /// Identifier. ResourceAllowance name.
+    /// For example:
+    /// "projects/123456/locations/us-central1/resourceAllowances/resource-allowance-1".
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. A system generated unique ID (in UUID4 format) for the
+    /// ResourceAllowance.
+    #[prost(string, tag = "2")]
+    pub uid: ::prost::alloc::string::String,
+    /// Output only. Time when the ResourceAllowance was created.
+    #[prost(message, optional, tag = "3")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Optional. Labels are attributes that can be set and used by both the
+    /// user and by Batch. Labels must meet the following constraints:
+    ///
+    /// * Keys and values can contain only lowercase letters, numeric characters,
+    /// underscores, and dashes.
+    /// * All characters must use UTF-8 encoding, and international characters are
+    /// allowed.
+    /// * Keys must start with a lowercase letter or international character.
+    /// * Each resource is limited to a maximum of 64 labels.
+    ///
+    /// Both keys and values are additionally constrained to be <= 128 bytes.
+    #[prost(map = "string, string", tag = "5")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Optional. Notification configurations.
+    #[prost(message, repeated, tag = "6")]
+    pub notifications: ::prost::alloc::vec::Vec<Notification>,
+    /// ResourceAllowance detail.
+    #[prost(oneof = "resource_allowance::ResourceAllowance", tags = "4")]
+    pub resource_allowance: ::core::option::Option<resource_allowance::ResourceAllowance>,
+}
+/// Nested message and enum types in `ResourceAllowance`.
+pub mod resource_allowance {
+    /// ResourceAllowance detail.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ResourceAllowance {
+        /// The detail of usage resource allowance.
+        #[prost(message, tag = "4")]
+        UsageResourceAllowance(super::UsageResourceAllowance),
+    }
+}
+/// UsageResourceAllowance describes the detail of usage resource allowance.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UsageResourceAllowance {
+    /// Required. Spec of a usage ResourceAllowance.
+    #[prost(message, optional, tag = "1")]
+    pub spec: ::core::option::Option<UsageResourceAllowanceSpec>,
+    /// Output only. Status of a usage ResourceAllowance.
+    #[prost(message, optional, tag = "2")]
+    pub status: ::core::option::Option<UsageResourceAllowanceStatus>,
+}
+/// Spec of a usage ResourceAllowance.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UsageResourceAllowanceSpec {
+    /// Required. Spec type is unique for each usage ResourceAllowance.
+    /// Batch now only supports type as "cpu-core-hours" for CPU usage consumption
+    /// tracking.
+    #[prost(string, tag = "1")]
+    pub r#type: ::prost::alloc::string::String,
+    /// Required. Threshold of a UsageResourceAllowance limiting how many resources
+    /// can be consumed for each type.
+    #[prost(message, optional, tag = "2")]
+    pub limit: ::core::option::Option<usage_resource_allowance_spec::Limit>,
+}
+/// Nested message and enum types in `UsageResourceAllowanceSpec`.
+pub mod usage_resource_allowance_spec {
+    /// UsageResourceAllowance limitation.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Limit {
+        /// Required. Limit value of a UsageResourceAllowance within its one
+        /// duration.
+        ///
+        /// Limit cannot be a negative value. Default is 0.
+        /// For example, you can set `limit` as 10000.0 with duration of the current
+        /// month by setting `calendar_period` field as monthly. That means in your
+        /// current month, 10000.0 is the core hour limitation that your resources
+        /// are allowed to consume.
+        #[prost(double, optional, tag = "2")]
+        pub limit: ::core::option::Option<f64>,
+        #[prost(oneof = "limit::Duration", tags = "1")]
+        pub duration: ::core::option::Option<limit::Duration>,
+    }
+    /// Nested message and enum types in `Limit`.
+    pub mod limit {
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Duration {
+            /// Optional. A CalendarPeriod represents the abstract concept of a time
+            /// period that has a canonical start.
+            #[prost(enumeration = "super::super::CalendarPeriod", tag = "1")]
+            CalendarPeriod(i32),
+        }
+    }
+}
+/// Status of a usage ResourceAllowance.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UsageResourceAllowanceStatus {
+    /// Output only. ResourceAllowance state.
+    #[prost(enumeration = "ResourceAllowanceState", tag = "1")]
+    pub state: i32,
+    /// Output only. ResourceAllowance consumption status for usage resources.
+    #[prost(message, optional, tag = "2")]
+    pub limit_status: ::core::option::Option<usage_resource_allowance_status::LimitStatus>,
+    /// Output only. The report of ResourceAllowance consumptions in a time period.
+    #[prost(message, optional, tag = "3")]
+    pub report: ::core::option::Option<usage_resource_allowance_status::ConsumptionReport>,
+}
+/// Nested message and enum types in `UsageResourceAllowanceStatus`.
+pub mod usage_resource_allowance_status {
+    /// UsageResourceAllowanceStatus detail about usage consumption.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct LimitStatus {
+        /// Output only. The consumption interval.
+        #[prost(message, optional, tag = "1")]
+        pub consumption_interval:
+            ::core::option::Option<super::super::super::super::r#type::Interval>,
+        /// Output only. Limit value of a UsageResourceAllowance within its one
+        /// duration.
+        #[prost(double, optional, tag = "2")]
+        pub limit: ::core::option::Option<f64>,
+        /// Output only. Accumulated consumption during `consumption_interval`.
+        #[prost(double, optional, tag = "3")]
+        pub consumed: ::core::option::Option<f64>,
+    }
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PeriodConsumption {
+        /// Output only. The consumption interval.
+        #[prost(message, optional, tag = "1")]
+        pub consumption_interval:
+            ::core::option::Option<super::super::super::super::r#type::Interval>,
+        /// Output only. Accumulated consumption during `consumption_interval`.
+        #[prost(double, optional, tag = "2")]
+        pub consumed: ::core::option::Option<f64>,
+    }
+    /// ConsumptionReport is the report of ResourceAllowance consumptions in a time
+    /// period.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ConsumptionReport {
+        /// Output only. ResourceAllowance consumptions in the latest calendar
+        /// period. Key is the calendar period in string format. Batch currently
+        /// supports HOUR, DAY, MONTH and YEAR.
+        #[prost(map = "string, message", tag = "1")]
+        pub latest_period_consumptions:
+            ::std::collections::HashMap<::prost::alloc::string::String, PeriodConsumption>,
+    }
+}
+/// A `CalendarPeriod` represents the abstract concept of a time period that
+/// has a canonical start. All calendar times begin at 12 AM US and Canadian
+/// Pacific Time (UTC-8).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum CalendarPeriod {
+    /// Unspecified.
+    Unspecified = 0,
+    /// The month starts on the first date of the month and resets at the beginning
+    /// of each month.
+    Month = 1,
+    /// The quarter starts on dates January 1, April 1, July 1, and October 1 of
+    /// each year and resets at the beginning of the next quarter.
+    Quarter = 2,
+    /// The year starts on January 1 and resets at the beginning of the next year.
+    Year = 3,
+    /// The week period starts and resets every Monday.
+    Week = 4,
+    /// The day starts at 12:00am.
+    Day = 5,
+}
+/// ResourceAllowance valid state.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ResourceAllowanceState {
+    /// Unspecified.
+    Unspecified = 0,
+    /// ResourceAllowance is active and in use.
+    ResourceAllowanceActive = 1,
+    /// ResourceAllowance limit is reached.
+    ResourceAllowanceDepleted = 2,
 }
 /// CreateJob Request.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1171,6 +1593,48 @@ pub struct DeleteJobRequest {
     #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
 }
+/// UpdateJob Request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateJobRequest {
+    /// Required. The Job to update.
+    /// Only fields specified in `updateMask` are updated.
+    #[prost(message, optional, tag = "1")]
+    pub job: ::core::option::Option<Job>,
+    /// Required. Mask of fields to update.
+    ///
+    /// The `jobs.patch` method can only be used while a job is in the `QUEUED`,
+    /// `SCHEDULED`, or `RUNNING` state and currently only supports increasing the
+    /// value of the first `taskCount` field in the job's `taskGroups` field.
+    /// Therefore, you must set the value of `updateMask` to `taskGroups`. Any
+    /// other job fields in the update request will be ignored.
+    ///
+    /// For example, to update a job's `taskCount` to `2`, set `updateMask` to
+    /// `taskGroups` and use the following request body:
+    /// ```
+    /// {
+    ///   "taskGroups":[{
+    ///     "taskCount": 2
+    ///   }]
+    /// }
+    /// ```
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes after the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and
+    /// the request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
 /// ListJob Request.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListJobsRequest {
@@ -1180,8 +1644,8 @@ pub struct ListJobsRequest {
     /// List filter.
     #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
-    /// Sort results. Supported are "name", "name desc", "create_time",
-    /// "create_time desc", and "".
+    /// Optional. Sort results. Supported are "name", "name desc", "create_time",
+    /// and "create_time desc".
     #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
     /// Page size.
@@ -1217,8 +1681,7 @@ pub struct ListTasksRequest {
     /// State=RUNNING
     #[prost(string, tag = "2")]
     pub filter: ::prost::alloc::string::String,
-    /// Sort results. Supported are "name", "name desc", "create_time",
-    /// "create_time desc", and "".
+    /// Not implemented.
     #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
     /// Page size.
@@ -1247,6 +1710,137 @@ pub struct GetTaskRequest {
     /// Required. Task name.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+}
+/// CreateResourceAllowance Request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateResourceAllowanceRequest {
+    /// Required. The parent resource name where the ResourceAllowance will be
+    /// created. Pattern: "projects/{project}/locations/{location}"
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// ID used to uniquely identify the ResourceAllowance within its parent scope.
+    /// This field should contain at most 63 characters and must start with
+    /// lowercase characters.
+    /// Only lowercase characters, numbers and '-' are accepted.
+    /// The '-' character cannot be the first or the last one.
+    /// A system generated ID will be used if the field is not set.
+    ///
+    /// The resource_allowance.name field in the request will be ignored and the
+    /// created resource name of the ResourceAllowance will be
+    /// "{parent}/resourceAllowances/{resource_allowance_id}".
+    #[prost(string, tag = "2")]
+    pub resource_allowance_id: ::prost::alloc::string::String,
+    /// Required. The ResourceAllowance to create.
+    #[prost(message, optional, tag = "3")]
+    pub resource_allowance: ::core::option::Option<ResourceAllowance>,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and
+    /// the request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// GetResourceAllowance Request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetResourceAllowanceRequest {
+    /// Required. ResourceAllowance name.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// DeleteResourceAllowance Request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteResourceAllowanceRequest {
+    /// Required. ResourceAllowance name.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. Reason for this deletion.
+    #[prost(string, tag = "2")]
+    pub reason: ::prost::alloc::string::String,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes after the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and
+    /// the request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// ListResourceAllowances Request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListResourceAllowancesRequest {
+    /// Required. Parent path.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Page size.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. Page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// ListResourceAllowances Response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListResourceAllowancesResponse {
+    /// ResourceAllowances.
+    #[prost(message, repeated, tag = "1")]
+    pub resource_allowances: ::prost::alloc::vec::Vec<ResourceAllowance>,
+    /// Next page token.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// UpdateResourceAllowance Request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateResourceAllowanceRequest {
+    /// Required. The ResourceAllowance to update.
+    /// Update description.
+    /// Only fields specified in `update_mask` are updated.
+    #[prost(message, optional, tag = "1")]
+    pub resource_allowance: ::core::option::Option<ResourceAllowance>,
+    /// Required. Mask of fields to update.
+    ///
+    /// Field mask is used to specify the fields to be overwritten in the
+    /// ResourceAllowance resource by the update.
+    /// The fields specified in the update_mask are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask. If the
+    /// user does not provide a mask then all fields will be overwritten.
+    ///
+    /// UpdateResourceAllowance request now only supports update on `limit` field.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and
+    /// the request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
 }
 /// Represents the metadata of the long-running operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1383,6 +1977,23 @@ pub mod batch_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Update a Job."]
+        pub async fn update_job(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateJobRequest>,
+        ) -> Result<tonic::Response<super::Job>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.batch.v1alpha.BatchService/UpdateJob",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " List all Jobs for a project within a region."]
         pub async fn list_jobs(
             &mut self,
@@ -1431,6 +2042,94 @@ pub mod batch_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.batch.v1alpha.BatchService/ListTasks",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Create a Resource Allowance."]
+        pub async fn create_resource_allowance(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateResourceAllowanceRequest>,
+        ) -> Result<tonic::Response<super::ResourceAllowance>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.batch.v1alpha.BatchService/CreateResourceAllowance",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Get a ResourceAllowance specified by its resource name."]
+        pub async fn get_resource_allowance(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetResourceAllowanceRequest>,
+        ) -> Result<tonic::Response<super::ResourceAllowance>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.batch.v1alpha.BatchService/GetResourceAllowance",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Delete a ResourceAllowance."]
+        pub async fn delete_resource_allowance(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteResourceAllowanceRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.batch.v1alpha.BatchService/DeleteResourceAllowance",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " List all ResourceAllowances for a project within a region."]
+        pub async fn list_resource_allowances(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListResourceAllowancesRequest>,
+        ) -> Result<tonic::Response<super::ListResourceAllowancesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.batch.v1alpha.BatchService/ListResourceAllowances",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Update a Resource Allowance."]
+        pub async fn update_resource_allowance(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateResourceAllowanceRequest>,
+        ) -> Result<tonic::Response<super::ResourceAllowance>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.batch.v1alpha.BatchService/UpdateResourceAllowance",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

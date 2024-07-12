@@ -247,8 +247,8 @@ pub mod asset_service_client {
         #[doc = " (project/folder/organization). This RPC gives callers especially"]
         #[doc = " administrators the ability to search all the resources within a scope, even"]
         #[doc = " if they don't have `.get` permission of all the resources. Callers should"]
-        #[doc = " have `cloud.assets.SearchAllResources` permission on the requested scope,"]
-        #[doc = " otherwise the request will be rejected."]
+        #[doc = " have `cloudasset.assets.searchAllResources` permission on the requested"]
+        #[doc = " scope, otherwise the request will be rejected."]
         pub async fn search_all_resources(
             &mut self,
             request: impl tonic::IntoRequest<super::SearchAllResourcesRequest>,
@@ -269,8 +269,8 @@ pub mod asset_service_client {
         #[doc = " scope (project/folder/organization). This RPC gives callers especially"]
         #[doc = " administrators the ability to search all the IAM policies within a scope,"]
         #[doc = " even if they don't have `.getIamPolicy` permission of all the IAM policies."]
-        #[doc = " Callers should have `cloud.assets.SearchAllIamPolicies` permission on the"]
-        #[doc = " requested scope, otherwise the request will be rejected."]
+        #[doc = " Callers should have `cloudasset.assets.searchAllIamPolicies` permission on"]
+        #[doc = " the requested scope, otherwise the request will be rejected."]
         pub async fn search_all_iam_policies(
             &mut self,
             request: impl tonic::IntoRequest<super::SearchAllIamPoliciesRequest>,

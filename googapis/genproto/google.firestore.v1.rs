@@ -11,23 +11,23 @@ pub struct Document {
     ///
     /// The map keys represent field names.
     ///
+    /// Field names matching the regular expression `__.*__` are reserved. Reserved
+    /// field names are forbidden except in certain documented contexts. The field
+    /// names, represented as UTF-8, must not exceed 1,500 bytes and cannot be
+    /// empty.
+    ///
+    /// Field paths may be used in other contexts to refer to structured fields
+    /// defined here. For `map_value`, the field path is represented by a
+    /// dot-delimited (`.`) string of segments. Each segment is either a simple
+    /// field name (defined below) or a quoted field name. For example, the
+    /// structured field `"foo" : { map_value: { "x&y" : { string_value: "hello"
+    /// }}}` would be represented by the field path `` foo.`x&y` ``.
+    ///
     /// A simple field name contains only characters `a` to `z`, `A` to `Z`,
     /// `0` to `9`, or `_`, and must not start with `0` to `9`. For example,
     /// `foo_bar_17`.
     ///
-    /// Field names matching the regular expression `__.*__` are reserved. Reserved
-    /// field names are forbidden except in certain documented contexts. The map
-    /// keys, represented as UTF-8, must not exceed 1,500 bytes and cannot be
-    /// empty.
-    ///
-    /// Field paths may be used in other contexts to refer to structured fields
-    /// defined here. For `map_value`, the field path is represented by the simple
-    /// or quoted field names of the containing fields, delimited by `.`. For
-    /// example, the structured field
-    /// `"foo" : { map_value: { "x&y" : { string_value: "hello" }}}` would be
-    /// represented by the field path `foo.x&y`.
-    ///
-    /// Within a field path, a quoted field name starts and ends with `` ` `` and
+    /// A quoted field name starts and ends with `` ` `` and
     /// may contain any character. Some characters, including `` ` ``, must be
     /// escaped using a `\`. For example, `` `x&y` `` represents `x&y` and
     /// `` `bak\`tik` `` represents `` bak`tik ``.
@@ -132,6 +132,14 @@ pub struct MapValue {
     pub fields: ::std::collections::HashMap<::prost::alloc::string::String, Value>,
 }
 /// A Firestore query.
+///
+/// The query stages are executed in the following order:
+/// 1. from
+/// 2. where
+/// 3. select
+/// 4. order_by + start_at + end_at
+/// 5. offset
+/// 6. limit
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StructuredQuery {
     /// Optional sub-set of the fields to return.
@@ -232,6 +240,13 @@ pub struct StructuredQuery {
     /// * The value must be greater than or equal to zero if specified.
     #[prost(message, optional, tag = "5")]
     pub limit: ::core::option::Option<i32>,
+    /// Optional. A potential Nearest Neighbors Search.
+    ///
+    /// Applies after all other filters and ordering.
+    ///
+    /// Finds the closest vector embeddings to the given query vector.
+    #[prost(message, optional, tag = "9")]
+    pub find_nearest: ::core::option::Option<structured_query::FindNearest>,
 }
 /// Nested message and enum types in `StructuredQuery`.
 pub mod structured_query {
@@ -448,11 +463,12 @@ pub mod structured_query {
     /// A reference to a field in a document, ex: `stats.operations`.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct FieldReference {
-        /// The relative path of the document being referenced.
+        /// A reference to a field in a document.
         ///
         /// Requires:
         ///
-        /// * Conform to [document field name]\[google.firestore.v1.Document.fields\]
+        /// * MUST be a dot-delimited (`.`) string of segments, where each segment
+        /// conforms to [document field name]\[google.firestore.v1.Document.fields\]
         /// limitations.
         #[prost(string, tag = "2")]
         pub field_path: ::prost::alloc::string::String,
@@ -466,6 +482,53 @@ pub mod structured_query {
         /// of the document, use `\['__name__'\]`.
         #[prost(message, repeated, tag = "2")]
         pub fields: ::prost::alloc::vec::Vec<FieldReference>,
+    }
+    /// Nearest Neighbors search config.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FindNearest {
+        /// Required. An indexed vector field to search upon. Only documents which
+        /// contain vectors whose dimensionality match the query_vector can be
+        /// returned.
+        #[prost(message, optional, tag = "1")]
+        pub vector_field: ::core::option::Option<FieldReference>,
+        /// Required. The query vector that we are searching on. Must be a vector of
+        /// no more than 2048 dimensions.
+        #[prost(message, optional, tag = "2")]
+        pub query_vector: ::core::option::Option<super::Value>,
+        /// Required. The Distance Measure to use, required.
+        #[prost(enumeration = "find_nearest::DistanceMeasure", tag = "3")]
+        pub distance_measure: i32,
+        /// Required. The number of nearest neighbors to return. Must be a positive
+        /// integer of no more than 1000.
+        #[prost(message, optional, tag = "4")]
+        pub limit: ::core::option::Option<i32>,
+    }
+    /// Nested message and enum types in `FindNearest`.
+    pub mod find_nearest {
+        /// The distance measure to use when comparing vectors.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum DistanceMeasure {
+            /// Should not be set.
+            Unspecified = 0,
+            /// Measures the EUCLIDEAN distance between the vectors. See
+            /// \[Euclidean\](<https://en.wikipedia.org/wiki/Euclidean_distance>) to learn
+            /// more
+            Euclidean = 1,
+            /// Compares vectors based on the angle between them, which allows you to
+            /// measure similarity that isn't based on the vectors magnitude.
+            /// We recommend using DOT_PRODUCT with unit normalized vectors instead of
+            /// COSINE distance, which is mathematically equivalent with better
+            /// performance. See [Cosine
+            /// Similarity](<https://en.wikipedia.org/wiki/Cosine_similarity>) to learn
+            /// more.
+            Cosine = 2,
+            /// Similar to cosine but is affected by the magnitude of the vectors. See
+            /// [Dot Product](<https://en.wikipedia.org/wiki/Dot_product>) to learn more.
+            DotProduct = 3,
+        }
     }
     /// A sort direction.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -538,7 +601,7 @@ pub mod structured_aggregation_query {
         #[prost(string, tag = "7")]
         pub alias: ::prost::alloc::string::String,
         /// The type of aggregation to perform, required.
-        #[prost(oneof = "aggregation::Operator", tags = "1")]
+        #[prost(oneof = "aggregation::Operator", tags = "1, 2, 3")]
         pub operator: ::core::option::Option<aggregation::Operator>,
     }
     /// Nested message and enum types in `Aggregation`.
@@ -569,12 +632,62 @@ pub mod structured_aggregation_query {
             #[prost(message, optional, tag = "1")]
             pub up_to: ::core::option::Option<i64>,
         }
+        /// Sum of the values of the requested field.
+        ///
+        /// * Only numeric values will be aggregated. All non-numeric values
+        /// including `NULL` are skipped.
+        ///
+        /// * If the aggregated values contain `NaN`, returns `NaN`. Infinity math
+        /// follows IEEE-754 standards.
+        ///
+        /// * If the aggregated value set is empty, returns 0.
+        ///
+        /// * Returns a 64-bit integer if all aggregated numbers are integers and the
+        /// sum result does not overflow. Otherwise, the result is returned as a
+        /// double. Note that even if all the aggregated values are integers, the
+        /// result is returned as a double if it cannot fit within a 64-bit signed
+        /// integer. When this occurs, the returned value will lose precision.
+        ///
+        /// * When underflow occurs, floating-point aggregation is non-deterministic.
+        /// This means that running the same query repeatedly without any changes to
+        /// the underlying values could produce slightly different results each
+        /// time. In those cases, values should be stored as integers over
+        /// floating-point numbers.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Sum {
+            /// The field to aggregate on.
+            #[prost(message, optional, tag = "1")]
+            pub field: ::core::option::Option<super::super::structured_query::FieldReference>,
+        }
+        /// Average of the values of the requested field.
+        ///
+        /// * Only numeric values will be aggregated. All non-numeric values
+        /// including `NULL` are skipped.
+        ///
+        /// * If the aggregated values contain `NaN`, returns `NaN`. Infinity math
+        /// follows IEEE-754 standards.
+        ///
+        /// * If the aggregated value set is empty, returns `NULL`.
+        ///
+        /// * Always returns the result as a double.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Avg {
+            /// The field to aggregate on.
+            #[prost(message, optional, tag = "1")]
+            pub field: ::core::option::Option<super::super::structured_query::FieldReference>,
+        }
         /// The type of aggregation to perform, required.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Operator {
             /// Count aggregator.
             #[prost(message, tag = "1")]
             Count(Count),
+            /// Sum aggregator.
+            #[prost(message, tag = "2")]
+            Sum(Sum),
+            /// Average aggregator.
+            #[prost(message, tag = "3")]
+            Avg(Avg),
         }
     }
     /// The base query to aggregate over.
@@ -710,6 +823,9 @@ pub struct TransactionOptions {
 /// Nested message and enum types in `TransactionOptions`.
 pub mod transaction_options {
     /// Options for a transaction that can be used to read and write documents.
+    ///
+    /// Firestore does not allow 3rd party auth requests to create read-write.
+    /// transactions.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ReadWrite {
         /// An optional transaction to retry.
@@ -731,7 +847,10 @@ pub mod transaction_options {
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum ConsistencySelector {
             /// Reads documents at the given time.
-            /// This may not be older than 60 seconds.
+            ///
+            /// This must be a microsecond precision timestamp within the past one
+            /// hour, or if Point-in-Time Recovery is enabled, can additionally be a
+            /// whole minute timestamp within the past 7 days.
             #[prost(message, tag = "2")]
             ReadTime(::prost_types::Timestamp),
         }
@@ -746,6 +865,72 @@ pub mod transaction_options {
         #[prost(message, tag = "3")]
         ReadWrite(ReadWrite),
     }
+}
+// Specification of the Firestore Query Profile fields.
+
+/// Explain options for the query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExplainOptions {
+    /// Optional. Whether to execute this query.
+    ///
+    /// When false (the default), the query will be planned, returning only
+    /// metrics from the planning stages.
+    ///
+    /// When true, the query will be planned and executed, returning the full
+    /// query results along with both planning and execution stage metrics.
+    #[prost(bool, tag = "1")]
+    pub analyze: bool,
+}
+/// Explain metrics for the query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExplainMetrics {
+    /// Planning phase information for the query.
+    #[prost(message, optional, tag = "1")]
+    pub plan_summary: ::core::option::Option<PlanSummary>,
+    /// Aggregated stats from the execution of the query. Only present when
+    /// \[ExplainOptions.analyze][google.firestore.v1.ExplainOptions.analyze\] is set
+    /// to true.
+    #[prost(message, optional, tag = "2")]
+    pub execution_stats: ::core::option::Option<ExecutionStats>,
+}
+/// Planning phase information for the query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PlanSummary {
+    /// The indexes selected for the query. For example:
+    ///  [
+    ///    {"query_scope": "Collection", "properties": "(foo ASC, __name__ ASC)"},
+    ///    {"query_scope": "Collection", "properties": "(bar ASC, __name__ ASC)"}
+    ///  ]
+    #[prost(message, repeated, tag = "1")]
+    pub indexes_used: ::prost::alloc::vec::Vec<::prost_types::Struct>,
+}
+/// Execution statistics for the query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExecutionStats {
+    /// Total number of results returned, including documents, projections,
+    /// aggregation results, keys.
+    #[prost(int64, tag = "1")]
+    pub results_returned: i64,
+    /// Total time to execute the query in the backend.
+    #[prost(message, optional, tag = "3")]
+    pub execution_duration: ::core::option::Option<::prost_types::Duration>,
+    /// Total billable read operations.
+    #[prost(int64, tag = "4")]
+    pub read_operations: i64,
+    /// Debugging statistics from the execution of the query. Note that the
+    /// debugging stats are subject to change as Firestore evolves. It could
+    /// include:
+    ///  {
+    ///    "indexes_entries_scanned": "1000",
+    ///    "documents_scanned": "20",
+    ///    "billing_details" : {
+    ///       "documents_billable": "20",
+    ///       "index_entries_billable": "1000",
+    ///       "min_query_cost": "0"
+    ///    }
+    ///  }
+    #[prost(message, optional, tag = "5")]
+    pub debug_stats: ::core::option::Option<::prost_types::Struct>,
 }
 /// A write on a document.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1010,15 +1195,15 @@ pub struct ExistenceFilter {
     /// client must manually determine which documents no longer match the target.
     ///
     /// The client can use the `unchanged_names` bloom filter to assist with
-    /// this determination.
+    /// this determination by testing ALL the document names against the filter;
+    /// if the document name is NOT in the filter, it means the document no
+    /// longer matches the target.
     #[prost(int32, tag = "2")]
     pub count: i32,
-    /// A bloom filter that contains the UTF-8 byte encodings of the resource names
-    /// of the documents that match
+    /// A bloom filter that, despite its name, contains the UTF-8 byte encodings of
+    /// the resource names of ALL the documents that match
     /// \[target_id][google.firestore.v1.ExistenceFilter.target_id\], in the form
-    /// `projects/{project_id}/databases/{database_id}/documents/{document_path}`
-    /// that have NOT changed since the query results indicated by the resume token
-    /// or timestamp given in `Target.resume_type`.
+    /// `projects/{project_id}/databases/{database_id}/documents/{document_path}`.
     ///
     /// This bloom filter may be omitted at the server's discretion, such as if it
     /// is deemed that the client will not make use of it or if it is too
@@ -1058,7 +1243,10 @@ pub mod get_document_request {
         #[prost(bytes, tag = "3")]
         Transaction(::prost::alloc::vec::Vec<u8>),
         /// Reads the version of the document at the given time.
-        /// This may not be older than 270 seconds.
+        ///
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, tag = "5")]
         ReadTime(::prost_types::Timestamp),
     }
@@ -1138,7 +1326,9 @@ pub mod list_documents_request {
         Transaction(::prost::alloc::vec::Vec<u8>),
         /// Perform the read at the provided time.
         ///
-        /// This may not be older than 270 seconds.
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, tag = "10")]
         ReadTime(::prost_types::Timestamp),
     }
@@ -1270,7 +1460,10 @@ pub mod batch_get_documents_request {
         #[prost(message, tag = "5")]
         NewTransaction(super::TransactionOptions),
         /// Reads documents as they were at the given time.
-        /// This may not be older than 270 seconds.
+        ///
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, tag = "7")]
         ReadTime(::prost_types::Timestamp),
     }
@@ -1384,6 +1577,10 @@ pub struct RunQueryRequest {
     /// `projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
+    /// Optional. Explain options for the query. If set, additional query
+    /// statistics will be returned. If not, only query results will be returned.
+    #[prost(message, optional, tag = "10")]
+    pub explain_options: ::core::option::Option<ExplainOptions>,
     /// The query to run.
     #[prost(oneof = "run_query_request::QueryType", tags = "2")]
     pub query_type: ::core::option::Option<run_query_request::QueryType>,
@@ -1417,7 +1614,10 @@ pub mod run_query_request {
         #[prost(message, tag = "6")]
         NewTransaction(super::TransactionOptions),
         /// Reads documents as they were at the given time.
-        /// This may not be older than 270 seconds.
+        ///
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, tag = "7")]
         ReadTime(::prost_types::Timestamp),
     }
@@ -1449,6 +1649,11 @@ pub struct RunQueryResponse {
     /// the last response and the current response.
     #[prost(int32, tag = "4")]
     pub skipped_results: i32,
+    /// Query explain metrics. This is only present when the
+    /// \[RunQueryRequest.explain_options][google.firestore.v1.RunQueryRequest.explain_options\]
+    /// is provided, and it is sent only once with the last response in the stream.
+    #[prost(message, optional, tag = "11")]
+    pub explain_metrics: ::core::option::Option<ExplainMetrics>,
     /// The continuation mode for the query. If present, it indicates the current
     /// query response stream has finished. This can be set with or without a
     /// `document` present, but when set, no more results are returned.
@@ -1480,6 +1685,10 @@ pub struct RunAggregationQueryRequest {
     /// `projects/my-project/databases/my-database/documents/chatrooms/my-chatroom`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
+    /// Optional. Explain options for the query. If set, additional query
+    /// statistics will be returned. If not, only query results will be returned.
+    #[prost(message, optional, tag = "8")]
+    pub explain_options: ::core::option::Option<ExplainOptions>,
     /// The query to run.
     #[prost(oneof = "run_aggregation_query_request::QueryType", tags = "2")]
     pub query_type: ::core::option::Option<run_aggregation_query_request::QueryType>,
@@ -1516,9 +1725,9 @@ pub mod run_aggregation_query_request {
         NewTransaction(super::TransactionOptions),
         /// Executes the query at the given timestamp.
         ///
-        /// Requires:
-        ///
-        /// * Cannot be more than 270 seconds in the past.
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, tag = "6")]
         ReadTime(::prost_types::Timestamp),
     }
@@ -1548,6 +1757,11 @@ pub struct RunAggregationQueryResponse {
     /// was run.
     #[prost(message, optional, tag = "3")]
     pub read_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Query explain metrics. This is only present when the
+    /// \[RunAggregationQueryRequest.explain_options][google.firestore.v1.RunAggregationQueryRequest.explain_options\]
+    /// is provided, and it is sent only once with the last response in the stream.
+    #[prost(message, optional, tag = "10")]
+    pub explain_metrics: ::core::option::Option<ExplainMetrics>,
 }
 /// The request for
 /// \[Firestore.PartitionQuery][google.firestore.v1.Firestore.PartitionQuery\].
@@ -1618,7 +1832,10 @@ pub mod partition_query_request {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ConsistencySelector {
         /// Reads documents as they were at the given time.
-        /// This may not be older than 270 seconds.
+        ///
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, tag = "6")]
         ReadTime(::prost_types::Timestamp),
     }
@@ -1643,7 +1860,7 @@ pub struct PartitionQueryResponse {
     ///  * query, start_at B
     ///
     /// An empty result may indicate that the query has too few results to be
-    /// partitioned.
+    /// partitioned, or that the query is not yet supported for partitioning.
     #[prost(message, repeated, tag = "1")]
     pub partitions: ::prost::alloc::vec::Vec<Cursor>,
     /// A page token that may be used to request an additional set of results, up
@@ -1794,6 +2011,21 @@ pub mod listen_response {
 pub struct Target {
     /// The target ID that identifies the target on the stream. Must be a positive
     /// number and non-zero.
+    ///
+    /// If `target_id` is 0 (or unspecified), the server will assign an ID for this
+    /// target and return that in a `TargetChange::ADD` event. Once a target with
+    /// `target_id=0` is added, all subsequent targets must also have
+    /// `target_id=0`. If an `AddTarget` request with `target_id != 0` is
+    /// sent to the server after a target with `target_id=0` is added, the server
+    /// will immediately send a response with a `TargetChange::Remove` event.
+    ///
+    /// Note that if the client sends multiple `AddTarget` requests
+    /// without an ID, the order of IDs returned in `TargetChage.target_ids` are
+    /// undefined. Therefore, clients should provide a target ID instead of relying
+    /// on the server to assign one.
+    ///
+    /// If `target_id` is non-zero, there must not be an existing active target on
+    /// this stream with the same ID.
     #[prost(int32, tag = "5")]
     pub target_id: i32,
     /// If the target should be removed once it is current and consistent.
@@ -1812,8 +2044,9 @@ pub struct Target {
     pub target_type: ::core::option::Option<target::TargetType>,
     /// When to start listening.
     ///
-    /// If not specified, all matching Documents are returned before any
-    /// subsequent changes.
+    /// If specified, only the matching Documents that have been updated AFTER the
+    /// `resume_token` or `read_time` will be returned. Otherwise, all matching
+    /// Documents are returned before any subsequent changes.
     #[prost(oneof = "target::ResumeType", tags = "4, 11")]
     pub resume_type: ::core::option::Option<target::ResumeType>,
 }
@@ -1866,8 +2099,9 @@ pub mod target {
     }
     /// When to start listening.
     ///
-    /// If not specified, all matching Documents are returned before any
-    /// subsequent changes.
+    /// If specified, only the matching Documents that have been updated AFTER the
+    /// `resume_token` or `read_time` will be returned. Otherwise, all matching
+    /// Documents are returned before any subsequent changes.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ResumeType {
         /// A resume token from a prior
@@ -1977,7 +2211,10 @@ pub mod list_collection_ids_request {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum ConsistencySelector {
         /// Reads documents as they were at the given time.
-        /// This may not be older than 270 seconds.
+        ///
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, tag = "4")]
         ReadTime(::prost_types::Timestamp),
     }

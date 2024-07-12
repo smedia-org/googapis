@@ -135,15 +135,15 @@ pub mod asset {
     /// policy](<https://cloud.google.com/access-context-manager/docs/overview#access-policies>).
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum AccessContextPolicy {
-        /// Please also refer to the [access policy user
+        /// Also refer to the [access policy user
         /// guide](<https://cloud.google.com/access-context-manager/docs/overview#access-policies>).
         #[prost(message, tag = "7")]
         AccessPolicy(super::super::super::super::identity::accesscontextmanager::v1::AccessPolicy),
-        /// Please also refer to the [access level user
+        /// Also refer to the [access level user
         /// guide](<https://cloud.google.com/access-context-manager/docs/overview#access-levels>).
         #[prost(message, tag = "8")]
         AccessLevel(super::super::super::super::identity::accesscontextmanager::v1::AccessLevel),
-        /// Please also refer to the [service perimeter user
+        /// Also refer to the [service perimeter user
         /// guide](<https://cloud.google.com/vpc-service-controls/docs/overview>).
         #[prost(message, tag = "9")]
         ServicePerimeter(
@@ -189,8 +189,6 @@ pub struct Resource {
     /// hierarchy](<https://cloud.google.com/iam/docs/overview#policy_hierarchy>).
     /// Example:
     /// `//cloudresourcemanager.googleapis.com/projects/my_project_123`
-    ///
-    /// For third-party assets, this field may be set differently.
     #[prost(string, tag = "5")]
     pub parent: ::prost::alloc::string::String,
     /// The content of the resource, in which some sensitive fields are removed
@@ -274,8 +272,47 @@ pub struct RelatedAsset {
     #[prost(string, tag = "4")]
     pub relationship_type: ::prost::alloc::string::String,
 }
+/// The key and value for a
+/// \[tag\](<https://cloud.google.com/resource-manager/docs/tags/tags-overview>).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Tag {
+    /// TagKey namespaced name, in the format of {ORG_ID}/{TAG_KEY_SHORT_NAME}.
+    #[prost(string, optional, tag = "1")]
+    pub tag_key: ::core::option::Option<::prost::alloc::string::String>,
+    /// TagKey ID, in the format of tagKeys/{TAG_KEY_ID}.
+    #[prost(string, optional, tag = "2")]
+    pub tag_key_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// TagValue namespaced name, in the format of
+    /// {ORG_ID}/{TAG_KEY_SHORT_NAME}/{TAG_VALUE_SHORT_NAME}.
+    #[prost(string, optional, tag = "3")]
+    pub tag_value: ::core::option::Option<::prost::alloc::string::String>,
+    /// TagValue ID, in the format of tagValues/{TAG_VALUE_ID}.
+    #[prost(string, optional, tag = "4")]
+    pub tag_value_id: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// The effective tags and the ancestor resources from which they were inherited.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EffectiveTagDetails {
+    /// The [full resource
+    /// name](<https://cloud.google.com/asset-inventory/docs/resource-name-format>)
+    /// of the ancestor from which an \[effective_tag][\] is inherited, according to
+    /// [tag
+    /// inheritance](<https://cloud.google.com/resource-manager/docs/tags/tags-overview#inheritance>).
+    #[prost(string, optional, tag = "1")]
+    pub attached_resource: ::core::option::Option<::prost::alloc::string::String>,
+    /// The effective tags inherited from the
+    /// \[attached_resource][google.cloud.asset.v1.EffectiveTagDetails.attached_resource\].
+    /// Note that tags with the same key but different values may attach to
+    /// resources at a different hierarchy levels. The lower hierarchy tag value
+    /// will overwrite the higher hierarchy tag value of the same tag key. In this
+    /// case, the tag value at the higher hierarchy level will be removed. For more
+    /// information, see [tag
+    /// inheritance](<https://cloud.google.com/resource-manager/docs/tags/tags-overview#inheritance>).
+    #[prost(message, repeated, tag = "2")]
+    pub effective_tags: ::prost::alloc::vec::Vec<Tag>,
+}
 /// A result of Resource Search, containing information of a cloud resource.
-/// Next ID: 32
+/// Next ID: 34
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ResourceSearchResult {
     /// The full resource name of this resource. Example:
@@ -394,8 +431,8 @@ pub struct ResourceSearchResult {
     /// \[CryptoKeyVersion\](<https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions>)
     /// name.
     ///
-    /// This field only presents for the purpose of backward compatibility. Please
-    /// use the `kms_keys` field to retrieve Cloud KMS key information. This field
+    /// This field only presents for the purpose of backward compatibility.
+    /// Use the `kms_keys` field to retrieve Cloud KMS key information. This field
     /// is available only when the resource's Protobuf contains it and will only be
     /// populated for [these resource
     /// types](<https://cloud.google.com/asset-inventory/docs/legacy-field-names#resource_types_with_the_to_be_deprecated_kmskey_field>)
@@ -476,7 +513,7 @@ pub struct ResourceSearchResult {
     /// metadata fields that are returned by the List or Get APIs provided by the
     /// corresponding Google Cloud service (e.g., Compute Engine). see [API
     /// references and supported searchable
-    /// attributes](<https://cloud.google.com/asset-inventory/docs/supported-asset-types#searchable_asset_types>)
+    /// attributes](<https://cloud.google.com/asset-inventory/docs/supported-asset-types>)
     /// to see which fields are included.
     ///
     /// You can search values of these fields through free text search. However,
@@ -527,6 +564,9 @@ pub struct ResourceSearchResult {
     #[prost(map = "string, message", tag = "21")]
     pub relationships:
         ::std::collections::HashMap<::prost::alloc::string::String, RelatedResources>,
+    /// This field is only present for the purpose of backward compatibility.
+    /// Use the `tags` field instead.
+    ///
     /// TagKey namespaced names, in the format of {ORG_ID}/{TAG_KEY_SHORT_NAME}.
     /// To search against the `tagKeys`:
     ///
@@ -537,8 +577,12 @@ pub struct ResourceSearchResult {
     ///
     /// * Use a free text query. Example:
     ///     - `env`
+    #[deprecated]
     #[prost(string, repeated, tag = "23")]
     pub tag_keys: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// This field is only present for the purpose of backward compatibility.
+    /// Use the `tags` field instead.
+    ///
     /// TagValue namespaced names, in the format of
     /// {ORG_ID}/{TAG_KEY_SHORT_NAME}/{TAG_VALUE_SHORT_NAME}.
     /// To search against the `tagValues`:
@@ -551,19 +595,61 @@ pub struct ResourceSearchResult {
     ///
     /// * Use a free text query. Example:
     ///     - `prod`
+    #[deprecated]
     #[prost(string, repeated, tag = "25")]
     pub tag_values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// This field is only present for the purpose of backward compatibility.
+    /// Use the `tags` field instead.
+    ///
     /// TagValue IDs, in the format of tagValues/{TAG_VALUE_ID}.
     /// To search against the `tagValueIds`:
     ///
     /// * Use a field query. Example:
-    ///     - `tagValueIds:"456"`
     ///     - `tagValueIds="tagValues/456"`
     ///
     /// * Use a free text query. Example:
     ///     - `456`
+    #[deprecated]
     #[prost(string, repeated, tag = "26")]
     pub tag_value_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The tags directly attached to this resource.
+    ///
+    /// To search against the `tags`:
+    ///
+    /// * Use a field query. Example:
+    ///     - `tagKeys:"123456789/env*"`
+    ///     - `tagKeys="123456789/env"`
+    ///     - `tagKeys:"env"`
+    ///     - `tagKeyIds="tagKeys/123"`
+    ///     - `tagValues:"env"`
+    ///     - `tagValues:"env/prod"`
+    ///     - `tagValues:"123456789/env/prod*"`
+    ///     - `tagValues="123456789/env/prod"`
+    ///     - `tagValueIds="tagValues/456"`
+    ///
+    /// * Use a free text query. Example:
+    ///     - `env/prod`
+    #[prost(message, repeated, tag = "29")]
+    pub tags: ::prost::alloc::vec::Vec<Tag>,
+    /// The effective tags on this resource. All of the tags that are both attached
+    /// to and inherited by a resource are collectively called the effective
+    /// tags. For more information, see [tag
+    /// inheritance](<https://cloud.google.com/resource-manager/docs/tags/tags-overview#inheritance>).
+    ///
+    /// To search against the `effective_tags`:
+    ///
+    /// * Use a field query. Example:
+    ///     - `effectiveTagKeys:"123456789/env*"`
+    ///     - `effectiveTagKeys="123456789/env"`
+    ///     - `effectiveTagKeys:"env"`
+    ///     - `effectiveTagKeyIds="tagKeys/123"`
+    ///     - `effectiveTagValues:"env"`
+    ///     - `effectiveTagValues:"env/prod"`
+    ///     - `effectiveTagValues:"123456789/env/prod*"`
+    ///     - `effectiveTagValues="123456789/env/prod"`
+    ///     - `effectiveTagValueIds="tagValues/456"`
+    #[prost(message, repeated, tag = "30")]
+    pub effective_tags: ::prost::alloc::vec::Vec<EffectiveTagDetails>,
     /// The type of this resource's immediate parent, if there is one.
     ///
     /// To search against the `parent_asset_type`:
@@ -574,6 +660,18 @@ pub struct ResourceSearchResult {
     /// `cloudresourcemanager.googleapis.com/Project`
     #[prost(string, tag = "103")]
     pub parent_asset_type: ::prost::alloc::string::String,
+    /// The actual content of Security Command Center security marks associated
+    /// with the asset.
+    ///
+    ///
+    /// To search against SCC SecurityMarks field:
+    ///
+    ///   * Use a field query:
+    ///     - query by a given key value pair. Example: `sccSecurityMarks.foo=bar`
+    ///     - query by a given key's existence. Example: `sccSecurityMarks.foo:*`
+    #[prost(map = "string, string", tag = "32")]
+    pub scc_security_marks:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
 /// Resource representation as defined by the corresponding service providing the
 /// resource for a given API version.
@@ -598,7 +696,7 @@ pub struct VersionedResource {
     ///
     /// You can find the resource definition for each supported resource type in
     /// this table:
-    /// `<https://cloud.google.com/asset-inventory/docs/supported-asset-types#searchable_asset_types`>
+    /// `<https://cloud.google.com/asset-inventory/docs/supported-asset-types`>
     #[prost(message, optional, tag = "2")]
     pub resource: ::core::option::Option<::prost_types::Struct>,
 }
@@ -612,7 +710,7 @@ pub struct AttachedResource {
     ///
     /// You can find the supported attached asset types of each resource in this
     /// table:
-    /// `<https://cloud.google.com/asset-inventory/docs/supported-asset-types#searchable_asset_types`>
+    /// `<https://cloud.google.com/asset-inventory/docs/supported-asset-types`>
     #[prost(string, tag = "1")]
     pub asset_type: ::prost::alloc::string::String,
     /// Versioned resource representations of this attached resource. This is
@@ -759,7 +857,7 @@ pub struct IamPolicyAnalysisState {
     #[prost(string, tag = "2")]
     pub cause: ::prost::alloc::string::String,
 }
-/// The Condition evaluation.
+/// The condition evaluation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ConditionEvaluation {
     /// The evaluation result.
@@ -780,7 +878,7 @@ pub mod condition_evaluation {
         False = 2,
         /// The evaluation result is `conditional` when the condition expression
         /// contains variables that are either missing input values or have not been
-        /// supported by Analyzer yet.
+        /// supported by Policy Analyzer yet.
         Conditional = 3,
     }
 }
@@ -853,17 +951,17 @@ pub mod iam_policy_analysis_result {
     /// An identity under analysis.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Identity {
-        /// The identity name in any form of members appear in
+        /// The identity of members, formatted as appear in an
         /// [IAM policy
-        /// binding](<https://cloud.google.com/iam/reference/rest/v1/Binding>), such
-        /// as:
+        /// binding](<https://cloud.google.com/iam/reference/rest/v1/Binding>). For
+        /// example, they might be formatted like the following:
+        ///
         /// - user:foo@google.com
         /// - group:group1@google.com
         /// - serviceAccount:s1@prj1.iam.gserviceaccount.com
         /// - projectOwner:some_project_id
         /// - domain:google.com
         /// - allUsers
-        /// - etc.
         #[prost(string, tag = "1")]
         pub name: ::prost::alloc::string::String,
         /// The analysis state of this identity.
@@ -1558,55 +1656,83 @@ pub struct SearchAllResourcesRequest {
     /// Examples:
     ///
     /// * `name:Important` to find Google Cloud resources whose name contains
-    ///   "Important" as a word.
+    ///   `Important` as a word.
     /// * `name=Important` to find the Google Cloud resource whose name is exactly
-    ///   "Important".
+    ///   `Important`.
     /// * `displayName:Impor*` to find Google Cloud resources whose display name
-    ///   contains "Impor" as a prefix of any word in the field.
+    ///   contains `Impor` as a prefix of any word in the field.
     /// * `location:us-west*` to find Google Cloud resources whose location
-    ///   contains both "us" and "west" as prefixes.
-    /// * `labels:prod` to find Google Cloud resources whose labels contain "prod"
+    ///   contains both `us` and `west` as prefixes.
+    /// * `labels:prod` to find Google Cloud resources whose labels contain `prod`
     ///   as a key or value.
-    /// * `labels.env:prod` to find Google Cloud resources that have a label "env"
-    ///   and its value is "prod".
-    /// * `labels.env:*` to find Google Cloud resources that have a label "env".
+    /// * `labels.env:prod` to find Google Cloud resources that have a label `env`
+    ///   and its value is `prod`.
+    /// * `labels.env:*` to find Google Cloud resources that have a label `env`.
+    /// * `tagKeys:env` to find Google Cloud resources that have directly
+    ///   attached tags where the
+    ///   \[`TagKey.namespacedName`\](<https://cloud.google.com/resource-manager/reference/rest/v3/tagKeys#resource:-tagkey>)
+    ///   contains `env`.
+    /// * `tagValues:prod*` to find Google Cloud resources that have directly
+    ///   attached tags where the
+    ///   \[`TagValue.namespacedName`\](<https://cloud.google.com/resource-manager/reference/rest/v3/tagValues#resource:-tagvalue>)
+    ///   contains a word prefixed by `prod`.
+    /// * `tagValueIds=tagValues/123` to find Google Cloud resources that have
+    ///   directly attached tags where the
+    ///   \[`TagValue.name`\](<https://cloud.google.com/resource-manager/reference/rest/v3/tagValues#resource:-tagvalue>)
+    ///   is exactly `tagValues/123`.
+    /// * `effectiveTagKeys:env` to find Google Cloud resources that have
+    ///   directly attached or inherited tags where the
+    ///   \[`TagKey.namespacedName`\](<https://cloud.google.com/resource-manager/reference/rest/v3/tagKeys#resource:-tagkey>)
+    ///   contains `env`.
+    /// * `effectiveTagValues:prod*` to find Google Cloud resources that have
+    ///   directly attached or inherited tags where the
+    ///   \[`TagValue.namespacedName`\](<https://cloud.google.com/resource-manager/reference/rest/v3/tagValues#resource:-tagvalue>)
+    ///   contains a word prefixed by `prod`.
+    /// * `effectiveTagValueIds=tagValues/123` to find Google Cloud resources that
+    ///    have directly attached or inherited tags where the
+    ///   \[`TagValue.name`\](<https://cloud.google.com/resource-manager/reference/rest/v3/tagValues#resource:-tagvalue>)
+    ///   is exactly `tagValues/123`.
     /// * `kmsKey:key` to find Google Cloud resources encrypted with a
-    ///   customer-managed encryption key whose name contains "key" as a word. This
-    ///   field is deprecated. Please use the `kmsKeys` field to retrieve Cloud KMS
+    ///   customer-managed encryption key whose name contains `key` as a word. This
+    ///   field is deprecated. Use the `kmsKeys` field to retrieve Cloud KMS
     ///   key information.
     /// * `kmsKeys:key` to find Google Cloud resources encrypted with
-    ///   customer-managed encryption keys whose name contains the word "key".
+    ///   customer-managed encryption keys whose name contains the word `key`.
     /// * `relationships:instance-group-1` to find Google Cloud resources that have
-    ///   relationships with "instance-group-1" in the related resource name.
+    ///   relationships with `instance-group-1` in the related resource name.
     /// * `relationships:INSTANCE_TO_INSTANCEGROUP` to find Compute Engine
-    ///   instances that have relationships of type "INSTANCE_TO_INSTANCEGROUP".
+    ///   instances that have relationships of type `INSTANCE_TO_INSTANCEGROUP`.
     /// * `relationships.INSTANCE_TO_INSTANCEGROUP:instance-group-1` to find
-    ///   Compute Engine instances that have relationships with "instance-group-1"
+    ///   Compute Engine instances that have relationships with `instance-group-1`
     ///   in the Compute Engine instance group resource name, for relationship type
-    ///   "INSTANCE_TO_INSTANCEGROUP".
+    ///   `INSTANCE_TO_INSTANCEGROUP`.
+    /// * `sccSecurityMarks.key=value` to find Cloud resources that are attached
+    ///   with security marks whose key is `key` and value is `value`.
+    /// * `sccSecurityMarks.key:*` to find Cloud resources that are attached with
+    ///   security marks whose key is `key`.
     /// * `state:ACTIVE` to find Google Cloud resources whose state contains
-    ///   "ACTIVE" as a word.
+    ///   `ACTIVE` as a word.
     /// * `NOT state:ACTIVE` to find Google Cloud resources whose state doesn't
-    ///   contain "ACTIVE" as a word.
+    ///   contain `ACTIVE` as a word.
     /// * `createTime<1609459200` to find Google Cloud resources that were created
-    ///   before "2021-01-01 00:00:00 UTC". 1609459200 is the epoch timestamp of
-    ///   "2021-01-01 00:00:00 UTC" in seconds.
+    ///   before `2021-01-01 00:00:00 UTC`. `1609459200` is the epoch timestamp of
+    ///   `2021-01-01 00:00:00 UTC` in seconds.
     /// * `updateTime>1609459200` to find Google Cloud resources that were updated
-    ///   after "2021-01-01 00:00:00 UTC". 1609459200 is the epoch timestamp of
-    ///   "2021-01-01 00:00:00 UTC" in seconds.
-    /// * `Important` to find Google Cloud resources that contain "Important" as a
+    ///   after `2021-01-01 00:00:00 UTC`. `1609459200` is the epoch timestamp of
+    ///   `2021-01-01 00:00:00 UTC` in seconds.
+    /// * `Important` to find Google Cloud resources that contain `Important` as a
     ///   word in any of the searchable fields.
-    /// * `Impor*` to find Google Cloud resources that contain "Impor" as a prefix
+    /// * `Impor*` to find Google Cloud resources that contain `Impor` as a prefix
     ///   of any word in any of the searchable fields.
     /// * `Important location:(us-west1 OR global)` to find Google Cloud
-    ///   resources that contain "Important" as a word in any of the searchable
-    ///   fields and are also located in the "us-west1" region or the "global"
+    ///   resources that contain `Important` as a word in any of the searchable
+    ///   fields and are also located in the `us-west1` region or the `global`
     ///   location.
     #[prost(string, tag = "2")]
     pub query: ::prost::alloc::string::String,
     /// Optional. A list of asset types that this request searches for. If empty,
-    /// it will search all the [searchable asset
-    /// types](<https://cloud.google.com/asset-inventory/docs/supported-asset-types#searchable_asset_types>).
+    /// it will search all the asset types [supported by search
+    /// APIs](<https://cloud.google.com/asset-inventory/docs/supported-asset-types>).
     ///
     /// Regular expressions are also supported. For example:
     ///
@@ -1621,10 +1747,10 @@ pub struct SearchAllResourcesRequest {
     #[prost(string, repeated, tag = "3")]
     pub asset_types: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Optional. The page size for search result pagination. Page size is capped
-    /// at 500 even if a larger value is given. If set to zero, server will pick an
-    /// appropriate default. Returned results may be fewer than requested. When
-    /// this happens, there could be more results as long as `next_page_token` is
-    /// returned.
+    /// at 500 even if a larger value is given. If set to zero or a negative value,
+    /// server will pick an appropriate default. Returned results may be fewer than
+    /// requested. When this happens, there could be more results as long as
+    /// `next_page_token` is returned.
     #[prost(int32, tag = "4")]
     pub page_size: i32,
     /// Optional. If present, then retrieve the next batch of results from the
@@ -1637,7 +1763,7 @@ pub struct SearchAllResourcesRequest {
     /// the results. The default order is ascending. Add " DESC" after the field
     /// name to indicate descending order. Redundant space characters are ignored.
     /// Example: "location DESC, name".
-    /// Only singular primitive fields in the response are sortable:
+    /// Only the following fields in the response are sortable:
     ///
     ///   * name
     ///   * assetType
@@ -1650,44 +1776,38 @@ pub struct SearchAllResourcesRequest {
     ///   * state
     ///   * parentFullResourceName
     ///   * parentAssetType
-    ///
-    /// All the other fields such as repeated fields (e.g., `networkTags`,
-    /// `kmsKeys`), map fields (e.g., `labels`) and struct fields (e.g.,
-    /// `additionalAttributes`) are not supported.
     #[prost(string, tag = "6")]
     pub order_by: ::prost::alloc::string::String,
-    /// Optional. A comma-separated list of fields specifying which fields to be
-    /// returned in ResourceSearchResult. Only '*' or combination of top level
-    /// fields can be specified. Field names of both snake_case and camelCase are
-    /// supported. Examples: `"*"`, `"name,location"`, `"name,versionedResources"`.
+    /// Optional. A comma-separated list of fields that you want returned in the
+    /// results. The following fields are returned by default if not specified:
     ///
-    /// The read_mask paths must be valid field paths listed but not limited to
-    /// (both snake_case and camelCase are supported):
+    ///   * `name`
+    ///   * `assetType`
+    ///   * `project`
+    ///   * `folders`
+    ///   * `organization`
+    ///   * `displayName`
+    ///   * `description`
+    ///   * `location`
+    ///   * `labels`
+    ///   * `tags`
+    ///   * `effectiveTags`
+    ///   * `networkTags`
+    ///   * `kmsKeys`
+    ///   * `createTime`
+    ///   * `updateTime`
+    ///   * `state`
+    ///   * `additionalAttributes`
+    ///   * `parentFullResourceName`
+    ///   * `parentAssetType`
     ///
-    ///   * name
-    ///   * assetType
-    ///   * project
-    ///   * displayName
-    ///   * description
-    ///   * location
-    ///   * tagKeys
-    ///   * tagValues
-    ///   * tagValueIds
-    ///   * labels
-    ///   * networkTags
-    ///   * kmsKey (This field is deprecated. Please use the `kmsKeys` field to
-    ///     retrieve Cloud KMS key information.)
-    ///   * kmsKeys
-    ///   * createTime
-    ///   * updateTime
-    ///   * state
-    ///   * additionalAttributes
-    ///   * versionedResources
-    ///
-    /// If read_mask is not specified, all fields except versionedResources will
-    /// be returned.
-    /// If only '*' is specified, all fields including versionedResources will be
-    /// returned.
+    /// Some fields of large size, such as `versionedResources`,
+    /// `attachedResources`, `effectiveTags` etc., are not returned by default, but
+    /// you can specify them in the `read_mask` parameter if you want to include
+    /// them. If `"*"` is specified, all [available
+    /// fields](<https://cloud.google.com/asset-inventory/docs/reference/rest/v1/TopLevel/searchAllResources#resourcesearchresult>)
+    /// are returned.
+    /// Examples: `"name,location"`, `"name,versionedResources"`, `"*"`.
     /// Any invalid field path will trigger INVALID_ARGUMENT error.
     #[prost(message, optional, tag = "8")]
     pub read_mask: ::core::option::Option<::prost_types::FieldMask>,
@@ -1767,10 +1887,10 @@ pub struct SearchAllIamPoliciesRequest {
     #[prost(string, tag = "2")]
     pub query: ::prost::alloc::string::String,
     /// Optional. The page size for search result pagination. Page size is capped
-    /// at 500 even if a larger value is given. If set to zero, server will pick an
-    /// appropriate default. Returned results may be fewer than requested. When
-    /// this happens, there could be more results as long as `next_page_token` is
-    /// returned.
+    /// at 500 even if a larger value is given. If set to zero or a negative value,
+    /// server will pick an appropriate default. Returned results may be fewer than
+    /// requested. When this happens, there could be more results as long as
+    /// `next_page_token` is returned.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
     /// Optional. If present, retrieve the next batch of results from the preceding
@@ -1780,9 +1900,9 @@ pub struct SearchAllIamPoliciesRequest {
     #[prost(string, tag = "4")]
     pub page_token: ::prost::alloc::string::String,
     /// Optional. A list of asset types that the IAM policies are attached to. If
-    /// empty, it will search the IAM policies that are attached to all the
-    /// [searchable asset
-    /// types](<https://cloud.google.com/asset-inventory/docs/supported-asset-types#searchable_asset_types>).
+    /// empty, it will search the IAM policies that are attached to all the asset
+    /// types [supported by search
+    /// APIs](<https://cloud.google.com/asset-inventory/docs/supported-asset-types>)
     ///
     /// Regular expressions are also supported. For example:
     ///
@@ -1834,10 +1954,10 @@ pub struct IamPolicyAnalysisQuery {
     /// folder number (such as "folders/123"), a project ID (such as
     /// "projects/my-project-id"), or a project number (such as "projects/12345").
     ///
-    /// To know how to get organization id, visit [here
+    /// To know how to get organization ID, visit [here
     /// ](<https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id>).
     ///
-    /// To know how to get folder or project id, visit [here
+    /// To know how to get folder or project ID, visit [here
     /// ](<https://cloud.google.com/resource-manager/docs/creating-managing-folders#viewing_or_listing_folders_and_projects>).
     #[prost(string, tag = "1")]
     pub scope: ::prost::alloc::string::String,
@@ -2045,7 +2165,7 @@ pub struct AnalyzeIamPolicyRequest {
     /// If both `analysis_query` and `saved_analysis_query` are provided, they
     /// will be merged together with the `saved_analysis_query` as base and
     /// the `analysis_query` as overrides. For more details of the merge behavior,
-    /// please refer to the
+    /// refer to the
     /// \[MergeFrom\](<https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message#Message.MergeFrom.details>)
     /// page.
     ///
@@ -2224,7 +2344,7 @@ pub struct AnalyzeIamPolicyLongrunningRequest {
     /// If both `analysis_query` and `saved_analysis_query` are provided, they
     /// will be merged together with the `saved_analysis_query` as base and
     /// the `analysis_query` as overrides. For more details of the merge behavior,
-    /// please refer to the
+    /// refer to the
     /// \[MergeFrom\](<https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message#Message.MergeFrom.details>)
     /// doc.
     ///
@@ -2602,8 +2722,8 @@ pub struct QueryAssetsRequest {
 pub mod query_assets_request {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Query {
-        /// Optional. A SQL statement that's compatible with [BigQuery Standard
-        /// SQL](<http://cloud/bigquery/docs/reference/standard-sql/enabling-standard-sql>).
+        /// Optional. A SQL statement that's compatible with [BigQuery
+        /// SQL](<https://cloud.google.com/bigquery/docs/introduction-sql>).
         #[prost(string, tag = "2")]
         Statement(::prost::alloc::string::String),
         /// Optional. Reference to the query job, which is from the
@@ -2735,17 +2855,17 @@ pub struct BatchGetEffectiveIamPoliciesRequest {
     /// folder number (such as "folders/123"), a project ID (such as
     /// "projects/my-project-id"), or a project number (such as "projects/12345").
     ///
-    /// To know how to get organization id, visit [here
+    /// To know how to get organization ID, visit [here
     /// ](<https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id>).
     ///
-    /// To know how to get folder or project id, visit [here
+    /// To know how to get folder or project ID, visit [here
     /// ](<https://cloud.google.com/resource-manager/docs/creating-managing-folders#viewing_or_listing_folders_and_projects>).
     #[prost(string, tag = "1")]
     pub scope: ::prost::alloc::string::String,
     /// Required. The names refer to the \[full_resource_names\]
     /// (<https://cloud.google.com/asset-inventory/docs/resource-name-format>)
-    /// of [searchable asset
-    /// types](<https://cloud.google.com/asset-inventory/docs/supported-asset-types#searchable_asset_types>).
+    /// of the asset types [supported by search
+    /// APIs](<https://cloud.google.com/asset-inventory/docs/supported-asset-types>).
     /// A maximum of 20 resources' effective policies can be retrieved in a batch.
     #[prost(string, repeated, tag = "3")]
     pub names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -2862,12 +2982,31 @@ pub struct AnalyzerOrgPolicy {
 }
 /// Nested message and enum types in `AnalyzerOrgPolicy`.
 pub mod analyzer_org_policy {
-    /// Represents a rule defined in an organization policy
+    /// This rule message is a customized version of the one defined in the
+    /// Organization Policy system. In addition to the fields defined in the
+    /// original organization policy, it contains additional field(s) under
+    /// specific circumstances to support analysis results.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Rule {
         /// The evaluating condition for this rule.
         #[prost(message, optional, tag = "7")]
         pub condition: ::core::option::Option<super::super::super::super::r#type::Expr>,
+        /// The condition evaluation result for this rule.
+        /// Only populated if it meets all the following criteria:
+        ///
+        /// * There is a
+        /// \[condition][google.cloud.asset.v1.AnalyzerOrgPolicy.Rule.condition\]
+        /// defined for this rule.
+        /// * This rule is within
+        ///   \[AnalyzeOrgPolicyGovernedContainersResponse.GovernedContainer.consolidated_policy][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedContainersResponse.GovernedContainer.consolidated_policy\],
+        ///   or
+        ///   \[AnalyzeOrgPolicyGovernedAssetsResponse.GovernedAsset.consolidated_policy][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedAssetsResponse.GovernedAsset.consolidated_policy\]
+        ///   when the
+        ///   \[AnalyzeOrgPolicyGovernedAssetsResponse.GovernedAsset][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedAssetsResponse.GovernedAsset\]
+        ///   has
+        ///   \[AnalyzeOrgPolicyGovernedAssetsResponse.GovernedAsset.governed_resource][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedAssetsResponse.GovernedAsset.governed_resource\].
+        #[prost(message, optional, tag = "8")]
+        pub condition_evaluation: ::core::option::Option<super::ConditionEvaluation>,
         #[prost(oneof = "rule::Kind", tags = "3, 4, 5, 6")]
         pub kind: ::core::option::Option<rule::Kind>,
     }
@@ -2885,8 +3024,8 @@ pub mod analyzer_org_policy {
         }
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Kind {
-            /// List of values to be used for this PolicyRule. This field can be set
-            /// only in Policies for list constraints.
+            /// List of values to be used for this policy rule. This field can be set
+            /// only in policies for list constraints.
             #[prost(message, tag = "3")]
             Values(StringValues),
             /// Setting this to true means that all values are allowed. This field can
@@ -3092,12 +3231,15 @@ pub struct AnalyzeOrgPoliciesRequest {
     pub constraint: ::prost::alloc::string::String,
     /// The expression to filter
     /// \[AnalyzeOrgPoliciesResponse.org_policy_results][google.cloud.asset.v1.AnalyzeOrgPoliciesResponse.org_policy_results\].
-    /// The only supported field is `consolidated_policy.attached_resource`, and
-    /// the only supported operator is `=`.
+    /// Filtering is currently available for bare literal values and the following
+    /// fields:
+    /// * consolidated_policy.attached_resource
+    /// * consolidated_policy.rules.enforce
     ///
-    /// Example:
+    /// When filtering by a specific field, the only supported operator is `=`.
+    /// For example, filtering by
     /// consolidated_policy.attached_resource="//cloudresourcemanager.googleapis.com/folders/001"
-    /// will return the org policy results of"folders/001".
+    /// will return all the Organization Policy results attached to "folders/001".
     #[prost(string, tag = "3")]
     pub filter: ::prost::alloc::string::String,
     /// The maximum number of items to return per page. If unspecified,
@@ -3148,6 +3290,21 @@ pub mod analyze_org_policies_response {
         /// the list.
         #[prost(message, repeated, tag = "2")]
         pub policy_bundle: ::prost::alloc::vec::Vec<super::AnalyzerOrgPolicy>,
+        /// The project that this consolidated policy belongs to, in the format of
+        /// projects/{PROJECT_NUMBER}. This field is available when the consolidated
+        /// policy belongs to a project.
+        #[prost(string, tag = "3")]
+        pub project: ::prost::alloc::string::String,
+        /// The folder(s) that this consolidated policy belongs to, in the format of
+        /// folders/{FOLDER_NUMBER}. This field is available when the consolidated
+        /// policy belongs (directly or cascadingly) to one or more folders.
+        #[prost(string, repeated, tag = "4")]
+        pub folders: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// The organization that this consolidated policy belongs to, in the format
+        /// of organizations/{ORGANIZATION_NUMBER}. This field is available when the
+        /// consolidated policy belongs (directly or cascadingly) to an organization.
+        #[prost(string, tag = "5")]
+        pub organization: ::prost::alloc::string::String,
     }
 }
 /// A request message for
@@ -3167,13 +3324,17 @@ pub struct AnalyzeOrgPolicyGovernedContainersRequest {
     /// constraint.
     #[prost(string, tag = "2")]
     pub constraint: ::prost::alloc::string::String,
-    /// The expression to filter the governed containers in result.
-    /// The only supported field is `parent`, and the only supported operator is
-    /// `=`.
+    /// The expression to filter
+    /// \[AnalyzeOrgPolicyGovernedContainersResponse.governed_containers][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedContainersResponse.governed_containers\].
+    /// Filtering is currently available for bare literal values and the following
+    /// fields:
+    /// * parent
+    /// * consolidated_policy.rules.enforce
     ///
-    /// Example:
-    /// parent="//cloudresourcemanager.googleapis.com/folders/001" will return all
-    /// containers under "folders/001".
+    /// When filtering by a specific field, the only supported operator is `=`.
+    /// For example, filtering by
+    /// parent="//cloudresourcemanager.googleapis.com/folders/001"
+    /// will return all the containers under "folders/001".
     #[prost(string, tag = "3")]
     pub filter: ::prost::alloc::string::String,
     /// The maximum number of items to return per page. If unspecified,
@@ -3235,6 +3396,24 @@ pub mod analyze_org_policy_governed_containers_response {
         /// the list.
         #[prost(message, repeated, tag = "4")]
         pub policy_bundle: ::prost::alloc::vec::Vec<super::AnalyzerOrgPolicy>,
+        /// The project that this resource belongs to, in the format of
+        /// projects/{PROJECT_NUMBER}. This field is available when the resource
+        /// belongs to a project.
+        #[prost(string, tag = "5")]
+        pub project: ::prost::alloc::string::String,
+        /// The folder(s) that this resource belongs to, in the format of
+        /// folders/{FOLDER_NUMBER}. This field is available when the resource
+        /// belongs (directly or cascadingly) to one or more folders.
+        #[prost(string, repeated, tag = "6")]
+        pub folders: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// The organization that this resource belongs to, in the format of
+        /// organizations/{ORGANIZATION_NUMBER}. This field is available when the
+        /// resource belongs (directly or cascadingly) to an organization.
+        #[prost(string, tag = "7")]
+        pub organization: ::prost::alloc::string::String,
+        /// The effective tags on this resource.
+        #[prost(message, repeated, tag = "8")]
+        pub effective_tags: ::prost::alloc::vec::Vec<super::EffectiveTagDetails>,
     }
 }
 /// A request message for
@@ -3254,18 +3433,33 @@ pub struct AnalyzeOrgPolicyGovernedAssetsRequest {
     /// constraint.
     #[prost(string, tag = "2")]
     pub constraint: ::prost::alloc::string::String,
-    /// The expression to filter the governed assets in result. The only supported
-    /// fields for governed resources are `governed_resource.project` and
-    /// `governed_resource.folders`. The only supported fields for governed iam
-    /// policies are `governed_iam_policy.project` and
-    /// `governed_iam_policy.folders`. The only supported operator is `=`.
+    /// The expression to filter
+    /// \[AnalyzeOrgPolicyGovernedAssetsResponse.governed_assets][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedAssetsResponse.governed_assets\].
     ///
-    /// Example 1: governed_resource.project="projects/12345678" filter will return
-    /// all governed resources under projects/12345678 including the project
-    /// ifself, if applicable.
+    /// For governed resources, filtering is currently available for bare literal
+    /// values and the following fields:
+    /// * governed_resource.project
+    /// * governed_resource.folders
+    /// * consolidated_policy.rules.enforce
+    /// When filtering by `governed_resource.project` or
+    /// `consolidated_policy.rules.enforce`, the only supported operator is `=`.
+    /// When filtering by `governed_resource.folders`, the supported operators
+    /// are `=` and `:`.
+    /// For example, filtering by `governed_resource.project="projects/12345678"`
+    /// will return all the governed resources under "projects/12345678",
+    /// including the project itself if applicable.
     ///
-    /// Example 2: governed_iam_policy.folders="folders/12345678" filter will
-    /// return all governed iam policies under folders/12345678, if applicable.
+    /// For governed IAM policies, filtering is currently available for bare
+    /// literal values and the following fields:
+    /// * governed_iam_policy.project
+    /// * governed_iam_policy.folders
+    /// * consolidated_policy.rules.enforce
+    /// When filtering by `governed_iam_policy.project` or
+    /// `consolidated_policy.rules.enforce`, the only supported operator is `=`.
+    /// When filtering by `governed_iam_policy.folders`, the supported operators
+    /// are `=` and `:`.
+    /// For example, filtering by `governed_iam_policy.folders:"folders/12345678"`
+    /// will return all the governed IAM policies under "folders/001".
     #[prost(string, tag = "3")]
     pub filter: ::prost::alloc::string::String,
     /// The maximum number of items to return per page. If unspecified,
@@ -3325,12 +3519,24 @@ pub mod analyze_org_policy_governed_assets_response {
         /// resource belongs (directly or cascadingly) to an organization.
         #[prost(string, tag = "7")]
         pub organization: ::prost::alloc::string::String,
+        /// The asset type of the
+        /// \[AnalyzeOrgPolicyGovernedAssetsResponse.GovernedResource.full_resource_name][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedAssetsResponse.GovernedResource.full_resource_name\]
+        /// Example:
+        /// `cloudresourcemanager.googleapis.com/Project`
+        /// See [Cloud Asset Inventory Supported Asset
+        /// Types](<https://cloud.google.com/asset-inventory/docs/supported-asset-types>)
+        /// for all supported asset types.
+        #[prost(string, tag = "8")]
+        pub asset_type: ::prost::alloc::string::String,
+        /// The effective tags on this resource.
+        #[prost(message, repeated, tag = "9")]
+        pub effective_tags: ::prost::alloc::vec::Vec<super::EffectiveTagDetails>,
     }
     /// The IAM policies governed by the organization policies of the
     /// \[AnalyzeOrgPolicyGovernedAssetsRequest.constraint][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedAssetsRequest.constraint\].
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct GovernedIamPolicy {
-        /// The full resource name of the resource associated with this IAM policy.
+        /// The full resource name of the resource on which this IAM policy is set.
         /// Example:
         /// `//compute.googleapis.com/projects/my_project_123/zones/zone1/instances/instance1`.
         /// See [Cloud Asset Inventory Resource Name
@@ -3356,6 +3562,15 @@ pub mod analyze_org_policy_governed_assets_response {
         /// IAM policy belongs (directly or cascadingly) to an organization.
         #[prost(string, tag = "7")]
         pub organization: ::prost::alloc::string::String,
+        /// The asset type of the
+        /// \[AnalyzeOrgPolicyGovernedAssetsResponse.GovernedIamPolicy.attached_resource][google.cloud.asset.v1.AnalyzeOrgPolicyGovernedAssetsResponse.GovernedIamPolicy.attached_resource\].
+        /// Example:
+        /// `cloudresourcemanager.googleapis.com/Project`
+        /// See [Cloud Asset Inventory Supported Asset
+        /// Types](<https://cloud.google.com/asset-inventory/docs/supported-asset-types>)
+        /// for all supported asset types.
+        #[prost(string, tag = "8")]
+        pub asset_type: ::prost::alloc::string::String,
     }
     /// Represents a Google Cloud asset(resource or IAM policy) governed by the
     /// organization policies of the
@@ -3731,8 +3946,7 @@ pub mod asset_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Issue a job that queries assets using a SQL statement compatible with"]
-        #[doc = " [BigQuery Standard"]
-        #[doc = " SQL](http://cloud/bigquery/docs/reference/standard-sql/enabling-standard-sql)."]
+        #[doc = " [BigQuery SQL](https://cloud.google.com/bigquery/docs/introduction-sql)."]
         #[doc = ""]
         #[doc = " If the query execution finishes within timeout and there's no pagination,"]
         #[doc = " the full query results will be returned in the `QueryAssetsResponse`."]
@@ -3741,9 +3955,8 @@ pub mod asset_service_client {
         #[doc = " with the `job_reference` from the a previous `QueryAssets` call."]
         #[doc = ""]
         #[doc = " Note, the query result has approximately 10 GB limitation enforced by"]
-        #[doc = " BigQuery"]
-        #[doc = " https://cloud.google.com/bigquery/docs/best-practices-performance-output,"]
-        #[doc = " queries return larger results will result in errors."]
+        #[doc = " [BigQuery](https://cloud.google.com/bigquery/docs/best-practices-performance-output)."]
+        #[doc = " Queries return larger results will result in errors."]
         pub async fn query_assets(
             &mut self,
             request: impl tonic::IntoRequest<super::QueryAssetsRequest>,
@@ -3901,22 +4114,52 @@ pub mod asset_service_client {
         }
         #[doc = " Analyzes organization policies governed assets (Google Cloud resources or"]
         #[doc = " policies) under a scope. This RPC supports custom constraints and the"]
-        #[doc = " following 10 canned constraints:"]
+        #[doc = " following canned constraints:"]
         #[doc = ""]
-        #[doc = " * storage.uniformBucketLevelAccess"]
-        #[doc = " * iam.disableServiceAccountKeyCreation"]
-        #[doc = " * iam.allowedPolicyMemberDomains"]
-        #[doc = " * compute.vmExternalIpAccess"]
-        #[doc = " * appengine.enforceServiceAccountActAsCheck"]
-        #[doc = " * gcp.resourceLocations"]
-        #[doc = " * compute.trustedImageProjects"]
-        #[doc = " * compute.skipDefaultNetworkCreation"]
-        #[doc = " * compute.requireOsLogin"]
-        #[doc = " * compute.disableNestedVirtualization"]
+        #[doc = " * constraints/ainotebooks.accessMode"]
+        #[doc = " * constraints/ainotebooks.disableFileDownloads"]
+        #[doc = " * constraints/ainotebooks.disableRootAccess"]
+        #[doc = " * constraints/ainotebooks.disableTerminal"]
+        #[doc = " * constraints/ainotebooks.environmentOptions"]
+        #[doc = " * constraints/ainotebooks.requireAutoUpgradeSchedule"]
+        #[doc = " * constraints/ainotebooks.restrictVpcNetworks"]
+        #[doc = " * constraints/compute.disableGuestAttributesAccess"]
+        #[doc = " * constraints/compute.disableInstanceDataAccessApis"]
+        #[doc = " * constraints/compute.disableNestedVirtualization"]
+        #[doc = " * constraints/compute.disableSerialPortAccess"]
+        #[doc = " * constraints/compute.disableSerialPortLogging"]
+        #[doc = " * constraints/compute.disableVpcExternalIpv6"]
+        #[doc = " * constraints/compute.requireOsLogin"]
+        #[doc = " * constraints/compute.requireShieldedVm"]
+        #[doc = " * constraints/compute.restrictLoadBalancerCreationForTypes"]
+        #[doc = " * constraints/compute.restrictProtocolForwardingCreationForTypes"]
+        #[doc = " * constraints/compute.restrictXpnProjectLienRemoval"]
+        #[doc = " * constraints/compute.setNewProjectDefaultToZonalDNSOnly"]
+        #[doc = " * constraints/compute.skipDefaultNetworkCreation"]
+        #[doc = " * constraints/compute.trustedImageProjects"]
+        #[doc = " * constraints/compute.vmCanIpForward"]
+        #[doc = " * constraints/compute.vmExternalIpAccess"]
+        #[doc = " * constraints/gcp.detailedAuditLoggingMode"]
+        #[doc = " * constraints/gcp.resourceLocations"]
+        #[doc = " * constraints/iam.allowedPolicyMemberDomains"]
+        #[doc = " * constraints/iam.automaticIamGrantsForDefaultServiceAccounts"]
+        #[doc = " * constraints/iam.disableServiceAccountCreation"]
+        #[doc = " * constraints/iam.disableServiceAccountKeyCreation"]
+        #[doc = " * constraints/iam.disableServiceAccountKeyUpload"]
+        #[doc = " * constraints/iam.restrictCrossProjectServiceAccountLienRemoval"]
+        #[doc = " * constraints/iam.serviceAccountKeyExpiryHours"]
+        #[doc = " * constraints/resourcemanager.accessBoundaries"]
+        #[doc = " * constraints/resourcemanager.allowedExportDestinations"]
+        #[doc = " * constraints/sql.restrictAuthorizedNetworks"]
+        #[doc = " * constraints/sql.restrictNoncompliantDiagnosticDataAccess"]
+        #[doc = " * constraints/sql.restrictNoncompliantResourceCreation"]
+        #[doc = " * constraints/sql.restrictPublicIp"]
+        #[doc = " * constraints/storage.publicAccessPrevention"]
+        #[doc = " * constraints/storage.restrictAuthTypes"]
+        #[doc = " * constraints/storage.uniformBucketLevelAccess"]
         #[doc = ""]
-        #[doc = " This RPC only returns either resources of types supported by [searchable"]
-        #[doc = " asset"]
-        #[doc = " types](https://cloud.google.com/asset-inventory/docs/supported-asset-types#searchable_asset_types),"]
+        #[doc = " This RPC only returns either resources of types [supported by search"]
+        #[doc = " APIs](https://cloud.google.com/asset-inventory/docs/supported-asset-types)"]
         #[doc = " or IAM policies."]
         pub async fn analyze_org_policy_governed_assets(
             &mut self,

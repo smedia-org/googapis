@@ -40,6 +40,19 @@ pub enum FieldBehavior {
     /// a non-empty value will be returned. The user will not be aware of what
     /// non-empty value to expect.
     NonEmptyDefault = 7,
+    /// Denotes that the field in a resource (a message annotated with
+    /// google.api.resource) is used in the resource name to uniquely identify the
+    /// resource. For AIP-compliant APIs, this should only be applied to the
+    /// `name` field on the resource.
+    ///
+    /// This behavior should not be applied to references to other resources within
+    /// the message.
+    ///
+    /// The identifier field of resources often have different field behavior
+    /// depending on the request it is embedded in (e.g. for Create methods name
+    /// is optional and unused, while for Update methods it is required). Instead
+    /// of method-specific annotations, only `IDENTIFIER` is required.
+    Identifier = 8,
 }
 /// A simple descriptor of a resource type.
 ///
@@ -746,6 +759,10 @@ pub struct Publishing {
     /// <https://cloud.google.com/pubsub/lite/docs/reference/rpc>
     #[prost(string, tag = "110")]
     pub proto_reference_documentation_uri: ::prost::alloc::string::String,
+    /// Optional link to REST reference documentation.  Example:
+    /// <https://cloud.google.com/pubsub/lite/docs/reference/rest>
+    #[prost(string, tag = "111")]
+    pub rest_reference_documentation_uri: ::prost::alloc::string::String,
 }
 /// Settings for Java client libraries.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -891,6 +908,19 @@ pub struct MethodSettings {
     ///             seconds: 54000 # 90 minutes
     #[prost(message, optional, tag = "2")]
     pub long_running: ::core::option::Option<method_settings::LongRunning>,
+    /// List of top-level fields of the request message, that should be
+    /// automatically populated by the client libraries based on their
+    /// (google.api.field_info).format. Currently supported format: UUID4.
+    ///
+    /// Example of a YAML configuration:
+    ///
+    ///  publishing:
+    ///    method_settings:
+    ///      - selector: google.example.v1.ExampleService.CreateExample
+    ///        auto_populated_fields:
+    ///        - request_id
+    #[prost(string, repeated, tag = "3")]
+    pub auto_populated_fields: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Nested message and enum types in `MethodSettings`.
 pub mod method_settings {
@@ -1617,6 +1647,55 @@ pub struct ContextRule {
     #[prost(string, repeated, tag = "5")]
     pub allowed_response_extensions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
+/// Google API Policy Annotation
+///
+/// This message defines a simple API policy annotation that can be used to
+/// annotate API request and response message fields with applicable policies.
+/// One field may have multiple applicable policies that must all be satisfied
+/// before a request can be processed. This policy annotation is used to
+/// generate the overall policy that will be used for automatic runtime
+/// policy enforcement and documentation generation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FieldPolicy {
+    /// Selects one or more request or response message fields to apply this
+    /// `FieldPolicy`.
+    ///
+    /// When a `FieldPolicy` is used in proto annotation, the selector must
+    /// be left as empty. The service config generator will automatically fill
+    /// the correct value.
+    ///
+    /// When a `FieldPolicy` is used in service config, the selector must be a
+    /// comma-separated string with valid request or response field paths,
+    /// such as "foo.bar" or "foo.bar,foo.baz".
+    #[prost(string, tag = "1")]
+    pub selector: ::prost::alloc::string::String,
+    /// Specifies the required permission(s) for the resource referred to by the
+    /// field. It requires the field contains a valid resource reference, and
+    /// the request must pass the permission checks to proceed. For example,
+    /// "resourcemanager.projects.get".
+    #[prost(string, tag = "2")]
+    pub resource_permission: ::prost::alloc::string::String,
+    /// Specifies the resource type for the resource referred to by the field.
+    #[prost(string, tag = "3")]
+    pub resource_type: ::prost::alloc::string::String,
+}
+/// Defines policies applying to an RPC method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MethodPolicy {
+    /// Selects a method to which these policies should be enforced, for example,
+    /// "google.pubsub.v1.Subscriber.CreateSubscription".
+    ///
+    /// Refer to \[selector][google.api.DocumentationRule.selector\] for syntax
+    /// details.
+    ///
+    /// NOTE: This field must not be set in the proto annotation. It will be
+    /// automatically filled by the service config compiler .
+    #[prost(string, tag = "9")]
+    pub selector: ::prost::alloc::string::String,
+    /// Policies that are applicable to the request message.
+    #[prost(message, repeated, tag = "2")]
+    pub request_policies: ::prost::alloc::vec::Vec<FieldPolicy>,
+}
 /// Selects and configures the service controller used by the service.
 ///
 /// Example:
@@ -1630,6 +1709,9 @@ pub struct Control {
     /// most services is servicecontrol.googleapis.com
     #[prost(string, tag = "1")]
     pub environment: ::prost::alloc::string::String,
+    /// Defines policies applying to the API methods of the service.
+    #[prost(message, repeated, tag = "4")]
+    pub method_policies: ::prost::alloc::vec::Vec<MethodPolicy>,
 }
 /// `Distribution` contains summary statistics for a population of values. It
 /// optionally contains a histogram representing the distribution of those values
@@ -1847,7 +1929,7 @@ pub mod distribution {
 ///     content: &#40;== include google/foo/overview.md ==&#41;
 ///   - name: Tutorial
 ///     content: &#40;== include google/foo/tutorial.md ==&#41;
-///     subpages;
+///     subpages:
 ///     - name: Java
 ///       content: &#40;== include google/foo/tutorial_java.md ==&#41;
 ///   rules:
@@ -2553,6 +2635,65 @@ pub enum ErrorReason {
     ///
     /// This response indicates the associated GCP account has been suspended.
     GcpSuspended = 30,
+    /// The request violates the location policies when creating resources in
+    /// the restricted region.
+    ///
+    /// Example of an ErrorInfo when creating the Cloud Storage Bucket by
+    /// "projects/123" for service storage.googleapis.com:
+    ///
+    ///     { "reason": "LOCATION_POLICY_VIOLATED",
+    ///       "domain": "googleapis.com",
+    ///       "metadata": {
+    ///         "consumer": "projects/123",
+    ///         "service": "storage.googleapis.com",
+    ///       }
+    ///     }
+    ///
+    /// This response indicates creating the Cloud Storage Bucket in
+    /// "locations/asia-northeast3" violates at least one location policy.
+    /// The troubleshooting guidance is provided in the Help links.
+    LocationPolicyViolated = 31,
+}
+/// Rich semantic information of an API field beyond basic typing.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FieldInfo {
+    /// The standard format of a field value. This does not explicitly configure
+    /// any API consumer, just documents the API's format for the field it is
+    /// applied to.
+    #[prost(enumeration = "field_info::Format", tag = "1")]
+    pub format: i32,
+}
+/// Nested message and enum types in `FieldInfo`.
+pub mod field_info {
+    /// The standard format of a field value. The supported formats are all backed
+    /// by either an RFC defined by the IETF or a Google-defined AIP.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Format {
+        /// Default, unspecified value.
+        Unspecified = 0,
+        /// Universally Unique Identifier, version 4, value as defined by
+        /// <https://datatracker.ietf.org/doc/html/rfc4122.> The value may be
+        /// normalized to entirely lowercase letters. For example, the value
+        /// `F47AC10B-58CC-0372-8567-0E02B2C3D479` would be normalized to
+        /// `f47ac10b-58cc-0372-8567-0e02b2c3d479`.
+        Uuid4 = 1,
+        /// Internet Protocol v4 value as defined by [RFC
+        /// 791](<https://datatracker.ietf.org/doc/html/rfc791>). The value may be
+        /// condensed, with leading zeros in each octet stripped. For example,
+        /// `001.022.233.040` would be condensed to `1.22.233.40`.
+        Ipv4 = 2,
+        /// Internet Protocol v6 value as defined by [RFC
+        /// 2460](<https://datatracker.ietf.org/doc/html/rfc2460>). The value may be
+        /// normalized to entirely lowercase letters with zeros compressed, following
+        /// [RFC 5952](<https://datatracker.ietf.org/doc/html/rfc5952>). For example,
+        /// the value `2001:0DB8:0::0` would be normalized to `2001:db8::`.
+        Ipv6 = 3,
+        /// An IP address in either v4 or v6 format as described by the individual
+        /// values defined herein. See the comments on the IPV4 and IPV6 types for
+        /// allowed normalizations of each.
+        Ipv4OrIpv6 = 4,
+    }
 }
 /// Message that represents an arbitrary HTTP body. It should only be used for
 /// payload formats that can't be represented as JSON, such as raw binary or
@@ -2995,7 +3136,7 @@ pub struct MonitoredResourceDescriptor {
     pub name: ::prost::alloc::string::String,
     /// Required. The monitored resource type. For example, the type
     /// `"cloudsql_database"` represents databases in Google Cloud SQL.
-    ///  For a list of types, see [Monitoring resource
+    ///  For a list of types, see [Monitored resource
     ///  types](<https://cloud.google.com/monitoring/api/resources>)
     /// and [Logging resource
     /// types](<https://cloud.google.com/logging/docs/api/v2/resource-list>).

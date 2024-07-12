@@ -23,9 +23,22 @@ pub struct LinuxNodeConfig {
     /// cgroup_mode specifies the cgroup mode to be used on the node.
     #[prost(enumeration = "linux_node_config::CgroupMode", tag = "2")]
     pub cgroup_mode: i32,
+    /// Optional. Amounts for 2M and 1G hugepages
+    #[prost(message, optional, tag = "3")]
+    pub hugepages: ::core::option::Option<linux_node_config::HugepagesConfig>,
 }
 /// Nested message and enum types in `LinuxNodeConfig`.
 pub mod linux_node_config {
+    /// Hugepages amount in both 2m and 1g size
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct HugepagesConfig {
+        /// Optional. Amount of 2M hugepages
+        #[prost(int32, optional, tag = "1")]
+        pub hugepage_size2m: ::core::option::Option<i32>,
+        /// Optional. Amount of 1G hugepages
+        #[prost(int32, optional, tag = "2")]
+        pub hugepage_size1g: ::core::option::Option<i32>,
+    }
     /// Possible cgroup modes that can be used.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -106,6 +119,9 @@ pub struct NodeKubeletConfig {
     /// must be greater than or equal to 1024 and less than 4194304.
     #[prost(int64, tag = "4")]
     pub pod_pids_limit: i64,
+    /// Enable or disable Kubelet read only port.
+    #[prost(bool, optional, tag = "7")]
+    pub insecure_kubelet_readonly_port_enabled: ::core::option::Option<bool>,
 }
 /// Parameters that describe the nodes in a cluster.
 ///
@@ -323,6 +339,22 @@ pub struct NodeConfig {
     /// Parameters for node pools to be backed by shared sole tenant node groups.
     #[prost(message, optional, tag = "42")]
     pub sole_tenant_config: ::core::option::Option<SoleTenantConfig>,
+    /// Parameters for containerd customization.
+    #[prost(message, optional, tag = "43")]
+    pub containerd_config: ::core::option::Option<ContainerdConfig>,
+    /// A map of resource manager tag keys and values to be attached to the nodes.
+    #[prost(message, optional, tag = "45")]
+    pub resource_manager_tags: ::core::option::Option<ResourceManagerTags>,
+    /// Optional. Reserved for future use.
+    #[prost(bool, tag = "46")]
+    pub enable_confidential_storage: bool,
+    /// List of secondary boot disks attached to the nodes.
+    #[prost(message, repeated, tag = "48")]
+    pub secondary_boot_disks: ::prost::alloc::vec::Vec<SecondaryBootDisk>,
+    /// Secondary boot disk update strategy.
+    #[prost(message, optional, tag = "50")]
+    pub secondary_boot_disk_update_strategy:
+        ::core::option::Option<SecondaryBootDiskUpdateStrategy>,
 }
 /// Specifies options for controlling advanced machine features.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -332,6 +364,9 @@ pub struct AdvancedMachineFeatures {
     /// supported per core by the underlying processor is assumed.
     #[prost(int64, optional, tag = "1")]
     pub threads_per_core: ::core::option::Option<i64>,
+    /// Whether or not to enable nested virtualization (defaults to false).
+    #[prost(bool, optional, tag = "2")]
+    pub enable_nested_virtualization: ::core::option::Option<bool>,
 }
 /// Parameters for node pool-level network config.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -400,6 +435,19 @@ pub struct NodeNetworkConfig {
     /// overprovisioning is disabled.
     #[prost(message, optional, tag = "13")]
     pub pod_cidr_overprovision_config: ::core::option::Option<PodCidrOverprovisionConfig>,
+    /// We specify the additional node networks for this node pool using this list.
+    /// Each node network corresponds to an additional interface
+    #[prost(message, repeated, tag = "14")]
+    pub additional_node_network_configs: ::prost::alloc::vec::Vec<AdditionalNodeNetworkConfig>,
+    /// We specify the additional pod networks for this node pool using this list.
+    /// Each pod network corresponds to an additional alias IP range for the node
+    #[prost(message, repeated, tag = "15")]
+    pub additional_pod_network_configs: ::prost::alloc::vec::Vec<AdditionalPodNetworkConfig>,
+    /// Output only. [Output only] The utilization of the IPv4 range for the pod.
+    /// The ratio is Usage/[Total number of IPs in the secondary range],
+    /// Usage=numNodes*numZones*podIPsPerNode.
+    #[prost(double, tag = "16")]
+    pub pod_ipv4_range_utilization: f64,
 }
 /// Nested message and enum types in `NodeNetworkConfig`.
 pub mod node_network_config {
@@ -424,6 +472,32 @@ pub mod node_network_config {
             Tier1 = 1,
         }
     }
+}
+/// AdditionalNodeNetworkConfig is the configuration for additional node networks
+/// within the NodeNetworkConfig message
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdditionalNodeNetworkConfig {
+    /// Name of the VPC where the additional interface belongs
+    #[prost(string, tag = "1")]
+    pub network: ::prost::alloc::string::String,
+    /// Name of the subnetwork where the additional interface belongs
+    #[prost(string, tag = "2")]
+    pub subnetwork: ::prost::alloc::string::String,
+}
+/// AdditionalPodNetworkConfig is the configuration for additional pod networks
+/// within the NodeNetworkConfig message
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdditionalPodNetworkConfig {
+    /// Name of the subnetwork where the additional pod network belongs
+    #[prost(string, tag = "1")]
+    pub subnetwork: ::prost::alloc::string::String,
+    /// The name of the secondary range on the subnet which provides IP address for
+    /// this pod range
+    #[prost(string, tag = "2")]
+    pub secondary_pod_range: ::prost::alloc::string::String,
+    /// The maximum number of pods per node which use this pod network
+    #[prost(message, optional, tag = "3")]
+    pub max_pods_per_node: ::core::option::Option<MaxPodsConstraint>,
 }
 /// A set of Shielded Instance options.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -546,6 +620,76 @@ pub mod sole_tenant_config {
             In = 1,
             /// Anti-affinity operator.
             NotIn = 2,
+        }
+    }
+}
+/// ContainerdConfig contains configuration to customize containerd.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ContainerdConfig {
+    /// PrivateRegistryAccessConfig is used to configure access configuration
+    /// for private container registries.
+    #[prost(message, optional, tag = "1")]
+    pub private_registry_access_config:
+        ::core::option::Option<containerd_config::PrivateRegistryAccessConfig>,
+}
+/// Nested message and enum types in `ContainerdConfig`.
+pub mod containerd_config {
+    /// PrivateRegistryAccessConfig contains access configuration for
+    /// private container registries.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PrivateRegistryAccessConfig {
+        /// Private registry access is enabled.
+        #[prost(bool, tag = "1")]
+        pub enabled: bool,
+        /// Private registry access configuration.
+        #[prost(message, repeated, tag = "2")]
+        pub certificate_authority_domain_config: ::prost::alloc::vec::Vec<
+            private_registry_access_config::CertificateAuthorityDomainConfig,
+        >,
+    }
+    /// Nested message and enum types in `PrivateRegistryAccessConfig`.
+    pub mod private_registry_access_config {
+        /// CertificateAuthorityDomainConfig configures one or more fully qualified
+        /// domain names (FQDN) to a specific certificate.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct CertificateAuthorityDomainConfig {
+            /// List of fully qualified domain names (FQDN).
+            /// Specifying port is supported.
+            /// Wilcards are NOT supported.
+            /// Examples:
+            /// - my.customdomain.com
+            /// - 10.0.1.2:5000
+            #[prost(string, repeated, tag = "1")]
+            pub fqdns: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// Certificate access config. The following are supported:
+            /// - GCPSecretManagerCertificateConfig
+            #[prost(
+                oneof = "certificate_authority_domain_config::CertificateConfig",
+                tags = "2"
+            )]
+            pub certificate_config:
+                ::core::option::Option<certificate_authority_domain_config::CertificateConfig>,
+        }
+        /// Nested message and enum types in `CertificateAuthorityDomainConfig`.
+        pub mod certificate_authority_domain_config {
+            /// GCPSecretManagerCertificateConfig configures a secret from
+            /// [Google Secret Manager](<https://cloud.google.com/secret-manager>).
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct GcpSecretManagerCertificateConfig {
+                /// Secret URI, in the form
+                /// "projects/$PROJECT_ID/secrets/$SECRET_NAME/versions/$VERSION".
+                /// Version can be fixed (e.g. "2") or "latest"
+                #[prost(string, tag = "1")]
+                pub secret_uri: ::prost::alloc::string::String,
+            }
+            /// Certificate access config. The following are supported:
+            /// - GCPSecretManagerCertificateConfig
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum CertificateConfig {
+                /// Google Secret Manager (GCP) certificate configuration.
+                #[prost(message, tag = "2")]
+                GcpSecretManagerCertificateConfig(GcpSecretManagerCertificateConfig),
+            }
         }
     }
 }
@@ -717,6 +861,12 @@ pub struct AddonsConfig {
     /// Configuration for the Backup for GKE agent addon.
     #[prost(message, optional, tag = "16")]
     pub gke_backup_agent_config: ::core::option::Option<GkeBackupAgentConfig>,
+    /// Configuration for the Cloud Storage Fuse CSI driver.
+    #[prost(message, optional, tag = "17")]
+    pub gcs_fuse_csi_driver_config: ::core::option::Option<GcsFuseCsiDriverConfig>,
+    /// Optional. Configuration for the StatefulHA add-on.
+    #[prost(message, optional, tag = "18")]
+    pub stateful_ha_config: ::core::option::Option<StatefulHaConfig>,
 }
 /// Configuration options for the HTTP (L7) load balancing controller addon,
 /// which makes it easy to set up HTTP load balancers for services in a cluster.
@@ -860,10 +1010,24 @@ pub struct GcpFilestoreCsiDriverConfig {
     #[prost(bool, tag = "1")]
     pub enabled: bool,
 }
+/// Configuration for the Cloud Storage Fuse CSI driver.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GcsFuseCsiDriverConfig {
+    /// Whether the Cloud Storage Fuse CSI driver is enabled for this cluster.
+    #[prost(bool, tag = "1")]
+    pub enabled: bool,
+}
 /// Configuration for the Backup for GKE Agent.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GkeBackupAgentConfig {
     /// Whether the Backup for GKE agent is enabled for this cluster.
+    #[prost(bool, tag = "1")]
+    pub enabled: bool,
+}
+/// Configuration for the Stateful HA add-on.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StatefulHaConfig {
+    /// Whether the Stateful HA add-on is enabled for this cluster.
     #[prost(bool, tag = "1")]
     pub enabled: bool,
 }
@@ -1125,6 +1289,11 @@ pub struct IpAllocationPolicy {
     /// IPAllocationPolicy.
     #[prost(message, optional, tag = "24")]
     pub additional_pod_ranges_config: ::core::option::Option<AdditionalPodRangesConfig>,
+    /// Output only. [Output only] The utilization of the cluster default IPv4
+    /// range for the pod. The ratio is Usage/[Total number of IPs in the secondary
+    /// range], Usage=numNodes*numZones*podIPsPerNode.
+    #[prost(double, tag = "25")]
+    pub default_pod_ipv4_range_utilization: f64,
 }
 /// A Google Kubernetes Engine cluster.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1466,6 +1635,15 @@ pub struct Cluster {
     /// Beta APIs Config
     #[prost(message, optional, tag = "143")]
     pub enable_k8s_beta_apis: ::core::option::Option<K8sBetaApiConfig>,
+    /// GKE Enterprise Configuration.
+    #[prost(message, optional, tag = "149")]
+    pub enterprise_config: ::core::option::Option<EnterpriseConfig>,
+    /// Output only. Reserved for future use.
+    #[prost(bool, optional, tag = "152")]
+    pub satisfies_pzs: ::core::option::Option<bool>,
+    /// Output only. Reserved for future use.
+    #[prost(bool, optional, tag = "153")]
+    pub satisfies_pzi: ::core::option::Option<bool>,
 }
 /// Nested message and enum types in `Cluster`.
 pub mod cluster {
@@ -1528,6 +1706,8 @@ pub mod security_posture_config {
         Disabled = 1,
         /// Applies Security Posture features on the cluster.
         Basic = 2,
+        /// Applies the Security Posture off cluster Enterprise level features.
+        Enterprise = 3,
     }
     /// VulnerabilityMode defines enablement mode for vulnerability scanning.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1539,6 +1719,9 @@ pub mod security_posture_config {
         VulnerabilityDisabled = 1,
         /// Applies basic vulnerability scanning on the cluster.
         VulnerabilityBasic = 2,
+        /// Applies the Security Posture's vulnerability on cluster Enterprise level
+        /// features.
+        VulnerabilityEnterprise = 3,
     }
 }
 /// Node pool configs that apply to all auto-provisioned node pools
@@ -1551,6 +1734,15 @@ pub struct NodePoolAutoConfig {
     /// must comply with RFC1035.
     #[prost(message, optional, tag = "1")]
     pub network_tags: ::core::option::Option<NetworkTags>,
+    /// Resource manager tag keys and values to be attached to the nodes
+    /// for managing Compute Engine firewalls using Network Firewall Policies.
+    #[prost(message, optional, tag = "2")]
+    pub resource_manager_tags: ::core::option::Option<ResourceManagerTags>,
+    /// NodeKubeletConfig controls the defaults for autoprovisioned node-pools.
+    ///
+    /// Currently only `insecure_kubelet_readonly_port_enabled` can be set here.
+    #[prost(message, optional, tag = "3")]
+    pub node_kubelet_config: ::core::option::Option<NodeKubeletConfig>,
 }
 /// Subset of Nodepool message that has defaults.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1568,6 +1760,14 @@ pub struct NodeConfigDefaults {
     /// Logging configuration for node pools.
     #[prost(message, optional, tag = "3")]
     pub logging_config: ::core::option::Option<NodePoolLoggingConfig>,
+    /// Parameters for containerd customization.
+    #[prost(message, optional, tag = "4")]
+    pub containerd_config: ::core::option::Option<ContainerdConfig>,
+    /// NodeKubeletConfig controls the defaults for new node-pools.
+    ///
+    /// Currently only `insecure_kubelet_readonly_port_enabled` can be set here.
+    #[prost(message, optional, tag = "6")]
+    pub node_kubelet_config: ::core::option::Option<NodeKubeletConfig>,
 }
 /// ClusterUpdate describes an update to the cluster. Exactly one update can
 /// be applied to a cluster with each request, so at most one field can be
@@ -1677,7 +1877,12 @@ pub struct ClusterUpdate {
     /// Cluster-level Vertical Pod Autoscaling configuration.
     #[prost(message, optional, tag = "22")]
     pub desired_vertical_pod_autoscaling: ::core::option::Option<VerticalPodAutoscaling>,
-    /// The desired private cluster configuration.
+    /// The desired private cluster configuration. master_global_access_config is
+    /// the only field that can be changed via this field.
+    /// See also
+    /// \[ClusterUpdate.desired_enable_private_endpoint][google.container.v1.ClusterUpdate.desired_enable_private_endpoint\]
+    /// for modifying other fields within
+    /// \[PrivateClusterConfig][google.container.v1.PrivateClusterConfig\].
     #[prost(message, optional, tag = "25")]
     pub desired_private_cluster_config: ::core::option::Option<PrivateClusterConfig>,
     /// The desired config of Intra-node visibility.
@@ -1773,6 +1978,10 @@ pub struct ClusterUpdate {
     /// Enable/Disable Security Posture API features for the cluster.
     #[prost(message, optional, tag = "124")]
     pub desired_security_posture_config: ::core::option::Option<SecurityPostureConfig>,
+    /// The desired network performance config.
+    #[prost(message, optional, tag = "125")]
+    pub desired_network_performance_config:
+        ::core::option::Option<network_config::ClusterNetworkPerformanceConfig>,
     /// Enable/Disable FQDN Network Policy for the cluster.
     #[prost(bool, optional, tag = "126")]
     pub desired_enable_fqdn_network_policy: ::core::option::Option<bool>,
@@ -1782,6 +1991,30 @@ pub struct ClusterUpdate {
     /// Desired Beta APIs to be enabled for cluster.
     #[prost(message, optional, tag = "131")]
     pub desired_k8s_beta_apis: ::core::option::Option<K8sBetaApiConfig>,
+    /// The desired containerd config for the cluster.
+    #[prost(message, optional, tag = "134")]
+    pub desired_containerd_config: ::core::option::Option<ContainerdConfig>,
+    /// Enable/Disable Multi-Networking for the cluster
+    #[prost(bool, optional, tag = "135")]
+    pub desired_enable_multi_networking: ::core::option::Option<bool>,
+    /// The desired resource manager tags that apply to all auto-provisioned node
+    /// pools in autopilot clusters and node auto-provisioning enabled clusters.
+    #[prost(message, optional, tag = "136")]
+    pub desired_node_pool_auto_config_resource_manager_tags:
+        ::core::option::Option<ResourceManagerTags>,
+    /// Specify the details of in-transit encryption.
+    #[prost(enumeration = "InTransitEncryptionConfig", optional, tag = "137")]
+    pub desired_in_transit_encryption_config: ::core::option::Option<i32>,
+    /// Enable/Disable Cilium Clusterwide Network Policy for the cluster.
+    #[prost(bool, optional, tag = "138")]
+    pub desired_enable_cilium_clusterwide_network_policy: ::core::option::Option<bool>,
+    /// The desired node kubelet config for the cluster.
+    #[prost(message, optional, tag = "141")]
+    pub desired_node_kubelet_config: ::core::option::Option<NodeKubeletConfig>,
+    /// The desired node kubelet config for all auto-provisioned node pools
+    /// in autopilot clusters and node auto-provisioning enabled clusters.
+    #[prost(message, optional, tag = "142")]
+    pub desired_node_pool_auto_config_kubelet_config: ::core::option::Option<NodeKubeletConfig>,
 }
 /// AdditionalPodRangesConfig is the configuration for additional pod secondary
 /// ranges supporting the ClusterUpdate message.
@@ -1790,6 +2023,19 @@ pub struct AdditionalPodRangesConfig {
     /// Name for pod secondary ipv4 range which has the actual range defined ahead.
     #[prost(string, repeated, tag = "1")]
     pub pod_range_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Output only. [Output only] Information for additional pod range.
+    #[prost(message, repeated, tag = "2")]
+    pub pod_range_info: ::prost::alloc::vec::Vec<RangeInfo>,
+}
+/// RangeInfo contains the range name and the range utilization by this cluster.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RangeInfo {
+    /// Output only. [Output only] Name of a range.
+    #[prost(string, tag = "1")]
+    pub range_name: ::prost::alloc::string::String,
+    /// Output only. [Output only] The utilization of the range.
+    #[prost(double, tag = "2")]
+    pub utilization: f64,
 }
 /// This operation resource represents operations that may have happened or are
 /// happening on the cluster. All fields are output only.
@@ -1992,6 +2238,9 @@ pub mod operation {
         /// [documentation on
         /// resizes](<https://cloud.google.com/kubernetes-engine/docs/concepts/maintenance-windows-and-exclusions#repairs>).
         ResizeCluster = 18,
+        /// Fleet features of GKE Enterprise are being upgraded. The cluster should
+        /// be assumed to be blocked for other upgrades until the operation finishes.
+        FleetFeatureUpgrade = 19,
     }
 }
 /// Information about operation (or operation stage) progress.
@@ -2240,6 +2489,42 @@ pub struct UpdateNodePoolRequest {
     /// Parameters that can be configured on Windows nodes.
     #[prost(message, optional, tag = "34")]
     pub windows_node_config: ::core::option::Option<WindowsNodeConfig>,
+    /// A list of hardware accelerators to be attached to each node.
+    /// See <https://cloud.google.com/compute/docs/gpus> for more information about
+    /// support for GPUs.
+    #[prost(message, repeated, tag = "35")]
+    pub accelerators: ::prost::alloc::vec::Vec<AcceleratorConfig>,
+    /// Optional. The desired [Google Compute Engine machine
+    /// type](<https://cloud.google.com/compute/docs/machine-types>) for nodes in the
+    /// node pool. Initiates an upgrade operation that migrates the nodes in the
+    /// node pool to the specified machine type.
+    #[prost(string, tag = "36")]
+    pub machine_type: ::prost::alloc::string::String,
+    /// Optional. The desired disk type (e.g. 'pd-standard', 'pd-ssd' or
+    /// 'pd-balanced') for nodes in the node pool.
+    /// Initiates an upgrade operation that migrates the nodes in the
+    /// node pool to the specified disk type.
+    #[prost(string, tag = "37")]
+    pub disk_type: ::prost::alloc::string::String,
+    /// Optional. The desired disk size for nodes in the node pool specified in GB.
+    /// The smallest allowed disk size is 10GB.
+    /// Initiates an upgrade operation that migrates the nodes in the
+    /// node pool to the specified disk size.
+    #[prost(int64, tag = "38")]
+    pub disk_size_gb: i64,
+    /// Desired resource manager tag keys and values to be attached to the nodes
+    /// for managing Compute Engine firewalls using Network Firewall Policies.
+    /// Existing tags will be replaced with new values.
+    #[prost(message, optional, tag = "39")]
+    pub resource_manager_tags: ::core::option::Option<ResourceManagerTags>,
+    /// The desired containerd config for nodes in the node pool.
+    /// Initiates an upgrade operation that recreates the nodes with the new
+    /// config.
+    #[prost(message, optional, tag = "40")]
+    pub containerd_config: ::core::option::Option<ContainerdConfig>,
+    /// Specifies the configuration of queued provisioning.
+    #[prost(message, optional, tag = "42")]
+    pub queued_provisioning: ::core::option::Option<node_pool::QueuedProvisioning>,
 }
 /// SetNodePoolAutoscalingRequest sets the autoscaler settings of a node pool.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2969,6 +3254,9 @@ pub struct NodePool {
     /// up-to-date value before proceeding.
     #[prost(string, tag = "110")]
     pub etag: ::prost::alloc::string::String,
+    /// Specifies the configuration of queued provisioning.
+    #[prost(message, optional, tag = "112")]
+    pub queued_provisioning: ::core::option::Option<node_pool::QueuedProvisioning>,
     /// Enable best effort provisioning for nodes
     #[prost(message, optional, tag = "113")]
     pub best_effort_provisioning: ::core::option::Option<BestEffortProvisioning>,
@@ -3106,6 +3394,15 @@ pub mod node_pool {
         /// The type of placement.
         #[prost(enumeration = "placement_policy::Type", tag = "1")]
         pub r#type: i32,
+        /// Optional. TPU placement topology for pod slice node pool.
+        /// <https://cloud.google.com/tpu/docs/types-topologies#tpu_topologies>
+        #[prost(string, tag = "2")]
+        pub tpu_topology: ::prost::alloc::string::String,
+        /// If set, refers to the name of a custom resource policy supplied by the
+        /// user. The resource policy must be in the same project and region as the
+        /// node pool. If not found, InvalidArgument error is returned.
+        #[prost(string, tag = "3")]
+        pub policy_name: ::prost::alloc::string::String,
     }
     /// Nested message and enum types in `PlacementPolicy`.
     pub mod placement_policy {
@@ -3122,6 +3419,15 @@ pub mod node_pool {
             /// ensure low communication latency.
             Compact = 1,
         }
+    }
+    /// QueuedProvisioning defines the queued provisioning used by the node pool.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QueuedProvisioning {
+        /// Denotes that this nodepool is QRM specific, meaning nodes can be only
+        /// obtained through queuing via the Cluster Autoscaler ProvisioningRequest
+        /// API.
+        #[prost(bool, tag = "1")]
+        pub enabled: bool,
     }
     /// The current status of the node pool instance.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -3567,6 +3873,9 @@ pub struct AutoprovisioningNodePoolDefaults {
     /// available image types.
     #[prost(string, tag = "10")]
     pub image_type: ::prost::alloc::string::String,
+    /// Enable or disable Kubelet read only port.
+    #[prost(bool, optional, tag = "13")]
+    pub insecure_kubelet_readonly_port_enabled: ::core::option::Option<bool>,
 }
 /// Contains information about amount of some resource in the cluster.
 /// For memory, value should be in GB.
@@ -3805,6 +4114,8 @@ pub mod gpu_sharing_config {
         Unspecified = 0,
         /// GPUs are time-shared between containers.
         TimeSharing = 1,
+        /// GPUs are shared between containers with NVIDIA MPS.
+        Mps = 2,
     }
 }
 /// GPUDriverInstallationConfig specifies the version of GPU driver to be auto
@@ -4006,9 +4317,51 @@ pub struct NetworkConfig {
     /// cluster.
     #[prost(message, optional, tag = "16")]
     pub gateway_api_config: ::core::option::Option<GatewayApiConfig>,
+    /// Whether multi-networking is enabled for this cluster.
+    #[prost(bool, tag = "17")]
+    pub enable_multi_networking: bool,
+    /// Network bandwidth tier configuration.
+    #[prost(message, optional, tag = "18")]
+    pub network_performance_config:
+        ::core::option::Option<network_config::ClusterNetworkPerformanceConfig>,
     /// Whether FQDN Network Policy is enabled on this cluster.
     #[prost(bool, optional, tag = "19")]
     pub enable_fqdn_network_policy: ::core::option::Option<bool>,
+    /// Specify the details of in-transit encryption.
+    /// Now named inter-node transparent encryption.
+    #[prost(enumeration = "InTransitEncryptionConfig", optional, tag = "20")]
+    pub in_transit_encryption_config: ::core::option::Option<i32>,
+    /// Whether CiliumClusterwideNetworkPolicy is enabled on this cluster.
+    #[prost(bool, optional, tag = "21")]
+    pub enable_cilium_clusterwide_network_policy: ::core::option::Option<bool>,
+}
+/// Nested message and enum types in `NetworkConfig`.
+pub mod network_config {
+    /// Configuration of network bandwidth tiers
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ClusterNetworkPerformanceConfig {
+        /// Specifies the total network bandwidth tier for NodePools in the cluster.
+        #[prost(
+            enumeration = "cluster_network_performance_config::Tier",
+            optional,
+            tag = "1"
+        )]
+        pub total_egress_bandwidth_tier: ::core::option::Option<i32>,
+    }
+    /// Nested message and enum types in `ClusterNetworkPerformanceConfig`.
+    pub mod cluster_network_performance_config {
+        /// Node network tier
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum Tier {
+            /// Default value
+            Unspecified = 0,
+            /// Higher bandwidth, actual values based on VM size.
+            Tier1 = 1,
+        }
+    }
 }
 /// GatewayAPIConfig contains the desired config of Gateway API on this cluster.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -4028,6 +4381,7 @@ pub mod gateway_api_config {
         Unspecified = 0,
         /// Gateway API support is disabled
         Disabled = 1,
+        /// Deprecated: use CHANNEL_STANDARD instead.
         /// Gateway API support is enabled, experimental CRDs are installed
         Experimental = 3,
         /// Gateway API support is enabled, standard CRDs are installed
@@ -4260,6 +4614,9 @@ pub struct DnsConfig {
     /// cluster_dns_domain is the suffix used for all cluster service records.
     #[prost(string, tag = "3")]
     pub cluster_dns_domain: ::prost::alloc::string::String,
+    /// Optional. The domain used in Additive VPC scope.
+    #[prost(string, tag = "5")]
+    pub additive_vpc_scope_dns_domain: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `DNSConfig`.
 pub mod dns_config {
@@ -4273,6 +4630,8 @@ pub mod dns_config {
         PlatformDefault = 1,
         /// Use CloudDNS for DNS resolution.
         CloudDns = 2,
+        /// Use KubeDNS for DNS resolution.
+        KubeDns = 3,
     }
     /// DNSScope lists the various scopes of access to cluster DNS records.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -4334,9 +4693,36 @@ pub struct DatabaseEncryption {
     /// The desired state of etcd encryption.
     #[prost(enumeration = "database_encryption::State", tag = "2")]
     pub state: i32,
+    /// Output only. The current state of etcd encryption.
+    #[prost(enumeration = "database_encryption::CurrentState", optional, tag = "3")]
+    pub current_state: ::core::option::Option<i32>,
+    /// Output only. Keys in use by the cluster for decrypting
+    /// existing objects, in addition to the key in `key_name`.
+    ///
+    /// Each item is a CloudKMS key resource.
+    #[prost(string, repeated, tag = "4")]
+    pub decryption_keys: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Output only. Records errors seen during DatabaseEncryption update
+    /// operations.
+    #[prost(message, repeated, tag = "5")]
+    pub last_operation_errors: ::prost::alloc::vec::Vec<database_encryption::OperationError>,
 }
 /// Nested message and enum types in `DatabaseEncryption`.
 pub mod database_encryption {
+    /// OperationError records errors seen from CloudKMS keys
+    /// encountered during updates to DatabaseEncryption configuration.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct OperationError {
+        /// CloudKMS key resource that had the error.
+        #[prost(string, tag = "1")]
+        pub key_name: ::prost::alloc::string::String,
+        /// Description of the error seen during the operation.
+        #[prost(string, tag = "2")]
+        pub error_message: ::prost::alloc::string::String,
+        /// Time when the CloudKMS error was seen.
+        #[prost(message, optional, tag = "3")]
+        pub timestamp: ::core::option::Option<::prost_types::Timestamp>,
+    }
     /// State of etcd encryption.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -4348,6 +4734,28 @@ pub mod database_encryption {
         /// Secrets in etcd are stored in plain text (at etcd level) - this is
         /// unrelated to Compute Engine level full disk encryption.
         Decrypted = 2,
+    }
+    /// Current State of etcd encryption.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CurrentState {
+        /// Should never be set
+        Unspecified = 0,
+        /// Secrets in etcd are encrypted.
+        Encrypted = 7,
+        /// Secrets in etcd are stored in plain text (at etcd level) - this is
+        /// unrelated to Compute Engine level full disk encryption.
+        Decrypted = 2,
+        /// Encryption (or re-encryption with a different CloudKMS key)
+        /// of Secrets is in progress.
+        EncryptionPending = 3,
+        /// Encryption (or re-encryption with a different CloudKMS key) of Secrets in
+        /// etcd encountered an error.
+        EncryptionError = 4,
+        /// De-crypting Secrets to plain text in etcd is in progress.
+        DecryptionPending = 5,
+        /// De-crypting Secrets to plain text in etcd encountered an error.
+        DecryptionError = 6,
     }
 }
 /// ListUsableSubnetworksRequest requests the list of usable subnetworks
@@ -4734,6 +5142,43 @@ pub struct MonitoringConfig {
     /// in the cluster.
     #[prost(message, optional, tag = "2")]
     pub managed_prometheus_config: ::core::option::Option<ManagedPrometheusConfig>,
+    /// Configuration of Advanced Datapath Observability features.
+    #[prost(message, optional, tag = "3")]
+    pub advanced_datapath_observability_config:
+        ::core::option::Option<AdvancedDatapathObservabilityConfig>,
+}
+/// AdvancedDatapathObservabilityConfig specifies configuration of observability
+/// features of advanced datapath.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AdvancedDatapathObservabilityConfig {
+    /// Expose flow metrics on nodes
+    #[prost(bool, tag = "1")]
+    pub enable_metrics: bool,
+    /// Method used to make Relay available
+    #[prost(
+        enumeration = "advanced_datapath_observability_config::RelayMode",
+        tag = "2"
+    )]
+    pub relay_mode: i32,
+    /// Enable Relay component
+    #[prost(bool, optional, tag = "3")]
+    pub enable_relay: ::core::option::Option<bool>,
+}
+/// Nested message and enum types in `AdvancedDatapathObservabilityConfig`.
+pub mod advanced_datapath_observability_config {
+    /// Supported Relay modes
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RelayMode {
+        /// Default value. This shouldn't be used.
+        Unspecified = 0,
+        /// disabled
+        Disabled = 1,
+        /// exposed via internal load balancer
+        InternalVpcLb = 3,
+        /// exposed via external load balancer
+        ExternalLb = 4,
+    }
 }
 /// NodePoolLoggingConfig specifies logging configuration for nodepools.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -4791,6 +5236,24 @@ pub mod monitoring_component_config {
         Scheduler = 4,
         /// kube-controller-manager
         ControllerManager = 5,
+        /// Storage
+        Storage = 7,
+        /// Horizontal Pod Autoscaling
+        Hpa = 8,
+        /// Pod
+        Pod = 9,
+        /// DaemonSet
+        Daemonset = 10,
+        /// Deployment
+        Deployment = 11,
+        /// Statefulset
+        Statefulset = 12,
+        /// CADVISOR
+        Cadvisor = 13,
+        /// KUBELET
+        Kubelet = 14,
+        /// NVIDIA Data Center GPU Manager (DCGM)
+        Dcgm = 15,
     }
 }
 /// ManagedPrometheusConfig defines the configuration for
@@ -4820,33 +5283,120 @@ pub struct Fleet {
     pub pre_registered: bool,
 }
 /// LocalNvmeSsdBlockConfig contains configuration for using raw-block local
-/// NVMe SSD.
+/// NVMe SSDs
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LocalNvmeSsdBlockConfig {
-    /// The number of raw-block local NVMe SSD disks to be attached to the node.
-    /// Each local SSD is 375 GB in size. If zero, it means no raw-block local NVMe
-    /// SSD disks to be attached to the node.
-    /// The limit for this value is dependent upon the maximum number of
-    /// disks available on a machine per zone. See:
+    /// Number of local NVMe SSDs to use.  The limit for this value is dependent
+    /// upon the maximum number of disk available on a machine per zone. See:
     /// <https://cloud.google.com/compute/docs/disks/local-ssd>
     /// for more information.
+    ///
+    /// A zero (or unset) value has different meanings depending on machine type
+    /// being used:
+    /// 1. For pre-Gen3 machines, which support flexible numbers of local ssds,
+    /// zero (or unset) means to disable using local SSDs as ephemeral storage.
+    /// 2. For Gen3 machines which dictate a specific number of local ssds, zero
+    /// (or unset) means to use the default number of local ssds that goes with
+    /// that machine type. For example, for a c3-standard-8-lssd machine, 2 local
+    /// ssds would be provisioned. For c3-standard-8 (which doesn't support local
+    /// ssds), 0 will be provisioned. See
+    /// <https://cloud.google.com/compute/docs/disks/local-ssd#choose_number_local_ssds>
+    /// for more info.
     #[prost(int32, tag = "1")]
     pub local_ssd_count: i32,
 }
 /// EphemeralStorageLocalSsdConfig contains configuration for the node ephemeral
-/// storage using Local SSD.
+/// storage using Local SSDs.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EphemeralStorageLocalSsdConfig {
     /// Number of local SSDs to use to back ephemeral storage. Uses NVMe
-    /// interfaces. Each local SSD is 375 GB in size.
-    /// If zero, it means to disable using local SSDs as ephemeral storage.
-    /// The limit for this value is dependent upon the maximum number of
-    /// disks available on a machine per zone. See:
+    /// interfaces.
+    ///
+    /// A zero (or unset) value has different meanings depending on machine type
+    /// being used:
+    /// 1. For pre-Gen3 machines, which support flexible numbers of local ssds,
+    /// zero (or unset) means to disable using local SSDs as ephemeral storage. The
+    /// limit for this value is dependent upon the maximum number of disk
+    /// available on a machine per zone. See:
     /// <https://cloud.google.com/compute/docs/disks/local-ssd>
     /// for more information.
+    /// 2. For Gen3 machines which dictate a specific number of local ssds, zero
+    /// (or unset) means to use the default number of local ssds that goes with
+    /// that machine type. For example, for a c3-standard-8-lssd machine, 2 local
+    /// ssds would be provisioned. For c3-standard-8 (which doesn't support local
+    /// ssds), 0 will be provisioned. See
+    /// <https://cloud.google.com/compute/docs/disks/local-ssd#choose_number_local_ssds>
+    /// for more info.
     #[prost(int32, tag = "1")]
     pub local_ssd_count: i32,
 }
+/// A map of resource manager tag keys and values to be attached to the nodes
+/// for managing Compute Engine firewalls using Network Firewall Policies.
+/// Tags must be according to specifications in
+/// <https://cloud.google.com/vpc/docs/tags-firewalls-overview#specifications.>
+/// A maximum of 5 tag key-value pairs can be specified.
+/// Existing tags will be replaced with new values.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourceManagerTags {
+    /// TagKeyValue must be in one of the following formats (\[KEY]=[VALUE\])
+    /// 1. `tagKeys/{tag_key_id}=tagValues/{tag_value_id}`
+    /// 2. `{org_id}/{tag_key_name}={tag_value_name}`
+    /// 3. `{project_id}/{tag_key_name}={tag_value_name}`
+    #[prost(map = "string, string", tag = "1")]
+    pub tags:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// EnterpriseConfig is the cluster enterprise configuration.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EnterpriseConfig {
+    /// Output only. [Output only] cluster_tier specifies the premium tier of the
+    /// cluster.
+    #[prost(enumeration = "enterprise_config::ClusterTier", tag = "1")]
+    pub cluster_tier: i32,
+}
+/// Nested message and enum types in `EnterpriseConfig`.
+pub mod enterprise_config {
+    /// Premium tiers for GKE Cluster.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ClusterTier {
+        /// CLUSTER_TIER_UNSPECIFIED is when cluster_tier is not set.
+        Unspecified = 0,
+        /// STANDARD indicates a standard GKE cluster.
+        Standard = 1,
+        /// ENTERPRISE indicates a GKE Enterprise cluster.
+        Enterprise = 2,
+    }
+}
+/// SecondaryBootDisk represents a persistent disk attached to a node
+/// with special configurations based on its mode.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SecondaryBootDisk {
+    /// Disk mode (container image cache, etc.)
+    #[prost(enumeration = "secondary_boot_disk::Mode", tag = "1")]
+    pub mode: i32,
+    /// Fully-qualified resource ID for an existing disk image.
+    #[prost(string, tag = "2")]
+    pub disk_image: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `SecondaryBootDisk`.
+pub mod secondary_boot_disk {
+    /// Mode specifies how the secondary boot disk will be used.
+    /// This triggers mode-specified logic in the control plane.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Mode {
+        /// MODE_UNSPECIFIED is when mode is not set.
+        Unspecified = 0,
+        /// CONTAINER_IMAGE_CACHE is for using the secondary boot disk as
+        /// a container image cache.
+        ContainerImageCache = 1,
+    }
+}
+/// SecondaryBootDiskUpdateStrategy is a placeholder which will be extended
+/// in the future to define different options for updating secondary boot disks.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SecondaryBootDiskUpdateStrategy {}
 /// PrivateIPv6GoogleAccess controls whether and how the pods can communicate
 /// with Google Services through gRPC over IPv6.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -4922,6 +5472,18 @@ pub enum IPv6AccessType {
     Internal = 1,
     /// Access type external (all v6 addresses are external IPs)
     External = 2,
+}
+/// Options for in-transit encryption.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum InTransitEncryptionConfig {
+    /// Unspecified, will be inferred as default -
+    /// IN_TRANSIT_ENCRYPTION_UNSPECIFIED.
+    Unspecified = 0,
+    /// In-transit encryption is disabled.
+    InTransitEncryptionDisabled = 1,
+    /// Data in-transit is encrypted using inter-node transparent encryption.
+    InTransitEncryptionInterNodeTransparent = 2,
 }
 #[doc = r" Generated client implementations."]
 pub mod cluster_manager_client {
@@ -5291,8 +5853,6 @@ pub mod cluster_manager_client {
         }
         #[doc = " Gets the public component of the cluster signing keys in"]
         #[doc = " JSON Web Key format."]
-        #[doc = " This API is not yet intended for general use, and is not available for all"]
-        #[doc = " clusters."]
         pub async fn get_json_web_keys(
             &mut self,
             request: impl tonic::IntoRequest<super::GetJsonWebKeysRequest>,

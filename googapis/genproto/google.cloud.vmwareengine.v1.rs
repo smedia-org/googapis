@@ -25,6 +25,12 @@ pub struct NetworkConfig {
     /// current features.
     #[prost(int32, tag = "8")]
     pub management_ip_address_layout_version: i32,
+    /// Output only. DNS Server IP of the Private Cloud.
+    /// All DNS queries can be forwarded to this address for name resolution of
+    /// Private Cloud's management entities like vCenter, NSX-T Manager and
+    /// ESXi hosts.
+    #[prost(string, tag = "9")]
+    pub dns_server_ip: ::prost::alloc::string::String,
 }
 /// Information about the type and number of nodes associated with the cluster.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -39,7 +45,27 @@ pub struct NodeTypeConfig {
     #[prost(int32, tag = "2")]
     pub custom_core_count: i32,
 }
-/// Represents a private cloud resource. Private clouds are zonal resources.
+/// Configuration of a stretched cluster.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StretchedClusterConfig {
+    /// Required. Zone that will remain operational when connection between the two
+    /// zones is lost. Specify the resource name of a zone that belongs to the
+    /// region of the private cloud. For example:
+    /// `projects/{project}/locations/europe-west3-a` where `{project}` can either
+    /// be a project number or a project ID.
+    #[prost(string, tag = "1")]
+    pub preferred_location: ::prost::alloc::string::String,
+    /// Required. Additional zone for a higher level of availability and load
+    /// balancing. Specify the resource name of a zone that belongs to the region
+    /// of the private cloud. For example:
+    /// `projects/{project}/locations/europe-west3-b` where `{project}` can either
+    /// be a project number or a project ID.
+    #[prost(string, tag = "2")]
+    pub secondary_location: ::prost::alloc::string::String,
+}
+/// Represents a private cloud resource. Private clouds of type `STANDARD` and
+/// `TIME_LIMITED` are zonal resources, `STRETCHED` private clouds are
+/// regional.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivateCloud {
     /// Output only. The resource name of this private cloud.
@@ -116,6 +142,10 @@ pub mod private_cloud {
         #[prost(map = "string, message", tag = "7")]
         pub node_type_configs:
             ::std::collections::HashMap<::prost::alloc::string::String, super::NodeTypeConfig>,
+        /// Optional. Configuration of a stretched cluster. Required for STRETCHED
+        /// private clouds.
+        #[prost(message, optional, tag = "8")]
+        pub stretched_cluster_config: ::core::option::Option<super::StretchedClusterConfig>,
     }
     /// Enum State defines possible states of private clouds.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -149,6 +179,9 @@ pub mod private_cloud {
         /// can be converted into standard private cloud by expanding it up to 3
         /// or more nodes.
         TimeLimited = 1,
+        /// Stretched private cloud is a regional resource with redundancy,
+        /// with a minimum of 6 nodes, nodes count has to be even.
+        Stretched = 2,
     }
 }
 /// A cluster in a private cloud.
@@ -183,6 +216,10 @@ pub struct Cluster {
     #[prost(map = "string, message", tag = "16")]
     pub node_type_configs:
         ::std::collections::HashMap<::prost::alloc::string::String, NodeTypeConfig>,
+    /// Optional. Configuration of a stretched cluster. Required for clusters that
+    /// belong to a STRETCHED private cloud.
+    #[prost(message, optional, tag = "17")]
+    pub stretched_cluster_config: ::core::option::Option<StretchedClusterConfig>,
 }
 /// Nested message and enum types in `Cluster`.
 pub mod cluster {
@@ -204,6 +241,107 @@ pub mod cluster {
         /// The Cluster is undergoing maintenance, for example: a failed node is
         /// getting replaced.
         Repairing = 5,
+    }
+}
+/// Node in a cluster.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Node {
+    /// Output only. The resource name of this node.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// projects/my-project/locations/us-central1-a/privateClouds/my-cloud/clusters/my-cluster/nodes/my-node
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Fully qualified domain name of the node.
+    #[prost(string, tag = "2")]
+    pub fqdn: ::prost::alloc::string::String,
+    /// Output only. Internal IP address of the node.
+    #[prost(string, tag = "3")]
+    pub internal_ip: ::prost::alloc::string::String,
+    /// Output only. The canonical identifier of the node type (corresponds to the
+    /// `NodeType`).
+    /// For example: standard-72.
+    #[prost(string, tag = "4")]
+    pub node_type_id: ::prost::alloc::string::String,
+    /// Output only. The version number of the VMware ESXi
+    /// management component in this cluster.
+    #[prost(string, tag = "5")]
+    pub version: ::prost::alloc::string::String,
+    /// Output only. Customized number of cores
+    #[prost(int64, tag = "6")]
+    pub custom_core_count: i64,
+    /// Output only. The state of the appliance.
+    #[prost(enumeration = "node::State", tag = "7")]
+    pub state: i32,
+}
+/// Nested message and enum types in `Node`.
+pub mod node {
+    /// Enum State defines possible states of a node in a cluster.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value should never be used.
+        Unspecified = 0,
+        /// Node is operational and can be used by the user.
+        Active = 1,
+        /// Node is being provisioned.
+        Creating = 2,
+        /// Node is in a failed state.
+        Failed = 3,
+        /// Node is undergoing maintenance, e.g.: during private cloud upgrade.
+        Upgrading = 4,
+    }
+}
+/// Represents an allocated external IP address and its corresponding internal IP
+/// address in a private cloud.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExternalAddress {
+    /// Output only. The resource name of this external IP address.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/externalAddresses/my-address`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Creation time of this resource.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Last update time of this resource.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The internal IP address of a workload VM.
+    #[prost(string, tag = "6")]
+    pub internal_ip: ::prost::alloc::string::String,
+    /// Output only. The external IP address of a workload VM.
+    #[prost(string, tag = "7")]
+    pub external_ip: ::prost::alloc::string::String,
+    /// Output only. The state of the resource.
+    #[prost(enumeration = "external_address::State", tag = "8")]
+    pub state: i32,
+    /// Output only. System-generated unique identifier for the resource.
+    #[prost(string, tag = "9")]
+    pub uid: ::prost::alloc::string::String,
+    /// User-provided description for this resource.
+    #[prost(string, tag = "11")]
+    pub description: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `ExternalAddress`.
+pub mod external_address {
+    /// Enum State defines possible states of external addresses.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value should never be used.
+        Unspecified = 0,
+        /// The address is ready.
+        Active = 1,
+        /// The address is being created.
+        Creating = 2,
+        /// The address is being updated.
+        Updating = 3,
+        /// The address is being deleted.
+        Deleting = 4,
     }
 }
 /// Subnet in a private cloud. Either `management` subnets (such as vMotion) that
@@ -231,6 +369,9 @@ pub struct Subnet {
     /// Output only. The state of the resource.
     #[prost(enumeration = "subnet::State", tag = "13")]
     pub state: i32,
+    /// Output only. VLAN ID of the VLAN on which the subnet is configured
+    #[prost(int32, tag = "16")]
+    pub vlan_id: i32,
 }
 /// Nested message and enum types in `Subnet`.
 pub mod subnet {
@@ -253,6 +394,197 @@ pub mod subnet {
         /// Last operation on the subnet did not succeed. Subnet's payload is
         /// reverted back to its most recent working state.
         Failed = 6,
+    }
+}
+/// External access firewall rules for filtering incoming traffic destined to
+/// `ExternalAddress` resources.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExternalAccessRule {
+    /// Output only. The resource name of this external access rule.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1/networkPolicies/my-policy/externalAccessRules/my-rule`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Creation time of this resource.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Last update time of this resource.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// User-provided description for this external access rule.
+    #[prost(string, tag = "5")]
+    pub description: ::prost::alloc::string::String,
+    /// External access rule priority, which determines the external access rule to
+    /// use when multiple rules apply. If multiple rules have the same priority,
+    /// their ordering is non-deterministic. If specific ordering is required,
+    /// assign unique priorities to enforce such ordering. The external access rule
+    /// priority is an integer from 100 to 4096, both inclusive. Lower integers
+    /// indicate higher precedence. For example, a rule with priority `100` has
+    /// higher precedence than a rule with priority `101`.
+    #[prost(int32, tag = "6")]
+    pub priority: i32,
+    /// The action that the external access rule performs.
+    #[prost(enumeration = "external_access_rule::Action", tag = "7")]
+    pub action: i32,
+    /// The IP protocol to which the external access rule applies. This value can
+    /// be one of the following three protocol strings (not case-sensitive):
+    /// `tcp`, `udp`, or `icmp`.
+    #[prost(string, tag = "8")]
+    pub ip_protocol: ::prost::alloc::string::String,
+    /// If source ranges are specified, the external access rule applies only to
+    /// traffic that has a source IP address in these ranges. These ranges can
+    /// either be expressed in the CIDR format or as an IP address. As only inbound
+    /// rules are supported, `ExternalAddress` resources cannot be the source IP
+    /// addresses of an external access rule. To match all source addresses,
+    /// specify `0.0.0.0/0`.
+    #[prost(message, repeated, tag = "9")]
+    pub source_ip_ranges: ::prost::alloc::vec::Vec<external_access_rule::IpRange>,
+    /// A list of source ports to which the external access rule applies. This
+    /// field is only applicable for the UDP or TCP protocol.
+    /// Each entry must be either an integer or a range. For example: `\["22"\]`,
+    /// `\["80","443"\]`, or `\["12345-12349"\]`. To match all source ports, specify
+    /// `\["0-65535"\]`.
+    #[prost(string, repeated, tag = "10")]
+    pub source_ports: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// If destination ranges are specified, the external access rule applies only
+    /// to the traffic that has a destination IP address in these ranges. The
+    /// specified IP addresses must have reserved external IP addresses in the
+    /// scope of the parent network policy. To match all external IP addresses in
+    /// the scope of the parent network policy, specify `0.0.0.0/0`. To match a
+    /// specific external IP address, specify it using the
+    /// `IpRange.external_address` property.
+    #[prost(message, repeated, tag = "11")]
+    pub destination_ip_ranges: ::prost::alloc::vec::Vec<external_access_rule::IpRange>,
+    /// A list of destination ports to which the external access rule applies. This
+    /// field is only applicable for the UDP or TCP protocol.
+    /// Each entry must be either an integer or a range. For example: `\["22"\]`,
+    /// `\["80","443"\]`, or `\["12345-12349"\]`. To match all destination ports,
+    /// specify `\["0-65535"\]`.
+    #[prost(string, repeated, tag = "12")]
+    pub destination_ports: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Output only. The state of the resource.
+    #[prost(enumeration = "external_access_rule::State", tag = "13")]
+    pub state: i32,
+    /// Output only. System-generated unique identifier for the resource.
+    #[prost(string, tag = "14")]
+    pub uid: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `ExternalAccessRule`.
+pub mod external_access_rule {
+    /// An IP range provided in any one of the supported formats.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct IpRange {
+        #[prost(oneof = "ip_range::IpRange", tags = "1, 2, 3")]
+        pub ip_range: ::core::option::Option<ip_range::IpRange>,
+    }
+    /// Nested message and enum types in `IpRange`.
+    pub mod ip_range {
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum IpRange {
+            /// A single IP address. For example: `10.0.0.5`.
+            #[prost(string, tag = "1")]
+            IpAddress(::prost::alloc::string::String),
+            /// An IP address range in the CIDR format. For example: `10.0.0.0/24`.
+            #[prost(string, tag = "2")]
+            IpAddressRange(::prost::alloc::string::String),
+            /// The name of an `ExternalAddress` resource. The external address must
+            /// have been reserved in the scope of this external access rule's parent
+            /// network policy.  Provide the external address name in the form of
+            /// `projects/{project}/locations/{location}/privateClouds/{private_cloud}/externalAddresses/{external_address}`.
+            /// For example:
+            /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/externalAddresses/my-address`.
+            #[prost(string, tag = "3")]
+            ExternalAddress(::prost::alloc::string::String),
+        }
+    }
+    /// Action determines whether the external access rule permits or blocks
+    /// traffic, subject to the other components of the rule matching the traffic.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Action {
+        /// Defaults to allow.
+        Unspecified = 0,
+        /// Allows connections that match the other specified components.
+        Allow = 1,
+        /// Blocks connections that match the other specified components.
+        Deny = 2,
+    }
+    /// Defines possible states of external access firewall rules.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value is used if the state is omitted.
+        Unspecified = 0,
+        /// The rule is ready.
+        Active = 1,
+        /// The rule is being created.
+        Creating = 2,
+        /// The rule is being updated.
+        Updating = 3,
+        /// The rule is being deleted.
+        Deleting = 4,
+    }
+}
+/// Logging server to receive vCenter or ESXi logs.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LoggingServer {
+    /// Output only. The resource name of this logging server.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/loggingServers/my-logging-server`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Creation time of this resource.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Last update time of this resource.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Required. Fully-qualified domain name (FQDN) or IP Address of the logging
+    /// server.
+    #[prost(string, tag = "5")]
+    pub hostname: ::prost::alloc::string::String,
+    /// Required. Port number at which the logging server receives logs.
+    #[prost(int32, tag = "7")]
+    pub port: i32,
+    /// Required. Protocol used by vCenter to send logs to a logging server.
+    #[prost(enumeration = "logging_server::Protocol", tag = "6")]
+    pub protocol: i32,
+    /// Required. The type of component that produces logs that will be forwarded
+    /// to this logging server.
+    #[prost(enumeration = "logging_server::SourceType", tag = "10")]
+    pub source_type: i32,
+    /// Output only. System-generated unique identifier for the resource.
+    #[prost(string, tag = "8")]
+    pub uid: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `LoggingServer`.
+pub mod logging_server {
+    /// Defines possible protocols used to send logs to
+    /// a logging server.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Protocol {
+        /// Unspecified communications protocol. This is the default value.
+        Unspecified = 0,
+        /// UDP
+        Udp = 1,
+        /// TCP
+        Tcp = 2,
+    }
+    /// Defines possible types of component that produces logs.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SourceType {
+        /// The default value. This value should never be used.
+        Unspecified = 0,
+        /// Logs produced by ESXI hosts
+        Esxi = 1,
+        /// Logs produced by vCenter server
+        Vcsa = 2,
     }
 }
 /// Describes node type.
@@ -288,6 +620,46 @@ pub struct NodeType {
     /// Output only. List of possible values of custom core count.
     #[prost(int32, repeated, packed = "false", tag = "11")]
     pub available_custom_core_counts: ::prost::alloc::vec::Vec<i32>,
+    /// Output only. The type of the resource.
+    #[prost(enumeration = "node_type::Kind", tag = "12")]
+    pub kind: i32,
+    /// Output only. Families of the node type.
+    /// For node types to be in the same cluster
+    /// they must share at least one element in the `families`.
+    #[prost(string, repeated, tag = "13")]
+    pub families: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Output only. Capabilities of this node type.
+    #[prost(
+        enumeration = "node_type::Capability",
+        repeated,
+        packed = "false",
+        tag = "14"
+    )]
+    pub capabilities: ::prost::alloc::vec::Vec<i32>,
+}
+/// Nested message and enum types in `NodeType`.
+pub mod node_type {
+    /// Enum Kind defines possible types of a NodeType.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Kind {
+        /// The default value. This value should never be used.
+        Unspecified = 0,
+        /// Standard HCI node.
+        Standard = 1,
+        /// Storage only Node.
+        StorageOnly = 2,
+    }
+    /// Capability of a node type.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Capability {
+        /// The default value. This value is used if the capability is omitted or
+        /// unknown.
+        Unspecified = 0,
+        /// This node type supports stretch clusters.
+        StretchedClusters = 1,
+    }
 }
 /// Credentials for a private cloud.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -433,6 +805,170 @@ pub mod vcenter {
         Active = 1,
         /// The appliance is being deployed.
         Creating = 2,
+    }
+}
+/// DNS forwarding config.
+/// This config defines a list of domain to name server mappings,
+/// and is attached to the private cloud for custom domain resolution.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DnsForwarding {
+    /// Output only. The resource name of this DNS profile.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/dnsForwarding`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Creation time of this resource.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Last update time of this resource.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Required. List of domain mappings to configure
+    #[prost(message, repeated, tag = "4")]
+    pub forwarding_rules: ::prost::alloc::vec::Vec<dns_forwarding::ForwardingRule>,
+}
+/// Nested message and enum types in `DnsForwarding`.
+pub mod dns_forwarding {
+    /// A forwarding rule is a mapping of a `domain` to `name_servers`.
+    /// This mapping allows VMware Engine to resolve domains for attached private
+    /// clouds by forwarding DNS requests for a given domain to the specified
+    /// nameservers.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ForwardingRule {
+        /// Required. Domain used to resolve a `name_servers` list.
+        #[prost(string, tag = "1")]
+        pub domain: ::prost::alloc::string::String,
+        /// Required. List of DNS servers to use for domain resolution
+        #[prost(string, repeated, tag = "2")]
+        pub name_servers: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+}
+/// Details of a network peering.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NetworkPeering {
+    /// Output only. The resource name of the network peering. NetworkPeering is a
+    /// global resource and location can only be global. Resource names are
+    /// scheme-less URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/global/networkPeerings/my-peering`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Creation time of this resource.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Last update time of this resource.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Required. The relative resource name of the network to peer with
+    /// a standard VMware Engine network. The provided network can be a
+    /// consumer VPC network or another standard VMware Engine network. If the
+    /// `peer_network_type` is VMWARE_ENGINE_NETWORK, specify the name in the form:
+    /// `projects/{project}/locations/global/vmwareEngineNetworks/{vmware_engine_network_id}`.
+    /// Otherwise specify the name in the form:
+    /// `projects/{project}/global/networks/{network_id}`, where
+    /// `{project}` can either be a project number or a project ID.
+    #[prost(string, tag = "5")]
+    pub peer_network: ::prost::alloc::string::String,
+    /// Optional. True if custom routes are exported to the peered network;
+    /// false otherwise. The default value is true.
+    #[prost(bool, optional, tag = "8")]
+    pub export_custom_routes: ::core::option::Option<bool>,
+    /// Optional. True if custom routes are imported from the peered network;
+    /// false otherwise. The default value is true.
+    #[prost(bool, optional, tag = "9")]
+    pub import_custom_routes: ::core::option::Option<bool>,
+    /// Optional. True if full mesh connectivity is created and managed
+    /// automatically between peered networks; false otherwise. Currently this
+    /// field is always true because Google Compute Engine automatically creates
+    /// and manages subnetwork routes between two VPC networks when peering state
+    /// is 'ACTIVE'.
+    #[prost(bool, optional, tag = "10")]
+    pub exchange_subnet_routes: ::core::option::Option<bool>,
+    /// Optional. True if all subnet routes with a public IP address range are
+    /// exported; false otherwise. The default value is true. IPv4 special-use
+    /// ranges (<https://en.wikipedia.org/wiki/IPv4#Special_addresses>) are always
+    /// exported to peers and are not controlled by this field.
+    #[prost(bool, optional, tag = "11")]
+    pub export_custom_routes_with_public_ip: ::core::option::Option<bool>,
+    /// Optional. True if all subnet routes with public IP address range are
+    /// imported; false otherwise. The default value is true. IPv4 special-use
+    /// ranges (<https://en.wikipedia.org/wiki/IPv4#Special_addresses>) are always
+    /// imported to peers and are not controlled by this field.
+    #[prost(bool, optional, tag = "12")]
+    pub import_custom_routes_with_public_ip: ::core::option::Option<bool>,
+    /// Output only. State of the network peering. This field
+    /// has a value of 'ACTIVE' when there's a matching configuration in the peer
+    /// network. New values may be added to this enum when appropriate.
+    #[prost(enumeration = "network_peering::State", tag = "13")]
+    pub state: i32,
+    /// Output only. Output Only. Details about the current state of the network
+    /// peering.
+    #[prost(string, tag = "7")]
+    pub state_details: ::prost::alloc::string::String,
+    /// Optional. Maximum transmission unit (MTU) in bytes.
+    /// The default value is `1500`. If a value of `0` is provided for this field,
+    /// VMware Engine uses the default value instead.
+    #[prost(int32, tag = "14")]
+    pub peer_mtu: i32,
+    /// Required. The type of the network to peer with the VMware Engine network.
+    #[prost(enumeration = "network_peering::PeerNetworkType", tag = "16")]
+    pub peer_network_type: i32,
+    /// Output only. System-generated unique identifier for the resource.
+    #[prost(string, tag = "17")]
+    pub uid: ::prost::alloc::string::String,
+    /// Required. The relative resource name of the VMware Engine network.
+    /// Specify the name in the following form:
+    /// `projects/{project}/locations/{location}/vmwareEngineNetworks/{vmware_engine_network_id}`
+    /// where `{project}` can either be a project number or a project ID.
+    #[prost(string, tag = "20")]
+    pub vmware_engine_network: ::prost::alloc::string::String,
+    /// Optional. User-provided description for this network peering.
+    #[prost(string, tag = "21")]
+    pub description: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `NetworkPeering`.
+pub mod network_peering {
+    /// Possible states of a network peering.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unspecified network peering state. This is the default value.
+        Unspecified = 0,
+        /// The peering is not active.
+        Inactive = 1,
+        /// The peering is active.
+        Active = 2,
+        /// The peering is being created.
+        Creating = 3,
+        /// The peering is being deleted.
+        Deleting = 4,
+    }
+    /// Type or purpose of the network peering connection.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum PeerNetworkType {
+        /// Unspecified
+        Unspecified = 0,
+        /// Peering connection used for connecting to another VPC network established
+        /// by the same user. For example, a peering connection to another VPC
+        /// network in the same project or to an on-premises network.
+        Standard = 1,
+        /// Peering connection used for connecting to another VMware Engine network.
+        VmwareEngineNetwork = 2,
+        /// Peering connection used for establishing [private services
+        /// access](<https://cloud.google.com/vpc/docs/private-services-access>).
+        PrivateServicesAccess = 3,
+        /// Peering connection used for connecting to NetApp Cloud Volumes.
+        NetappCloudVolumes = 4,
+        /// Peering connection used for connecting to third-party services. Most
+        /// third-party services require manual setup of reverse peering on the VPC
+        /// network associated with the third-party service.
+        ThirdPartyService = 5,
+        /// Peering connection used for connecting to Dell PowerScale Filers
+        DellPowerscale = 6,
     }
 }
 /// Exchanged network peering route.
@@ -584,6 +1120,80 @@ pub mod network_policy {
         }
     }
 }
+/// Represents a binding between a network and the management DNS zone.
+/// A management DNS zone is the Cloud DNS cross-project binding zone that
+/// VMware Engine creates for each private cloud. It contains FQDNs and
+/// corresponding IP addresses for the private cloud's ESXi hosts and management
+/// VM appliances like vCenter and NSX Manager.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ManagementDnsZoneBinding {
+    /// Output only. The resource name of this binding.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/managementDnsZoneBindings/my-management-dns-zone-binding`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Creation time of this resource.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Last update time of this resource.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The state of the resource.
+    #[prost(enumeration = "management_dns_zone_binding::State", tag = "8")]
+    pub state: i32,
+    /// User-provided description for this resource.
+    #[prost(string, tag = "13")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. System-generated unique identifier for the resource.
+    #[prost(string, tag = "9")]
+    pub uid: ::prost::alloc::string::String,
+    /// Required. The relative resource name of the network to bind to the
+    /// management DNS zone. This network can be a consumer VPC network or a
+    /// VMware engine network.
+    #[prost(oneof = "management_dns_zone_binding::BindNetwork", tags = "14, 15")]
+    pub bind_network: ::core::option::Option<management_dns_zone_binding::BindNetwork>,
+}
+/// Nested message and enum types in `ManagementDnsZoneBinding`.
+pub mod management_dns_zone_binding {
+    /// Enum State defines possible states of binding between the consumer VPC
+    /// network and the management DNS zone.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value should never be used.
+        Unspecified = 0,
+        /// The binding is ready.
+        Active = 1,
+        /// The binding is being created.
+        Creating = 2,
+        /// The binding is being updated.
+        Updating = 3,
+        /// The binding is being deleted.
+        Deleting = 4,
+        /// The binding has failed.
+        Failed = 5,
+    }
+    /// Required. The relative resource name of the network to bind to the
+    /// management DNS zone. This network can be a consumer VPC network or a
+    /// VMware engine network.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum BindNetwork {
+        /// Network to bind is a standard consumer VPC.
+        /// Specify the name in the following form for consumer
+        /// VPC network: `projects/{project}/global/networks/{network_id}`.
+        /// `{project}` can either be a project number or a project ID.
+        #[prost(string, tag = "14")]
+        VpcNetwork(::prost::alloc::string::String),
+        /// Network to bind is a VMware Engine network.
+        /// Specify the name in the following form for VMware engine network:
+        /// `projects/{project}/locations/global/vmwareEngineNetworks/{vmware_engine_network_id}`.
+        /// `{project}` can either be a project number or a project ID.
+        #[prost(string, tag = "15")]
+        VmwareEngineNetwork(::prost::alloc::string::String),
+    }
+}
 /// VMware Engine network resource that provides connectivity for VMware Engine
 /// private clouds.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -689,6 +1299,8 @@ pub mod vmware_engine_network {
         /// of type `STANDARD`. This network type is no longer used for new VMware
         /// Engine private cloud deployments.
         Legacy = 1,
+        /// Standard network type used for private cloud connectivity.
+        Standard = 2,
     }
 }
 /// Private connection resource that provides connectivity for VMware Engine
@@ -823,6 +1435,76 @@ pub mod private_connection {
         PeeringActive = 1,
         /// The peering is in inactive state.
         PeeringInactive = 2,
+    }
+}
+/// VmwareEngine specific metadata for the given
+/// \[google.cloud.location.Location][google.cloud.location.Location\]. It is
+/// returned as a content of the `google.cloud.location.Location.metadata` field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LocationMetadata {
+    /// Output only. Capabilities of this location.
+    #[prost(
+        enumeration = "location_metadata::Capability",
+        repeated,
+        packed = "false",
+        tag = "1"
+    )]
+    pub capabilities: ::prost::alloc::vec::Vec<i32>,
+}
+/// Nested message and enum types in `LocationMetadata`.
+pub mod location_metadata {
+    /// Capability of a location.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Capability {
+        /// The default value. This value is used if the capability is omitted or
+        /// unknown.
+        Unspecified = 0,
+        /// Stretch clusters are supported in this location.
+        StretchedClusters = 1,
+    }
+}
+/// DnsBindPermission resource that contains the accounts having the consumer DNS
+/// bind permission on the corresponding intranet VPC of the consumer project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DnsBindPermission {
+    /// Required. Output only. The name of the resource which stores the
+    /// users/service accounts having the permission to bind to the corresponding
+    /// intranet VPC of the consumer project. DnsBindPermission is a global
+    /// resource and location can only be global. Resource names are schemeless
+    /// URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.> For example:
+    /// `projects/my-project/locations/global/dnsBindPermission`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Users/Service accounts which have access for binding on the
+    /// intranet VPC project corresponding to the consumer project.
+    #[prost(message, repeated, tag = "2")]
+    pub principals: ::prost::alloc::vec::Vec<Principal>,
+}
+/// Users/Service accounts which have access for DNS binding on the intranet
+/// VPC corresponding to the consumer project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Principal {
+    /// The consumer provided user/service account which needs to be
+    /// granted permission to DNS bind with the intranet VPC corresponding to the
+    /// consumer project.
+    #[prost(oneof = "principal::Principal", tags = "1, 2")]
+    pub principal: ::core::option::Option<principal::Principal>,
+}
+/// Nested message and enum types in `Principal`.
+pub mod principal {
+    /// The consumer provided user/service account which needs to be
+    /// granted permission to DNS bind with the intranet VPC corresponding to the
+    /// consumer project.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Principal {
+        /// The user who needs to be granted permission.
+        #[prost(string, tag = "1")]
+        User(::prost::alloc::string::String),
+        /// The service account which needs to be granted the permission.
+        #[prost(string, tag = "2")]
+        ServiceAccount(::prost::alloc::string::String),
     }
 }
 /// Request message for
@@ -1169,6 +1851,286 @@ pub struct DeleteClusterRequest {
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for
+/// \[VmwareEngine.ListNodes][google.cloud.vmwareengine.v1.VmwareEngine.ListNodes\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListNodesRequest {
+    /// Required. The resource name of the cluster to be queried for nodes.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/clusters/my-cluster`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of nodes to return in one page.
+    /// The service may return fewer than this value.
+    /// The maximum value is coerced to 1000.
+    /// The default value of this field is 500.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListNodes` call.
+    /// Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListNodes` must match the call that provided the page
+    /// token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[VmwareEngine.ListNodes][google.cloud.vmwareengine.v1.VmwareEngine.ListNodes\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListNodesResponse {
+    /// The nodes.
+    #[prost(message, repeated, tag = "1")]
+    pub nodes: ::prost::alloc::vec::Vec<Node>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.GetNode][google.cloud.vmwareengine.v1.VmwareEngine.GetNode\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetNodeRequest {
+    /// Required. The resource name of the node to retrieve.
+    /// For example:
+    /// `projects/{project}/locations/{location}/privateClouds/{private_cloud}/clusters/{cluster}/nodes/{node}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.ListExternalAddresses][google.cloud.vmwareengine.v1.VmwareEngine.ListExternalAddresses\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListExternalAddressesRequest {
+    /// Required. The resource name of the private cloud to be queried for
+    /// external IP addresses.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of external IP addresses to return in one page.
+    /// The service may return fewer than this value.
+    /// The maximum value is coerced to 1000.
+    /// The default value of this field is 500.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListExternalAddresses` call.
+    /// Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListExternalAddresses` must match the call that provided the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A filter expression that matches resources returned in the response.
+    /// The expression must specify the field name, a comparison
+    /// operator, and the value that you want to use for filtering. The value
+    /// must be a string, a number, or a boolean. The comparison operator
+    /// must be `=`, `!=`, `>`, or `<`.
+    ///
+    /// For example, if you are filtering a list of IP addresses, you can
+    /// exclude the ones named `example-ip` by specifying
+    /// `name != "example-ip"`.
+    ///
+    /// To filter on multiple expressions, provide each separate expression within
+    /// parentheses. For example:
+    /// ```
+    /// (name = "example-ip")
+    /// (createTime > "2021-04-12T08:15:10.40Z")
+    /// ```
+    ///
+    /// By default, each expression is an `AND` expression. However, you
+    /// can include `AND` and `OR` expressions explicitly.
+    /// For example:
+    /// ```
+    /// (name = "example-ip-1") AND
+    /// (createTime > "2021-04-12T08:15:10.40Z") OR
+    /// (name = "example-ip-2")
+    /// ```
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Sorts list results by a certain order. By default, returned results
+    /// are ordered by `name` in ascending order.
+    /// You can also sort results in descending order based on the `name` value
+    /// using `orderBy="name desc"`.
+    /// Currently, only ordering by `name` is supported.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[VmwareEngine.ListExternalAddresses][google.cloud.vmwareengine.v1.VmwareEngine.ListExternalAddresses\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListExternalAddressesResponse {
+    /// A list of external IP addresses.
+    #[prost(message, repeated, tag = "1")]
+    pub external_addresses: ::prost::alloc::vec::Vec<ExternalAddress>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached when making an aggregated query using
+    /// wildcards.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request message for
+/// \[VmwareEngine.FetchNetworkPolicyExternalAddresses][google.cloud.vmwareengine.v1.VmwareEngine.FetchNetworkPolicyExternalAddresses\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FetchNetworkPolicyExternalAddressesRequest {
+    /// Required. The resource name of the network policy to query for assigned
+    /// external IP addresses. Resource names are schemeless URIs that follow the
+    /// conventions in <https://cloud.google.com/apis/design/resource_names.> For
+    /// example:
+    /// `projects/my-project/locations/us-central1/networkPolicies/my-policy`
+    #[prost(string, tag = "1")]
+    pub network_policy: ::prost::alloc::string::String,
+    /// The maximum number of external IP addresses to return in one page.
+    /// The service may return fewer than this value.
+    /// The maximum value is coerced to 1000.
+    /// The default value of this field is 500.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous
+    /// `FetchNetworkPolicyExternalAddresses` call. Provide this to retrieve the
+    /// subsequent page.
+    ///
+    /// When paginating, all parameters provided to
+    /// `FetchNetworkPolicyExternalAddresses`, except for `page_size` and
+    /// `page_token`, must match the call that provided the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[VmwareEngine.FetchNetworkPolicyExternalAddresses][google.cloud.vmwareengine.v1.VmwareEngine.FetchNetworkPolicyExternalAddresses\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FetchNetworkPolicyExternalAddressesResponse {
+    /// A list of external IP addresses assigned to VMware workload VMs within the
+    /// scope of the given network policy.
+    #[prost(message, repeated, tag = "1")]
+    pub external_addresses: ::prost::alloc::vec::Vec<ExternalAddress>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.GetExternalAddress][google.cloud.vmwareengine.v1.VmwareEngine.GetExternalAddress\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetExternalAddressRequest {
+    /// Required. The resource name of the external IP address to retrieve.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/externalAddresses/my-ip`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.CreateExternalAddress][google.cloud.vmwareengine.v1.VmwareEngine.CreateExternalAddress\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateExternalAddressRequest {
+    /// Required. The resource name of the private cloud
+    /// to create a new external IP address in.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The initial description of a new external IP address.
+    #[prost(message, optional, tag = "2")]
+    pub external_address: ::core::option::Option<ExternalAddress>,
+    /// Required. The user-provided identifier of the `ExternalAddress` to be
+    /// created. This identifier must be unique among `ExternalAddress` resources
+    /// within the parent and becomes the final token in the name URI. The
+    /// identifier must meet the following requirements:
+    ///
+    /// * Only contains 1-63 alphanumeric characters and hyphens
+    /// * Begins with an alphabetical character
+    /// * Ends with a non-hyphen character
+    /// * Not formatted as a UUID
+    /// * Complies with [RFC 1034](<https://datatracker.ietf.org/doc/html/rfc1034>)
+    /// (section 3.5)
+    #[prost(string, tag = "3")]
+    pub external_address_id: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if the original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.UpdateExternalAddress][google.cloud.vmwareengine.v1.VmwareEngine.UpdateExternalAddress\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateExternalAddressRequest {
+    /// Required. Field mask is used to specify the fields to be overwritten in the
+    /// `ExternalAddress` resource by the update.
+    /// The fields specified in the `update_mask` are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask. If the
+    /// user does not provide a mask then all fields will be overwritten.
+    #[prost(message, optional, tag = "1")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Required. External IP address description.
+    #[prost(message, optional, tag = "2")]
+    pub external_address: ::core::option::Option<ExternalAddress>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if the original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.DeleteExternalAddress][google.cloud.vmwareengine.v1.VmwareEngine.DeleteExternalAddress\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteExternalAddressRequest {
+    /// Required. The resource name of the external IP address to delete.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/externalAddresses/my-ip`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if the original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
 /// \[VmwareEngine.ListSubnets][google.cloud.vmwareengine.v1.VmwareEngine.ListSubnets\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSubnetsRequest {
@@ -1236,6 +2198,391 @@ pub struct UpdateSubnetRequest {
     /// Required. Subnet description.
     #[prost(message, optional, tag = "2")]
     pub subnet: ::core::option::Option<Subnet>,
+}
+/// Request message for
+/// \[VmwareEngine.ListExternalAccessRules][google.cloud.vmwareengine.v1.VmwareEngine.ListExternalAccessRules\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListExternalAccessRulesRequest {
+    /// Required. The resource name of the network policy to query for external
+    /// access firewall rules. Resource names are schemeless URIs that follow the
+    /// conventions in <https://cloud.google.com/apis/design/resource_names.> For
+    /// example:
+    /// `projects/my-project/locations/us-central1/networkPolicies/my-policy`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of external access rules to return in one page.
+    /// The service may return fewer than this value.
+    /// The maximum value is coerced to 1000.
+    /// The default value of this field is 500.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListExternalAccessRulesRequest`
+    /// call. Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListExternalAccessRulesRequest` must match the call that provided the page
+    /// token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A filter expression that matches resources returned in the response.
+    /// The expression must specify the field name, a comparison
+    /// operator, and the value that you want to use for filtering. The value
+    /// must be a string, a number, or a boolean. The comparison operator
+    /// must be `=`, `!=`, `>`, or `<`.
+    ///
+    /// For example, if you are filtering a list of external access rules, you can
+    /// exclude the ones named `example-rule` by specifying
+    /// `name != "example-rule"`.
+    ///
+    /// To filter on multiple expressions, provide each separate expression within
+    /// parentheses. For example:
+    /// ```
+    /// (name = "example-rule")
+    /// (createTime > "2021-04-12T08:15:10.40Z")
+    /// ```
+    ///
+    /// By default, each expression is an `AND` expression. However, you
+    /// can include `AND` and `OR` expressions explicitly.
+    /// For example:
+    /// ```
+    /// (name = "example-rule-1") AND
+    /// (createTime > "2021-04-12T08:15:10.40Z") OR
+    /// (name = "example-rule-2")
+    /// ```
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Sorts list results by a certain order. By default, returned results
+    /// are ordered by `name` in ascending order.
+    /// You can also sort results in descending order based on the `name` value
+    /// using `orderBy="name desc"`.
+    /// Currently, only ordering by `name` is supported.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[VmwareEngine.ListExternalAccessRules][google.cloud.vmwareengine.v1.VmwareEngine.ListExternalAccessRules\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListExternalAccessRulesResponse {
+    /// A list of external access firewall rules.
+    #[prost(message, repeated, tag = "1")]
+    pub external_access_rules: ::prost::alloc::vec::Vec<ExternalAccessRule>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached when making an aggregated query using
+    /// wildcards.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request message for
+/// \[VmwareEngine.GetExternalAccessRule][google.cloud.vmwareengine.v1.VmwareEngine.GetExternalAccessRule\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetExternalAccessRuleRequest {
+    /// Required. The resource name of the external access firewall rule to
+    /// retrieve. Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1/networkPolicies/my-policy/externalAccessRules/my-rule`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.CreateExternalAccessRule][google.cloud.vmwareengine.v1.VmwareEngine.CreateExternalAccessRule\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateExternalAccessRuleRequest {
+    /// Required. The resource name of the network policy
+    /// to create a new external access firewall rule in.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1/networkPolicies/my-policy`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The initial description of a new external access rule.
+    #[prost(message, optional, tag = "2")]
+    pub external_access_rule: ::core::option::Option<ExternalAccessRule>,
+    /// Required. The user-provided identifier of the `ExternalAccessRule` to be
+    /// created. This identifier must be unique among `ExternalAccessRule`
+    /// resources within the parent and becomes the final token in the name URI.
+    /// The identifier must meet the following requirements:
+    ///
+    /// * Only contains 1-63 alphanumeric characters and hyphens
+    /// * Begins with an alphabetical character
+    /// * Ends with a non-hyphen character
+    /// * Not formatted as a UUID
+    /// * Complies with [RFC 1034](<https://datatracker.ietf.org/doc/html/rfc1034>)
+    /// (section 3.5)
+    #[prost(string, tag = "3")]
+    pub external_access_rule_id: ::prost::alloc::string::String,
+    /// A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if the original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.UpdateExternalAccessRule][google.cloud.vmwareengine.v1.VmwareEngine.UpdateExternalAccessRule\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateExternalAccessRuleRequest {
+    /// Required. Field mask is used to specify the fields to be overwritten in the
+    /// `ExternalAccessRule` resource by the update.
+    /// The fields specified in the `update_mask` are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask. If the
+    /// user does not provide a mask then all fields will be overwritten.
+    #[prost(message, optional, tag = "1")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Required. Description of the external access rule.
+    #[prost(message, optional, tag = "2")]
+    pub external_access_rule: ::core::option::Option<ExternalAccessRule>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if the original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.DeleteExternalAccessRule][google.cloud.vmwareengine.v1.VmwareEngine.DeleteExternalAccessRule\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteExternalAccessRuleRequest {
+    /// Required. The resource name of the external access firewall rule to delete.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1/networkPolicies/my-policy/externalAccessRules/my-rule`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if the original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.ListLoggingServers][google.cloud.vmwareengine.v1.VmwareEngine.ListLoggingServers\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListLoggingServersRequest {
+    /// Required. The resource name of the private cloud to be queried for
+    /// logging servers.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of logging servers to return in one page.
+    /// The service may return fewer than this value.
+    /// The maximum value is coerced to 1000.
+    /// The default value of this field is 500.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListLoggingServersRequest` call.
+    /// Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListLoggingServersRequest` must match the call that provided the page
+    /// token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A filter expression that matches resources returned in the response.
+    /// The expression must specify the field name, a comparison
+    /// operator, and the value that you want to use for filtering. The value
+    /// must be a string, a number, or a boolean. The comparison operator
+    /// must be `=`, `!=`, `>`, or `<`.
+    ///
+    /// For example, if you are filtering a list of logging servers, you can
+    /// exclude the ones named `example-server` by specifying
+    /// `name != "example-server"`.
+    ///
+    /// To filter on multiple expressions, provide each separate expression within
+    /// parentheses. For example:
+    /// ```
+    /// (name = "example-server")
+    /// (createTime > "2021-04-12T08:15:10.40Z")
+    /// ```
+    ///
+    /// By default, each expression is an `AND` expression. However, you
+    /// can include `AND` and `OR` expressions explicitly.
+    /// For example:
+    /// ```
+    /// (name = "example-server-1") AND
+    /// (createTime > "2021-04-12T08:15:10.40Z") OR
+    /// (name = "example-server-2")
+    /// ```
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Sorts list results by a certain order. By default, returned results
+    /// are ordered by `name` in ascending order.
+    /// You can also sort results in descending order based on the `name` value
+    /// using `orderBy="name desc"`.
+    /// Currently, only ordering by `name` is supported.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[VmwareEngine.ListLoggingServers][google.cloud.vmwareengine.v1.VmwareEngine.ListLoggingServers\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListLoggingServersResponse {
+    /// A list of Logging Servers.
+    #[prost(message, repeated, tag = "1")]
+    pub logging_servers: ::prost::alloc::vec::Vec<LoggingServer>,
+    /// A token, which can be send as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached when making an aggregated query using
+    /// wildcards.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request message for
+/// \[VmwareEngine.GetLoggingServer][google.cloud.vmwareengine.v1.VmwareEngine.GetLoggingServer\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetLoggingServerRequest {
+    /// Required. The resource name of the Logging Server to retrieve.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/loggingServers/my-logging-server`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.CreateLoggingServer][google.cloud.vmwareengine.v1.VmwareEngine.CreateLoggingServer\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateLoggingServerRequest {
+    /// Required. The resource name of the private cloud
+    /// to create a new Logging Server in.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The initial description of a new logging server.
+    #[prost(message, optional, tag = "2")]
+    pub logging_server: ::core::option::Option<LoggingServer>,
+    /// Required. The user-provided identifier of the `LoggingServer` to be
+    /// created. This identifier must be unique among `LoggingServer` resources
+    /// within the parent and becomes the final token in the name URI.
+    /// The identifier must meet the following requirements:
+    ///
+    /// * Only contains 1-63 alphanumeric characters and hyphens
+    /// * Begins with an alphabetical character
+    /// * Ends with a non-hyphen character
+    /// * Not formatted as a UUID
+    /// * Complies with [RFC 1034](<https://datatracker.ietf.org/doc/html/rfc1034>)
+    /// (section 3.5)
+    #[prost(string, tag = "3")]
+    pub logging_server_id: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.UpdateLoggingServer][google.cloud.vmwareengine.v1.VmwareEngine.UpdateLoggingServer\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateLoggingServerRequest {
+    /// Required. Field mask is used to specify the fields to be overwritten in the
+    /// `LoggingServer` resource by the update.
+    /// The fields specified in the `update_mask` are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask. If the
+    /// user does not provide a mask then all fields will be overwritten.
+    #[prost(message, optional, tag = "1")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Required. Logging server description.
+    #[prost(message, optional, tag = "2")]
+    pub logging_server: ::core::option::Option<LoggingServer>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.DeleteLoggingServer][google.cloud.vmwareengine.v1.VmwareEngine.DeleteLoggingServer\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteLoggingServerRequest {
+    /// Required. The resource name of the logging server to delete.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/loggingServers/my-logging-server`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
 }
 /// Represents the metadata of the long-running operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1372,6 +2719,18 @@ pub struct ShowVcenterCredentialsRequest {
     /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud`
     #[prost(string, tag = "1")]
     pub private_cloud: ::prost::alloc::string::String,
+    /// Optional. The username of the user to be queried for credentials.
+    /// The default value of this field is CloudOwner@gve.local.
+    /// The provided value must be one of the following:
+    /// CloudOwner@gve.local,
+    /// solution-user-01@gve.local,
+    /// solution-user-02@gve.local,
+    /// solution-user-03@gve.local,
+    /// solution-user-04@gve.local,
+    /// solution-user-05@gve.local,
+    /// zertoadmin@gve.local.
+    #[prost(string, tag = "2")]
+    pub username: ::prost::alloc::string::String,
 }
 /// Request message for
 /// \[VmwareEngine.ResetNsxCredentials][google.cloud.vmwareengine.v1.VmwareEngine.ResetNsxCredentials\]
@@ -1430,6 +2789,17 @@ pub struct ResetVcenterCredentialsRequest {
     /// not supported (00000000-0000-0000-0000-000000000000).
     #[prost(string, tag = "2")]
     pub request_id: ::prost::alloc::string::String,
+    /// Optional. The username of the user to be to reset the credentials.
+    /// The default value of this field is CloudOwner@gve.local.
+    /// The provided value should be one of the following:
+    /// solution-user-01@gve.local,
+    /// solution-user-02@gve.local,
+    /// solution-user-03@gve.local,
+    /// solution-user-04@gve.local,
+    /// solution-user-05@gve.local,
+    /// zertoadmin@gve.local.
+    #[prost(string, tag = "3")]
+    pub username: ::prost::alloc::string::String,
 }
 /// Response message for
 /// \[VmwareEngine.ListHcxActivationKeys][google.cloud.vmwareengine.v1.VmwareEngine.ListHcxActivationKeys\]
@@ -1529,6 +2899,279 @@ pub struct CreateHcxActivationKeyRequest {
     /// not supported (00000000-0000-0000-0000-000000000000).
     #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.GetDnsForwarding][google.cloud.vmwareengine.v1.VmwareEngine.GetDnsForwarding\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDnsForwardingRequest {
+    /// Required. The resource name of a `DnsForwarding` to retrieve.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/dnsForwarding`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.UpdateDnsForwarding][google.cloud.vmwareengine.v1.VmwareEngine.UpdateDnsForwarding\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateDnsForwardingRequest {
+    /// Required. DnsForwarding config details.
+    #[prost(message, optional, tag = "1")]
+    pub dns_forwarding: ::core::option::Option<DnsForwarding>,
+    /// Required. Field mask is used to specify the fields to be overwritten in the
+    /// `DnsForwarding` resource by the update.
+    /// The fields specified in the `update_mask` are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask. If the
+    /// user does not provide a mask then all fields will be overwritten.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.CreateNetworkPeering][google.cloud.vmwareengine.v1.VmwareEngine.CreateNetworkPeering\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateNetworkPeeringRequest {
+    /// Required. The resource name of the location to create the new network
+    /// peering in. This value is always `global`, because `NetworkPeering` is a
+    /// global resource. Resource names are schemeless URIs that follow the
+    /// conventions in <https://cloud.google.com/apis/design/resource_names.> For
+    /// example: `projects/my-project/locations/global`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The user-provided identifier of the new `NetworkPeering`.
+    /// This identifier must be unique among `NetworkPeering` resources within the
+    /// parent and becomes the final token in the name URI.
+    /// The identifier must meet the following requirements:
+    ///
+    /// * Only contains 1-63 alphanumeric characters and hyphens
+    /// * Begins with an alphabetical character
+    /// * Ends with a non-hyphen character
+    /// * Not formatted as a UUID
+    /// * Complies with [RFC 1034](<https://datatracker.ietf.org/doc/html/rfc1034>)
+    /// (section 3.5)
+    #[prost(string, tag = "2")]
+    pub network_peering_id: ::prost::alloc::string::String,
+    /// Required. The initial description of the new network peering.
+    #[prost(message, optional, tag = "3")]
+    pub network_peering: ::core::option::Option<NetworkPeering>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.DeleteNetworkPeering][google.cloud.vmwareengine.v1.VmwareEngine.DeleteNetworkPeering\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteNetworkPeeringRequest {
+    /// Required. The resource name of the network peering to be deleted.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/global/networkPeerings/my-peering`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.GetNetworkPeering][google.cloud.vmwareengine.v1.VmwareEngine.GetNetworkPeering\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetNetworkPeeringRequest {
+    /// Required. The resource name of the network peering to retrieve.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/global/networkPeerings/my-peering`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.ListNetworkPeerings][google.cloud.vmwareengine.v1.VmwareEngine.ListNetworkPeerings\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListNetworkPeeringsRequest {
+    /// Required. The resource name of the location (global) to query for
+    /// network peerings. Resource names are schemeless URIs that follow the
+    /// conventions in <https://cloud.google.com/apis/design/resource_names.> For
+    /// example: `projects/my-project/locations/global`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of network peerings to return in one page.
+    /// The maximum value is coerced to 1000.
+    /// The default value of this field is 500.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListNetworkPeerings` call.
+    /// Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListNetworkPeerings` must match the call that provided the page
+    /// token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A filter expression that matches resources returned in the response.
+    /// The expression must specify the field name, a comparison
+    /// operator, and the value that you want to use for filtering. The value
+    /// must be a string, a number, or a boolean. The comparison operator
+    /// must be `=`, `!=`, `>`, or `<`.
+    ///
+    /// For example, if you are filtering a list of network peerings, you can
+    /// exclude the ones named `example-peering` by specifying
+    /// `name != "example-peering"`.
+    ///
+    /// To filter on multiple expressions, provide each separate expression within
+    /// parentheses. For example:
+    /// ```
+    /// (name = "example-peering")
+    /// (createTime > "2021-04-12T08:15:10.40Z")
+    /// ```
+    ///
+    /// By default, each expression is an `AND` expression. However, you
+    /// can include `AND` and `OR` expressions explicitly.
+    /// For example:
+    /// ```
+    /// (name = "example-peering-1") AND
+    /// (createTime > "2021-04-12T08:15:10.40Z") OR
+    /// (name = "example-peering-2")
+    /// ```
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Sorts list results by a certain order. By default, returned results
+    /// are ordered by `name` in ascending order.
+    /// You can also sort results in descending order based on the `name` value
+    /// using `orderBy="name desc"`.
+    /// Currently, only ordering by `name` is supported.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.UpdateNetworkPeering][google.cloud.vmwareengine.v1.VmwareEngine.UpdateNetworkPeering\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateNetworkPeeringRequest {
+    /// Required. Network peering description.
+    #[prost(message, optional, tag = "1")]
+    pub network_peering: ::core::option::Option<NetworkPeering>,
+    /// Required. Field mask is used to specify the fields to be overwritten in the
+    /// `NetworkPeering` resource by the update.
+    /// The fields specified in the `update_mask` are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask. If the
+    /// user does not provide a mask then all fields will be overwritten.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[VmwareEngine.ListNetworkPeerings][google.cloud.vmwareengine.v1.VmwareEngine.ListNetworkPeerings\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListNetworkPeeringsResponse {
+    /// A list of network peerings.
+    #[prost(message, repeated, tag = "1")]
+    pub network_peerings: ::prost::alloc::vec::Vec<NetworkPeering>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Unreachable resources.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request message for
+/// \[VmwareEngine.ListPeeringRoutes][google.cloud.vmwareengine.v1.VmwareEngine.ListPeeringRoutes\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListPeeringRoutesRequest {
+    /// Required. The resource name of the network peering to retrieve peering
+    /// routes from. Resource names are schemeless URIs that follow the conventions
+    /// in <https://cloud.google.com/apis/design/resource_names.> For example:
+    /// `projects/my-project/locations/global/networkPeerings/my-peering`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of peering routes to return in one page.
+    /// The service may return fewer than this value.
+    /// The maximum value is coerced to 1000.
+    /// The default value of this field is 500.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListPeeringRoutes` call.
+    /// Provide this to retrieve the subsequent page.
+    /// When paginating, all other parameters provided to `ListPeeringRoutes` must
+    /// match the call that provided the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A filter expression that matches resources returned in the response.
+    /// Currently, only filtering on the `direction` field is supported. To return
+    /// routes imported from the peer network, provide "direction=INCOMING". To
+    /// return routes exported from the VMware Engine network, provide
+    /// "direction=OUTGOING". Other filter expressions return an error.
+    #[prost(string, tag = "6")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[VmwareEngine.ListPeeringRoutes][google.cloud.vmwareengine.v1.VmwareEngine.ListPeeringRoutes\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListPeeringRoutesResponse {
+    /// A list of peering routes.
+    #[prost(message, repeated, tag = "1")]
+    pub peering_routes: ::prost::alloc::vec::Vec<PeeringRoute>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for
 /// \[VmwareEngine.ListNetworkPolicies][google.cloud.vmwareengine.v1.VmwareEngine.ListNetworkPolicies\]
@@ -1716,6 +3359,226 @@ pub struct DeleteNetworkPolicyRequest {
     /// ID, the server can check if original operation with the same request ID
     /// was received, and if so, will ignore the second request. This prevents
     /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.ListManagementDnsZoneBindings][google.cloud.vmwareengine.v1.VmwareEngine.ListManagementDnsZoneBindings\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListManagementDnsZoneBindingsRequest {
+    /// Required. The resource name of the private cloud to be queried for
+    /// management DNS zone bindings.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of management DNS zone bindings to return in one page.
+    /// The service may return fewer than this value.
+    /// The maximum value is coerced to 1000.
+    /// The default value of this field is 500.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListManagementDnsZoneBindings`
+    /// call. Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `ListManagementDnsZoneBindings` must match the call that provided the page
+    /// token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A filter expression that matches resources returned in the response.
+    /// The expression must specify the field name, a comparison
+    /// operator, and the value that you want to use for filtering. The value
+    /// must be a string, a number, or a boolean. The comparison operator
+    /// must be `=`, `!=`, `>`, or `<`.
+    ///
+    /// For example, if you are filtering a list of Management DNS Zone Bindings,
+    /// you can exclude the ones named `example-management-dns-zone-binding` by
+    /// specifying `name != "example-management-dns-zone-binding"`.
+    ///
+    /// To filter on multiple expressions, provide each separate expression within
+    /// parentheses. For example:
+    /// ```
+    /// (name = "example-management-dns-zone-binding")
+    /// (createTime > "2021-04-12T08:15:10.40Z")
+    /// ```
+    ///
+    /// By default, each expression is an `AND` expression. However, you
+    /// can include `AND` and `OR` expressions explicitly.
+    /// For example:
+    /// ```
+    /// (name = "example-management-dns-zone-binding-1") AND
+    /// (createTime > "2021-04-12T08:15:10.40Z") OR
+    /// (name = "example-management-dns-zone-binding-2")
+    /// ```
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Sorts list results by a certain order. By default, returned results
+    /// are ordered by `name` in ascending order.
+    /// You can also sort results in descending order based on the `name` value
+    /// using `orderBy="name desc"`.
+    /// Currently, only ordering by `name` is supported.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[VmwareEngine.ListManagementDnsZoneBindings][google.cloud.vmwareengine.v1.VmwareEngine.ListManagementDnsZoneBindings\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListManagementDnsZoneBindingsResponse {
+    /// A list of management DNS zone bindings.
+    #[prost(message, repeated, tag = "1")]
+    pub management_dns_zone_bindings: ::prost::alloc::vec::Vec<ManagementDnsZoneBinding>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached when making an aggregated query using
+    /// wildcards.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request message for
+/// \[VmwareEngine.GetManagementDnsZoneBinding][google.cloud.vmwareengine.v1.VmwareEngine.GetManagementDnsZoneBinding\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetManagementDnsZoneBindingRequest {
+    /// Required. The resource name of the management DNS zone binding to
+    /// retrieve. Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/managementDnsZoneBindings/my-management-dns-zone-binding`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for \[VmwareEngine.CreateManagementDnsZoneBindings][\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateManagementDnsZoneBindingRequest {
+    /// Required. The resource name of the private cloud
+    /// to create a new management DNS zone binding for.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The initial values for a new management DNS zone binding.
+    #[prost(message, optional, tag = "2")]
+    pub management_dns_zone_binding: ::core::option::Option<ManagementDnsZoneBinding>,
+    /// Required. The user-provided identifier of the `ManagementDnsZoneBinding`
+    /// resource to be created. This identifier must be unique among
+    /// `ManagementDnsZoneBinding` resources within the parent and becomes the
+    /// final token in the name URI. The identifier must meet the following
+    /// requirements:
+    ///
+    /// * Only contains 1-63 alphanumeric characters and hyphens
+    /// * Begins with an alphabetical character
+    /// * Ends with a non-hyphen character
+    /// * Not formatted as a UUID
+    /// * Complies with [RFC 1034](<https://datatracker.ietf.org/doc/html/rfc1034>)
+    /// (section 3.5)
+    #[prost(string, tag = "3")]
+    pub management_dns_zone_binding_id: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if the original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.UpdateManagementDnsZoneBinding][google.cloud.vmwareengine.v1.VmwareEngine.UpdateManagementDnsZoneBinding\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateManagementDnsZoneBindingRequest {
+    /// Required. Field mask is used to specify the fields to be overwritten in the
+    /// `ManagementDnsZoneBinding` resource by the update.
+    /// The fields specified in the `update_mask` are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask. If the
+    /// user does not provide a mask then all fields will be overwritten.
+    #[prost(message, optional, tag = "1")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Required. New values to update the management DNS zone binding with.
+    #[prost(message, optional, tag = "2")]
+    pub management_dns_zone_binding: ::core::option::Option<ManagementDnsZoneBinding>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if the original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.DeleteManagementDnsZoneBinding][google.cloud.vmwareengine.v1.VmwareEngine.DeleteManagementDnsZoneBinding\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteManagementDnsZoneBindingRequest {
+    /// Required. The resource name of the management DNS zone binding to delete.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/managementDnsZoneBindings/my-management-dns-zone-binding`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if the original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for \[VmwareEngine.RepairManagementDnsZoneBindings][\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RepairManagementDnsZoneBindingRequest {
+    /// Required. The resource name of the management DNS zone binding to repair.
+    /// Resource names are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.>
+    /// For example:
+    /// `projects/my-project/locations/us-central1-a/privateClouds/my-cloud/managementDnsZoneBindings/my-management-dns-zone-binding`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if the original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
     ///
     /// The request ID must be a valid UUID with the exception that zero UUID is
     /// not supported (00000000-0000-0000-0000-000000000000).
@@ -2145,6 +4008,87 @@ pub struct ListPrivateConnectionPeeringRoutesResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
+/// Request message for
+/// \[VmwareEngine.GrantDnsBindPermission][google.cloud.vmwareengine.v1.VmwareEngine.GrantDnsBindPermission\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GrantDnsBindPermissionRequest {
+    /// Required. The name of the resource which stores the users/service accounts
+    /// having the permission to bind to the corresponding intranet VPC of the
+    /// consumer project. DnsBindPermission is a global resource. Resource names
+    /// are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.> For example:
+    /// `projects/my-project/locations/global/dnsBindPermission`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The consumer provided user/service account which needs to be
+    /// granted permission to bind with the intranet VPC corresponding to the
+    /// consumer project.
+    #[prost(message, optional, tag = "2")]
+    pub principal: ::core::option::Option<Principal>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.RevokeDnsBindPermission][google.cloud.vmwareengine.v1.VmwareEngine.RevokeDnsBindPermission\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RevokeDnsBindPermissionRequest {
+    /// Required. The name of the resource which stores the users/service accounts
+    /// having the permission to bind to the corresponding intranet VPC of the
+    /// consumer project. DnsBindPermission is a global resource. Resource names
+    /// are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.> For example:
+    /// `projects/my-project/locations/global/dnsBindPermission`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The consumer provided user/service account which needs to be
+    /// granted permission to bind with the intranet VPC corresponding to the
+    /// consumer project.
+    #[prost(message, optional, tag = "2")]
+    pub principal: ::core::option::Option<Principal>,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server guarantees that a
+    /// request doesn't result in creation of duplicate commitments for at least 60
+    /// minutes.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[VmwareEngine.GetDnsBindPermission][google.cloud.vmwareengine.v1.VmwareEngine.GetDnsBindPermission\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDnsBindPermissionRequest {
+    /// Required. The name of the resource which stores the users/service accounts
+    /// having the permission to bind to the corresponding intranet VPC of the
+    /// consumer project. DnsBindPermission is a global resource. Resource names
+    /// are schemeless URIs that follow the conventions in
+    /// <https://cloud.google.com/apis/design/resource_names.> For example:
+    /// `projects/my-project/locations/global/dnsBindPermission`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
 #[doc = r" Generated client implementations."]
 pub mod vmware_engine_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -2230,9 +4174,9 @@ pub mod vmware_engine_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Creates a new `PrivateCloud` resource in a given project and location."]
-        #[doc = " Private clouds can only be created in zones, regional private clouds are"]
-        #[doc = " not supported."]
-        #[doc = ""]
+        #[doc = " Private clouds of type `STANDARD` and"]
+        #[doc = " `TIME_LIMITED` are zonal resources, `STRETCHED` private clouds are"]
+        #[doc = " regional."]
         #[doc = " Creating a private cloud also creates a [management"]
         #[doc = " cluster](https://cloud.google.com/vmware-engine/docs/concepts-vmware-components)"]
         #[doc = " for that private cloud."]
@@ -2396,8 +4340,7 @@ pub mod vmware_engine_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Modifies a `Cluster` resource. Only the following fields can be updated:"]
-        #[doc = " `node_type_configs.*.node_count`. Only fields specified in `updateMask` are"]
+        #[doc = " Modifies a `Cluster` resource. Only fields specified in `updateMask` are"]
         #[doc = " applied."]
         #[doc = ""]
         #[doc = " During operation processing, the resource is temporarily in the `ACTIVE`"]
@@ -2443,6 +4386,166 @@ pub mod vmware_engine_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vmwareengine.v1.VmwareEngine/DeleteCluster",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists nodes in a given cluster."]
+        pub async fn list_nodes(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListNodesRequest>,
+        ) -> Result<tonic::Response<super::ListNodesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/ListNodes",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details of a single node."]
+        pub async fn get_node(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetNodeRequest>,
+        ) -> Result<tonic::Response<super::Node>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GetNode",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists external IP addresses assigned to VMware workload VMs in a given"]
+        #[doc = " private cloud."]
+        pub async fn list_external_addresses(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListExternalAddressesRequest>,
+        ) -> Result<tonic::Response<super::ListExternalAddressesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/ListExternalAddresses",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists external IP addresses assigned to VMware workload VMs within the"]
+        #[doc = " scope of the given network policy."]
+        pub async fn fetch_network_policy_external_addresses(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FetchNetworkPolicyExternalAddressesRequest>,
+        ) -> Result<
+            tonic::Response<super::FetchNetworkPolicyExternalAddressesResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/FetchNetworkPolicyExternalAddresses",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details of a single external IP address."]
+        pub async fn get_external_address(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetExternalAddressRequest>,
+        ) -> Result<tonic::Response<super::ExternalAddress>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GetExternalAddress",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a new `ExternalAddress` resource in a given private cloud. The"]
+        #[doc = " network policy that corresponds to the private cloud must have the external"]
+        #[doc = " IP address network service enabled (`NetworkPolicy.external_ip`)."]
+        pub async fn create_external_address(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateExternalAddressRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/CreateExternalAddress",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the parameters of a single external IP address."]
+        #[doc = " Only fields specified in `update_mask` are applied."]
+        #[doc = ""]
+        #[doc = " During operation processing, the resource is temporarily in the `ACTIVE`"]
+        #[doc = " state before the operation fully completes. For that period of time, you"]
+        #[doc = " can't update the resource. Use the operation status to determine when the"]
+        #[doc = " processing fully completes."]
+        pub async fn update_external_address(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateExternalAddressRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/UpdateExternalAddress",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a single external IP address. When you delete an external IP"]
+        #[doc = " address, connectivity between the external IP address and the corresponding"]
+        #[doc = " internal IP address is lost."]
+        pub async fn delete_external_address(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteExternalAddressRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/DeleteExternalAddress",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -2502,6 +4605,198 @@ pub mod vmware_engine_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vmwareengine.v1.VmwareEngine/UpdateSubnet",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists `ExternalAccessRule` resources in the specified network policy."]
+        pub async fn list_external_access_rules(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListExternalAccessRulesRequest>,
+        ) -> Result<tonic::Response<super::ListExternalAccessRulesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/ListExternalAccessRules",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details of a single external access rule."]
+        pub async fn get_external_access_rule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetExternalAccessRuleRequest>,
+        ) -> Result<tonic::Response<super::ExternalAccessRule>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GetExternalAccessRule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a new external access rule in a given network policy."]
+        pub async fn create_external_access_rule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateExternalAccessRuleRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/CreateExternalAccessRule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the parameters of a single external access rule."]
+        #[doc = " Only fields specified in `update_mask` are applied."]
+        pub async fn update_external_access_rule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateExternalAccessRuleRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/UpdateExternalAccessRule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a single external access rule."]
+        pub async fn delete_external_access_rule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteExternalAccessRuleRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/DeleteExternalAccessRule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists logging servers configured for a given private"]
+        #[doc = " cloud."]
+        pub async fn list_logging_servers(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListLoggingServersRequest>,
+        ) -> Result<tonic::Response<super::ListLoggingServersResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/ListLoggingServers",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details of a logging server."]
+        pub async fn get_logging_server(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetLoggingServerRequest>,
+        ) -> Result<tonic::Response<super::LoggingServer>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GetLoggingServer",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Create a new logging server for a given private cloud."]
+        pub async fn create_logging_server(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateLoggingServerRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/CreateLoggingServer",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the parameters of a single logging server."]
+        #[doc = " Only fields specified in `update_mask` are applied."]
+        pub async fn update_logging_server(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateLoggingServerRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/UpdateLoggingServer",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a single logging server."]
+        pub async fn delete_logging_server(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteLoggingServerRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/DeleteLoggingServer",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -2610,6 +4905,167 @@ pub mod vmware_engine_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vmwareengine.v1.VmwareEngine/ResetVcenterCredentials",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details of the `DnsForwarding` config."]
+        pub async fn get_dns_forwarding(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDnsForwardingRequest>,
+        ) -> Result<tonic::Response<super::DnsForwarding>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GetDnsForwarding",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the parameters of the `DnsForwarding` config, like associated"]
+        #[doc = " domains. Only fields specified in `update_mask` are applied."]
+        pub async fn update_dns_forwarding(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateDnsForwardingRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/UpdateDnsForwarding",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Retrieves a `NetworkPeering` resource by its resource name. The resource"]
+        #[doc = " contains details of the network peering, such as peered"]
+        #[doc = " networks, import and export custom route configurations, and peering state."]
+        #[doc = " NetworkPeering is a global resource and location can only be global."]
+        pub async fn get_network_peering(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetNetworkPeeringRequest>,
+        ) -> Result<tonic::Response<super::NetworkPeering>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GetNetworkPeering",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists `NetworkPeering` resources in a given project. NetworkPeering is a"]
+        #[doc = " global resource and location can only be global."]
+        pub async fn list_network_peerings(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListNetworkPeeringsRequest>,
+        ) -> Result<tonic::Response<super::ListNetworkPeeringsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/ListNetworkPeerings",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a new network peering between the peer network and VMware Engine"]
+        #[doc = " network provided in a `NetworkPeering` resource. NetworkPeering is a"]
+        #[doc = " global resource and location can only be global."]
+        pub async fn create_network_peering(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateNetworkPeeringRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/CreateNetworkPeering",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a `NetworkPeering` resource. When a network peering is deleted for"]
+        #[doc = " a VMware Engine network, the peer network becomes inaccessible to that"]
+        #[doc = " VMware Engine network. NetworkPeering is a global resource and location can"]
+        #[doc = " only be global."]
+        pub async fn delete_network_peering(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteNetworkPeeringRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/DeleteNetworkPeering",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Modifies a `NetworkPeering` resource. Only the `description` field can be"]
+        #[doc = " updated. Only fields specified in `updateMask` are applied. NetworkPeering"]
+        #[doc = " is a global resource and location can only be global."]
+        pub async fn update_network_peering(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateNetworkPeeringRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/UpdateNetworkPeering",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists the network peering routes exchanged over a peering connection."]
+        #[doc = " NetworkPeering is a global resource and location can only be global."]
+        pub async fn list_peering_routes(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListPeeringRoutesRequest>,
+        ) -> Result<tonic::Response<super::ListPeeringRoutesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/ListPeeringRoutes",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -2773,6 +5229,131 @@ pub mod vmware_engine_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vmwareengine.v1.VmwareEngine/DeleteNetworkPolicy",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists Consumer VPCs bound to Management DNS Zone of a given private cloud."]
+        pub async fn list_management_dns_zone_bindings(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListManagementDnsZoneBindingsRequest>,
+        ) -> Result<tonic::Response<super::ListManagementDnsZoneBindingsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/ListManagementDnsZoneBindings",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Retrieves a 'ManagementDnsZoneBinding' resource by its resource name."]
+        pub async fn get_management_dns_zone_binding(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetManagementDnsZoneBindingRequest>,
+        ) -> Result<tonic::Response<super::ManagementDnsZoneBinding>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GetManagementDnsZoneBinding",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a new `ManagementDnsZoneBinding` resource in a private cloud."]
+        #[doc = " This RPC creates the DNS binding and the resource that represents the"]
+        #[doc = " DNS binding of the consumer VPC network to the management DNS zone. A"]
+        #[doc = " management DNS zone is the Cloud DNS cross-project binding zone that"]
+        #[doc = " VMware Engine creates for each private cloud. It contains FQDNs and"]
+        #[doc = " corresponding IP addresses for the private cloud's ESXi hosts and"]
+        #[doc = " management VM appliances like vCenter and NSX Manager."]
+        pub async fn create_management_dns_zone_binding(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateManagementDnsZoneBindingRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/CreateManagementDnsZoneBinding",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a `ManagementDnsZoneBinding` resource."]
+        #[doc = " Only fields specified in `update_mask` are applied."]
+        pub async fn update_management_dns_zone_binding(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateManagementDnsZoneBindingRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/UpdateManagementDnsZoneBinding",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a `ManagementDnsZoneBinding` resource. When a management DNS zone"]
+        #[doc = " binding is deleted, the corresponding consumer VPC network is no longer"]
+        #[doc = " bound to the management DNS zone."]
+        pub async fn delete_management_dns_zone_binding(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteManagementDnsZoneBindingRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/DeleteManagementDnsZoneBinding",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Retries to create a `ManagementDnsZoneBinding` resource that is"]
+        #[doc = " in failed state."]
+        pub async fn repair_management_dns_zone_binding(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RepairManagementDnsZoneBindingRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/RepairManagementDnsZoneBinding",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -2995,6 +5576,70 @@ pub mod vmware_engine_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.vmwareengine.v1.VmwareEngine/ListPrivateConnectionPeeringRoutes",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Grants the bind permission to the customer provided principal(user /"]
+        #[doc = " service account) to bind their DNS zone with the intranet VPC associated"]
+        #[doc = " with the project. DnsBindPermission is a global resource and location can"]
+        #[doc = " only be global."]
+        pub async fn grant_dns_bind_permission(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GrantDnsBindPermissionRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GrantDnsBindPermission",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets all the principals having bind permission on the intranet VPC"]
+        #[doc = " associated with the consumer project granted by the Grant API."]
+        #[doc = " DnsBindPermission is a global resource and location can only be global."]
+        pub async fn get_dns_bind_permission(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDnsBindPermissionRequest>,
+        ) -> Result<tonic::Response<super::DnsBindPermission>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/GetDnsBindPermission",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Revokes the bind permission from the customer provided principal(user /"]
+        #[doc = " service account) on the intranet VPC associated with the consumer project."]
+        #[doc = " DnsBindPermission is a global resource and location can only be global."]
+        pub async fn revoke_dns_bind_permission(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RevokeDnsBindPermissionRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.vmwareengine.v1.VmwareEngine/RevokeDnsBindPermission",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

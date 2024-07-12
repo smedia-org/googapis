@@ -1,5 +1,5 @@
-/// A contiguous set of days: startDate, startDate + 1, ..., endDate. Requests
-/// are allowed up to 4 date ranges.
+/// A contiguous set of days: `startDate`, `startDate + 1`, ..., `endDate`.
+/// Requests are allowed up to 4 date ranges.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DateRange {
     /// The inclusive start date for the query in the format `YYYY-MM-DD`. Cannot
@@ -21,8 +21,8 @@ pub struct DateRange {
     #[prost(string, tag = "3")]
     pub name: ::prost::alloc::string::String,
 }
-/// A contiguous set of minutes: startMinutesAgo, startMinutesAgo + 1, ...,
-/// endMinutesAgo. Requests are allowed up to 2 minute ranges.
+/// A contiguous set of minutes: `startMinutesAgo`, `startMinutesAgo + 1`, ...,
+/// `endMinutesAgo`. Requests are allowed up to 2 minute ranges.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MinuteRange {
     /// The inclusive start minute for the query as a number of minutes before now.
@@ -61,7 +61,16 @@ pub struct MinuteRange {
 pub struct Dimension {
     /// The name of the dimension. See the [API
     /// Dimensions](<https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema#dimensions>)
-    /// for the list of dimension names.
+    /// for the list of dimension names supported by core reporting methods such
+    /// as `runReport` and `batchRunReports`. See
+    /// [Realtime
+    /// Dimensions](<https://developers.google.com/analytics/devguides/reporting/data/v1/realtime-api-schema#dimensions>)
+    /// for the list of dimension names supported by the `runRealtimeReport`
+    /// method. See
+    /// [Funnel
+    /// Dimensions](<https://developers.google.com/analytics/devguides/reporting/data/v1/exploration-api-schema#dimensions>)
+    /// for the list of dimension names supported by the `runFunnelReport`
+    /// method.
     ///
     /// If `dimensionExpression` is specified, `name` can be any string that you
     /// would like within the allowed character set. For example if a
@@ -137,7 +146,16 @@ pub mod dimension_expression {
 pub struct Metric {
     /// The name of the metric. See the [API
     /// Metrics](<https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema#metrics>)
-    /// for the list of metric names.
+    /// for the list of metric names supported by core reporting methods such
+    /// as `runReport` and `batchRunReports`. See
+    /// [Realtime
+    /// Metrics](<https://developers.google.com/analytics/devguides/reporting/data/v1/realtime-api-schema#metrics>)
+    /// for the list of metric names supported by the `runRealtimeReport`
+    /// method. See
+    /// [Funnel
+    /// Metrics](<https://developers.google.com/analytics/devguides/reporting/data/v1/exploration-api-schema#metrics>)
+    /// for the list of metric names supported by the `runFunnelReport`
+    /// method.
     ///
     /// If `expression` is specified, `name` can be any string that you would like
     /// within the allowed character set. For example if `expression` is
@@ -452,7 +470,7 @@ pub struct Pivot {
     /// single pivot requests.
     ///
     /// The product of the `limit` for each `pivot` in a `RunPivotReportRequest`
-    /// must not exceed 100,000. For example, a two pivot request with `limit:
+    /// must not exceed 250,000. For example, a two pivot request with `limit:
     /// 1000` in each pivot will fail because the product is `1,000,000`.
     #[prost(int64, tag = "4")]
     pub limit: i64,
@@ -599,6 +617,18 @@ pub struct CohortReportSettings {
 pub struct ResponseMetaData {
     /// If true, indicates some buckets of dimension combinations are rolled into
     /// "(other)" row. This can happen for high cardinality reports.
+    ///
+    /// The metadata parameter dataLossFromOtherRow is populated based on the
+    /// aggregated data table used in the report. The parameter will be accurately
+    /// populated regardless of the filters and limits in the report.
+    ///
+    /// For example, the (other) row could be dropped from the report because the
+    /// request contains a filter on sessionSource = google. This parameter will
+    /// still be populated if data loss from other row was present in the input
+    /// aggregate data used to generate this report.
+    ///
+    /// To learn more, see [About the (other) row and data
+    /// sampling](<https://support.google.com/analytics/answer/13208658#reports>).
     #[prost(bool, tag = "3")]
     pub data_loss_from_other_row: bool,
     /// Describes the schema restrictions actively enforced in creating this
@@ -633,11 +663,19 @@ pub struct ResponseMetaData {
     /// possible for a request to be subject to thresholding thresholding and no
     /// data is absent from the report, and this happens when all data is above the
     /// thresholds. To learn more, see [Data
-    /// thresholds](<https://support.google.com/analytics/answer/9383630>) and [About
-    /// Demographics and
-    /// Interests](<https://support.google.com/analytics/answer/2799357>).
+    /// thresholds](<https://support.google.com/analytics/answer/9383630>).
     #[prost(bool, optional, tag = "8")]
     pub subject_to_thresholding: ::core::option::Option<bool>,
+    /// If this report results is
+    /// \[sampled\](<https://support.google.com/analytics/answer/13331292>), this
+    /// describes the percentage of events used in this report. One
+    /// `samplingMetadatas` is populated for each date range. Each
+    /// `samplingMetadatas` corresponds to a date range in order that date ranges
+    /// were specified in the request.
+    ///
+    /// However if the results are not sampled, this field will not be defined.
+    #[prost(message, repeated, tag = "9")]
+    pub sampling_metadatas: ::prost::alloc::vec::Vec<SamplingMetadata>,
 }
 /// Nested message and enum types in `ResponseMetaData`.
 pub mod response_meta_data {
@@ -671,6 +709,28 @@ pub mod response_meta_data {
             pub restricted_metric_types: ::prost::alloc::vec::Vec<i32>,
         }
     }
+}
+/// If this report results is
+/// \[sampled\](<https://support.google.com/analytics/answer/13331292>), this
+/// describes the percentage of events used in this report. Sampling is the
+/// practice of analyzing a subset of all data in order to uncover the meaningful
+/// information in the larger data set.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SamplingMetadata {
+    /// The total number of events read in this sampled report for a date range.
+    /// This is the size of the subset this property's data that was analyzed in
+    /// this report.
+    #[prost(int64, tag = "1")]
+    pub samples_read_count: i64,
+    /// The total number of events present in this property's data that could
+    /// have been analyzed in this report for a date range. Sampling
+    /// uncovers the meaningful information about the larger data set, and this
+    /// is the size of the larger data set.
+    ///
+    /// To calculate the percentage of available data that was used in this
+    /// report, compute `samplesReadCount/samplingSpaceSize`.
+    #[prost(int64, tag = "2")]
+    pub sampling_space_size: i64,
 }
 /// Describes a dimension column in the report. Dimensions requested in a report
 /// produce column entries within rows and DimensionHeaders. However, dimensions
@@ -821,13 +881,13 @@ pub mod numeric_value {
 /// Exhausted errors.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PropertyQuota {
-    /// Standard Analytics Properties can use up to 25,000 tokens per day;
-    /// Analytics 360 Properties can use 250,000 tokens per day. Most requests
+    /// Standard Analytics Properties can use up to 200,000 tokens per day;
+    /// Analytics 360 Properties can use 2,000,000 tokens per day. Most requests
     /// consume fewer than 10 tokens.
     #[prost(message, optional, tag = "1")]
     pub tokens_per_day: ::core::option::Option<QuotaStatus>,
-    /// Standard Analytics Properties can use up to 5,000 tokens per hour;
-    /// Analytics 360 Properties can use 50,000 tokens per hour. An API request
+    /// Standard Analytics Properties can use up to 40,000 tokens per hour;
+    /// Analytics 360 Properties can use 400,000 tokens per hour. An API request
     /// consumes a single number of tokens, and that number is deducted from all of
     /// the hourly, daily, and per project hourly quotas.
     #[prost(message, optional, tag = "2")]
@@ -847,9 +907,9 @@ pub struct PropertyQuota {
     /// thresholded dimensions.
     #[prost(message, optional, tag = "5")]
     pub potentially_thresholded_requests_per_hour: ::core::option::Option<QuotaStatus>,
-    /// Analytics Properties can use up to 25% of their tokens per project per
-    /// hour. This amounts to standard Analytics Properties can use up to 1,250
-    /// tokens per project per hour, and Analytics 360 Properties can use 12,500
+    /// Analytics Properties can use up to 35% of their tokens per project per
+    /// hour. This amounts to standard Analytics Properties can use up to 14,000
+    /// tokens per project per hour, and Analytics 360 Properties can use 140,000
     /// tokens per project per hour. An API request consumes a single number of
     /// tokens, and that number is deducted from all of the hourly, daily, and per
     /// project hourly quotas.
@@ -860,11 +920,11 @@ pub struct PropertyQuota {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QuotaStatus {
     /// Quota consumed by this request.
-    #[prost(int32, tag = "1")]
-    pub consumed: i32,
+    #[prost(int32, optional, tag = "1")]
+    pub consumed: ::core::option::Option<i32>,
     /// Quota remaining after this request.
-    #[prost(int32, tag = "2")]
-    pub remaining: i32,
+    #[prost(int32, optional, tag = "2")]
+    pub remaining: ::core::option::Option<i32>,
 }
 /// Explains a dimension.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1065,10 +1125,6 @@ pub struct CheckCompatibilityRequest {
     /// `property` should be the same value as in your `runReport` request.
     ///
     /// Example: properties/1234
-    ///
-    /// Set the Property ID to 0 for compatibility checking on dimensions and
-    /// metrics common to all properties. In this special mode, this method will
-    /// not return custom dimensions and metrics.
     #[prost(string, tag = "1")]
     pub property: ::prost::alloc::string::String,
     /// The dimensions in this report. `dimensions` should be the same value as in
@@ -1103,7 +1159,8 @@ pub struct CheckCompatibilityResponse {
     #[prost(message, repeated, tag = "2")]
     pub metric_compatibilities: ::prost::alloc::vec::Vec<MetricCompatibility>,
 }
-/// The dimensions and metrics currently accepted in reporting methods.
+/// The dimensions, metrics and comparisons currently accepted in reporting
+/// methods.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Metadata {
     /// Resource name of this metadata.
@@ -1142,7 +1199,7 @@ pub struct RunReportRequest {
     /// must be unspecified.
     #[prost(message, repeated, tag = "4")]
     pub date_ranges: ::prost::alloc::vec::Vec<DateRange>,
-    /// Dimension filters allow you to ask for only specific dimension values in
+    /// Dimension filters let you ask for only specific dimension values in
     /// the report. To learn more, see [Fundamentals of Dimension
     /// Filters](<https://developers.google.com/analytics/devguides/reporting/data/v1/basics#dimension_filters>)
     /// for examples. Metrics cannot be used in this filter.
@@ -1164,7 +1221,7 @@ pub struct RunReportRequest {
     #[prost(int64, tag = "7")]
     pub offset: i64,
     /// The number of rows to return. If unspecified, 10,000 rows are returned. The
-    /// API returns a maximum of 100,000 rows per request, no matter how many you
+    /// API returns a maximum of 250,000 rows per request, no matter how many you
     /// ask for. `limit` must be positive.
     ///
     /// The API can also return fewer rows than the requested `limit`, if there
@@ -1195,6 +1252,13 @@ pub struct RunReportRequest {
     /// If false or unspecified, each row with all metrics equal to 0 will not be
     /// returned. If true, these rows will be returned if they are not separately
     /// removed by a filter.
+    ///
+    /// Regardless of this `keep_empty_rows` setting, only data recorded by the
+    /// Google Analytics (GA4) property can be displayed in a report.
+    ///
+    /// For example if a property never logs a `purchase` event, then a query for
+    /// the `eventName` dimension and  `eventCount` metric will not have a row
+    /// eventName: "purchase" and eventCount: 0.
     #[prost(bool, tag = "13")]
     pub keep_empty_rows: bool,
     /// Toggles whether to return the current state of this Analytics Property's
@@ -1302,6 +1366,13 @@ pub struct RunPivotReportRequest {
     /// If false or unspecified, each row with all metrics equal to 0 will not be
     /// returned. If true, these rows will be returned if they are not separately
     /// removed by a filter.
+    ///
+    /// Regardless of this `keep_empty_rows` setting, only data recorded by the
+    /// Google Analytics (GA4) property can be displayed in a report.
+    ///
+    /// For example if a property never logs a `purchase` event, then a query for
+    /// the `eventName` dimension and  `eventCount` metric will not have a row
+    /// eventName: "purchase" and eventCount: 0.
     #[prost(bool, tag = "10")]
     pub keep_empty_rows: bool,
     /// Toggles whether to return the current state of this Analytics Property's
@@ -1483,7 +1554,7 @@ pub struct RunRealtimeReportRequest {
     #[prost(message, optional, tag = "5")]
     pub metric_filter: ::core::option::Option<FilterExpression>,
     /// The number of rows to return. If unspecified, 10,000 rows are returned. The
-    /// API returns a maximum of 100,000 rows per request, no matter how many you
+    /// API returns a maximum of 250,000 rows per request, no matter how many you
     /// ask for. `limit` must be positive.
     ///
     /// The API can also return fewer rows than the requested `limit`, if there
@@ -1550,6 +1621,220 @@ pub struct RunRealtimeReportResponse {
     /// between response types in JSON.
     #[prost(string, tag = "9")]
     pub kind: ::prost::alloc::string::String,
+}
+/// A request to retrieve configuration metadata about a specific audience
+/// export.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetAudienceExportRequest {
+    /// Required. The audience export resource name.
+    /// Format: `properties/{property}/audienceExports/{audience_export}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A request to list all audience exports for a property.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAudienceExportsRequest {
+    /// Required. All audience exports for this property will be listed in the
+    /// response. Format: `properties/{property}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of audience exports to return. The service may
+    /// return fewer than this value. If unspecified, at most 200 audience exports
+    /// will be returned. The maximum value is 1000 (higher values will be coerced
+    /// to the maximum).
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token, received from a previous `ListAudienceExports`
+    /// call. Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to `ListAudienceExports`
+    /// must match the call that provided the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// A list of all audience exports for a property.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAudienceExportsResponse {
+    /// Each audience export for a property.
+    #[prost(message, repeated, tag = "1")]
+    pub audience_exports: ::prost::alloc::vec::Vec<AudienceExport>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, optional, tag = "2")]
+    pub next_page_token: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// A request to create a new audience export.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateAudienceExportRequest {
+    /// Required. The parent resource where this audience export will be created.
+    /// Format: `properties/{property}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The audience export to create.
+    #[prost(message, optional, tag = "2")]
+    pub audience_export: ::core::option::Option<AudienceExport>,
+}
+/// An audience export is a list of users in an audience at the time of the
+/// list's creation. One audience may have multiple audience exports created for
+/// different days.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AudienceExport {
+    /// Output only. Identifier. The audience export resource name assigned during
+    /// creation. This resource name identifies this `AudienceExport`.
+    ///
+    /// Format: `properties/{property}/audienceExports/{audience_export}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The audience resource name. This resource name identifies the
+    /// audience being listed and is shared between the Analytics Data & Admin
+    /// APIs.
+    ///
+    /// Format: `properties/{property}/audiences/{audience}`
+    #[prost(string, tag = "2")]
+    pub audience: ::prost::alloc::string::String,
+    /// Output only. The descriptive display name for this audience. For example,
+    /// "Purchasers".
+    #[prost(string, tag = "3")]
+    pub audience_display_name: ::prost::alloc::string::String,
+    /// Required. The dimensions requested and displayed in the query response.
+    #[prost(message, repeated, tag = "4")]
+    pub dimensions: ::prost::alloc::vec::Vec<AudienceDimension>,
+    /// Output only. The current state for this AudienceExport.
+    #[prost(enumeration = "audience_export::State", optional, tag = "5")]
+    pub state: ::core::option::Option<i32>,
+    /// Output only. The time when CreateAudienceExport was called and the
+    /// AudienceExport began the `CREATING` state.
+    #[prost(message, optional, tag = "6")]
+    pub begin_creating_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The total quota tokens charged during creation of the
+    /// AudienceExport. Because this token count is based on activity from the
+    /// `CREATING` state, this tokens charged will be fixed once an AudienceExport
+    /// enters the `ACTIVE` or `FAILED` states.
+    #[prost(int32, tag = "7")]
+    pub creation_quota_tokens_charged: i32,
+    /// Output only. The total number of rows in the AudienceExport result.
+    #[prost(int32, optional, tag = "8")]
+    pub row_count: ::core::option::Option<i32>,
+    /// Output only. Error message is populated when an audience export fails
+    /// during creation. A common reason for such a failure is quota exhaustion.
+    #[prost(string, optional, tag = "9")]
+    pub error_message: ::core::option::Option<::prost::alloc::string::String>,
+    /// Output only. The percentage completed for this audience export ranging
+    /// between 0 to 100.
+    #[prost(double, optional, tag = "10")]
+    pub percentage_completed: ::core::option::Option<f64>,
+}
+/// Nested message and enum types in `AudienceExport`.
+pub mod audience_export {
+    /// The AudienceExport currently exists in this state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unspecified state will never be used.
+        Unspecified = 0,
+        /// The AudienceExport is currently creating and will be available in the
+        /// future. Creating occurs immediately after the CreateAudienceExport call.
+        Creating = 1,
+        /// The AudienceExport is fully created and ready for querying. An
+        /// AudienceExport is updated to active asynchronously from a request; this
+        /// occurs some time (for example 15 minutes) after the initial create call.
+        Active = 2,
+        /// The AudienceExport failed to be created. It is possible that
+        /// re-requesting this audience export will succeed.
+        Failed = 3,
+    }
+}
+/// This metadata is currently blank.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AudienceExportMetadata {}
+/// A request to list users in an audience export.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryAudienceExportRequest {
+    /// Required. The name of the audience export to retrieve users from.
+    /// Format: `properties/{property}/audienceExports/{audience_export}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. The row count of the start row. The first row is counted as row
+    /// 0.
+    ///
+    /// When paging, the first request does not specify offset; or equivalently,
+    /// sets offset to 0; the first request returns the first `limit` of rows. The
+    /// second request sets offset to the `limit` of the first request; the second
+    /// request returns the second `limit` of rows.
+    ///
+    /// To learn more about this pagination parameter, see
+    /// \[Pagination\](<https://developers.google.com/analytics/devguides/reporting/data/v1/basics#pagination>).
+    #[prost(int64, tag = "2")]
+    pub offset: i64,
+    /// Optional. The number of rows to return. If unspecified, 10,000 rows are
+    /// returned. The API returns a maximum of 250,000 rows per request, no matter
+    /// how many you ask for. `limit` must be positive.
+    ///
+    /// The API can also return fewer rows than the requested `limit`, if there
+    /// aren't as many dimension values as the `limit`.
+    ///
+    /// To learn more about this pagination parameter, see
+    /// \[Pagination\](<https://developers.google.com/analytics/devguides/reporting/data/v1/basics#pagination>).
+    #[prost(int64, tag = "3")]
+    pub limit: i64,
+}
+/// A list of users in an audience export.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryAudienceExportResponse {
+    /// Configuration data about AudienceExport being queried. Returned to help
+    /// interpret the audience rows in this response. For example, the dimensions
+    /// in this AudienceExport correspond to the columns in the AudienceRows.
+    #[prost(message, optional, tag = "1")]
+    pub audience_export: ::core::option::Option<AudienceExport>,
+    /// Rows for each user in an audience export. The number of rows in this
+    /// response will be less than or equal to request's page size.
+    #[prost(message, repeated, tag = "2")]
+    pub audience_rows: ::prost::alloc::vec::Vec<AudienceRow>,
+    /// The total number of rows in the AudienceExport result. `rowCount` is
+    /// independent of the number of rows returned in the response, the `limit`
+    /// request parameter, and the `offset` request parameter. For example if a
+    /// query returns 175 rows and includes `limit` of 50 in the API request, the
+    /// response will contain `rowCount` of 175 but only 50 rows.
+    ///
+    /// To learn more about this pagination parameter, see
+    /// \[Pagination\](<https://developers.google.com/analytics/devguides/reporting/data/v1/basics#pagination>).
+    #[prost(int32, optional, tag = "3")]
+    pub row_count: ::core::option::Option<i32>,
+}
+/// Dimension value attributes for the audience user row.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AudienceRow {
+    /// Each dimension value attribute for an audience user. One dimension value
+    /// will be added for each dimension column requested.
+    #[prost(message, repeated, tag = "1")]
+    pub dimension_values: ::prost::alloc::vec::Vec<AudienceDimensionValue>,
+}
+/// An audience dimension is a user attribute. Specific user attributed are
+/// requested and then later returned in the `QueryAudienceExportResponse`.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AudienceDimension {
+    /// Optional. The API name of the dimension. See the [API
+    /// Dimensions](<https://developers.google.com/analytics/devguides/reporting/data/v1/audience-list-api-schema#dimensions>)
+    /// for the list of dimension names.
+    #[prost(string, tag = "1")]
+    pub dimension_name: ::prost::alloc::string::String,
+}
+/// The value of a dimension.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AudienceDimensionValue {
+    /// One kind of dimension value.
+    #[prost(oneof = "audience_dimension_value::OneValue", tags = "1")]
+    pub one_value: ::core::option::Option<audience_dimension_value::OneValue>,
+}
+/// Nested message and enum types in `AudienceDimensionValue`.
+pub mod audience_dimension_value {
+    /// One kind of dimension value.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum OneValue {
+        /// Value as a string if the dimension type is a string.
+        #[prost(string, tag = "1")]
+        Value(::prost::alloc::string::String),
+    }
 }
 #[doc = r" Generated client implementations."]
 pub mod beta_analytics_data_client {
@@ -1759,6 +2044,144 @@ pub mod beta_analytics_data_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.analytics.data.v1beta.BetaAnalyticsData/CheckCompatibility",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates an audience export for later retrieval. This method quickly returns"]
+        #[doc = " the audience export's resource name and initiates a long running"]
+        #[doc = " asynchronous request to form an audience export. To export the users in an"]
+        #[doc = " audience export, first create the audience export through this method and"]
+        #[doc = " then send the audience resource name to the `QueryAudienceExport` method."]
+        #[doc = ""]
+        #[doc = " See [Creating an Audience"]
+        #[doc = " Export](https://developers.google.com/analytics/devguides/reporting/data/v1/audience-list-basics)"]
+        #[doc = " for an introduction to Audience Exports with examples."]
+        #[doc = ""]
+        #[doc = " An audience export is a snapshot of the users currently in the audience at"]
+        #[doc = " the time of audience export creation. Creating audience exports for one"]
+        #[doc = " audience on different days will return different results as users enter and"]
+        #[doc = " exit the audience."]
+        #[doc = ""]
+        #[doc = " Audiences in Google Analytics 4 allow you to segment your users in the ways"]
+        #[doc = " that are important to your business. To learn more, see"]
+        #[doc = " https://support.google.com/analytics/answer/9267572. Audience exports"]
+        #[doc = " contain the users in each audience."]
+        #[doc = ""]
+        #[doc = " Audience Export APIs have some methods at alpha and other methods at beta"]
+        #[doc = " stability. The intention is to advance methods to beta stability after some"]
+        #[doc = " feedback and adoption. To give your feedback on this API, complete the"]
+        #[doc = " [Google Analytics Audience Export API"]
+        #[doc = " Feedback](https://forms.gle/EeA5u5LW6PEggtCEA) form."]
+        pub async fn create_audience_export(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateAudienceExportRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.data.v1beta.BetaAnalyticsData/CreateAudienceExport",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Retrieves an audience export of users. After creating an audience, the"]
+        #[doc = " users are not immediately available for exporting. First, a request to"]
+        #[doc = " `CreateAudienceExport` is necessary to create an audience export of users,"]
+        #[doc = " and then second, this method is used to retrieve the users in the audience"]
+        #[doc = " export."]
+        #[doc = ""]
+        #[doc = " See [Creating an Audience"]
+        #[doc = " Export](https://developers.google.com/analytics/devguides/reporting/data/v1/audience-list-basics)"]
+        #[doc = " for an introduction to Audience Exports with examples."]
+        #[doc = ""]
+        #[doc = " Audiences in Google Analytics 4 allow you to segment your users in the ways"]
+        #[doc = " that are important to your business. To learn more, see"]
+        #[doc = " https://support.google.com/analytics/answer/9267572."]
+        #[doc = ""]
+        #[doc = " Audience Export APIs have some methods at alpha and other methods at beta"]
+        #[doc = " stability. The intention is to advance methods to beta stability after some"]
+        #[doc = " feedback and adoption. To give your feedback on this API, complete the"]
+        #[doc = " [Google Analytics Audience Export API"]
+        #[doc = " Feedback](https://forms.gle/EeA5u5LW6PEggtCEA) form."]
+        pub async fn query_audience_export(
+            &mut self,
+            request: impl tonic::IntoRequest<super::QueryAudienceExportRequest>,
+        ) -> Result<tonic::Response<super::QueryAudienceExportResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.data.v1beta.BetaAnalyticsData/QueryAudienceExport",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets configuration metadata about a specific audience export. This method"]
+        #[doc = " can be used to understand an audience export after it has been created."]
+        #[doc = ""]
+        #[doc = " See [Creating an Audience"]
+        #[doc = " Export](https://developers.google.com/analytics/devguides/reporting/data/v1/audience-list-basics)"]
+        #[doc = " for an introduction to Audience Exports with examples."]
+        #[doc = ""]
+        #[doc = " Audience Export APIs have some methods at alpha and other methods at beta"]
+        #[doc = " stability. The intention is to advance methods to beta stability after some"]
+        #[doc = " feedback and adoption. To give your feedback on this API, complete the"]
+        #[doc = " [Google Analytics Audience Export API"]
+        #[doc = " Feedback](https://forms.gle/EeA5u5LW6PEggtCEA) form."]
+        pub async fn get_audience_export(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetAudienceExportRequest>,
+        ) -> Result<tonic::Response<super::AudienceExport>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.data.v1beta.BetaAnalyticsData/GetAudienceExport",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all audience exports for a property. This method can be used for you"]
+        #[doc = " to find and reuse existing audience exports rather than creating"]
+        #[doc = " unnecessary new audience exports. The same audience can have multiple"]
+        #[doc = " audience exports that represent the export of users that were in an"]
+        #[doc = " audience on different days."]
+        #[doc = ""]
+        #[doc = " See [Creating an Audience"]
+        #[doc = " Export](https://developers.google.com/analytics/devguides/reporting/data/v1/audience-list-basics)"]
+        #[doc = " for an introduction to Audience Exports with examples."]
+        #[doc = ""]
+        #[doc = " Audience Export APIs have some methods at alpha and other methods at beta"]
+        #[doc = " stability. The intention is to advance methods to beta stability after some"]
+        #[doc = " feedback and adoption. To give your feedback on this API, complete the"]
+        #[doc = " [Google Analytics Audience Export API"]
+        #[doc = " Feedback](https://forms.gle/EeA5u5LW6PEggtCEA) form."]
+        pub async fn list_audience_exports(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListAudienceExportsRequest>,
+        ) -> Result<tonic::Response<super::ListAudienceExportsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.data.v1beta.BetaAnalyticsData/ListAudienceExports",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

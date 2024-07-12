@@ -901,11 +901,12 @@ pub struct ChannelGroup {
     /// The description of the Channel Group. Max length of 256 characters.
     #[prost(string, tag = "3")]
     pub description: ::prost::alloc::string::String,
-    /// Required. The grouping rules of channels. Maximum number of rules is 25.
+    /// Required. The grouping rules of channels. Maximum number of rules is 50.
     #[prost(message, repeated, tag = "4")]
     pub grouping_rule: ::prost::alloc::vec::Vec<GroupingRule>,
-    /// Output only. Default Channel Group defined by Google, which cannot be
-    /// updated.
+    /// Output only. If true, then this channel group is the Default Channel Group
+    /// predefined by Google Analytics. Display name and grouping rules cannot be
+    /// updated for this channel group.
     #[prost(bool, tag = "5")]
     pub system_defined: bool,
 }
@@ -1211,8 +1212,7 @@ pub struct Property {
     pub name: ::prost::alloc::string::String,
     /// Immutable. The property type for this Property resource. When creating a
     /// property, if the type is "PROPERTY_TYPE_UNSPECIFIED", then
-    /// "ORDINARY_PROPERTY" will be implied. "SUBPROPERTY" and "ROLLUP_PROPERTY"
-    /// types cannot yet be created with the Google Analytics Admin API.
+    /// "ORDINARY_PROPERTY" will be implied.
     #[prost(enumeration = "PropertyType", tag = "14")]
     pub property_type: i32,
     /// Output only. Time when the entity was originally created.
@@ -1308,15 +1308,16 @@ pub mod data_stream {
     /// Data specific to web streams.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct WebStreamData {
-        /// Output only. Analytics "Measurement ID", without the "G-" prefix.
-        /// Example: "G-1A2BCD345E" would just be "1A2BCD345E"
+        /// Output only. Analytics Measurement ID.
+        ///
+        /// Example: "G-1A2BCD345E"
         #[prost(string, tag = "1")]
         pub measurement_id: ::prost::alloc::string::String,
         /// Output only. ID of the corresponding web app in Firebase, if any.
         /// This ID can change if the web app is deleted and recreated.
         #[prost(string, tag = "2")]
         pub firebase_app_id: ::prost::alloc::string::String,
-        /// Immutable. Domain name of the web app being measured, or empty.
+        /// Domain name of the web app being measured, or empty.
         /// Example: "<http://www.google.com",> "<https://www.google.com">
         #[prost(string, tag = "3")]
         pub default_uri: ::prost::alloc::string::String,
@@ -1375,58 +1376,6 @@ pub mod data_stream {
         #[prost(message, tag = "8")]
         IosAppStreamData(IosAppStreamData),
     }
-}
-/// A resource message representing a user's permissions on an Account or
-/// Property resource.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserLink {
-    /// Output only. Example format: properties/1234/userLinks/5678
-    #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
-    /// Immutable. Email address of the user to link
-    #[prost(string, tag = "2")]
-    pub email_address: ::prost::alloc::string::String,
-    /// Roles directly assigned to this user for this account or property.
-    ///
-    /// Valid values:
-    /// predefinedRoles/viewer
-    /// predefinedRoles/analyst
-    /// predefinedRoles/editor
-    /// predefinedRoles/admin
-    /// predefinedRoles/no-cost-data
-    /// predefinedRoles/no-revenue-data
-    ///
-    /// Excludes roles that are inherited from a higher-level entity, group,
-    /// or organization admin role.
-    ///
-    /// A UserLink that is updated to have an empty list of direct_roles will be
-    /// deleted.
-    #[prost(string, repeated, tag = "3")]
-    pub direct_roles: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-/// Read-only resource used to summarize a principal's effective roles.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct AuditUserLink {
-    /// Example format: properties/1234/userLinks/5678
-    #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
-    /// Email address of the linked user
-    #[prost(string, tag = "2")]
-    pub email_address: ::prost::alloc::string::String,
-    /// Roles directly assigned to this user for this entity.
-    ///
-    /// Format: predefinedRoles/viewer
-    ///
-    /// Excludes roles that are inherited from an account (if this is for a
-    /// property), group, or organization admin role.
-    #[prost(string, repeated, tag = "3")]
-    pub direct_roles: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Union of all permissions a user has at this account or property (includes
-    /// direct permissions, group-inherited permissions, etc.).
-    ///
-    /// Format: predefinedRoles/viewer
-    #[prost(string, repeated, tag = "4")]
-    pub effective_roles: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// A link between a GA4 property and a Firebase project.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1582,6 +1531,127 @@ pub struct MeasurementProtocolSecret {
     #[prost(string, tag = "3")]
     pub secret_value: ::prost::alloc::string::String,
 }
+/// SKAdNetwork conversion value schema of an iOS stream.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SkAdNetworkConversionValueSchema {
+    /// Output only. Resource name of the schema. This will be child of ONLY an iOS
+    /// stream, and there can be at most one such child under an iOS stream.
+    /// Format:
+    /// properties/{property}/dataStreams/{dataStream}/sKAdNetworkConversionValueSchema
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The conversion value settings for the first postback window.
+    /// These differ from values for postback window two and three in that they
+    /// contain a "Fine" grained conversion value (a numeric value).
+    ///
+    /// Conversion values for this postback window must be set.  The other windows
+    /// are optional and may inherit this window's settings if unset or disabled.
+    #[prost(message, optional, tag = "2")]
+    pub postback_window_one: ::core::option::Option<PostbackWindow>,
+    /// The conversion value settings for the second postback window.
+    ///
+    /// This field should only be configured if there is a need to define different
+    /// conversion values for this postback window.
+    ///
+    /// If enable_postback_window_settings is set to false for this postback
+    /// window, the values from postback_window_one will be used.
+    #[prost(message, optional, tag = "3")]
+    pub postback_window_two: ::core::option::Option<PostbackWindow>,
+    /// The conversion value settings for the third postback window.
+    ///
+    /// This field should only be set if the user chose to define different
+    /// conversion values for this postback window. It is allowed to configure
+    /// window 3 without setting window 2. In case window 1 & 2 settings are set
+    /// and enable_postback_window_settings for this postback window is set to
+    /// false, the schema will inherit settings from postback_window_two.
+    #[prost(message, optional, tag = "4")]
+    pub postback_window_three: ::core::option::Option<PostbackWindow>,
+    /// If enabled, the GA SDK will set conversion values using this schema
+    /// definition, and schema will be exported to any Google Ads accounts linked
+    /// to this property. If disabled, the GA SDK will not automatically set
+    /// conversion values, and also the schema will not be exported to Ads.
+    #[prost(bool, tag = "5")]
+    pub apply_conversion_values: bool,
+}
+/// Settings for a SKAdNetwork conversion postback window.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PostbackWindow {
+    /// Ordering of the repeated field will be used to prioritize the conversion
+    /// value settings. Lower indexed entries are prioritized higher. The first
+    /// conversion value setting that evaluates to true will be selected. It must
+    /// have at least one entry if enable_postback_window_settings is set to
+    /// true. It can have maximum of 128 entries.
+    #[prost(message, repeated, tag = "1")]
+    pub conversion_values: ::prost::alloc::vec::Vec<ConversionValues>,
+    /// If enable_postback_window_settings is true, conversion_values
+    /// must be populated and will be used for determining when and how to set the
+    /// Conversion Value on a client device and exporting schema to linked Ads
+    /// accounts. If false, the settings are not used, but are retained in case
+    /// they may be used in the future. This must always be true for
+    /// postback_window_one.
+    #[prost(bool, tag = "2")]
+    pub postback_window_settings_enabled: bool,
+}
+/// Conversion value settings for a postback window for SKAdNetwork conversion
+/// value schema.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConversionValues {
+    /// Display name of the SKAdNetwork conversion value.
+    /// The max allowed display name length is 50 UTF-16 code units.
+    #[prost(string, tag = "1")]
+    pub display_name: ::prost::alloc::string::String,
+    /// The fine-grained conversion value.  This is applicable only to the first
+    /// postback window. Its valid values are \[0,63\], both inclusive. It must be
+    /// set for postback window 1, and must not be set for postback window 2 & 3.
+    /// This value is not guaranteed to be unique.
+    ///
+    /// If the configuration for the first postback window is re-used for second or
+    /// third postback windows this field has no effect.
+    #[prost(int32, optional, tag = "2")]
+    pub fine_value: ::core::option::Option<i32>,
+    /// Required. A coarse grained conversion value.
+    ///
+    /// This value is not guaranteed to be unique.
+    #[prost(enumeration = "CoarseValue", tag = "3")]
+    pub coarse_value: i32,
+    /// Event conditions that must be met for this Conversion Value to be achieved.
+    /// The conditions in this list are ANDed together. It must have minimum of 1
+    /// entry and maximum of 3 entries, if the postback window is enabled.
+    #[prost(message, repeated, tag = "4")]
+    pub event_mappings: ::prost::alloc::vec::Vec<EventMapping>,
+    /// If true, the SDK should lock to this conversion value for the current
+    /// postback window.
+    #[prost(bool, tag = "5")]
+    pub lock_enabled: bool,
+}
+/// Event setting conditions to match an event.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventMapping {
+    /// Required. Name of the GA4 event. It must always be set.
+    /// The max allowed display name length is 40 UTF-16 code units.
+    #[prost(string, tag = "1")]
+    pub event_name: ::prost::alloc::string::String,
+    /// At least one of the following four min/max values must be set. The
+    /// values set will be ANDed together to qualify an event.
+    /// The minimum number of times the event occurred. If not set, minimum event
+    /// count won't be checked.
+    #[prost(int64, optional, tag = "2")]
+    pub min_event_count: ::core::option::Option<i64>,
+    /// The maximum number of times the event occurred. If not set, maximum event
+    /// count won't be checked.
+    #[prost(int64, optional, tag = "3")]
+    pub max_event_count: ::core::option::Option<i64>,
+    /// The minimum revenue generated due to the event. Revenue currency will be
+    /// defined at the property level. If not set, minimum event value won't be
+    /// checked.
+    #[prost(double, optional, tag = "4")]
+    pub min_event_value: ::core::option::Option<f64>,
+    /// The maximum revenue generated due to the event. Revenue currency will be
+    /// defined at the property level. If not set, maximum event value won't be
+    /// checked.
+    #[prost(double, optional, tag = "5")]
+    pub max_event_value: ::core::option::Option<f64>,
+}
 /// A set of changes within a Google Analytics account or its child properties
 /// that resulted from the same cause. Common causes would be updates made in the
 /// Google Analytics UI, changes from customer support, or automatic Google
@@ -1638,7 +1708,7 @@ pub mod change_history_change {
     pub struct ChangeHistoryResource {
         #[prost(
             oneof = "change_history_resource::Resource",
-            tags = "1, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 27, 28, 29"
+            tags = "1, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31"
         )]
         pub resource: ::core::option::Option<change_history_resource::Resource>,
     }
@@ -1707,6 +1777,13 @@ pub mod change_history_change {
             /// A snapshot of EnhancedMeasurementSettings resource in change history.
             #[prost(message, tag = "24")]
             EnhancedMeasurementSettings(super::super::EnhancedMeasurementSettings),
+            /// A snapshot of DataRedactionSettings resource in change history.
+            #[prost(message, tag = "25")]
+            DataRedactionSettings(super::super::DataRedactionSettings),
+            /// A snapshot of SKAdNetworkConversionValueSchema resource in change
+            /// history.
+            #[prost(message, tag = "26")]
+            SkadnetworkConversionValueSchema(super::super::SkAdNetworkConversionValueSchema),
             /// A snapshot of an AdSenseLink resource in change history.
             #[prost(message, tag = "27")]
             AdsenseLink(super::super::AdSenseLink),
@@ -1716,6 +1793,9 @@ pub mod change_history_change {
             /// A snapshot of an EventCreateRule resource in change history.
             #[prost(message, tag = "29")]
             EventCreateRule(super::super::EventCreateRule),
+            /// A snapshot of a CalculatedMetric resource in change history.
+            #[prost(message, tag = "31")]
+            CalculatedMetric(super::super::CalculatedMetric),
         }
     }
 }
@@ -1878,6 +1958,45 @@ pub struct ConversionEvent {
     /// custom conversion events that may be created per property.
     #[prost(bool, tag = "5")]
     pub custom: bool,
+    /// Optional. The method by which conversions will be counted across multiple
+    /// events within a session. If this value is not provided, it will be set to
+    /// `ONCE_PER_EVENT`.
+    #[prost(enumeration = "conversion_event::ConversionCountingMethod", tag = "6")]
+    pub counting_method: i32,
+    /// Optional. Defines a default value/currency for a conversion event.
+    #[prost(message, optional, tag = "7")]
+    pub default_conversion_value: ::core::option::Option<conversion_event::DefaultConversionValue>,
+}
+/// Nested message and enum types in `ConversionEvent`.
+pub mod conversion_event {
+    /// Defines a default value/currency for a conversion event. Both value and
+    /// currency must be provided.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DefaultConversionValue {
+        /// This value will be used to populate the value for all conversions
+        /// of the specified event_name where the event "value" parameter is unset.
+        #[prost(double, optional, tag = "1")]
+        pub value: ::core::option::Option<f64>,
+        /// When a conversion event for this event_name has no set currency,
+        /// this currency will be applied as the default. Must be in ISO 4217
+        /// currency code format. See <https://en.wikipedia.org/wiki/ISO_4217> for
+        /// more information.
+        #[prost(string, optional, tag = "2")]
+        pub currency_code: ::core::option::Option<::prost::alloc::string::String>,
+    }
+    /// The method by which conversions will be counted across multiple events
+    /// within a session.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ConversionCountingMethod {
+        /// Counting method not specified.
+        Unspecified = 0,
+        /// Each Event instance is considered a Conversion.
+        OncePerEvent = 1,
+        /// An Event instance is considered a Conversion at most once per session per
+        /// user.
+        OncePerSession = 2,
+    }
 }
 /// Settings values for Google Signals.  This is a singleton resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2050,6 +2169,96 @@ pub mod custom_metric {
         RevenueData = 2,
     }
 }
+/// A definition for a calculated metric.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CalculatedMetric {
+    /// Output only. Resource name for this CalculatedMetric.
+    /// Format: 'properties/{property_id}/calculatedMetrics/{calculated_metric_id}'
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. Description for this calculated metric.
+    /// Max length of 4096 characters.
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    /// Required. Display name for this calculated metric as shown in the
+    /// Google Analytics UI. Max length 82 characters.
+    #[prost(string, tag = "3")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Output only. The ID to use for the calculated metric. In the UI, this is
+    /// referred to as the "API name."
+    ///
+    /// The calculated_metric_id is used when referencing this calculated metric
+    /// from external APIs. For example, "calcMetric:{calculated_metric_id}".
+    #[prost(string, tag = "4")]
+    pub calculated_metric_id: ::prost::alloc::string::String,
+    /// Required. The type for the calculated metric's value.
+    #[prost(enumeration = "calculated_metric::MetricUnit", tag = "5")]
+    pub metric_unit: i32,
+    /// Output only. Types of restricted data that this metric contains.
+    #[prost(
+        enumeration = "calculated_metric::RestrictedMetricType",
+        repeated,
+        packed = "false",
+        tag = "6"
+    )]
+    pub restricted_metric_type: ::prost::alloc::vec::Vec<i32>,
+    /// Required. The calculated metric's definition. Maximum number of unique
+    /// referenced custom metrics is 5. Formulas supports the following operations:
+    /// + (addition),  - (subtraction), - (negative),  * (multiplication), /
+    /// (division), () (parenthesis). Any valid real numbers are acceptable that
+    /// fit in a Long (64bit integer) or a Double (64 bit floating point number).
+    /// Example formula:
+    ///   "( customEvent:parameter_name + cartPurchaseQuantity ) / 2.0"
+    #[prost(string, tag = "7")]
+    pub formula: ::prost::alloc::string::String,
+    /// Output only. If true, this calculated metric has a invalid metric
+    /// reference. Anything using a calculated metric with invalid_metric_reference
+    /// set to true may fail, produce warnings, or produce unexpected results.
+    #[prost(bool, tag = "9")]
+    pub invalid_metric_reference: bool,
+}
+/// Nested message and enum types in `CalculatedMetric`.
+pub mod calculated_metric {
+    /// Possible types of representing the calculated metric's value.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum MetricUnit {
+        /// MetricUnit unspecified or missing.
+        Unspecified = 0,
+        /// This metric uses default units.
+        Standard = 1,
+        /// This metric measures a currency.
+        Currency = 2,
+        /// This metric measures feet.
+        Feet = 3,
+        /// This metric measures miles.
+        Miles = 4,
+        /// This metric measures meters.
+        Meters = 5,
+        /// This metric measures kilometers.
+        Kilometers = 6,
+        /// This metric measures milliseconds.
+        Milliseconds = 7,
+        /// This metric measures seconds.
+        Seconds = 8,
+        /// This metric measures minutes.
+        Minutes = 9,
+        /// This metric measures hours.
+        Hours = 10,
+    }
+    /// Labels that mark the data in calculated metric used in conjunction with
+    /// user roles that restrict access to cost and/or revenue metrics.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RestrictedMetricType {
+        /// Type unknown or unspecified.
+        Unspecified = 0,
+        /// Metric reports cost data.
+        CostData = 1,
+        /// Metric reports revenue data.
+        RevenueData = 2,
+    }
+}
 /// Settings values for data retention. This is a singleton resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DataRetentionSettings {
@@ -2122,6 +2331,13 @@ pub struct AttributionSettings {
         tag = "4"
     )]
     pub reporting_attribution_model: i32,
+    /// Required. The Conversion Export Scope for data exported to linked Ads
+    /// Accounts.
+    #[prost(
+        enumeration = "attribution_settings::AdsWebConversionDataExportScope",
+        tag = "5"
+    )]
+    pub ads_web_conversion_data_export_scope: i32,
 }
 /// Nested message and enum types in `AttributionSettings`.
 pub mod attribution_settings {
@@ -2163,27 +2379,36 @@ pub mod attribution_settings {
         /// Data-driven attribution distributes credit for the conversion based on
         /// data for each conversion event. Each Data-driven model is specific to
         /// each advertiser and each conversion event.
-        CrossChannelDataDriven = 1,
+        /// Previously CROSS_CHANNEL_DATA_DRIVEN
+        PaidAndOrganicChannelsDataDriven = 1,
         /// Ignores direct traffic and attributes 100% of the conversion value to the
         /// last channel that the customer clicked through (or engaged view through
         /// for YouTube) before converting.
-        CrossChannelLastClick = 2,
-        /// Gives all credit for the conversion to the first channel that a customer
-        /// clicked (or engaged view through for YouTube) before converting.
-        CrossChannelFirstClick = 3,
-        /// Distributes the credit for the conversion equally across all the channels
-        /// a customer clicked (or engaged view through for YouTube) before
-        /// converting.
-        CrossChannelLinear = 4,
-        /// Attributes 40% credit to the first and last interaction, and the
-        /// remaining 20% credit is distributed evenly to the middle interactions.
-        CrossChannelPositionBased = 5,
-        /// Gives more credit to the touchpoints that happened closer in time to
-        /// the conversion.
-        CrossChannelTimeDecay = 6,
-        /// Attributes 100% of the conversion value to the last Google Ads channel
+        /// Previously CROSS_CHANNEL_LAST_CLICK
+        PaidAndOrganicChannelsLastClick = 2,
+        /// Attributes 100% of the conversion value to the last Google Paid channel
         /// that the customer clicked through before converting.
-        AdsPreferredLastClick = 7,
+        /// Previously ADS_PREFERRED_LAST_CLICK
+        GooglePaidChannelsLastClick = 7,
+    }
+    /// The Conversion Export Scope for data exported to linked Ads Accounts.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AdsWebConversionDataExportScope {
+        /// Default value. This value is unused.
+        Unspecified = 0,
+        /// No data export scope selected yet.
+        /// Export scope can never be changed back to this value.
+        NotSelectedYet = 1,
+        /// Paid and organic channels are eligible to receive conversion credit, but
+        /// only credit assigned to Google Ads channels will appear in your Ads
+        /// accounts. To learn more, see [Paid and Organic
+        /// channels](<https://support.google.com/analytics/answer/10632359>).
+        PaidAndOrganicChannels = 2,
+        /// Only Google Ads paid channels are eligible to receive conversion credit.
+        /// To learn more, see [Google Paid
+        /// channels](<https://support.google.com/analytics/answer/10632359>).
+        GooglePaidChannels = 3,
     }
 }
 /// A binding of a user to a set of roles.
@@ -2252,9 +2477,9 @@ pub struct BigQueryLink {
     /// If set true, enables streaming export to the linked Google Cloud project.
     #[prost(bool, tag = "5")]
     pub streaming_export_enabled: bool,
-    /// If set true, enables intraday export to the linked Google Cloud project.
+    /// If set true, enables fresh daily export to the linked Google Cloud project.
     #[prost(bool, tag = "9")]
-    pub intraday_export_enabled: bool,
+    pub fresh_daily_export_enabled: bool,
     /// If set true, exported data will include advertising identifiers for mobile
     /// app streams.
     #[prost(bool, tag = "6")]
@@ -2269,7 +2494,7 @@ pub struct BigQueryLink {
     #[prost(string, repeated, tag = "8")]
     pub excluded_events: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
-/// Singleton resource under a WebDataStream, configuring measurement of
+/// Singleton resource under a web DataStream, configuring measurement of
 /// additional site interactions and content.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EnhancedMeasurementSettings {
@@ -2336,6 +2561,35 @@ pub struct ConnectedSiteTag {
     #[prost(string, tag = "2")]
     pub tag_id: ::prost::alloc::string::String,
 }
+/// Settings for client-side data redaction. Singleton resource under a Web
+/// Stream.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DataRedactionSettings {
+    /// Output only. Name of this Data Redaction Settings resource.
+    /// Format:
+    /// properties/{property_id}/dataStreams/{data_stream}/dataRedactionSettings
+    /// Example: "properties/1000/dataStreams/2000/dataRedactionSettings"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// If enabled, any event parameter or user property values that look like an
+    /// email will be redacted.
+    #[prost(bool, tag = "2")]
+    pub email_redaction_enabled: bool,
+    /// Query Parameter redaction removes the key and value portions of a
+    /// query parameter if it is in the configured set of query parameters.
+    ///
+    /// If enabled, URL query replacement logic will be run for the Stream. Any
+    /// query parameters defined in query_parameter_keys will be redacted.
+    #[prost(bool, tag = "3")]
+    pub query_parameter_redaction_enabled: bool,
+    /// The query parameter keys to apply redaction logic to if present in the URL.
+    /// Query parameter matching is case-insensitive.
+    ///
+    /// Must contain at least one element if query_parameter_replacement_enabled
+    /// is true. Keys cannot contain commas.
+    #[prost(string, repeated, tag = "4")]
+    pub query_parameter_keys: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
 /// A link between a GA4 Property and an AdSense for Content ad client.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AdSenseLink {
@@ -2348,6 +2602,21 @@ pub struct AdSenseLink {
     /// Example format: "ca-pub-1234567890"
     #[prost(string, tag = "2")]
     pub ad_client_code: ::prost::alloc::string::String,
+}
+/// A link that references a source property under the parent rollup property.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RollupPropertySourceLink {
+    /// Output only. Resource name of this RollupPropertySourceLink.
+    /// Format:
+    /// 'properties/{property_id}/rollupPropertySourceLinks/{rollup_property_source_link}'
+    /// Format: 'properties/123/rollupPropertySourceLinks/456'
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Immutable. Resource name of the source property.
+    /// Format: properties/{property_id}
+    /// Example: "properties/789"
+    #[prost(string, tag = "2")]
+    pub source_property: ::prost::alloc::string::String,
 }
 /// The category selected for this property, used for industry benchmarking.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -2488,12 +2757,18 @@ pub enum ChangeHistoryResourceType {
     ChannelGroup = 22,
     /// EnhancedMeasurementSettings resource
     EnhancedMeasurementSettings = 24,
+    /// DataRedactionSettings resource
+    DataRedactionSettings = 25,
+    /// SKAdNetworkConversionValueSchema resource
+    SkadnetworkConversionValueSchema = 26,
     /// AdSenseLink resource
     AdsenseLink = 27,
     /// Audience resource
     Audience = 28,
     /// EventCreateRule resource
     EventCreateRule = 29,
+    /// CalculatedMetric resource
+    CalculatedMetric = 31,
 }
 /// Status of the Google Signals settings.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -2571,6 +2846,164 @@ pub enum PropertyType {
     Subproperty = 2,
     /// GA4 rollup property
     Rollup = 3,
+}
+/// The coarse conversion value set on the updatePostbackConversionValue SDK call
+/// when a ConversionValues.event_mappings conditions are satisfied. For
+/// more information, see
+/// \[SKAdNetwork.CoarseConversionValue\](<https://developer.apple.com/documentation/storekit/skadnetwork/coarseconversionvalue>).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum CoarseValue {
+    /// Coarse value not specified.
+    Unspecified = 0,
+    /// Coarse value of low.
+    Low = 1,
+    /// Coarse value of medium.
+    Medium = 2,
+    /// Coarse value of high.
+    High = 3,
+}
+/// A specific filter expression
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubpropertyEventFilterCondition {
+    /// Required. The field that is being filtered.
+    #[prost(string, tag = "1")]
+    pub field_name: ::prost::alloc::string::String,
+    #[prost(oneof = "subproperty_event_filter_condition::OneFilter", tags = "2, 3")]
+    pub one_filter: ::core::option::Option<subproperty_event_filter_condition::OneFilter>,
+}
+/// Nested message and enum types in `SubpropertyEventFilterCondition`.
+pub mod subproperty_event_filter_condition {
+    /// A filter for a string-type dimension that matches a particular pattern.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct StringFilter {
+        /// Required. The match type for the string filter.
+        #[prost(enumeration = "string_filter::MatchType", tag = "1")]
+        pub match_type: i32,
+        /// Required. The string value used for the matching.
+        #[prost(string, tag = "2")]
+        pub value: ::prost::alloc::string::String,
+        /// Optional. If true, the string value is case sensitive. If false, the
+        /// match is case-insensitive.
+        #[prost(bool, tag = "3")]
+        pub case_sensitive: bool,
+    }
+    /// Nested message and enum types in `StringFilter`.
+    pub mod string_filter {
+        /// How the filter will be used to determine a match.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum MatchType {
+            /// Match type unknown or not specified.
+            Unspecified = 0,
+            /// Exact match of the string value.
+            Exact = 1,
+            /// Begins with the string value.
+            BeginsWith = 2,
+            /// Ends with the string value.
+            EndsWith = 3,
+            /// Contains the string value.
+            Contains = 4,
+            /// Full regular expression matches with the string value.
+            FullRegexp = 5,
+            /// Partial regular expression matches with the string value.
+            PartialRegexp = 6,
+        }
+    }
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum OneFilter {
+        /// A filter for null values.
+        #[prost(bool, tag = "2")]
+        NullFilter(bool),
+        /// A filter for a string-type dimension that matches a particular pattern.
+        #[prost(message, tag = "3")]
+        StringFilter(StringFilter),
+    }
+}
+/// A logical expression of Subproperty event filters.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubpropertyEventFilterExpression {
+    /// The expression applied to a filter.
+    #[prost(oneof = "subproperty_event_filter_expression::Expr", tags = "1, 2, 3")]
+    pub expr: ::core::option::Option<subproperty_event_filter_expression::Expr>,
+}
+/// Nested message and enum types in `SubpropertyEventFilterExpression`.
+pub mod subproperty_event_filter_expression {
+    /// The expression applied to a filter.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Expr {
+        /// A list of expressions to OR’ed together. Must only contain
+        /// not_expression or filter_condition expressions.
+        #[prost(message, tag = "1")]
+        OrGroup(super::SubpropertyEventFilterExpressionList),
+        /// A filter expression to be NOT'ed (inverted, complemented). It can only
+        /// include a filter. This cannot be set on the top level
+        /// SubpropertyEventFilterExpression.
+        #[prost(message, tag = "2")]
+        NotExpression(::prost::alloc::boxed::Box<super::SubpropertyEventFilterExpression>),
+        /// Creates a filter that matches a specific event. This cannot be set on the
+        /// top level SubpropertyEventFilterExpression.
+        #[prost(message, tag = "3")]
+        FilterCondition(super::SubpropertyEventFilterCondition),
+    }
+}
+/// A list of Subproperty event filter expressions.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubpropertyEventFilterExpressionList {
+    /// Required. Unordered list. A list of Subproperty event filter expressions
+    #[prost(message, repeated, tag = "1")]
+    pub filter_expressions: ::prost::alloc::vec::Vec<SubpropertyEventFilterExpression>,
+}
+/// A clause for defining a filter. A filter may be inclusive (events satisfying
+/// the filter clause are included in the subproperty's data) or exclusive
+/// (events satisfying the filter clause are excluded from the subproperty's
+/// data).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubpropertyEventFilterClause {
+    /// Required. The type for the filter clause.
+    #[prost(
+        enumeration = "subproperty_event_filter_clause::FilterClauseType",
+        tag = "1"
+    )]
+    pub filter_clause_type: i32,
+    /// Required. The logical expression for what events are sent to the
+    /// subproperty.
+    #[prost(message, optional, tag = "2")]
+    pub filter_expression: ::core::option::Option<SubpropertyEventFilterExpression>,
+}
+/// Nested message and enum types in `SubpropertyEventFilterClause`.
+pub mod subproperty_event_filter_clause {
+    /// Specifies whether this is an include or exclude filter clause.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum FilterClauseType {
+        /// Filter clause type unknown or not specified.
+        Unspecified = 0,
+        /// Events will be included in the Sub property if the filter clause is met.
+        Include = 1,
+        /// Events will be excluded from the Sub property if the filter clause is
+        /// met.
+        Exclude = 2,
+    }
+}
+/// A resource message representing a GA4 Subproperty event filter.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubpropertyEventFilter {
+    /// Output only. Format:
+    /// properties/{ordinary_property_id}/subpropertyEventFilters/{sub_property_event_filter}
+    /// Example: properties/1234/subpropertyEventFilters/5678
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Immutable. Resource name of the Subproperty that uses this filter.
+    #[prost(string, optional, tag = "2")]
+    pub apply_to_property: ::core::option::Option<::prost::alloc::string::String>,
+    /// Required. Unordered list. Filter clauses that define the
+    /// SubpropertyEventFilter. All clauses are AND'ed together to determine what
+    /// data is sent to the subproperty.
+    #[prost(message, repeated, tag = "3")]
+    pub filter_clauses: ::prost::alloc::vec::Vec<SubpropertyEventFilterClause>,
 }
 /// The request for a Data Access Record Report.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2652,6 +3085,19 @@ pub struct RunAccessReportRequest {
     /// requests, this field must be false.
     #[prost(bool, tag = "11")]
     pub return_entity_quota: bool,
+    /// Optional. Determines whether to include users who have never made an API
+    /// call in the response. If true, all users with access to the specified
+    /// property or account are included in the response, regardless of whether
+    /// they have made an API call or not. If false, only the users who have made
+    /// an API call will be included.
+    #[prost(bool, tag = "12")]
+    pub include_all_users: bool,
+    /// Optional. Decides whether to return the users within user groups. This
+    /// field works only when include_all_users is set to true. If true, it will
+    /// return all users with access to the specified property or account.
+    /// If false, only the users with direct access will be returned.
+    #[prost(bool, tag = "13")]
+    pub expand_groups: bool,
 }
 /// The customized Data Access Record Report response.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2857,192 +3303,6 @@ pub struct DeletePropertyRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// Request message for GetUserLink RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GetUserLinkRequest {
-    /// Required. Example format: accounts/1234/userLinks/5678
-    #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
-}
-/// Request message for BatchGetUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchGetUserLinksRequest {
-    /// Required. The account or property that all user links in the request are
-    /// for. The parent of all provided values for the 'names' field must match
-    /// this field.
-    /// Example format: accounts/1234
-    #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// Required. The names of the user links to retrieve.
-    /// A maximum of 1000 user links can be retrieved in a batch.
-    /// Format: accounts/{accountId}/userLinks/{userLinkId}
-    #[prost(string, repeated, tag = "2")]
-    pub names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-/// Response message for BatchGetUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchGetUserLinksResponse {
-    /// The requested user links.
-    #[prost(message, repeated, tag = "1")]
-    pub user_links: ::prost::alloc::vec::Vec<UserLink>,
-}
-/// Request message for ListUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListUserLinksRequest {
-    /// Required. Example format: accounts/1234
-    #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// The maximum number of user links to return.
-    /// The service may return fewer than this value.
-    /// If unspecified, at most 200 user links will be returned.
-    /// The maximum value is 500; values above 500 will be coerced to 500.
-    #[prost(int32, tag = "2")]
-    pub page_size: i32,
-    /// A page token, received from a previous `ListUserLinks` call.
-    /// Provide this to retrieve the subsequent page.
-    /// When paginating, all other parameters provided to `ListUserLinks` must
-    /// match the call that provided the page token.
-    #[prost(string, tag = "3")]
-    pub page_token: ::prost::alloc::string::String,
-}
-/// Response message for ListUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListUserLinksResponse {
-    /// List of UserLinks. These will be ordered stably, but in an arbitrary order.
-    #[prost(message, repeated, tag = "1")]
-    pub user_links: ::prost::alloc::vec::Vec<UserLink>,
-    /// A token, which can be sent as `page_token` to retrieve the next page.
-    /// If this field is omitted, there are no subsequent pages.
-    #[prost(string, tag = "2")]
-    pub next_page_token: ::prost::alloc::string::String,
-}
-/// Request message for AuditUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct AuditUserLinksRequest {
-    /// Required. Example format: accounts/1234
-    #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// The maximum number of user links to return.
-    /// The service may return fewer than this value.
-    /// If unspecified, at most 1000 user links will be returned.
-    /// The maximum value is 5000; values above 5000 will be coerced to 5000.
-    #[prost(int32, tag = "2")]
-    pub page_size: i32,
-    /// A page token, received from a previous `AuditUserLinks` call.
-    /// Provide this to retrieve the subsequent page.
-    /// When paginating, all other parameters provided to `AuditUserLinks` must
-    /// match the call that provided the page token.
-    #[prost(string, tag = "3")]
-    pub page_token: ::prost::alloc::string::String,
-}
-/// Response message for AuditUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct AuditUserLinksResponse {
-    /// List of AuditUserLinks. These will be ordered stably, but in an arbitrary
-    /// order.
-    #[prost(message, repeated, tag = "1")]
-    pub user_links: ::prost::alloc::vec::Vec<AuditUserLink>,
-    /// A token, which can be sent as `page_token` to retrieve the next page.
-    /// If this field is omitted, there are no subsequent pages.
-    #[prost(string, tag = "2")]
-    pub next_page_token: ::prost::alloc::string::String,
-}
-/// Request message for CreateUserLink RPC.
-///
-/// Users can have multiple email addresses associated with their Google
-/// account, and one of these email addresses is the "primary" email address.
-/// Any of the email addresses associated with a Google account may be used
-/// for a new UserLink, but the returned UserLink will always contain the
-/// "primary" email address. As a result, the input and output email address
-/// for this request may differ.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CreateUserLinkRequest {
-    /// Required. Example format: accounts/1234
-    #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// Optional. If set, then email the new user notifying them that they've been
-    /// granted permissions to the resource.
-    #[prost(bool, tag = "2")]
-    pub notify_new_user: bool,
-    /// Required. The user link to create.
-    #[prost(message, optional, tag = "3")]
-    pub user_link: ::core::option::Option<UserLink>,
-}
-/// Request message for BatchCreateUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchCreateUserLinksRequest {
-    /// Required. The account or property that all user links in the request are
-    /// for. This field is required. The parent field in the CreateUserLinkRequest
-    /// messages must either be empty or match this field.
-    /// Example format: accounts/1234
-    #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// Optional. If set, then email the new users notifying them that they've been
-    /// granted permissions to the resource. Regardless of whether this is set or
-    /// not, notify_new_user field inside each individual request is ignored.
-    #[prost(bool, tag = "2")]
-    pub notify_new_users: bool,
-    /// Required. The requests specifying the user links to create.
-    /// A maximum of 1000 user links can be created in a batch.
-    #[prost(message, repeated, tag = "3")]
-    pub requests: ::prost::alloc::vec::Vec<CreateUserLinkRequest>,
-}
-/// Response message for BatchCreateUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchCreateUserLinksResponse {
-    /// The user links created.
-    #[prost(message, repeated, tag = "1")]
-    pub user_links: ::prost::alloc::vec::Vec<UserLink>,
-}
-/// Request message for UpdateUserLink RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UpdateUserLinkRequest {
-    /// Required. The user link to update.
-    #[prost(message, optional, tag = "1")]
-    pub user_link: ::core::option::Option<UserLink>,
-}
-/// Request message for BatchUpdateUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchUpdateUserLinksRequest {
-    /// Required. The account or property that all user links in the request are
-    /// for. The parent field in the UpdateUserLinkRequest messages must either be
-    /// empty or match this field.
-    /// Example format: accounts/1234
-    #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// Required. The requests specifying the user links to update.
-    /// A maximum of 1000 user links can be updated in a batch.
-    #[prost(message, repeated, tag = "2")]
-    pub requests: ::prost::alloc::vec::Vec<UpdateUserLinkRequest>,
-}
-/// Response message for BatchUpdateUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchUpdateUserLinksResponse {
-    /// The user links updated.
-    #[prost(message, repeated, tag = "1")]
-    pub user_links: ::prost::alloc::vec::Vec<UserLink>,
-}
-/// Request message for DeleteUserLink RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DeleteUserLinkRequest {
-    /// Required. Example format: accounts/1234/userLinks/5678
-    #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
-}
-/// Request message for BatchDeleteUserLinks RPC.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchDeleteUserLinksRequest {
-    /// Required. The account or property that all user links in the request are
-    /// for. The parent of all values for user link names to delete must match this
-    /// field.
-    /// Example format: accounts/1234
-    #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// Required. The requests specifying the user links to update.
-    /// A maximum of 1000 user links can be updated in a batch.
-    #[prost(message, repeated, tag = "2")]
-    pub requests: ::prost::alloc::vec::Vec<DeleteUserLinkRequest>,
-}
 /// Request message for CreateFirebaseLink RPC
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateFirebaseLinkRequest {
@@ -3225,11 +3485,13 @@ pub struct AcknowledgeUserDataCollectionResponse {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SearchChangeHistoryEventsRequest {
     /// Required. The account resource for which to return change history
-    /// resources.
+    /// resources. Format: accounts/{account} Example: "accounts/100"
     #[prost(string, tag = "1")]
     pub account: ::prost::alloc::string::String,
     /// Optional. Resource name for a child property. If set, only return changes
     /// made to this property or its child resources.
+    /// Format: properties/{propertyId}
+    /// Example: "properties/100"
     #[prost(string, tag = "2")]
     pub property: ::prost::alloc::string::String,
     /// Optional. If set, only return changes if they are for a resource that
@@ -3315,7 +3577,8 @@ pub struct UpdateMeasurementProtocolSecretRequest {
     /// Required. The measurement protocol secret to update.
     #[prost(message, optional, tag = "1")]
     pub measurement_protocol_secret: ::core::option::Option<MeasurementProtocolSecret>,
-    /// The list of fields to be updated. Omitted fields will not be updated.
+    /// Required. The list of fields to be updated. Omitted fields will not be
+    /// updated.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
@@ -3347,6 +3610,87 @@ pub struct ListMeasurementProtocolSecretsResponse {
     pub measurement_protocol_secrets: ::prost::alloc::vec::Vec<MeasurementProtocolSecret>,
     /// A token, which can be sent as `page_token` to retrieve the next page.
     /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for GetSKAdNetworkConversionValueSchema RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSkAdNetworkConversionValueSchemaRequest {
+    /// Required. The resource name of SKAdNetwork conversion value schema to look
+    /// up. Format:
+    /// properties/{property}/dataStreams/{dataStream}/sKAdNetworkConversionValueSchema/{skadnetwork_conversion_value_schema}
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for CreateSKAdNetworkConversionValueSchema RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSkAdNetworkConversionValueSchemaRequest {
+    /// Required. The parent resource where this schema will be created.
+    /// Format: properties/{property}/dataStreams/{dataStream}
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. SKAdNetwork conversion value schema to create.
+    #[prost(message, optional, tag = "2")]
+    pub skadnetwork_conversion_value_schema:
+        ::core::option::Option<SkAdNetworkConversionValueSchema>,
+}
+/// Request message for DeleteSKAdNetworkConversionValueSchema RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteSkAdNetworkConversionValueSchemaRequest {
+    /// Required. The name of the SKAdNetworkConversionValueSchema to delete.
+    /// Format:
+    /// properties/{property}/dataStreams/{dataStream}/sKAdNetworkConversionValueSchema/{skadnetwork_conversion_value_schema}
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for UpdateSKAdNetworkConversionValueSchema RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateSkAdNetworkConversionValueSchemaRequest {
+    /// Required. SKAdNetwork conversion value schema to update.
+    #[prost(message, optional, tag = "1")]
+    pub skadnetwork_conversion_value_schema:
+        ::core::option::Option<SkAdNetworkConversionValueSchema>,
+    /// Required. The list of fields to be updated. Omitted fields will not be
+    /// updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request message for ListSKAdNetworkConversionValueSchemas RPC
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSkAdNetworkConversionValueSchemasRequest {
+    /// Required. The DataStream resource to list schemas for.
+    /// Format:
+    /// properties/{property_id}/dataStreams/{dataStream}
+    /// Example: properties/1234/dataStreams/5678
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of resources to return. The service may return
+    /// fewer than this value, even if there are additional pages.
+    /// If unspecified, at most 50 resources will be returned.
+    /// The maximum value is 200; (higher values will be coerced to the maximum)
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous
+    /// `ListSKAdNetworkConversionValueSchemas` call. Provide this to retrieve the
+    /// subsequent page. When paginating, all other parameters provided to
+    /// `ListSKAdNetworkConversionValueSchema` must match the call that provided
+    /// the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for ListSKAdNetworkConversionValueSchemas RPC
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSkAdNetworkConversionValueSchemasResponse {
+    /// List of SKAdNetworkConversionValueSchemas. This will have at most one
+    /// value.
+    #[prost(message, repeated, tag = "1")]
+    pub skadnetwork_conversion_value_schemas:
+        ::prost::alloc::vec::Vec<SkAdNetworkConversionValueSchema>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    /// Currently, Google Analytics supports only one
+    /// SKAdNetworkConversionValueSchema per dataStream, so this will never be
+    /// populated.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
@@ -3382,6 +3726,20 @@ pub struct CreateConversionEventRequest {
     /// event will be created. Format: properties/123
     #[prost(string, tag = "2")]
     pub parent: ::prost::alloc::string::String,
+}
+/// Request message for UpdateConversionEvent RPC
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateConversionEventRequest {
+    /// Required. The conversion event to update.
+    /// The `name` field is used to identify the settings to be updated.
+    #[prost(message, optional, tag = "1")]
+    pub conversion_event: ::core::option::Option<ConversionEvent>,
+    /// Required. The list of fields to be updated. Field names must be in snake
+    /// case (e.g., "field_to_update"). Omitted fields will not be updated. To
+    /// replace the entire entity, use one path with the string "*" to match all
+    /// fields.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Request message for GetConversionEvent RPC
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -3786,6 +4144,87 @@ pub struct ArchiveCustomMetricRequest {
 pub struct GetCustomMetricRequest {
     /// Required. The name of the CustomMetric to get.
     /// Example format: properties/1234/customMetrics/5678
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for CreateCalculatedMetric RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateCalculatedMetricRequest {
+    /// Required. Format: properties/{property_id}
+    /// Example: properties/1234
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The ID to use for the calculated metric which will become the
+    /// final component of the calculated metric's resource name.
+    ///
+    /// This value should be 1-80 characters and valid characters are
+    /// /\[a-zA-Z0-9_\]/, no spaces allowed. calculated_metric_id must be unique
+    /// between all calculated metrics under a property. The calculated_metric_id
+    /// is used when referencing this calculated metric from external APIs, for
+    /// example, "calcMetric:{calculated_metric_id}".
+    #[prost(string, tag = "2")]
+    pub calculated_metric_id: ::prost::alloc::string::String,
+    /// Required. The CalculatedMetric to create.
+    #[prost(message, optional, tag = "3")]
+    pub calculated_metric: ::core::option::Option<CalculatedMetric>,
+}
+/// Request message for UpdateCalculatedMetric RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateCalculatedMetricRequest {
+    /// Required. The CalculatedMetric to update
+    #[prost(message, optional, tag = "1")]
+    pub calculated_metric: ::core::option::Option<CalculatedMetric>,
+    /// Required. The list of fields to be updated. Omitted fields will not be
+    /// updated. To replace the entire entity, use one path with the string "*" to
+    /// match all fields.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request message for DeleteCalculatedMetric RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteCalculatedMetricRequest {
+    /// Required. The name of the CalculatedMetric to delete.
+    /// Format: properties/{property_id}/calculatedMetrics/{calculated_metric_id}
+    /// Example: properties/1234/calculatedMetrics/Metric01
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for ListCalculatedMetrics RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListCalculatedMetricsRequest {
+    /// Required. Example format: properties/1234
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of resources to return.
+    /// If unspecified, at most 50 resources will be returned.
+    /// The maximum value is 200 (higher values will be coerced to the maximum).
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token, received from a previous `ListCalculatedMetrics`
+    /// call. Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to `ListCalculatedMetrics`
+    /// must match the call that provided the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for ListCalculatedMetrics RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListCalculatedMetricsResponse {
+    /// List of CalculatedMetrics.
+    #[prost(message, repeated, tag = "1")]
+    pub calculated_metrics: ::prost::alloc::vec::Vec<CalculatedMetric>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for GetCalculatedMetric RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetCalculatedMetricRequest {
+    /// Required. The name of the CalculatedMetric to get.
+    /// Format: properties/{property_id}/calculatedMetrics/{calculated_metric_id}
+    /// Example: properties/1234/calculatedMetrics/Metric01
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -4373,6 +4812,30 @@ pub struct UpdateEnhancedMeasurementSettingsRequest {
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
+/// Request message for GetDataRedactionSettings RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDataRedactionSettingsRequest {
+    /// Required. The name of the settings to lookup.
+    /// Format:
+    /// properties/{property}/dataStreams/{data_stream}/dataRedactionSettings
+    /// Example: "properties/1000/dataStreams/2000/dataRedactionSettings"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for UpdateDataRedactionSettings RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateDataRedactionSettingsRequest {
+    /// Required. The settings to update.
+    /// The `name` field is used to identify the settings to be updated.
+    #[prost(message, optional, tag = "1")]
+    pub data_redaction_settings: ::core::option::Option<DataRedactionSettings>,
+    /// Required. The list of fields to be updated. Field names must be in snake
+    /// case (e.g., "field_to_update"). Omitted fields will not be updated. To
+    /// replace the entire entity, use one path with the string "*" to match all
+    /// fields.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
 /// Request message for CreateConnectedSiteTag RPC.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateConnectedSiteTagRequest {
@@ -4576,6 +5039,191 @@ pub struct ListEventCreateRulesResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
+/// Request message for CreateRollupProperty RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateRollupPropertyRequest {
+    /// Required. The roll-up property to create.
+    #[prost(message, optional, tag = "1")]
+    pub rollup_property: ::core::option::Option<Property>,
+    /// Optional. The resource names of properties that will be sources to the
+    /// created roll-up property.
+    #[prost(string, repeated, tag = "2")]
+    pub source_properties: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Response message for CreateRollupProperty RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateRollupPropertyResponse {
+    /// The created roll-up property.
+    #[prost(message, optional, tag = "1")]
+    pub rollup_property: ::core::option::Option<Property>,
+    /// The created roll-up property source links.
+    #[prost(message, repeated, tag = "2")]
+    pub rollup_property_source_links: ::prost::alloc::vec::Vec<RollupPropertySourceLink>,
+}
+/// Request message for GetRollupPropertySourceLink RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetRollupPropertySourceLinkRequest {
+    /// Required. The name of the roll-up property source link to lookup.
+    /// Format:
+    /// properties/{property_id}/rollupPropertySourceLinks/{rollup_property_source_link_id}
+    /// Example: properties/123/rollupPropertySourceLinks/456
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for ListRollupPropertySourceLinks RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListRollupPropertySourceLinksRequest {
+    /// Required. The name of the roll-up property to list roll-up property source
+    /// links under. Format: properties/{property_id} Example: properties/1234
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of resources to return. The service may return
+    /// fewer than this value, even if there are additional pages.
+    /// If unspecified, at most 50 resources will be returned.
+    /// The maximum value is 200; (higher values will be coerced to the maximum)
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token, received from a previous
+    /// `ListRollupPropertySourceLinks` call. Provide this to retrieve the
+    /// subsequent page. When paginating, all other parameters provided to
+    /// `ListRollupPropertySourceLinks` must match the call that provided the page
+    /// token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for ListRollupPropertySourceLinks RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListRollupPropertySourceLinksResponse {
+    /// List of RollupPropertySourceLinks.
+    #[prost(message, repeated, tag = "1")]
+    pub rollup_property_source_links: ::prost::alloc::vec::Vec<RollupPropertySourceLink>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for CreateRollupPropertySourceLink RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateRollupPropertySourceLinkRequest {
+    /// Required. Format: properties/{property_id}
+    /// Example: properties/1234
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The roll-up property source link to create.
+    #[prost(message, optional, tag = "2")]
+    pub rollup_property_source_link: ::core::option::Option<RollupPropertySourceLink>,
+}
+/// Request message for DeleteRollupPropertySourceLink RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteRollupPropertySourceLinkRequest {
+    /// Required. Format:
+    /// properties/{property_id}/rollupPropertySourceLinks/{rollup_property_source_link_id}
+    /// Example: properties/1234/rollupPropertySourceLinks/5678
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for CreateSubproperty RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSubpropertyRequest {
+    /// Required. The ordinary property for which to create a subproperty.
+    /// Format: properties/property_id
+    /// Example: properties/123
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The subproperty to create.
+    #[prost(message, optional, tag = "2")]
+    pub subproperty: ::core::option::Option<Property>,
+    /// Optional. The subproperty event filter to create on an ordinary property.
+    #[prost(message, optional, tag = "3")]
+    pub subproperty_event_filter: ::core::option::Option<SubpropertyEventFilter>,
+}
+/// Response message for CreateSubproperty RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSubpropertyResponse {
+    /// The created subproperty.
+    #[prost(message, optional, tag = "1")]
+    pub subproperty: ::core::option::Option<Property>,
+    /// The created subproperty event filter.
+    #[prost(message, optional, tag = "2")]
+    pub subproperty_event_filter: ::core::option::Option<SubpropertyEventFilter>,
+}
+/// Request message for CreateSubpropertyEventFilter RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSubpropertyEventFilterRequest {
+    /// Required. The ordinary property for which to create a subproperty event
+    /// filter. Format: properties/property_id Example: properties/123
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The subproperty event filter to create.
+    #[prost(message, optional, tag = "2")]
+    pub subproperty_event_filter: ::core::option::Option<SubpropertyEventFilter>,
+}
+/// Request message for GetSubpropertyEventFilter RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSubpropertyEventFilterRequest {
+    /// Required. Resource name of the subproperty event filter to lookup.
+    /// Format:
+    /// properties/property_id/subpropertyEventFilters/subproperty_event_filter
+    /// Example: properties/123/subpropertyEventFilters/456
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for ListSubpropertyEventFilters RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSubpropertyEventFiltersRequest {
+    /// Required. Resource name of the ordinary property.
+    /// Format: properties/property_id
+    /// Example: properties/123
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of resources to return. The service may return
+    /// fewer than this value, even if there are additional pages. If unspecified,
+    /// at most 50 resources will be returned. The maximum value is 200; (higher
+    /// values will be coerced to the maximum)
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token, received from a previous
+    /// `ListSubpropertyEventFilters` call. Provide this to retrieve the subsequent
+    /// page. When paginating, all other parameters provided to
+    /// `ListSubpropertyEventFilters` must match the call that provided the page
+    /// token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for ListSubpropertyEventFilter RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSubpropertyEventFiltersResponse {
+    /// List of subproperty event filters.
+    #[prost(message, repeated, tag = "1")]
+    pub subproperty_event_filters: ::prost::alloc::vec::Vec<SubpropertyEventFilter>,
+    /// A token, which can be sent as `page_token` to retrieve the next page. If
+    /// this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for UpdateSubpropertyEventFilter RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateSubpropertyEventFilterRequest {
+    /// Required. The subproperty event filter to update.
+    #[prost(message, optional, tag = "1")]
+    pub subproperty_event_filter: ::core::option::Option<SubpropertyEventFilter>,
+    /// Required. The list of fields to update. Field names must be in snake case
+    /// (for example, "field_to_update"). Omitted fields will not be updated. To
+    /// replace the entire entity, use one path with the string "*" to match all
+    /// fields.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request message for DeleteSubpropertyEventFilter RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteSubpropertyEventFilterRequest {
+    /// Required. Resource name of the subproperty event filter to delete.
+    /// Format:
+    /// properties/property_id/subpropertyEventFilters/subproperty_event_filter
+    /// Example: properties/123/subpropertyEventFilters/456
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
 #[doc = r" Generated client implementations."]
 pub mod analytics_admin_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -4671,7 +5319,7 @@ pub mod analytics_admin_service_client {
         #[doc = ""]
         #[doc = " If the accounts are not restored before the expiration time, the account"]
         #[doc = " and all child resources (eg: Properties, GoogleAdsLinks, Streams,"]
-        #[doc = " UserLinks) will be permanently purged."]
+        #[doc = " AccessBindings) will be permanently purged."]
         #[doc = " https://support.google.com/analytics/answer/6154772"]
         #[doc = ""]
         #[doc = " Returns an error if the target is not found."]
@@ -4804,7 +5452,7 @@ pub mod analytics_admin_service_client {
         #[doc = " However, they can be restored using the Trash Can UI."]
         #[doc = ""]
         #[doc = " If the properties are not restored before the expiration time, the Property"]
-        #[doc = " and all child resources (eg: GoogleAdsLinks, Streams, UserLinks)"]
+        #[doc = " and all child resources (eg: GoogleAdsLinks, Streams, AccessBindings)"]
         #[doc = " will be permanently purged."]
         #[doc = " https://support.google.com/analytics/answer/6154772"]
         #[doc = ""]
@@ -4839,191 +5487,6 @@ pub mod analytics_admin_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.analytics.admin.v1alpha.AnalyticsAdminService/UpdateProperty",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Gets information about a user's link to an account or property."]
-        pub async fn get_user_link(
-            &mut self,
-            request: impl tonic::IntoRequest<super::GetUserLinkRequest>,
-        ) -> Result<tonic::Response<super::UserLink>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/GetUserLink",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Gets information about multiple users' links to an account or property."]
-        pub async fn batch_get_user_links(
-            &mut self,
-            request: impl tonic::IntoRequest<super::BatchGetUserLinksRequest>,
-        ) -> Result<tonic::Response<super::BatchGetUserLinksResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/BatchGetUserLinks",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Lists all user links on an account or property."]
-        pub async fn list_user_links(
-            &mut self,
-            request: impl tonic::IntoRequest<super::ListUserLinksRequest>,
-        ) -> Result<tonic::Response<super::ListUserLinksResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/ListUserLinks",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Lists all user links on an account or property, including implicit ones"]
-        #[doc = " that come from effective permissions granted by groups or organization"]
-        #[doc = " admin roles."]
-        #[doc = ""]
-        #[doc = " If a returned user link does not have direct permissions, they cannot"]
-        #[doc = " be removed from the account or property directly with the DeleteUserLink"]
-        #[doc = " command. They have to be removed from the group/etc that gives them"]
-        #[doc = " permissions, which is currently only usable/discoverable in the GA or GMP"]
-        #[doc = " UIs."]
-        pub async fn audit_user_links(
-            &mut self,
-            request: impl tonic::IntoRequest<super::AuditUserLinksRequest>,
-        ) -> Result<tonic::Response<super::AuditUserLinksResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/AuditUserLinks",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Creates a user link on an account or property."]
-        #[doc = ""]
-        #[doc = " If the user with the specified email already has permissions on the"]
-        #[doc = " account or property, then the user's existing permissions will be unioned"]
-        #[doc = " with the permissions specified in the new UserLink."]
-        pub async fn create_user_link(
-            &mut self,
-            request: impl tonic::IntoRequest<super::CreateUserLinkRequest>,
-        ) -> Result<tonic::Response<super::UserLink>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/CreateUserLink",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Creates information about multiple users' links to an account or property."]
-        #[doc = ""]
-        #[doc = " This method is transactional. If any UserLink cannot be created, none of"]
-        #[doc = " the UserLinks will be created."]
-        pub async fn batch_create_user_links(
-            &mut self,
-            request: impl tonic::IntoRequest<super::BatchCreateUserLinksRequest>,
-        ) -> Result<tonic::Response<super::BatchCreateUserLinksResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/BatchCreateUserLinks",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Updates a user link on an account or property."]
-        pub async fn update_user_link(
-            &mut self,
-            request: impl tonic::IntoRequest<super::UpdateUserLinkRequest>,
-        ) -> Result<tonic::Response<super::UserLink>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/UpdateUserLink",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Updates information about multiple users' links to an account or property."]
-        pub async fn batch_update_user_links(
-            &mut self,
-            request: impl tonic::IntoRequest<super::BatchUpdateUserLinksRequest>,
-        ) -> Result<tonic::Response<super::BatchUpdateUserLinksResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/BatchUpdateUserLinks",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Deletes a user link on an account or property."]
-        pub async fn delete_user_link(
-            &mut self,
-            request: impl tonic::IntoRequest<super::DeleteUserLinkRequest>,
-        ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/DeleteUserLink",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Deletes information about multiple users' links to an account or property."]
-        pub async fn batch_delete_user_links(
-            &mut self,
-            request: impl tonic::IntoRequest<super::BatchDeleteUserLinksRequest>,
-        ) -> Result<tonic::Response<()>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.analytics.admin.v1alpha.AnalyticsAdminService/BatchDeleteUserLinks",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -5282,6 +5745,88 @@ pub mod analytics_admin_service_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/AcknowledgeUserDataCollection") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Looks up a single SKAdNetworkConversionValueSchema."]
+        pub async fn get_sk_ad_network_conversion_value_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSkAdNetworkConversionValueSchemaRequest>,
+        ) -> Result<tonic::Response<super::SkAdNetworkConversionValueSchema>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/GetSKAdNetworkConversionValueSchema") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a SKAdNetworkConversionValueSchema."]
+        pub async fn create_sk_ad_network_conversion_value_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSkAdNetworkConversionValueSchemaRequest>,
+        ) -> Result<tonic::Response<super::SkAdNetworkConversionValueSchema>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/CreateSKAdNetworkConversionValueSchema") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes target SKAdNetworkConversionValueSchema."]
+        pub async fn delete_sk_ad_network_conversion_value_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteSkAdNetworkConversionValueSchemaRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/DeleteSKAdNetworkConversionValueSchema") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a SKAdNetworkConversionValueSchema."]
+        pub async fn update_sk_ad_network_conversion_value_schema(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateSkAdNetworkConversionValueSchemaRequest>,
+        ) -> Result<tonic::Response<super::SkAdNetworkConversionValueSchema>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/UpdateSKAdNetworkConversionValueSchema") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists SKAdNetworkConversionValueSchema on a stream."]
+        #[doc = " Properties can have at most one SKAdNetworkConversionValueSchema."]
+        pub async fn list_sk_ad_network_conversion_value_schemas(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListSkAdNetworkConversionValueSchemasRequest>,
+        ) -> Result<
+            tonic::Response<super::ListSkAdNetworkConversionValueSchemasResponse>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/ListSKAdNetworkConversionValueSchemas") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Searches through all changes to an account or its children given the"]
         #[doc = " specified set of filters."]
         pub async fn search_change_history_events(
@@ -5349,6 +5894,23 @@ pub mod analytics_admin_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.analytics.admin.v1alpha.AnalyticsAdminService/CreateConversionEvent",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a conversion event with the specified attributes."]
+        pub async fn update_conversion_event(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateConversionEventRequest>,
+        ) -> Result<tonic::Response<super::ConversionEvent>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/UpdateConversionEvent",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -6092,8 +6654,10 @@ pub mod analytics_admin_service_client {
         #[doc = " records of each time a user reads Google Analytics reporting data. Access"]
         #[doc = " records are retained for up to 2 years."]
         #[doc = ""]
-        #[doc = " Data Access Reports can be requested for a property. The property must be"]
-        #[doc = " in Google Analytics 360. This method is only available to Administrators."]
+        #[doc = " Data Access Reports can be requested for a property. Reports may be"]
+        #[doc = " requested for any property, but dimensions that aren't related to quota can"]
+        #[doc = " only be requested on Google Analytics 360 properties. This method is only"]
+        #[doc = " available to Administrators."]
         #[doc = ""]
         #[doc = " These data access records include GA4 UI Reporting, GA4 UI Explorations,"]
         #[doc = " GA4 Data API, and other products like Firebase & Admob that can retrieve"]
@@ -6779,6 +7343,311 @@ pub mod analytics_admin_service_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.analytics.admin.v1alpha.AnalyticsAdminService/DeleteEventCreateRule",
             );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a DataRedactionSettings on a property."]
+        pub async fn update_data_redaction_settings(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateDataRedactionSettingsRequest>,
+        ) -> Result<tonic::Response<super::DataRedactionSettings>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/UpdateDataRedactionSettings",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lookup for a single DataRedactionSettings."]
+        pub async fn get_data_redaction_settings(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDataRedactionSettingsRequest>,
+        ) -> Result<tonic::Response<super::DataRedactionSettings>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/GetDataRedactionSettings",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lookup for a single CalculatedMetric."]
+        pub async fn get_calculated_metric(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetCalculatedMetricRequest>,
+        ) -> Result<tonic::Response<super::CalculatedMetric>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/GetCalculatedMetric",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a CalculatedMetric."]
+        pub async fn create_calculated_metric(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateCalculatedMetricRequest>,
+        ) -> Result<tonic::Response<super::CalculatedMetric>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/CreateCalculatedMetric",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists CalculatedMetrics on a property."]
+        pub async fn list_calculated_metrics(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListCalculatedMetricsRequest>,
+        ) -> Result<tonic::Response<super::ListCalculatedMetricsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/ListCalculatedMetrics",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a CalculatedMetric on a property."]
+        pub async fn update_calculated_metric(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateCalculatedMetricRequest>,
+        ) -> Result<tonic::Response<super::CalculatedMetric>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/UpdateCalculatedMetric",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a CalculatedMetric on a property."]
+        pub async fn delete_calculated_metric(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteCalculatedMetricRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/DeleteCalculatedMetric",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Create a roll-up property and all roll-up property source links."]
+        pub async fn create_rollup_property(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateRollupPropertyRequest>,
+        ) -> Result<tonic::Response<super::CreateRollupPropertyResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/CreateRollupProperty",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lookup for a single roll-up property source Link."]
+        #[doc = " Only roll-up properties can have source links, so this method will throw an"]
+        #[doc = " error if used on other types of properties."]
+        pub async fn get_rollup_property_source_link(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetRollupPropertySourceLinkRequest>,
+        ) -> Result<tonic::Response<super::RollupPropertySourceLink>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/GetRollupPropertySourceLink",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists roll-up property source Links on a property."]
+        #[doc = " Only roll-up properties can have source links, so this method will throw an"]
+        #[doc = " error if used on other types of properties."]
+        pub async fn list_rollup_property_source_links(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListRollupPropertySourceLinksRequest>,
+        ) -> Result<tonic::Response<super::ListRollupPropertySourceLinksResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/ListRollupPropertySourceLinks") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a roll-up property source link."]
+        #[doc = " Only roll-up properties can have source links, so this method will throw an"]
+        #[doc = " error if used on other types of properties."]
+        pub async fn create_rollup_property_source_link(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateRollupPropertySourceLinkRequest>,
+        ) -> Result<tonic::Response<super::RollupPropertySourceLink>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/CreateRollupPropertySourceLink") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a roll-up property source link."]
+        #[doc = " Only roll-up properties can have source links, so this method will throw an"]
+        #[doc = " error if used on other types of properties."]
+        pub async fn delete_rollup_property_source_link(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteRollupPropertySourceLinkRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/DeleteRollupPropertySourceLink") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Create a subproperty and a subproperty event filter that applies to the"]
+        #[doc = " created subproperty."]
+        pub async fn create_subproperty(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSubpropertyRequest>,
+        ) -> Result<tonic::Response<super::CreateSubpropertyResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/CreateSubproperty",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a subproperty Event Filter."]
+        pub async fn create_subproperty_event_filter(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSubpropertyEventFilterRequest>,
+        ) -> Result<tonic::Response<super::SubpropertyEventFilter>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/CreateSubpropertyEventFilter") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lookup for a single subproperty Event Filter."]
+        pub async fn get_subproperty_event_filter(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSubpropertyEventFilterRequest>,
+        ) -> Result<tonic::Response<super::SubpropertyEventFilter>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/GetSubpropertyEventFilter",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " List all subproperty Event Filters on a property."]
+        pub async fn list_subproperty_event_filters(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListSubpropertyEventFiltersRequest>,
+        ) -> Result<tonic::Response<super::ListSubpropertyEventFiltersResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.analytics.admin.v1alpha.AnalyticsAdminService/ListSubpropertyEventFilters",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a subproperty Event Filter."]
+        pub async fn update_subproperty_event_filter(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateSubpropertyEventFilterRequest>,
+        ) -> Result<tonic::Response<super::SubpropertyEventFilter>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/UpdateSubpropertyEventFilter") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a subproperty event filter."]
+        pub async fn delete_subproperty_event_filter(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteSubpropertyEventFilterRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.analytics.admin.v1alpha.AnalyticsAdminService/DeleteSubpropertyEventFilter") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }

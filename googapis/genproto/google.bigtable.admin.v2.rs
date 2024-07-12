@@ -61,9 +61,9 @@ pub struct Instance {
     #[prost(map = "string, string", tag = "5")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Output only. A server-assigned timestamp representing when this Instance was created.
-    /// For instances created before this field was added (August 2021), this value
-    /// is `seconds: 0, nanos: 1`.
+    /// Output only. A server-assigned timestamp representing when this Instance
+    /// was created. For instances created before this field was added (August
+    /// 2021), this value is `seconds: 0, nanos: 1`.
     #[prost(message, optional, tag = "7")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Output only. Reserved for future use.
@@ -112,7 +112,7 @@ pub struct AutoscalingTargets {
     pub cpu_utilization_percent: i32,
     /// The storage utilization that the Autoscaler should be trying to achieve.
     /// This number is limited between 2560 (2.5TiB) and 5120 (5TiB) for a SSD
-    /// cluster and between 8192 (8TiB) and 16384 (16TiB) for an HDD cluster;
+    /// cluster and between 8192 (8TiB) and 16384 (16TiB) for an HDD cluster,
     /// otherwise it will return INVALID_ARGUMENT error. If this value is set to 0,
     /// it will be treated as if it were set to the default value: 2560 for SSD,
     /// 8192 for HDD.
@@ -138,8 +138,8 @@ pub struct Cluster {
     /// `projects/{project}/instances/{instance}/clusters/\[a-z][-a-z0-9\]*`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Immutable. The location where this cluster's nodes and storage reside. For best
-    /// performance, clients should be located as close as possible to this
+    /// Immutable. The location where this cluster's nodes and storage reside. For
+    /// best performance, clients should be located as close as possible to this
     /// cluster. Currently only zones are supported, so values should be of the
     /// form `projects/{project}/locations/{zone}`.
     #[prost(string, tag = "2")]
@@ -251,6 +251,9 @@ pub struct AppProfile {
     /// A value must be explicitly set.
     #[prost(oneof = "app_profile::RoutingPolicy", tags = "5, 6")]
     pub routing_policy: ::core::option::Option<app_profile::RoutingPolicy>,
+    /// Options for isolating this app profile's traffic from other use cases.
+    #[prost(oneof = "app_profile::Isolation", tags = "7, 11, 10")]
+    pub isolation: ::core::option::Option<app_profile::Isolation>,
 }
 /// Nested message and enum types in `AppProfile`.
 pub mod app_profile {
@@ -280,6 +283,65 @@ pub mod app_profile {
         #[prost(bool, tag = "2")]
         pub allow_transactional_writes: bool,
     }
+    /// Standard options for isolating this app profile's traffic from other use
+    /// cases.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct StandardIsolation {
+        /// The priority of requests sent using this app profile.
+        #[prost(enumeration = "Priority", tag = "1")]
+        pub priority: i32,
+    }
+    /// Data Boost is a serverless compute capability that lets you run
+    /// high-throughput read jobs on your Bigtable data, without impacting the
+    /// performance of the clusters that handle your application traffic.
+    /// Currently, Data Boost exclusively supports read-only use-cases with
+    /// single-cluster routing.
+    ///
+    /// Data Boost reads are only guaranteed to see the results of writes that
+    /// were written at least 30 minutes ago. This means newly written values may
+    /// not become visible for up to 30m, and also means that old values may
+    /// remain visible for up to 30m after being deleted or overwritten. To
+    /// mitigate the staleness of the data, users may either wait 30m, or use
+    /// CheckConsistency.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DataBoostIsolationReadOnly {
+        /// The Compute Billing Owner for this Data Boost App Profile.
+        #[prost(
+            enumeration = "data_boost_isolation_read_only::ComputeBillingOwner",
+            optional,
+            tag = "1"
+        )]
+        pub compute_billing_owner: ::core::option::Option<i32>,
+    }
+    /// Nested message and enum types in `DataBoostIsolationReadOnly`.
+    pub mod data_boost_isolation_read_only {
+        /// Compute Billing Owner specifies how usage should be accounted when using
+        /// Data Boost. Compute Billing Owner also configures which Cloud Project is
+        /// charged for relevant quota.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum ComputeBillingOwner {
+            /// Unspecified value.
+            Unspecified = 0,
+            /// The host Cloud Project containing the targeted Bigtable Instance /
+            /// Table pays for compute.
+            HostPays = 1,
+        }
+    }
+    /// Possible priorities for an app profile. Note that higher priority writes
+    /// can sometimes queue behind lower priority writes to the same tablet, as
+    /// writes must be strictly sequenced in the durability log.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Priority {
+        /// Default value. Mapped to PRIORITY_HIGH (the legacy behavior) on creation.
+        Unspecified = 0,
+        Low = 1,
+        Medium = 2,
+        High = 3,
+    }
     /// The routing policy for all read/write requests that use this app profile.
     /// A value must be explicitly set.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
@@ -290,6 +352,24 @@ pub mod app_profile {
         /// Use a single-cluster routing policy.
         #[prost(message, tag = "6")]
         SingleClusterRouting(SingleClusterRouting),
+    }
+    /// Options for isolating this app profile's traffic from other use cases.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Isolation {
+        /// This field has been deprecated in favor of `standard_isolation.priority`.
+        /// If you set this field, `standard_isolation.priority` will be set instead.
+        ///
+        /// The priority of requests sent using this app profile.
+        #[prost(enumeration = "Priority", tag = "7")]
+        Priority(i32),
+        /// The standard options used for isolating this app profile's traffic from
+        /// other use cases.
+        #[prost(message, tag = "11")]
+        StandardIsolation(StandardIsolation),
+        /// Specifies that this app profile is intended for read-only usage via the
+        /// Data Boost feature.
+        #[prost(message, tag = "10")]
+        DataBoostIsolationReadOnly(DataBoostIsolationReadOnly),
     }
 }
 /// A tablet is a defined by a start and end key and is explained in
@@ -319,22 +399,22 @@ pub struct HotTablet {
     /// Tablet End Key (inclusive).
     #[prost(string, tag = "6")]
     pub end_key: ::prost::alloc::string::String,
-    /// Output only. The average CPU usage spent by a node on this tablet over the start_time to
-    /// end_time time range. The percentage is the amount of CPU used by the node
-    /// to serve the tablet, from 0% (tablet was not interacted with) to 100% (the
-    /// node spent all cycles serving the hot tablet).
+    /// Output only. The average CPU usage spent by a node on this tablet over the
+    /// start_time to end_time time range. The percentage is the amount of CPU used
+    /// by the node to serve the tablet, from 0% (tablet was not interacted with)
+    /// to 100% (the node spent all cycles serving the hot tablet).
     #[prost(float, tag = "7")]
     pub node_cpu_usage_percent: f32,
 }
 /// Request message for BigtableInstanceAdmin.CreateInstance.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateInstanceRequest {
-    /// Required. The unique name of the project in which to create the new instance.
-    /// Values are of the form `projects/{project}`.
+    /// Required. The unique name of the project in which to create the new
+    /// instance. Values are of the form `projects/{project}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The ID to be used when referring to the new instance within its project,
-    /// e.g., just `myinstance` rather than
+    /// Required. The ID to be used when referring to the new instance within its
+    /// project, e.g., just `myinstance` rather than
     /// `projects/myproject/instances/myinstance`.
     #[prost(string, tag = "2")]
     pub instance_id: ::prost::alloc::string::String,
@@ -361,8 +441,8 @@ pub struct GetInstanceRequest {
 /// Request message for BigtableInstanceAdmin.ListInstances.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListInstancesRequest {
-    /// Required. The unique name of the project for which a list of instances is requested.
-    /// Values are of the form `projects/{project}`.
+    /// Required. The unique name of the project for which a list of instances is
+    /// requested. Values are of the form `projects/{project}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// DEPRECATED: This field is unused and ignored.
@@ -409,13 +489,12 @@ pub struct DeleteInstanceRequest {
 /// Request message for BigtableInstanceAdmin.CreateCluster.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateClusterRequest {
-    /// Required. The unique name of the instance in which to create the new cluster.
-    /// Values are of the form
-    /// `projects/{project}/instances/{instance}`.
+    /// Required. The unique name of the instance in which to create the new
+    /// cluster. Values are of the form `projects/{project}/instances/{instance}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The ID to be used when referring to the new cluster within its instance,
-    /// e.g., just `mycluster` rather than
+    /// Required. The ID to be used when referring to the new cluster within its
+    /// instance, e.g., just `mycluster` rather than
     /// `projects/myproject/instances/myinstance/clusters/mycluster`.
     #[prost(string, tag = "2")]
     pub cluster_id: ::prost::alloc::string::String,
@@ -435,10 +514,11 @@ pub struct GetClusterRequest {
 /// Request message for BigtableInstanceAdmin.ListClusters.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListClustersRequest {
-    /// Required. The unique name of the instance for which a list of clusters is requested.
-    /// Values are of the form `projects/{project}/instances/{instance}`.
-    /// Use `{instance} = '-'` to list Clusters for all Instances in a project,
-    /// e.g., `projects/myproject/instances/-`.
+    /// Required. The unique name of the instance for which a list of clusters is
+    /// requested. Values are of the form
+    /// `projects/{project}/instances/{instance}`. Use `{instance} = '-'` to list
+    /// Clusters for all Instances in a project, e.g.,
+    /// `projects/myproject/instances/-`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// DEPRECATED: This field is unused and ignored.
@@ -465,8 +545,8 @@ pub struct ListClustersResponse {
 /// Request message for BigtableInstanceAdmin.DeleteCluster.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteClusterRequest {
-    /// Required. The unique name of the cluster to be deleted. Values are of the form
-    /// `projects/{project}/instances/{instance}/clusters/{cluster}`.
+    /// Required. The unique name of the cluster to be deleted. Values are of the
+    /// form `projects/{project}/instances/{instance}/clusters/{cluster}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -588,8 +668,8 @@ pub struct PartialUpdateClusterMetadata {
 /// Request message for BigtableInstanceAdmin.PartialUpdateCluster.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PartialUpdateClusterRequest {
-    /// Required. The Cluster which contains the partial updates to be applied, subject to
-    /// the update_mask.
+    /// Required. The Cluster which contains the partial updates to be applied,
+    /// subject to the update_mask.
     #[prost(message, optional, tag = "1")]
     pub cluster: ::core::option::Option<Cluster>,
     /// Required. The subset of Cluster fields which should be replaced.
@@ -599,13 +679,12 @@ pub struct PartialUpdateClusterRequest {
 /// Request message for BigtableInstanceAdmin.CreateAppProfile.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAppProfileRequest {
-    /// Required. The unique name of the instance in which to create the new app profile.
-    /// Values are of the form
-    /// `projects/{project}/instances/{instance}`.
+    /// Required. The unique name of the instance in which to create the new app
+    /// profile. Values are of the form `projects/{project}/instances/{instance}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The ID to be used when referring to the new app profile within its
-    /// instance, e.g., just `myprofile` rather than
+    /// Required. The ID to be used when referring to the new app profile within
+    /// its instance, e.g., just `myprofile` rather than
     /// `projects/myproject/instances/myinstance/appProfiles/myprofile`.
     #[prost(string, tag = "2")]
     pub app_profile_id: ::prost::alloc::string::String,
@@ -620,16 +699,16 @@ pub struct CreateAppProfileRequest {
 /// Request message for BigtableInstanceAdmin.GetAppProfile.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetAppProfileRequest {
-    /// Required. The unique name of the requested app profile. Values are of the form
-    /// `projects/{project}/instances/{instance}/appProfiles/{app_profile}`.
+    /// Required. The unique name of the requested app profile. Values are of the
+    /// form `projects/{project}/instances/{instance}/appProfiles/{app_profile}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for BigtableInstanceAdmin.ListAppProfiles.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListAppProfilesRequest {
-    /// Required. The unique name of the instance for which a list of app profiles is
-    /// requested. Values are of the form
+    /// Required. The unique name of the instance for which a list of app profiles
+    /// is requested. Values are of the form
     /// `projects/{project}/instances/{instance}`.
     /// Use `{instance} = '-'` to list AppProfiles for all Instances in a project,
     /// e.g., `projects/myproject/instances/-`.
@@ -685,7 +764,8 @@ pub struct UpdateAppProfileRequest {
 /// Request message for BigtableInstanceAdmin.DeleteAppProfile.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteAppProfileRequest {
-    /// Required. The unique name of the app profile to be deleted. Values are of the form
+    /// Required. The unique name of the app profile to be deleted. Values are of
+    /// the form
     /// `projects/{project}/instances/{instance}/appProfiles/{app_profile}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -1215,6 +1295,209 @@ pub mod bigtable_instance_admin_client {
         }
     }
 }
+/// `Type` represents the type of data that is written to, read from, or stored
+/// in Bigtable. It is heavily based on the GoogleSQL standard to help maintain
+/// familiarity and consistency across products and features.
+///
+/// For compatibility with Bigtable's existing untyped APIs, each `Type` includes
+/// an `Encoding` which describes how to convert to/from the underlying data.
+/// This might involve composing a series of steps into an "encoding chain," for
+/// example to convert from INT64 -> STRING -> raw bytes. In most cases, a "link"
+/// in the encoding chain will be based an on existing GoogleSQL conversion
+/// function like `CAST`.
+///
+/// Each link in the encoding chain also defines the following properties:
+///  * Natural sort: Does the encoded value sort consistently with the original
+///    typed value? Note that Bigtable will always sort data based on the raw
+///    encoded value, *not* the decoded type.
+///     - Example: BYTES values sort in the same order as their raw encodings.
+///     - Counterexample: Encoding INT64 to a fixed-width STRING does *not*
+///       preserve sort order when dealing with negative numbers.
+///       INT64(1) > INT64(-1), but STRING("-00001") > STRING("00001).
+///     - The overall encoding chain has this property if *every* link does.
+///  * Self-delimiting: If we concatenate two encoded values, can we always tell
+///    where the first one ends and the second one begins?
+///     - Example: If we encode INT64s to fixed-width STRINGs, the first value
+///       will always contain exactly N digits, possibly preceded by a sign.
+///     - Counterexample: If we concatenate two UTF-8 encoded STRINGs, we have
+///       no way to tell where the first one ends.
+///     - The overall encoding chain has this property if *any* link does.
+///  * Compatibility: Which other systems have matching encoding schemes? For
+///    example, does this encoding have a GoogleSQL equivalent? HBase? Java?
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Type {
+    /// The kind of type that this represents.
+    #[prost(oneof = "r#type::Kind", tags = "1, 2, 5, 6")]
+    pub kind: ::core::option::Option<r#type::Kind>,
+}
+/// Nested message and enum types in `Type`.
+pub mod r#type {
+    /// Bytes
+    /// Values of type `Bytes` are stored in `Value.bytes_value`.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Bytes {
+        /// The encoding to use when converting to/from lower level types.
+        #[prost(message, optional, tag = "1")]
+        pub encoding: ::core::option::Option<bytes::Encoding>,
+    }
+    /// Nested message and enum types in `Bytes`.
+    pub mod bytes {
+        /// Rules used to convert to/from lower level types.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Encoding {
+            /// Which encoding to use.
+            #[prost(oneof = "encoding::Encoding", tags = "1")]
+            pub encoding: ::core::option::Option<encoding::Encoding>,
+        }
+        /// Nested message and enum types in `Encoding`.
+        pub mod encoding {
+            /// Leaves the value "as-is"
+            /// * Natural sort? Yes
+            /// * Self-delimiting? No
+            /// * Compatibility? N/A
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct Raw {}
+            /// Which encoding to use.
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum Encoding {
+                /// Use `Raw` encoding.
+                #[prost(message, tag = "1")]
+                Raw(Raw),
+            }
+        }
+    }
+    /// String
+    /// Values of type `String` are stored in `Value.string_value`.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct String {
+        /// The encoding to use when converting to/from lower level types.
+        #[prost(message, optional, tag = "1")]
+        pub encoding: ::core::option::Option<string::Encoding>,
+    }
+    /// Nested message and enum types in `String`.
+    pub mod string {
+        /// Rules used to convert to/from lower level types.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Encoding {
+            /// Which encoding to use.
+            #[prost(oneof = "encoding::Encoding", tags = "1")]
+            pub encoding: ::core::option::Option<encoding::Encoding>,
+        }
+        /// Nested message and enum types in `Encoding`.
+        pub mod encoding {
+            /// UTF-8 encoding
+            /// * Natural sort? No (ASCII characters only)
+            /// * Self-delimiting? No
+            /// * Compatibility?
+            ///    - BigQuery Federation `TEXT` encoding
+            ///    - HBase `Bytes.toBytes`
+            ///    - Java `String#getBytes(StandardCharsets.UTF_8)`
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct Utf8Raw {}
+            /// Which encoding to use.
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum Encoding {
+                /// Use `Utf8Raw` encoding.
+                #[prost(message, tag = "1")]
+                Utf8Raw(Utf8Raw),
+            }
+        }
+    }
+    /// Int64
+    /// Values of type `Int64` are stored in `Value.int_value`.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Int64 {
+        /// The encoding to use when converting to/from lower level types.
+        #[prost(message, optional, tag = "1")]
+        pub encoding: ::core::option::Option<int64::Encoding>,
+    }
+    /// Nested message and enum types in `Int64`.
+    pub mod int64 {
+        /// Rules used to convert to/from lower level types.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Encoding {
+            /// Which encoding to use.
+            #[prost(oneof = "encoding::Encoding", tags = "1")]
+            pub encoding: ::core::option::Option<encoding::Encoding>,
+        }
+        /// Nested message and enum types in `Encoding`.
+        pub mod encoding {
+            /// Encodes the value as an 8-byte big endian twos complement `Bytes`
+            /// value.
+            /// * Natural sort? No (positive values only)
+            /// * Self-delimiting? Yes
+            /// * Compatibility?
+            ///    - BigQuery Federation `BINARY` encoding
+            ///    - HBase `Bytes.toBytes`
+            ///    - Java `ByteBuffer.putLong()` with `ByteOrder.BIG_ENDIAN`
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct BigEndianBytes {
+                /// The underlying `Bytes` type, which may be able to encode further.
+                #[prost(message, optional, tag = "1")]
+                pub bytes_type: ::core::option::Option<super::super::Bytes>,
+            }
+            /// Which encoding to use.
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum Encoding {
+                /// Use `BigEndianBytes` encoding.
+                #[prost(message, tag = "1")]
+                BigEndianBytes(BigEndianBytes),
+            }
+        }
+    }
+    /// A value that combines incremental updates into a summarized value.
+    ///
+    /// Data is never directly written or read using type `Aggregate`. Writes will
+    /// provide either the `input_type` or `state_type`, and reads will always
+    /// return the `state_type` .
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Aggregate {
+        /// Type of the inputs that are accumulated by this `Aggregate`, which must
+        /// specify a full encoding.
+        /// Use `AddInput` mutations to accumulate new inputs.
+        #[prost(message, optional, boxed, tag = "1")]
+        pub input_type: ::core::option::Option<::prost::alloc::boxed::Box<super::Type>>,
+        /// Output only. Type that holds the internal accumulator state for the
+        /// `Aggregate`. This is a function of the `input_type` and `aggregator`
+        /// chosen, and will always specify a full encoding.
+        #[prost(message, optional, boxed, tag = "2")]
+        pub state_type: ::core::option::Option<::prost::alloc::boxed::Box<super::Type>>,
+        /// Which aggregator function to use. The configured types must match.
+        #[prost(oneof = "aggregate::Aggregator", tags = "4")]
+        pub aggregator: ::core::option::Option<aggregate::Aggregator>,
+    }
+    /// Nested message and enum types in `Aggregate`.
+    pub mod aggregate {
+        /// Computes the sum of the input values.
+        /// Allowed input: `Int64`
+        /// State: same as input
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Sum {}
+        /// Which aggregator function to use. The configured types must match.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Aggregator {
+            /// Sum aggregator.
+            #[prost(message, tag = "4")]
+            Sum(Sum),
+        }
+    }
+    /// The kind of type that this represents.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Kind {
+        /// Bytes
+        #[prost(message, tag = "1")]
+        BytesType(Bytes),
+        /// String
+        #[prost(message, tag = "2")]
+        StringType(String),
+        /// Int64
+        #[prost(message, tag = "5")]
+        Int64Type(Int64),
+        /// Aggregate
+        #[prost(message, tag = "6")]
+        AggregateType(::prost::alloc::boxed::Box<Aggregate>),
+    }
+}
 /// Information about a table restore.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RestoreInfo {
@@ -1265,17 +1548,17 @@ pub struct Table {
     pub cluster_states:
         ::std::collections::HashMap<::prost::alloc::string::String, table::ClusterState>,
     /// The column families configured for this table, mapped by column family ID.
-    /// Views: `SCHEMA_VIEW`, `FULL`
+    /// Views: `SCHEMA_VIEW`, `STATS_VIEW`, `FULL`
     #[prost(map = "string, message", tag = "3")]
     pub column_families: ::std::collections::HashMap<::prost::alloc::string::String, ColumnFamily>,
-    /// Immutable. The granularity (i.e. `MILLIS`) at which timestamps are stored in this
-    /// table. Timestamps not matching the granularity will be rejected.
-    /// If unspecified at creation time, the value will be set to `MILLIS`.
-    /// Views: `SCHEMA_VIEW`, `FULL`.
+    /// Immutable. The granularity (i.e. `MILLIS`) at which timestamps are stored
+    /// in this table. Timestamps not matching the granularity will be rejected. If
+    /// unspecified at creation time, the value will be set to `MILLIS`. Views:
+    /// `SCHEMA_VIEW`, `FULL`.
     #[prost(enumeration = "table::TimestampGranularity", tag = "4")]
     pub granularity: i32,
-    /// Output only. If this table was restored from another data source (e.g. a backup), this
-    /// field will be populated with information about the restore.
+    /// Output only. If this table was restored from another data source (e.g. a
+    /// backup), this field will be populated with information about the restore.
     #[prost(message, optional, tag = "6")]
     pub restore_info: ::core::option::Option<RestoreInfo>,
     /// If specified, enable the change stream on this table.
@@ -1285,12 +1568,16 @@ pub struct Table {
     pub change_stream_config: ::core::option::Option<ChangeStreamConfig>,
     /// Set to true to make the table protected against data loss. i.e. deleting
     /// the following resources through Admin APIs are prohibited:
-    ///   - The table.
-    ///   - The column families in the table.
-    ///   - The instance containing the table.
+    ///
+    /// * The table.
+    /// * The column families in the table.
+    /// * The instance containing the table.
+    ///
     /// Note one can still delete the data stored in the table through Data APIs.
     #[prost(bool, tag = "9")]
     pub deletion_protection: bool,
+    #[prost(oneof = "table::AutomatedBackupConfig", tags = "13")]
+    pub automated_backup_config: ::core::option::Option<table::AutomatedBackupConfig>,
 }
 /// Nested message and enum types in `Table`.
 pub mod table {
@@ -1338,6 +1625,18 @@ pub mod table {
             ReadyOptimizing = 5,
         }
     }
+    /// Defines an automated backup policy for a table
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AutomatedBackupPolicy {
+        /// Required. How long the automated backups should be retained. The only
+        /// supported value at this time is 3 days.
+        #[prost(message, optional, tag = "1")]
+        pub retention_period: ::core::option::Option<::prost_types::Duration>,
+        /// Required. How frequently automated backups should occur. The only
+        /// supported value at this time is 24 hours.
+        #[prost(message, optional, tag = "2")]
+        pub frequency: ::core::option::Option<::prost_types::Duration>,
+    }
     /// Possible timestamp granularities to use when keeping multiple versions
     /// of data in a table.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1367,6 +1666,88 @@ pub mod table {
         /// Populates all fields.
         Full = 4,
     }
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum AutomatedBackupConfig {
+        /// If specified, automated backups are enabled for this table.
+        /// Otherwise, automated backups are disabled.
+        #[prost(message, tag = "13")]
+        AutomatedBackupPolicy(AutomatedBackupPolicy),
+    }
+}
+/// AuthorizedViews represent subsets of a particular Cloud Bigtable table. Users
+/// can configure access to each Authorized View independently from the table and
+/// use the existing Data APIs to access the subset of data.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AuthorizedView {
+    /// Identifier. The name of this AuthorizedView.
+    /// Values are of the form
+    /// `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/{authorized_view}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The etag for this AuthorizedView.
+    /// If this is provided on update, it must match the server's etag. The server
+    /// returns ABORTED error on a mismatched etag.
+    #[prost(string, tag = "3")]
+    pub etag: ::prost::alloc::string::String,
+    /// Set to true to make the AuthorizedView protected against deletion.
+    /// The parent Table and containing Instance cannot be deleted if an
+    /// AuthorizedView has this bit set.
+    #[prost(bool, tag = "4")]
+    pub deletion_protection: bool,
+    /// The type of this AuthorizedView.
+    #[prost(oneof = "authorized_view::AuthorizedView", tags = "2")]
+    pub authorized_view: ::core::option::Option<authorized_view::AuthorizedView>,
+}
+/// Nested message and enum types in `AuthorizedView`.
+pub mod authorized_view {
+    /// Subsets of a column family that are included in this AuthorizedView.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FamilySubsets {
+        /// Individual exact column qualifiers to be included in the AuthorizedView.
+        #[prost(bytes = "vec", repeated, tag = "1")]
+        pub qualifiers: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+        /// Prefixes for qualifiers to be included in the AuthorizedView. Every
+        /// qualifier starting with one of these prefixes is included in the
+        /// AuthorizedView. To provide access to all qualifiers, include the empty
+        /// string as a prefix
+        /// ("").
+        #[prost(bytes = "vec", repeated, tag = "2")]
+        pub qualifier_prefixes: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+    }
+    /// Defines a simple AuthorizedView that is a subset of the underlying Table.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SubsetView {
+        /// Row prefixes to be included in the AuthorizedView.
+        /// To provide access to all rows, include the empty string as a prefix ("").
+        #[prost(bytes = "vec", repeated, tag = "1")]
+        pub row_prefixes: ::prost::alloc::vec::Vec<::prost::alloc::vec::Vec<u8>>,
+        /// Map from column family name to the columns in this family to be included
+        /// in the AuthorizedView.
+        #[prost(map = "string, message", tag = "2")]
+        pub family_subsets:
+            ::std::collections::HashMap<::prost::alloc::string::String, FamilySubsets>,
+    }
+    /// Defines a subset of an AuthorizedView's fields.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ResponseView {
+        /// Uses the default view for each method as documented in the request.
+        Unspecified = 0,
+        /// Only populates `name`.
+        NameOnly = 1,
+        /// Only populates the AuthorizedView's basic metadata. This includes:
+        /// name, deletion_protection, etag.
+        Basic = 2,
+        /// Populates every fields.
+        Full = 3,
+    }
+    /// The type of this AuthorizedView.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum AuthorizedView {
+        /// An AuthorizedView permitting access to an explicit subset of a Table.
+        #[prost(message, tag = "2")]
+        SubsetView(SubsetView),
+    }
 }
 /// A set of columns within a table which share a common configuration.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1379,6 +1760,18 @@ pub struct ColumnFamily {
     /// GC expression for its family.
     #[prost(message, optional, tag = "1")]
     pub gc_rule: ::core::option::Option<GcRule>,
+    /// The type of data stored in each of this family's cell values, including its
+    /// full encoding. If omitted, the family only serves raw untyped bytes.
+    ///
+    /// For now, only the `Aggregate` type is supported.
+    ///
+    /// `Aggregate` can only be set at family creation and is immutable afterwards.
+    ///
+    ///
+    /// If `value_type` is `Aggregate`, written data must be compatible with:
+    ///  * `value_type.input_type` for `AddInput` mutations
+    #[prost(message, optional, tag = "3")]
+    pub value_type: ::core::option::Option<Type>,
 }
 /// Rule for determining which cells to delete during garbage collection.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1431,12 +1824,13 @@ pub struct EncryptionInfo {
     /// Output only. The type of encryption used to protect this resource.
     #[prost(enumeration = "encryption_info::EncryptionType", tag = "3")]
     pub encryption_type: i32,
-    /// Output only. The status of encrypt/decrypt calls on underlying data for this resource.
-    /// Regardless of status, the existing data is always encrypted at rest.
+    /// Output only. The status of encrypt/decrypt calls on underlying data for
+    /// this resource. Regardless of status, the existing data is always encrypted
+    /// at rest.
     #[prost(message, optional, tag = "4")]
     pub encryption_status: ::core::option::Option<super::super::super::rpc::Status>,
-    /// Output only. The version of the Cloud KMS key specified in the parent cluster that is
-    /// in use for the data underlying this table.
+    /// Output only. The version of the Cloud KMS key specified in the parent
+    /// cluster that is in use for the data underlying this table.
     #[prost(string, tag = "2")]
     pub kms_key_version: ::prost::alloc::string::String,
 }
@@ -1471,7 +1865,7 @@ pub mod encryption_info {
 /// for production use. It is not subject to any SLA or deprecation policy.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Snapshot {
-    /// Output only. The unique name of the snapshot.
+    /// The unique name of the snapshot.
     /// Values are of the form
     /// `projects/{project}/instances/{instance}/clusters/{cluster}/snapshots/{snapshot}`.
     #[prost(string, tag = "1")]
@@ -1488,15 +1882,15 @@ pub struct Snapshot {
     /// Output only. The time when the snapshot is created.
     #[prost(message, optional, tag = "4")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. The time when the snapshot will be deleted. The maximum amount
-    /// of time a snapshot can stay active is 365 days. If 'ttl' is not specified,
+    /// The time when the snapshot will be deleted. The maximum amount of time a
+    /// snapshot can stay active is 365 days. If 'ttl' is not specified,
     /// the default maximum of 365 days will be used.
     #[prost(message, optional, tag = "5")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Output only. The current state of the snapshot.
     #[prost(enumeration = "snapshot::State", tag = "6")]
     pub state: i32,
-    /// Output only. Description of the snapshot.
+    /// Description of the snapshot.
     #[prost(string, tag = "7")]
     pub description: ::prost::alloc::string::String,
 }
@@ -1531,13 +1925,18 @@ pub struct Backup {
     /// `projects/{project}/instances/{instance}/clusters/{cluster}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. Immutable. Name of the table from which this backup was created. This needs
-    /// to be in the same instance as the backup. Values are of the form
+    /// Required. Immutable. Name of the table from which this backup was created.
+    /// This needs to be in the same instance as the backup. Values are of the form
     /// `projects/{project}/instances/{instance}/tables/{source_table}`.
     #[prost(string, tag = "2")]
     pub source_table: ::prost::alloc::string::String,
+    /// Output only. Name of the backup from which this backup was copied. If a
+    /// backup is not created by copying a backup, this field will be empty. Values
+    /// are of the form: projects/<project>/instances/<instance>/backups/<backup>.
+    #[prost(string, tag = "10")]
+    pub source_backup: ::prost::alloc::string::String,
     /// Required. The expiration time of the backup, with microseconds
-    /// granularity that must be at least 6 hours and at most 30 days
+    /// granularity that must be at least 6 hours and at most 90 days
     /// from the time the request is received. Once the `expire_time`
     /// has passed, Cloud Bigtable will delete the backup and free the
     /// resources used by the backup.
@@ -1545,8 +1944,9 @@ pub struct Backup {
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Output only. `start_time` is the time that the backup was started
     /// (i.e. approximately the time the
-    /// \[CreateBackup][google.bigtable.admin.v2.BigtableTableAdmin.CreateBackup\] request is received).  The
-    /// row data in this backup will be no older than this timestamp.
+    /// \[CreateBackup][google.bigtable.admin.v2.BigtableTableAdmin.CreateBackup\]
+    /// request is received).  The row data in this backup will be no older than
+    /// this timestamp.
     #[prost(message, optional, tag = "4")]
     pub start_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Output only. `end_time` is the time that the backup was finished. The row
@@ -1595,6 +1995,11 @@ pub struct BackupInfo {
     /// Output only. Name of the table the backup was created from.
     #[prost(string, tag = "4")]
     pub source_table: ::prost::alloc::string::String,
+    /// Output only. Name of the backup from which this backup was copied. If a
+    /// backup is not created by copying a backup, this field will be empty. Values
+    /// are of the form: projects/<project>/instances/<instance>/backups/<backup>.
+    #[prost(string, tag = "10")]
+    pub source_backup: ::prost::alloc::string::String,
 }
 /// Indicates the type of the restore source.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1610,8 +2015,7 @@ pub enum RestoreSourceType {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RestoreTableRequest {
     /// Required. The name of the instance in which to create the restored
-    /// table. This instance must be in the same project as the source backup.
-    /// Values are of the form `projects/<project>/instances/<instance>`.
+    /// table. Values are of the form `projects/<project>/instances/<instance>`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The id of the table to create and restore to. This
@@ -1656,19 +2060,22 @@ pub struct RestoreTableMetadata {
     /// not successful.
     #[prost(string, tag = "4")]
     pub optimize_table_operation_name: ::prost::alloc::string::String,
-    /// The progress of the \[RestoreTable][google.bigtable.admin.v2.BigtableTableAdmin.RestoreTable\]
+    /// The progress of the
+    /// \[RestoreTable][google.bigtable.admin.v2.BigtableTableAdmin.RestoreTable\]
     /// operation.
     #[prost(message, optional, tag = "5")]
     pub progress: ::core::option::Option<OperationProgress>,
     /// Information about the source used to restore the table, as specified by
-    /// `source` in \[RestoreTableRequest][google.bigtable.admin.v2.RestoreTableRequest\].
+    /// `source` in
+    /// \[RestoreTableRequest][google.bigtable.admin.v2.RestoreTableRequest\].
     #[prost(oneof = "restore_table_metadata::SourceInfo", tags = "3")]
     pub source_info: ::core::option::Option<restore_table_metadata::SourceInfo>,
 }
 /// Nested message and enum types in `RestoreTableMetadata`.
 pub mod restore_table_metadata {
     /// Information about the source used to restore the table, as specified by
-    /// `source` in \[RestoreTableRequest][google.bigtable.admin.v2.RestoreTableRequest\].
+    /// `source` in
+    /// \[RestoreTableRequest][google.bigtable.admin.v2.RestoreTableRequest\].
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum SourceInfo {
         #[prost(message, tag = "3")]
@@ -1696,8 +2103,8 @@ pub struct CreateTableRequest {
     /// Values are of the form `projects/{project}/instances/{instance}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The name by which the new table should be referred to within the parent
-    /// instance, e.g., `foobar` rather than `{parent}/tables/foobar`.
+    /// Required. The name by which the new table should be referred to within the
+    /// parent instance, e.g., `foobar` rather than `{parent}/tables/foobar`.
     /// Maximum 50 characters.
     #[prost(string, tag = "2")]
     pub table_id: ::prost::alloc::string::String,
@@ -1746,13 +2153,13 @@ pub struct CreateTableFromSnapshotRequest {
     /// Values are of the form `projects/{project}/instances/{instance}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. The name by which the new table should be referred to within the parent
-    /// instance, e.g., `foobar` rather than `{parent}/tables/foobar`.
+    /// Required. The name by which the new table should be referred to within the
+    /// parent instance, e.g., `foobar` rather than `{parent}/tables/foobar`.
     #[prost(string, tag = "2")]
     pub table_id: ::prost::alloc::string::String,
-    /// Required. The unique name of the snapshot from which to restore the table. The
-    /// snapshot and the table must be in the same instance.
-    /// Values are of the form
+    /// Required. The unique name of the snapshot from which to restore the table.
+    /// The snapshot and the table must be in the same instance. Values are of the
+    /// form
     /// `projects/{project}/instances/{instance}/clusters/{cluster}/snapshots/{snapshot}`.
     #[prost(string, tag = "3")]
     pub source_snapshot: ::prost::alloc::string::String,
@@ -1788,12 +2195,12 @@ pub mod drop_row_range_request {
 /// \[google.bigtable.admin.v2.BigtableTableAdmin.ListTables][google.bigtable.admin.v2.BigtableTableAdmin.ListTables\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTablesRequest {
-    /// Required. The unique name of the instance for which tables should be listed.
-    /// Values are of the form `projects/{project}/instances/{instance}`.
+    /// Required. The unique name of the instance for which tables should be
+    /// listed. Values are of the form `projects/{project}/instances/{instance}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The view to be applied to the returned tables' fields.
-    /// Only NAME_ONLY view (default) and REPLICATION_VIEW are supported.
+    /// NAME_ONLY view (default) and REPLICATION_VIEW are supported.
     #[prost(enumeration = "table::View", tag = "2")]
     pub view: i32,
     /// Maximum number of results per page.
@@ -1918,12 +2325,15 @@ pub struct ModifyColumnFamiliesRequest {
     /// `projects/{project}/instances/{instance}/tables/{table}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. Modifications to be atomically applied to the specified table's families.
-    /// Entries are applied in order, meaning that earlier modifications can be
-    /// masked by later ones (in the case of repeated updates to the same family,
-    /// for example).
+    /// Required. Modifications to be atomically applied to the specified table's
+    /// families. Entries are applied in order, meaning that earlier modifications
+    /// can be masked by later ones (in the case of repeated updates to the same
+    /// family, for example).
     #[prost(message, repeated, tag = "2")]
     pub modifications: ::prost::alloc::vec::Vec<modify_column_families_request::Modification>,
+    /// Optional. If true, ignore safety checks when modifying the column families.
+    #[prost(bool, tag = "3")]
+    pub ignore_warnings: bool,
 }
 /// Nested message and enum types in `ModifyColumnFamiliesRequest`.
 pub mod modify_column_families_request {
@@ -1933,6 +2343,11 @@ pub mod modify_column_families_request {
         /// The ID of the column family to be modified.
         #[prost(string, tag = "1")]
         pub id: ::prost::alloc::string::String,
+        /// Optional. A mask specifying which fields (e.g. `gc_rule`) in the `update`
+        /// mod should be updated, ignored for other modification types. If unset or
+        /// empty, we treat it as updating `gc_rule` to be backward compatible.
+        #[prost(message, optional, tag = "6")]
+        pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
         /// Column family modifications.
         #[prost(oneof = "modification::Mod", tags = "2, 3, 4")]
         pub r#mod: ::core::option::Option<modification::Mod>,
@@ -1961,8 +2376,8 @@ pub mod modify_column_families_request {
 /// \[google.bigtable.admin.v2.BigtableTableAdmin.GenerateConsistencyToken][google.bigtable.admin.v2.BigtableTableAdmin.GenerateConsistencyToken\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenerateConsistencyTokenRequest {
-    /// Required. The unique name of the Table for which to create a consistency token.
-    /// Values are of the form
+    /// Required. The unique name of the Table for which to create a consistency
+    /// token. Values are of the form
     /// `projects/{project}/instances/{instance}/tables/{table}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -1979,15 +2394,45 @@ pub struct GenerateConsistencyTokenResponse {
 /// \[google.bigtable.admin.v2.BigtableTableAdmin.CheckConsistency][google.bigtable.admin.v2.BigtableTableAdmin.CheckConsistency\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CheckConsistencyRequest {
-    /// Required. The unique name of the Table for which to check replication consistency.
-    /// Values are of the form
+    /// Required. The unique name of the Table for which to check replication
+    /// consistency. Values are of the form
     /// `projects/{project}/instances/{instance}/tables/{table}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Required. The token created using GenerateConsistencyToken for the Table.
     #[prost(string, tag = "2")]
     pub consistency_token: ::prost::alloc::string::String,
+    /// Which type of read needs to consistently observe which type of write?
+    /// Default: `standard_read_remote_writes`
+    #[prost(oneof = "check_consistency_request::Mode", tags = "3, 4")]
+    pub mode: ::core::option::Option<check_consistency_request::Mode>,
 }
+/// Nested message and enum types in `CheckConsistencyRequest`.
+pub mod check_consistency_request {
+    /// Which type of read needs to consistently observe which type of write?
+    /// Default: `standard_read_remote_writes`
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Mode {
+        /// Checks that reads using an app profile with `StandardIsolation` can
+        /// see all writes committed before the token was created, even if the
+        /// read and write target different clusters.
+        #[prost(message, tag = "3")]
+        StandardReadRemoteWrites(super::StandardReadRemoteWrites),
+        /// Checks that reads using an app profile with `DataBoostIsolationReadOnly`
+        /// can see all writes committed before the token was created, but only if
+        /// the read and write target the same cluster.
+        #[prost(message, tag = "4")]
+        DataBoostReadLocalWrites(super::DataBoostReadLocalWrites),
+    }
+}
+/// Checks that all writes before the consistency token was generated are
+/// replicated in every cluster and readable.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StandardReadRemoteWrites {}
+/// Checks that all writes before the consistency token was generated in the same
+/// cluster are readable by Databoost.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DataBoostReadLocalWrites {}
 /// Response message for
 /// \[google.bigtable.admin.v2.BigtableTableAdmin.CheckConsistency][google.bigtable.admin.v2.BigtableTableAdmin.CheckConsistency\]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2016,9 +2461,9 @@ pub struct SnapshotTableRequest {
     /// `projects/{project}/instances/{instance}/clusters/{cluster}`.
     #[prost(string, tag = "2")]
     pub cluster: ::prost::alloc::string::String,
-    /// Required. The ID by which the new snapshot should be referred to within the parent
-    /// cluster, e.g., `mysnapshot` of the form: `\[_a-zA-Z0-9][-_.a-zA-Z0-9\]*`
-    /// rather than
+    /// Required. The ID by which the new snapshot should be referred to within the
+    /// parent cluster, e.g., `mysnapshot` of the form:
+    /// `\[_a-zA-Z0-9][-_.a-zA-Z0-9\]*` rather than
     /// `projects/{project}/instances/{instance}/clusters/{cluster}/snapshots/mysnapshot`.
     #[prost(string, tag = "3")]
     pub snapshot_id: ::prost::alloc::string::String,
@@ -2056,8 +2501,8 @@ pub struct GetSnapshotRequest {
 /// for production use. It is not subject to any SLA or deprecation policy.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSnapshotsRequest {
-    /// Required. The unique name of the cluster for which snapshots should be listed.
-    /// Values are of the form
+    /// Required. The unique name of the cluster for which snapshots should be
+    /// listed. Values are of the form
     /// `projects/{project}/instances/{instance}/clusters/{cluster}`.
     /// Use `{cluster} = '-'` to list snapshots for all clusters in an instance,
     /// e.g., `projects/{project}/instances/{instance}/clusters/-`.
@@ -2141,7 +2586,8 @@ pub struct CreateTableFromSnapshotMetadata {
     #[prost(message, optional, tag = "3")]
     pub finish_time: ::core::option::Option<::prost_types::Timestamp>,
 }
-/// The request for \[CreateBackup][google.bigtable.admin.v2.BigtableTableAdmin.CreateBackup\].
+/// The request for
+/// \[CreateBackup][google.bigtable.admin.v2.BigtableTableAdmin.CreateBackup\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateBackupRequest {
     /// Required. This must be one of the clusters in the instance in which this
@@ -2178,12 +2624,14 @@ pub struct CreateBackupMetadata {
     #[prost(message, optional, tag = "4")]
     pub end_time: ::core::option::Option<::prost_types::Timestamp>,
 }
-/// The request for \[UpdateBackup][google.bigtable.admin.v2.BigtableTableAdmin.UpdateBackup\].
+/// The request for
+/// \[UpdateBackup][google.bigtable.admin.v2.BigtableTableAdmin.UpdateBackup\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateBackupRequest {
     /// Required. The backup to update. `backup.name`, and the fields to be updated
     /// as specified by `update_mask` are required. Other fields are ignored.
     /// Update is only supported for the following fields:
+    ///
     ///  * `backup.expire_time`.
     #[prost(message, optional, tag = "1")]
     pub backup: ::core::option::Option<Backup>,
@@ -2195,7 +2643,8 @@ pub struct UpdateBackupRequest {
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
-/// The request for \[GetBackup][google.bigtable.admin.v2.BigtableTableAdmin.GetBackup\].
+/// The request for
+/// \[GetBackup][google.bigtable.admin.v2.BigtableTableAdmin.GetBackup\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetBackupRequest {
     /// Required. Name of the backup.
@@ -2204,7 +2653,8 @@ pub struct GetBackupRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// The request for \[DeleteBackup][google.bigtable.admin.v2.BigtableTableAdmin.DeleteBackup\].
+/// The request for
+/// \[DeleteBackup][google.bigtable.admin.v2.BigtableTableAdmin.DeleteBackup\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteBackupRequest {
     /// Required. Name of the backup to delete.
@@ -2213,7 +2663,8 @@ pub struct DeleteBackupRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// The request for \[ListBackups][google.bigtable.admin.v2.BigtableTableAdmin.ListBackups\].
+/// The request for
+/// \[ListBackups][google.bigtable.admin.v2.BigtableTableAdmin.ListBackups\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBackupsRequest {
     /// Required. The cluster to list backups from.  Values are of the
@@ -2230,13 +2681,14 @@ pub struct ListBackupsRequest {
     /// roughly synonymous with equality. Filter rules are case insensitive.
     ///
     /// The fields eligible for filtering are:
-    ///   * `name`
-    ///   * `source_table`
-    ///   * `state`
-    ///   * `start_time` (and values are of the format YYYY-MM-DDTHH:MM:SSZ)
-    ///   * `end_time` (and values are of the format YYYY-MM-DDTHH:MM:SSZ)
-    ///   * `expire_time` (and values are of the format YYYY-MM-DDTHH:MM:SSZ)
-    ///   * `size_bytes`
+    ///
+    /// * `name`
+    /// * `source_table`
+    /// * `state`
+    /// * `start_time` (and values are of the format YYYY-MM-DDTHH:MM:SSZ)
+    /// * `end_time` (and values are of the format YYYY-MM-DDTHH:MM:SSZ)
+    /// * `expire_time` (and values are of the format YYYY-MM-DDTHH:MM:SSZ)
+    /// * `size_bytes`
     ///
     /// To filter on multiple expressions, provide each separate expression within
     /// parentheses. By default, each expression is an AND expression. However,
@@ -2244,30 +2696,32 @@ pub struct ListBackupsRequest {
     ///
     /// Some examples of using filters are:
     ///
-    ///   * `name:"exact"` --> The backup's name is the string "exact".
-    ///   * `name:howl` --> The backup's name contains the string "howl".
-    ///   * `source_table:prod`
-    ///          --> The source_table's name contains the string "prod".
-    ///   * `state:CREATING` --> The backup is pending creation.
-    ///   * `state:READY` --> The backup is fully created and ready for use.
-    ///   * `(name:howl) AND (start_time < \"2018-03-28T14:50:00Z\")`
-    ///          --> The backup name contains the string "howl" and start_time
-    ///              of the backup is before 2018-03-28T14:50:00Z.
-    ///   * `size_bytes > 10000000000` --> The backup's size is greater than 10GB
+    /// * `name:"exact"` --> The backup's name is the string "exact".
+    /// * `name:howl` --> The backup's name contains the string "howl".
+    /// * `source_table:prod`
+    ///        --> The source_table's name contains the string "prod".
+    /// * `state:CREATING` --> The backup is pending creation.
+    /// * `state:READY` --> The backup is fully created and ready for use.
+    /// * `(name:howl) AND (start_time < \"2018-03-28T14:50:00Z\")`
+    ///        --> The backup name contains the string "howl" and start_time
+    ///            of the backup is before 2018-03-28T14:50:00Z.
+    /// * `size_bytes > 10000000000` --> The backup's size is greater than 10GB
     #[prost(string, tag = "2")]
     pub filter: ::prost::alloc::string::String,
     /// An expression for specifying the sort order of the results of the request.
-    /// The string value should specify one or more fields in \[Backup][google.bigtable.admin.v2.Backup\]. The full
-    /// syntax is described at <https://aip.dev/132#ordering.>
+    /// The string value should specify one or more fields in
+    /// \[Backup][google.bigtable.admin.v2.Backup\]. The full syntax is described at
+    /// <https://aip.dev/132#ordering.>
     ///
     /// Fields supported are:
-    ///    * name
-    ///    * source_table
-    ///    * expire_time
-    ///    * start_time
-    ///    * end_time
-    ///    * size_bytes
-    ///    * state
+    ///
+    /// * name
+    /// * source_table
+    /// * expire_time
+    /// * start_time
+    /// * end_time
+    /// * size_bytes
+    /// * state
     ///
     /// For example, "start_time". The default sorting order is ascending.
     /// To specify descending order for the field, a suffix " desc" should
@@ -2283,23 +2737,219 @@ pub struct ListBackupsRequest {
     #[prost(int32, tag = "4")]
     pub page_size: i32,
     /// If non-empty, `page_token` should contain a
-    /// \[next_page_token][google.bigtable.admin.v2.ListBackupsResponse.next_page_token\] from a
-    /// previous \[ListBackupsResponse][google.bigtable.admin.v2.ListBackupsResponse\] to the same `parent` and with the same
-    /// `filter`.
+    /// \[next_page_token][google.bigtable.admin.v2.ListBackupsResponse.next_page_token\]
+    /// from a previous
+    /// \[ListBackupsResponse][google.bigtable.admin.v2.ListBackupsResponse\] to the
+    /// same `parent` and with the same `filter`.
     #[prost(string, tag = "5")]
     pub page_token: ::prost::alloc::string::String,
 }
-/// The response for \[ListBackups][google.bigtable.admin.v2.BigtableTableAdmin.ListBackups\].
+/// The response for
+/// \[ListBackups][google.bigtable.admin.v2.BigtableTableAdmin.ListBackups\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBackupsResponse {
     /// The list of matching backups.
     #[prost(message, repeated, tag = "1")]
     pub backups: ::prost::alloc::vec::Vec<Backup>,
     /// `next_page_token` can be sent in a subsequent
-    /// \[ListBackups][google.bigtable.admin.v2.BigtableTableAdmin.ListBackups\] call to fetch more
-    /// of the matching backups.
+    /// \[ListBackups][google.bigtable.admin.v2.BigtableTableAdmin.ListBackups\] call
+    /// to fetch more of the matching backups.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
+}
+/// The request for
+/// \[CopyBackup][google.bigtable.admin.v2.BigtableTableAdmin.CopyBackup\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CopyBackupRequest {
+    /// Required. The name of the destination cluster that will contain the backup
+    /// copy. The cluster must already exists. Values are of the form:
+    /// `projects/{project}/instances/{instance}/clusters/{cluster}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The id of the new backup. The `backup_id` along with `parent`
+    /// are combined as {parent}/backups/{backup_id} to create the full backup
+    /// name, of the form:
+    /// `projects/{project}/instances/{instance}/clusters/{cluster}/backups/{backup_id}`.
+    /// This string must be between 1 and 50 characters in length and match the
+    /// regex \[_a-zA-Z0-9][-_.a-zA-Z0-9\]*.
+    #[prost(string, tag = "2")]
+    pub backup_id: ::prost::alloc::string::String,
+    /// Required. The source backup to be copied from.
+    /// The source backup needs to be in READY state for it to be copied.
+    /// Copying a copied backup is not allowed.
+    /// Once CopyBackup is in progress, the source backup cannot be deleted or
+    /// cleaned up on expiration until CopyBackup is finished.
+    /// Values are of the form:
+    /// `projects/<project>/instances/<instance>/clusters/<cluster>/backups/<backup>`.
+    #[prost(string, tag = "3")]
+    pub source_backup: ::prost::alloc::string::String,
+    /// Required. Required. The expiration time of the copied backup with
+    /// microsecond granularity that must be at least 6 hours and at most 30 days
+    /// from the time the request is received. Once the `expire_time` has
+    /// passed, Cloud Bigtable will delete the backup and free the resources used
+    /// by the backup.
+    #[prost(message, optional, tag = "4")]
+    pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Metadata type for the google.longrunning.Operation returned by
+/// \[CopyBackup][google.bigtable.admin.v2.BigtableTableAdmin.CopyBackup\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CopyBackupMetadata {
+    /// The name of the backup being created through the copy operation.
+    /// Values are of the form
+    /// `projects/<project>/instances/<instance>/clusters/<cluster>/backups/<backup>`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Information about the source backup that is being copied from.
+    #[prost(message, optional, tag = "2")]
+    pub source_backup_info: ::core::option::Option<BackupInfo>,
+    /// The progress of the
+    /// \[CopyBackup][google.bigtable.admin.v2.BigtableTableAdmin.CopyBackup\]
+    /// operation.
+    #[prost(message, optional, tag = "3")]
+    pub progress: ::core::option::Option<OperationProgress>,
+}
+/// The request for
+/// \[CreateAuthorizedView][google.bigtable.admin.v2.BigtableTableAdmin.CreateAuthorizedView\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateAuthorizedViewRequest {
+    /// Required. This is the name of the table the AuthorizedView belongs to.
+    /// Values are of the form
+    /// `projects/{project}/instances/{instance}/tables/{table}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The id of the AuthorizedView to create. This AuthorizedView must
+    /// not already exist. The `authorized_view_id` appended to `parent` forms the
+    /// full AuthorizedView name of the form
+    /// `projects/{project}/instances/{instance}/tables/{table}/authorizedView/{authorized_view}`.
+    #[prost(string, tag = "2")]
+    pub authorized_view_id: ::prost::alloc::string::String,
+    /// Required. The AuthorizedView to create.
+    #[prost(message, optional, tag = "3")]
+    pub authorized_view: ::core::option::Option<AuthorizedView>,
+}
+/// The metadata for the Operation returned by CreateAuthorizedView.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateAuthorizedViewMetadata {
+    /// The request that prompted the initiation of this CreateInstance operation.
+    #[prost(message, optional, tag = "1")]
+    pub original_request: ::core::option::Option<CreateAuthorizedViewRequest>,
+    /// The time at which the original request was received.
+    #[prost(message, optional, tag = "2")]
+    pub request_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time at which the operation failed or was completed successfully.
+    #[prost(message, optional, tag = "3")]
+    pub finish_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[google.bigtable.admin.v2.BigtableTableAdmin.ListAuthorizedViews][google.bigtable.admin.v2.BigtableTableAdmin.ListAuthorizedViews\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAuthorizedViewsRequest {
+    /// Required. The unique name of the table for which AuthorizedViews should be
+    /// listed. Values are of the form
+    /// `projects/{project}/instances/{instance}/tables/{table}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Maximum number of results per page.
+    ///
+    /// A page_size of zero lets the server choose the number of items to return.
+    /// A page_size which is strictly positive will return at most that many items.
+    /// A negative page_size will cause an error.
+    ///
+    /// Following the first request, subsequent paginated calls are not required
+    /// to pass a page_size. If a page_size is set in subsequent calls, it must
+    /// match the page_size given in the first request.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. The value of `next_page_token` returned by a previous call.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. The resource_view to be applied to the returned views' fields.
+    /// Default to NAME_ONLY.
+    #[prost(enumeration = "authorized_view::ResponseView", tag = "4")]
+    pub view: i32,
+}
+/// Response message for
+/// \[google.bigtable.admin.v2.BigtableTableAdmin.ListAuthorizedViews][google.bigtable.admin.v2.BigtableTableAdmin.ListAuthorizedViews\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAuthorizedViewsResponse {
+    /// The AuthorizedViews present in the requested table.
+    #[prost(message, repeated, tag = "1")]
+    pub authorized_views: ::prost::alloc::vec::Vec<AuthorizedView>,
+    /// Set if not all tables could be returned in a single response.
+    /// Pass this value to `page_token` in another request to get the next
+    /// page of results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[google.bigtable.admin.v2.BigtableTableAdmin.GetAuthorizedView][google.bigtable.admin.v2.BigtableTableAdmin.GetAuthorizedView\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetAuthorizedViewRequest {
+    /// Required. The unique name of the requested AuthorizedView.
+    /// Values are of the form
+    /// `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/{authorized_view}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. The resource_view to be applied to the returned AuthorizedView's
+    /// fields. Default to BASIC.
+    #[prost(enumeration = "authorized_view::ResponseView", tag = "2")]
+    pub view: i32,
+}
+/// The request for
+/// \[UpdateAuthorizedView][google.bigtable.admin.v2.BigtableTableAdmin.UpdateAuthorizedView\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateAuthorizedViewRequest {
+    /// Required. The AuthorizedView to update. The `name` in `authorized_view` is
+    /// used to identify the AuthorizedView. AuthorizedView name must in this
+    /// format
+    /// projects/<project>/instances/<instance>/tables/<table>/authorizedViews/<authorized_view>
+    #[prost(message, optional, tag = "1")]
+    pub authorized_view: ::core::option::Option<AuthorizedView>,
+    /// Optional. The list of fields to update.
+    /// A mask specifying which fields in the AuthorizedView resource should be
+    /// updated. This mask is relative to the AuthorizedView resource, not to the
+    /// request message. A field will be overwritten if it is in the mask. If
+    /// empty, all fields set in the request will be overwritten. A special value
+    /// `*` means to overwrite all fields (including fields not set in the
+    /// request).
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Optional. If true, ignore the safety checks when updating the
+    /// AuthorizedView.
+    #[prost(bool, tag = "3")]
+    pub ignore_warnings: bool,
+}
+/// Metadata for the google.longrunning.Operation returned by
+/// \[UpdateAuthorizedView][google.bigtable.admin.v2.BigtableTableAdmin.UpdateAuthorizedView\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateAuthorizedViewMetadata {
+    /// The request that prompted the initiation of this UpdateAuthorizedView
+    /// operation.
+    #[prost(message, optional, tag = "1")]
+    pub original_request: ::core::option::Option<UpdateAuthorizedViewRequest>,
+    /// The time at which the original request was received.
+    #[prost(message, optional, tag = "2")]
+    pub request_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time at which the operation failed or was completed successfully.
+    #[prost(message, optional, tag = "3")]
+    pub finish_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[google.bigtable.admin.v2.BigtableTableAdmin.DeleteAuthorizedView][google.bigtable.admin.v2.BigtableTableAdmin.DeleteAuthorizedView\]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteAuthorizedViewRequest {
+    /// Required. The unique name of the AuthorizedView to be deleted.
+    /// Values are of the form
+    /// `projects/{project}/instances/{instance}/tables/{table}/authorizedViews/{authorized_view}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. The current etag of the AuthorizedView.
+    /// If an etag is provided and does not match the current etag of the
+    /// AuthorizedView, deletion will be blocked and an ABORTED error will be
+    /// returned.
+    #[prost(string, tag = "2")]
+    pub etag: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod bigtable_table_admin_client {
@@ -2492,6 +3142,97 @@ pub mod bigtable_table_admin_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Creates a new AuthorizedView in a table."]
+        pub async fn create_authorized_view(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateAuthorizedViewRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.bigtable.admin.v2.BigtableTableAdmin/CreateAuthorizedView",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all AuthorizedViews from a specific table."]
+        pub async fn list_authorized_views(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListAuthorizedViewsRequest>,
+        ) -> Result<tonic::Response<super::ListAuthorizedViewsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.bigtable.admin.v2.BigtableTableAdmin/ListAuthorizedViews",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets information from a specified AuthorizedView."]
+        pub async fn get_authorized_view(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetAuthorizedViewRequest>,
+        ) -> Result<tonic::Response<super::AuthorizedView>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.bigtable.admin.v2.BigtableTableAdmin/GetAuthorizedView",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates an AuthorizedView in a table."]
+        pub async fn update_authorized_view(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateAuthorizedViewRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.bigtable.admin.v2.BigtableTableAdmin/UpdateAuthorizedView",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Permanently deletes a specified AuthorizedView."]
+        pub async fn delete_authorized_view(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteAuthorizedViewRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.bigtable.admin.v2.BigtableTableAdmin/DeleteAuthorizedView",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Performs a series of column family modifications on the specified table."]
         #[doc = " Either all or none of the modifications will occur before this method"]
         #[doc = " returns, but data requests received prior to that point may see a table"]
@@ -2673,8 +3414,8 @@ pub mod bigtable_table_admin_client {
         #[doc = " [metadata][google.longrunning.Operation.metadata] field type is"]
         #[doc = " [CreateBackupMetadata][google.bigtable.admin.v2.CreateBackupMetadata]. The"]
         #[doc = " [response][google.longrunning.Operation.response] field type is"]
-        #[doc = " [Backup][google.bigtable.admin.v2.Backup], if successful. Cancelling the returned operation will stop the"]
-        #[doc = " creation and delete the backup."]
+        #[doc = " [Backup][google.bigtable.admin.v2.Backup], if successful. Cancelling the"]
+        #[doc = " returned operation will stop the creation and delete the backup."]
         pub async fn create_backup(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateBackupRequest>,
@@ -2763,8 +3504,7 @@ pub mod bigtable_table_admin_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Create a new table by restoring from a completed backup. The new table"]
-        #[doc = " must be in the same project as the instance containing the backup.  The"]
+        #[doc = " Create a new table by restoring from a completed backup.  The"]
         #[doc = " returned table [long-running operation][google.longrunning.Operation] can"]
         #[doc = " be used to track the progress of the operation, and to cancel it.  The"]
         #[doc = " [metadata][google.longrunning.Operation.metadata] field type is"]
@@ -2787,6 +3527,27 @@ pub mod bigtable_table_admin_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.bigtable.admin.v2.BigtableTableAdmin/RestoreTable",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Copy a Cloud Bigtable backup to a new backup in the destination cluster"]
+        #[doc = " located in the destination instance and project."]
+        pub async fn copy_backup(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CopyBackupRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.bigtable.admin.v2.BigtableTableAdmin/CopyBackup",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -2829,7 +3590,8 @@ pub mod bigtable_table_admin_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Returns permissions that the caller has on the specified Table or Backup resource."]
+        #[doc = " Returns permissions that the caller has on the specified Table or Backup"]
+        #[doc = " resource."]
         pub async fn test_iam_permissions(
             &mut self,
             request: impl tonic::IntoRequest<

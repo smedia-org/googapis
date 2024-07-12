@@ -128,15 +128,6 @@ pub struct OptimizeToursRequest {
     /// By default, the solving mode is `DEFAULT_SOLVE` (0).
     #[prost(enumeration = "optimize_tours_request::SolvingMode", tag = "4")]
     pub solving_mode: i32,
-    /// Truncates the number of validation errors returned. These errors are
-    /// typically attached to an INVALID_ARGUMENT error payload as a BadRequest
-    /// error detail (<https://cloud.google.com/apis/design/errors#error_details>),
-    /// unless solving_mode=VALIDATE_ONLY: see the
-    /// \[OptimizeToursResponse.validation_errors][google.cloud.optimization.v1.OptimizeToursResponse.validation_errors\]
-    /// field.
-    /// This defaults to 100 and is capped at 10,000.
-    #[prost(int32, optional, tag = "5")]
-    pub max_validation_errors: ::core::option::Option<i32>,
     /// Search mode used to solve the request.
     #[prost(enumeration = "optimize_tours_request::SearchMode", tag = "6")]
     pub search_mode: i32,
@@ -302,6 +293,15 @@ pub struct OptimizeToursRequest {
     /// meters/seconds.
     #[prost(double, optional, tag = "16")]
     pub geodesic_meters_per_second: ::core::option::Option<f64>,
+    /// Truncates the number of validation errors returned. These errors are
+    /// typically attached to an INVALID_ARGUMENT error payload as a BadRequest
+    /// error detail (<https://cloud.google.com/apis/design/errors#error_details>),
+    /// unless solving_mode=VALIDATE_ONLY: see the
+    /// \[OptimizeToursResponse.validation_errors][google.cloud.optimization.v1.OptimizeToursResponse.validation_errors\]
+    /// field.
+    /// This defaults to 100 and is capped at 10,000.
+    #[prost(int32, optional, tag = "5")]
+    pub max_validation_errors: ::core::option::Option<i32>,
     /// Label that may be used to identify this request, reported back in the
     /// \[OptimizeToursResponse.request_label][google.cloud.optimization.v1.OptimizeToursResponse.request_label\].
     #[prost(string, tag = "17")]
@@ -333,12 +333,20 @@ pub mod optimize_tours_request {
         /// as possible.
         ValidateOnly = 1,
         /// Only populates
+        /// \[OptimizeToursResponse.validation_errors][google.cloud.optimization.v1.OptimizeToursResponse.validation_errors\]
+        /// or
         /// \[OptimizeToursResponse.skipped_shipments][google.cloud.optimization.v1.OptimizeToursResponse.skipped_shipments\],
         /// and doesn't actually solve the rest of the request (`status` and `routes`
         /// are unset in the response).
+        /// If infeasibilities in `injected_solution_constraint` routes are detected
+        /// they are populated in the
+        /// \[OptimizeToursResponse.validation_errors][google.cloud.optimization.v1.OptimizeToursResponse.validation_errors\]
+        /// field and
+        /// \[OptimizeToursResponse.skipped_shipments][google.cloud.optimization.v1.OptimizeToursResponse.skipped_shipments\]
+        /// is left empty.
         ///
         /// *IMPORTANT*: not all infeasible shipments are returned here, but only the
-        /// ones that are detected as infeasible as a preprocessing.
+        /// ones that are detected as infeasible during preprocessing.
         DetectSomeInfeasibleShipments = 2,
     }
     /// Mode defining the behavior of the search, trading off latency versus
@@ -1156,6 +1164,33 @@ pub mod shipment_type_requirement {
         InSameVehicleAtDeliveryTime = 3,
     }
 }
+/// Encapsulates a set of optional conditions to satisfy when calculating
+/// vehicle routes. This is similar to `RouteModifiers` in the Google Maps
+/// Platform API; see:
+/// <https://developers.google.com/maps/documentation/routes/reference/rest/v2/RouteModifiers.>
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RouteModifiers {
+    /// Specifies whether to avoid toll roads where reasonable. Preference will be
+    /// given to routes not containing toll roads. Applies only to motorized travel
+    /// modes.
+    #[prost(bool, tag = "2")]
+    pub avoid_tolls: bool,
+    /// Specifies whether to avoid highways where reasonable. Preference will be
+    /// given to routes not containing highways. Applies only to motorized travel
+    /// modes.
+    #[prost(bool, tag = "3")]
+    pub avoid_highways: bool,
+    /// Specifies whether to avoid ferries where reasonable. Preference will be
+    /// given to routes not containing travel by ferries. Applies only to motorized
+    /// travel modes.
+    #[prost(bool, tag = "4")]
+    pub avoid_ferries: bool,
+    /// Optional. Specifies whether to avoid navigating indoors where reasonable.
+    /// Preference will be given to routes not containing indoor navigation.
+    /// Applies only to the `WALKING` travel mode.
+    #[prost(bool, tag = "5")]
+    pub avoid_indoor: bool,
+}
 /// Models a vehicle in a shipment problem. Solving a shipment problem will
 /// build a route starting from `start_location` and ending at `end_location`
 /// for this vehicle. A route is a sequence of visits (see `ShipmentRoute`).
@@ -1165,6 +1200,10 @@ pub struct Vehicle {
     /// speed. See also `travel_duration_multiple`.
     #[prost(enumeration = "vehicle::TravelMode", tag = "1")]
     pub travel_mode: i32,
+    /// Optional. A set of conditions to satisfy that affect the way routes are
+    /// calculated for the given vehicle.
+    #[prost(message, optional, tag = "2")]
+    pub route_modifiers: ::core::option::Option<RouteModifiers>,
     /// Geographic location where the vehicle starts before picking up any
     /// shipments. If not specified, the vehicle starts at its first pickup.
     /// If the shipment model has duration and distance matrices, `start_location`
@@ -1495,6 +1534,8 @@ pub mod vehicle {
         Unspecified = 0,
         /// Travel mode corresponding to driving directions (car, ...).
         Driving = 1,
+        /// Travel mode corresponding to walking directions.
+        Walking = 2,
     }
     /// Policy on how a vehicle can be unloaded. Applies only to shipments having
     /// both a pickup and a delivery.
@@ -1618,6 +1659,15 @@ pub struct DistanceLimit {
     /// nonnegative.
     #[prost(int64, optional, tag = "2")]
     pub soft_max_meters: ::core::option::Option<i64>,
+    /// Cost per kilometer incurred, increasing up to `soft_max_meters`, with
+    /// formula:
+    /// ```
+    ///   min(distance_meters, soft_max_meters) / 1000.0 *
+    ///   cost_per_kilometer_below_soft_max.
+    /// ```
+    /// This cost is not supported in `route_distance_limit`.
+    #[prost(double, optional, tag = "4")]
+    pub cost_per_kilometer_below_soft_max: ::core::option::Option<f64>,
     /// Cost per kilometer incurred if distance is above `soft_max_meters` limit.
     /// The additional cost is 0 if the distance is under the limit, otherwise the
     /// formula used to compute the cost is the following:
@@ -2385,10 +2435,10 @@ pub struct AggregatedMetrics {
     #[prost(message, optional, tag = "6")]
     pub visit_duration: ::core::option::Option<::prost_types::Duration>,
     /// The total duration should be equal to the sum of all durations above.
-    /// For routes, it also corresponds to
+    /// For routes, it also corresponds to:
     /// \[ShipmentRoute.vehicle_end_time][google.cloud.optimization.v1.ShipmentRoute.vehicle_end_time\]
-    /// -
-    /// \[ShipmentRoute.vehicle_start_time][google.cloud.optimization.v1.ShipmentRoute.vehicle_start_time\].
+    /// `-`
+    /// \[ShipmentRoute.vehicle_start_time][google.cloud.optimization.v1.ShipmentRoute.vehicle_start_time\]
     #[prost(message, optional, tag = "7")]
     pub total_duration: ::core::option::Option<::prost_types::Duration>,
     /// Total travel distance for a route or a solution.
@@ -2546,7 +2596,8 @@ pub mod injected_solution_constraint {
                 /// them.
                 RelaxVisitTimesAfterThreshold = 1,
                 /// Same as `RELAX_VISIT_TIMES_AFTER_THRESHOLD`, but the visit sequence
-                /// is also relaxed: visits remain simply bound to their vehicle.
+                /// is also relaxed: visits can only be performed by this vehicle, but
+                /// can potentially become unperformed.
                 RelaxVisitTimesAndSequenceAfterThreshold = 2,
                 /// Same as `RELAX_VISIT_TIMES_AND_SEQUENCE_AFTER_THRESHOLD`, but the
                 /// vehicle is also relaxed: visits are completely free at or after the
@@ -2609,6 +2660,7 @@ pub struct OptimizeToursValidationError {
     ///     * INJECTED_SOLUTION_CONCURRENT_SOLUTION_TYPES = 2005;
     ///     * INJECTED_SOLUTION_MORE_THAN_ONE_PER_TYPE = 2006;
     ///     * INJECTED_SOLUTION_REFRESH_WITHOUT_POPULATE = 2008;
+    ///     * INJECTED_SOLUTION_CONSTRAINED_ROUTE_PORTION_INFEASIBLE = 2010;
     /// * SHIPMENT_MODEL_ERROR = 22;
     ///     * SHIPMENT_MODEL_TOO_LARGE = 2200;
     ///     * SHIPMENT_MODEL_TOO_MANY_CAPACITY_TYPES = 2201;
@@ -2750,6 +2802,13 @@ pub struct OptimizeToursValidationError {
     ///     * VISIT_REQUEST_DURATION_NEGATIVE_OR_NAN = 4404;
     ///     * VISIT_REQUEST_DURATION_EXCEEDS_GLOBAL_DURATION = 4405;
     /// * PRECEDENCE_ERROR = 46;
+    ///     * PRECEDENCE_RULE_MISSING_FIRST_INDEX = 4600;
+    ///     * PRECEDENCE_RULE_MISSING_SECOND_INDEX = 4601;
+    ///     * PRECEDENCE_RULE_FIRST_INDEX_OUT_OF_BOUNDS = 4602;
+    ///     * PRECEDENCE_RULE_SECOND_INDEX_OUT_OF_BOUNDS = 4603;
+    ///     * PRECEDENCE_RULE_DUPLICATE_INDEX = 4604;
+    ///     * PRECEDENCE_RULE_INEXISTENT_FIRST_VISIT_REQUEST = 4605;
+    ///     * PRECEDENCE_RULE_INEXISTENT_SECOND_VISIT_REQUEST = 4606;
     /// * BREAK_ERROR = 48;
     ///     * BREAK_RULE_EMPTY = 4800;
     ///     * BREAK_REQUEST_UNSPECIFIED_DURATION = 4801;

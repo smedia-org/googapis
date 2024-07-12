@@ -3,7 +3,9 @@
 /// different output formats.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ElementaryStream {
-    /// A unique key for this elementary stream.
+    /// A unique key for this elementary stream. The key must be 1-63
+    /// characters in length. The key must begin and end with a letter (regardless
+    /// of case) or a number, but can contain dashes or underscores in between.
     #[prost(string, tag = "4")]
     pub key: ::prost::alloc::string::String,
     /// Required. Encoding of an audio, video, or text track.
@@ -29,7 +31,9 @@ pub mod elementary_stream {
 /// Multiplexing settings for output stream.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MuxStream {
-    /// A unique key for this multiplexed stream.
+    /// A unique key for this multiplexed stream. The key must be 1-63
+    /// characters in length. The key must begin and end with a letter (regardless
+    /// of case) or a number, but can contain dashes or underscores in between.
     #[prost(string, tag = "1")]
     pub key: ::prost::alloc::string::String,
     /// The container format. The default is `fmp4`.
@@ -90,6 +94,12 @@ pub struct Manifest {
     /// errors while accessing segments which are listed in the manifest that the
     /// player has, but were already deleted from the output Google Cloud Storage
     /// bucket. Default value is `60s`.
+    ///
+    /// If both segment_keep_duration and
+    /// \[RetentionConfig.retention_window_duration][google.cloud.video.livestream.v1.RetentionConfig.retention_window_duration\]
+    /// are set,
+    /// \[RetentionConfig.retention_window_duration][google.cloud.video.livestream.v1.RetentionConfig.retention_window_duration\]
+    /// is used and segment_keep_duration is ignored.
     #[prost(message, optional, tag = "5")]
     pub segment_keep_duration: ::core::option::Option<::prost_types::Duration>,
     /// Whether to use the timecode, as specified in timecode config, when setting:
@@ -101,6 +111,9 @@ pub struct Manifest {
     /// when the manifest is first generated. This is the default behavior.
     #[prost(bool, tag = "6")]
     pub use_timecode_as_timeline: bool,
+    /// Optional. A unique key for this manifest.
+    #[prost(string, tag = "7")]
+    pub key: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `Manifest`.
 pub mod manifest {
@@ -658,6 +671,13 @@ pub struct Channel {
     /// \[input_attachments][google.cloud.video.livestream.v1.Channel.input_attachments\].
     #[prost(message, optional, tag = "25")]
     pub input_config: ::core::option::Option<InputConfig>,
+    /// Optional. Configuration for retention of output files for this channel.
+    #[prost(message, optional, tag = "26")]
+    pub retention_config: ::core::option::Option<RetentionConfig>,
+    /// Optional. List of static overlay images. Those images display over the
+    /// output content for the whole duration of the live stream.
+    #[prost(message, repeated, tag = "27")]
+    pub static_overlays: ::prost::alloc::vec::Vec<StaticOverlay>,
 }
 /// Nested message and enum types in `Channel`.
 pub mod channel {
@@ -694,6 +714,53 @@ pub mod channel {
         /// Channel is stopping.
         Stopping = 8,
     }
+}
+/// 2D normalized coordinates.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NormalizedCoordinate {
+    /// Optional. Normalized x coordinate. Valid range is [0.0, 1.0]. Default is 0.
+    #[prost(double, tag = "1")]
+    pub x: f64,
+    /// Optional. Normalized y coordinate. Valid range is [0.0, 1.0]. Default is 0.
+    #[prost(double, tag = "2")]
+    pub y: f64,
+}
+/// Normalized resolution.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NormalizedResolution {
+    /// Optional. Normalized width. Valid range is [0.0, 1.0]. Default is 0.
+    #[prost(double, tag = "1")]
+    pub w: f64,
+    /// Optional. Normalized height. Valid range is [0.0, 1.0]. Default is 0.
+    #[prost(double, tag = "2")]
+    pub h: f64,
+}
+/// Configuration for the static overlay.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StaticOverlay {
+    /// Required. Asset to use for the overlaid image.
+    /// The asset must be represented in the form of:
+    /// `projects/{project}/locations/{location}/assets/{assetId}`.
+    /// The asset's resource type must be image.
+    #[prost(string, tag = "1")]
+    pub asset: ::prost::alloc::string::String,
+    /// Optional. Normalized image resolution, based on output video resolution.
+    /// Valid values are [0.0, 1.0]. To respect the original image aspect ratio,
+    /// set either `w` or `h` to 0. To use the original image resolution, set both
+    /// `w` and `h` to 0. The default is {0, 0}.
+    #[prost(message, optional, tag = "2")]
+    pub resolution: ::core::option::Option<NormalizedResolution>,
+    /// Optional. Position of the image in terms of normalized coordinates of the
+    /// upper-left corner of the image, based on output video resolution. For
+    /// example, use the x and y coordinates {0, 0} to position the top-left corner
+    /// of the overlay animation in the top-left corner of the output video.
+    #[prost(message, optional, tag = "3")]
+    pub position: ::core::option::Option<NormalizedCoordinate>,
+    /// Optional. Target image opacity. Valid values are from `1.0` (solid,
+    /// default) to `0.0` (transparent), exclusive. Set this to a value greater
+    /// than `0.0`.
+    #[prost(double, tag = "4")]
+    pub opacity: f64,
 }
 /// Configuration for the input sources of a channel.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -761,6 +828,29 @@ pub mod log_config {
         Error = 500,
     }
 }
+/// Configuration for retention of output files.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RetentionConfig {
+    /// The minimum duration for which the output files from the channel will
+    /// remain in the output bucket. After this duration, output files are
+    /// deleted asynchronously.
+    ///
+    /// When the channel is deleted, all output files are deleted from the output
+    /// bucket asynchronously.
+    ///
+    /// If omitted or set to zero, output files will remain in the output bucket
+    /// based on
+    /// \[Manifest.segment_keep_duration][google.cloud.video.livestream.v1.Manifest.segment_keep_duration\],
+    /// which defaults to 60s.
+    ///
+    /// If both retention_window_duration and
+    /// \[Manifest.segment_keep_duration][google.cloud.video.livestream.v1.Manifest.segment_keep_duration\]
+    /// are set, retention_window_duration is used and
+    /// \[Manifest.segment_keep_duration][google.cloud.video.livestream.v1.Manifest.segment_keep_duration\]
+    /// is ignored.
+    #[prost(message, optional, tag = "1")]
+    pub retention_window_duration: ::core::option::Option<::prost_types::Duration>,
+}
 /// Properties of the input stream.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InputStreamProperty {
@@ -827,7 +917,9 @@ pub struct AudioFormat {
 /// A group of information for attaching an input resource to this channel.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InputAttachment {
-    /// A unique key for this input attachment.
+    /// A unique key for this input attachment. The key must be 1-63
+    /// characters in length. The key must begin and end with a letter (regardless
+    /// of case) or a number, but can contain dashes or underscores in between.
     #[prost(string, tag = "1")]
     pub key: ::prost::alloc::string::String,
     /// The resource name of an existing input, in the form of:
@@ -893,7 +985,7 @@ pub struct Event {
     #[prost(message, optional, tag = "12")]
     pub error: ::core::option::Option<super::super::super::super::rpc::Status>,
     /// Required. Operation to be executed by this event.
-    #[prost(oneof = "event::Task", tags = "5, 6, 13, 15, 16")]
+    #[prost(oneof = "event::Task", tags = "5, 6, 13, 14, 15, 16")]
     pub task: ::core::option::Option<event::Task>,
 }
 /// Nested message and enum types in `Event`.
@@ -914,6 +1006,20 @@ pub mod event {
         #[prost(message, optional, tag = "1")]
         pub duration: ::core::option::Option<::prost_types::Duration>,
     }
+    /// Inserts a slate.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SlateTask {
+        /// Optional. Duration of the slate. Must be greater than 0 if specified.
+        /// Omit this field for a long running slate.
+        #[prost(message, optional, tag = "1")]
+        pub duration: ::core::option::Option<::prost_types::Duration>,
+        /// Slate asset to use for the duration. If its duration is less than the
+        /// duration of the SlateTask, then the slate loops. The slate must be
+        /// represented in the form of:
+        /// `projects/{project}/locations/{location}/assets/{assetId}`.
+        #[prost(string, tag = "2")]
+        pub asset: ::prost::alloc::string::String,
+    }
     /// Stops any events which are currently running. This only applies to events
     /// with a duration.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -926,8 +1032,7 @@ pub mod event {
         #[prost(message, optional, tag = "1")]
         pub duration: ::core::option::Option<::prost_types::Duration>,
     }
-    /// Unmutes the stream. The task will fail if the stream is not
-    /// currently muted.
+    /// Unmutes the stream. The task fails if the stream is not currently muted.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct UnmuteTask {}
     /// State of the event
@@ -952,27 +1057,238 @@ pub mod event {
     /// Required. Operation to be executed by this event.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Task {
-        /// Required. Switches to another input stream.
+        /// Switches to another input stream.
         #[prost(message, tag = "5")]
         InputSwitch(InputSwitchTask),
-        /// Required. Inserts a new ad opportunity.
+        /// Inserts a new ad opportunity.
         #[prost(message, tag = "6")]
         AdBreak(AdBreakTask),
-        /// Required. Stops any running ad break.
+        /// Stops any running ad break.
         #[prost(message, tag = "13")]
         ReturnToProgram(ReturnToProgramTask),
-        /// Required. Mutes the stream.
+        /// Inserts a slate.
+        #[prost(message, tag = "14")]
+        Slate(SlateTask),
+        /// Mutes the stream.
         #[prost(message, tag = "15")]
         Mute(MuteTask),
-        /// Required. Unmutes the stream.
+        /// Unmutes the stream.
         #[prost(message, tag = "16")]
         Unmute(UnmuteTask),
+    }
+}
+/// Clip is a sub-resource under channel. Each clip represents a clipping
+/// operation that generates a VOD playlist from its channel given a set of
+/// timestamp ranges.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Clip {
+    /// The resource name of the clip, in the following format:
+    /// `projects/{project}/locations/{location}/channels/{c}/clips/{clipId}`.
+    /// `{clipId}` is a user-specified resource id that conforms to the following
+    /// criteria:
+    ///
+    /// 1. 1 character minimum, 63 characters maximum
+    /// 2. Only contains letters, digits, underscores, and hyphens
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. The creation timestamp of the clip resource.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The timestamp when the clip request starts to be processed.
+    #[prost(message, optional, tag = "3")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The update timestamp of the clip resource.
+    #[prost(message, optional, tag = "4")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The labels associated with this resource. Each label is a key-value pair.
+    #[prost(map = "string, string", tag = "5")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. The state of the clip.
+    #[prost(enumeration = "clip::State", tag = "6")]
+    pub state: i32,
+    /// Specify the `output_uri` to determine where to place the clip segments and
+    /// clip manifest files in Cloud Storage. The manifests specified in
+    /// `clip_manifests` fields will be placed under this URI. The exact URI of the
+    /// generated manifests will be provided in `clip_manifests.output_uri` for
+    /// each manifest.
+    /// Example:
+    /// "output_uri": "gs://my-bucket/clip-outputs"
+    /// "clip_manifests.output_uri": "gs://my-bucket/clip-outputs/main.m3u8"
+    #[prost(string, tag = "7")]
+    pub output_uri: ::prost::alloc::string::String,
+    /// Output only. An error object that describes the reason for the failure.
+    /// This property only presents when `state` is `FAILED`.
+    #[prost(message, optional, tag = "9")]
+    pub error: ::core::option::Option<super::super::super::super::rpc::Status>,
+    /// The specified ranges of segments to generate a clip.
+    #[prost(message, repeated, tag = "10")]
+    pub slices: ::prost::alloc::vec::Vec<clip::Slice>,
+    /// Required. A list of clip manifests. Currently only one clip manifest is
+    /// allowed.
+    #[prost(message, repeated, tag = "12")]
+    pub clip_manifests: ::prost::alloc::vec::Vec<clip::ClipManifest>,
+}
+/// Nested message and enum types in `Clip`.
+pub mod clip {
+    /// TimeSlice represents a tuple of Unix epoch timestamps that specifies a time
+    /// range.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct TimeSlice {
+        /// The mark-in Unix epoch time in the original live stream manifest.
+        #[prost(message, optional, tag = "1")]
+        pub markin_time: ::core::option::Option<::prost_types::Timestamp>,
+        /// The mark-out Unix epoch time in the original live stream manifest.
+        #[prost(message, optional, tag = "2")]
+        pub markout_time: ::core::option::Option<::prost_types::Timestamp>,
+    }
+    /// Slice represents a slice of the requested clip.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Slice {
+        /// The allowlist forms of a slice.
+        #[prost(oneof = "slice::Kind", tags = "1")]
+        pub kind: ::core::option::Option<slice::Kind>,
+    }
+    /// Nested message and enum types in `Slice`.
+    pub mod slice {
+        /// The allowlist forms of a slice.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Kind {
+            /// A slice in form of a tuple of Unix epoch time.
+            #[prost(message, tag = "1")]
+            TimeSlice(super::TimeSlice),
+        }
+    }
+    /// ClipManifest identifies a source manifest for the generated clip manifest.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ClipManifest {
+        /// Required. A unique key that identifies a manifest config in the parent
+        /// channel. This key is the same as `channel.manifests.key` for the selected
+        /// manifest.
+        #[prost(string, tag = "1")]
+        pub manifest_key: ::prost::alloc::string::String,
+        /// Output only. The output URI of the generated clip manifest. This field
+        /// will be populated when the CreateClip request is accepted. Current output
+        /// format is provided below but may change in the future. Please read this
+        /// field to get the uri to the generated clip manifest. Format:
+        /// {clip.output_uri}/{channel.manifest.fileName} Example:
+        /// gs://my-bucket/clip-outputs/main.m3u8
+        #[prost(string, tag = "2")]
+        pub output_uri: ::prost::alloc::string::String,
+    }
+    /// State of clipping operation.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// State is not specified.
+        Unspecified = 0,
+        /// The operation is pending to be picked up by the server.
+        Pending = 1,
+        /// The server admitted this create clip request, and
+        /// outputs are under processing.
+        Creating = 2,
+        /// Outputs are available in the specified Cloud Storage bucket. For
+        /// additional information, see the `outputs` field.
+        Succeeded = 3,
+        /// The operation has failed. For additional information, see the `error`
+        /// field.
+        Failed = 4,
+    }
+}
+/// An asset represents a video or an image.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Asset {
+    /// The resource name of the asset, in the form of:
+    /// `projects/{project}/locations/{location}/assets/{assetId}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. The creation time.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The update time.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// User-defined key/value metadata.
+    #[prost(map = "string, string", tag = "4")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Based64-encoded CRC32c checksum of the asset file. For more information,
+    /// see the crc32c checksum of the [Cloud Storage Objects
+    /// resource](<https://cloud.google.com/storage/docs/json_api/v1/objects>).
+    /// If crc32c is omitted or left empty when the asset is created, this field is
+    /// filled by the crc32c checksum of the Cloud Storage object indicated by
+    /// \[VideoAsset.uri][google.cloud.video.livestream.v1.Asset.VideoAsset.uri\] or
+    /// \[ImageAsset.uri][google.cloud.video.livestream.v1.Asset.ImageAsset.uri\]. If
+    /// crc32c is set, the asset can't be created if the crc32c value does not
+    /// match with the crc32c checksum of the Cloud Storage object indicated by
+    /// \[VideoAsset.uri][google.cloud.video.livestream.v1.Asset.VideoAsset.uri\] or
+    /// \[ImageAsset.uri][google.cloud.video.livestream.v1.Asset.ImageAsset.uri\].
+    #[prost(string, tag = "7")]
+    pub crc32c: ::prost::alloc::string::String,
+    /// Output only. The state of the asset resource.
+    #[prost(enumeration = "asset::State", tag = "8")]
+    pub state: i32,
+    /// Output only. Only present when `state` is `ERROR`. The reason for the error
+    /// state of the asset.
+    #[prost(message, optional, tag = "9")]
+    pub error: ::core::option::Option<super::super::super::super::rpc::Status>,
+    /// The reference to the asset.
+    /// The maximum size of the resource is 250 MB.
+    #[prost(oneof = "asset::Resource", tags = "5, 6")]
+    pub resource: ::core::option::Option<asset::Resource>,
+}
+/// Nested message and enum types in `Asset`.
+pub mod asset {
+    /// VideoAsset represents a video. The supported formats are MP4, MPEG-TS, and
+    /// FLV. The supported video codec is H264. The supported audio codecs are
+    /// AAC, AC3, MP2, and MP3.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct VideoAsset {
+        /// Cloud Storage URI of the video. The format is `gs://my-bucket/my-object`.
+        #[prost(string, tag = "1")]
+        pub uri: ::prost::alloc::string::String,
+    }
+    /// Image represents an image. The supported formats are JPEG, PNG.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ImageAsset {
+        /// Cloud Storage URI of the image. The format is `gs://my-bucket/my-object`.
+        #[prost(string, tag = "1")]
+        pub uri: ::prost::alloc::string::String,
+    }
+    /// State of the asset resource.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// State is not specified.
+        Unspecified = 0,
+        /// The asset is being created.
+        Creating = 1,
+        /// The asset is ready for use.
+        Active = 2,
+        /// The asset is being deleted.
+        Deleting = 3,
+        /// The asset has an error.
+        Error = 4,
+    }
+    /// The reference to the asset.
+    /// The maximum size of the resource is 250 MB.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Resource {
+        /// VideoAsset represents a video.
+        #[prost(message, tag = "5")]
+        Video(VideoAsset),
+        /// ImageAsset represents an image.
+        #[prost(message, tag = "6")]
+        Image(ImageAsset),
     }
 }
 /// Encryption settings.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Encryption {
-    /// Required. Identifier for this set of encryption options.
+    /// Required. Identifier for this set of encryption options. The ID must be
+    /// 1-63 characters in length. The ID must begin and end with a letter
+    /// (regardless of case) or a number, but can contain dashes or underscores in
+    /// between.
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
     /// Required. Configuration for DRM systems.
@@ -1059,6 +1375,142 @@ pub mod encryption {
         #[prost(message, tag = "6")]
         MpegCenc(MpegCommonEncryption),
     }
+}
+/// Pool resource defines the configuration of Live Stream pools for a specific
+/// location. Currently we support only one pool resource per project per
+/// location. After the creation of the first input, a default pool is created
+/// automatically at "projects/{project}/locations/{location}/pools/default".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Pool {
+    /// The resource name of the pool, in the form of:
+    /// `projects/{project}/locations/{location}/pools/{poolId}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. The creation time.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The update time.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// User-defined key/value metadata.
+    #[prost(map = "string, string", tag = "4")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Network configuration for the pool.
+    #[prost(message, optional, tag = "5")]
+    pub network_config: ::core::option::Option<pool::NetworkConfig>,
+}
+/// Nested message and enum types in `Pool`.
+pub mod pool {
+    /// Defines the network configuration for the pool.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct NetworkConfig {
+        /// peered_network is the network resource URL of the network that is peered
+        /// to the service provider network. Must be of the format
+        /// projects/NETWORK_PROJECT_NUMBER/global/networks/NETWORK_NAME, where
+        /// NETWORK_PROJECT_NUMBER is the project number of the Cloud project that
+        /// holds your VPC network and NETWORK_NAME is the name of your VPC network.
+        /// If peered_network is omitted or empty, the pool will use endpoints that
+        /// are publicly available.
+        #[prost(string, tag = "1")]
+        pub peered_network: ::prost::alloc::string::String,
+    }
+}
+/// Request message for "LivestreamService.CreateAsset".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateAssetRequest {
+    /// Required. The parent location for the resource, in the form of:
+    /// `projects/{project}/locations/{location}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The asset resource to be created.
+    #[prost(message, optional, tag = "2")]
+    pub asset: ::core::option::Option<Asset>,
+    /// Required. The ID of the asset resource to be created.
+    /// This value must be 1-63 characters, begin and end with `\[a-z0-9\]`,
+    /// could contain dashes (-) in between.
+    #[prost(string, tag = "3")]
+    pub asset_id: ::prost::alloc::string::String,
+    /// A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server will guarantee
+    /// that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported `(00000000-0000-0000-0000-000000000000)`.
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for "LivestreamService.DeleteAsset".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteAssetRequest {
+    /// Required. The name of the asset resource, in the form of:
+    /// `projects/{project}/locations/{location}/assets/{assetId}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server will guarantee
+    /// that for at least 60 minutes after the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported `(00000000-0000-0000-0000-000000000000)`.
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for "LivestreamService.ListAssets".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAssetsRequest {
+    /// Required. The parent location for the resource, in the form of:
+    /// `projects/{project}/locations/{location}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Requested page size. Server may return fewer items than requested.
+    /// If unspecified, server will pick an appropriate default.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A token identifying a page of results the server should return.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Filtering results
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Hint for how to order the results
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for "LivestreamService.ListAssets".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListAssetsResponse {
+    /// The list of Assets
+    #[prost(message, repeated, tag = "1")]
+    pub assets: ::prost::alloc::vec::Vec<Asset>,
+    /// The next_page_token value returned from a previous List request, if any.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request message for "LivestreamService.GetAsset".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetAssetRequest {
+    /// Required. Name of the resource, in the following form:
+    /// `projects/{project}/locations/{location}/assets/{asset}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
 }
 /// Request message for "LivestreamService.CreateChannel".
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1498,6 +1950,102 @@ pub struct DeleteEventRequest {
 /// Response message for Start/Stop Channel long-running operations.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChannelOperationResponse {}
+/// Request message for "LivestreamService.ListClips".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListClipsRequest {
+    /// Required. Parent value for ListClipsRequest
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Requested page size. Server may return fewer items than requested.
+    /// If unspecified, server will pick an appropriate default.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A token identifying a page of results the server should return.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Filtering results
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Hint for how to order the results
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for "LivestreamService.ListClips".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListClipsResponse {
+    /// The list of Clip
+    #[prost(message, repeated, tag = "1")]
+    pub clips: ::prost::alloc::vec::Vec<Clip>,
+    /// A token identifying a page of results the server should return.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request message for "LivestreamService.GetClip".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetClipRequest {
+    /// Required. Name of the resource, in the following form:
+    /// `projects/{project}/locations/{location}/channels/{channel}/clips/{clip}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for "LivestreamService.CreateClip".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateClipRequest {
+    /// Required. The parent resource name, in the following form:
+    /// `projects/{project}/locations/{location}/channels/{channel}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. Id of the requesting object in the following form:
+    ///
+    /// 1. 1 character minimum, 63 characters maximum
+    /// 2. Only contains letters, digits, underscores, and hyphens
+    #[prost(string, tag = "2")]
+    pub clip_id: ::prost::alloc::string::String,
+    /// Required. The resource being created
+    #[prost(message, optional, tag = "3")]
+    pub clip: ::core::option::Option<Clip>,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and
+    /// the request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for "LivestreamService.DeleteClip".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteClipRequest {
+    /// Required. The name of the clip resource, in the form of:
+    /// `projects/{project}/locations/{location}/channels/{channelId}/clips/{clipId}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server will guarantee
+    /// that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported `(00000000-0000-0000-0000-000000000000)`.
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
 /// Represents the metadata of the long-running operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct OperationMetadata {
@@ -1523,6 +2071,45 @@ pub struct OperationMetadata {
     /// Output only. API version used to start the operation.
     #[prost(string, tag = "6")]
     pub api_version: ::prost::alloc::string::String,
+}
+/// Request message for "LivestreamService.GetPool".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetPoolRequest {
+    /// Required. The name of the pool resource, in the form of:
+    /// `projects/{project}/locations/{location}/pools/{poolId}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for "LivestreamService.UpdatePool".
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdatePoolRequest {
+    /// Field mask is used to specify the fields to be overwritten in the Pool
+    /// resource by the update. You can only update the following fields:
+    ///
+    /// * `networkConfig`
+    ///
+    /// The fields specified in the update_mask are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask.
+    #[prost(message, optional, tag = "1")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Required. The pool resource to be updated.
+    #[prost(message, optional, tag = "2")]
+    pub pool: ::core::option::Option<Pool>,
+    /// A request ID to identify requests. Specify a unique request ID
+    /// so that if you must retry your request, the server will know to ignore
+    /// the request if it has already been completed. The server will guarantee
+    /// that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported `(00000000-0000-0000-0000-000000000000)`.
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod livestream_service_client {
@@ -1874,6 +2461,193 @@ pub mod livestream_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.video.livestream.v1.LivestreamService/DeleteEvent",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns a list of all clips in the specified channel."]
+        pub async fn list_clips(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListClipsRequest>,
+        ) -> Result<tonic::Response<super::ListClipsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/ListClips",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the specified clip."]
+        pub async fn get_clip(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetClipRequest>,
+        ) -> Result<tonic::Response<super::Clip>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/GetClip",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a clip with the provided clip ID in the specified channel."]
+        pub async fn create_clip(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateClipRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/CreateClip",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes the specified clip job resource. This method only deletes the clip"]
+        #[doc = " job and does not delete the VOD clip stored in the GCS."]
+        pub async fn delete_clip(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteClipRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/DeleteClip",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a Asset with the provided unique ID in the specified"]
+        #[doc = " region."]
+        pub async fn create_asset(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateAssetRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/CreateAsset",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes the specified asset if it is not used."]
+        pub async fn delete_asset(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteAssetRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/DeleteAsset",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the specified asset."]
+        pub async fn get_asset(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetAssetRequest>,
+        ) -> Result<tonic::Response<super::Asset>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/GetAsset",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns a list of all assets in the specified region."]
+        pub async fn list_assets(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListAssetsRequest>,
+        ) -> Result<tonic::Response<super::ListAssetsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/ListAssets",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the specified pool."]
+        pub async fn get_pool(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetPoolRequest>,
+        ) -> Result<tonic::Response<super::Pool>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/GetPool",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the specified pool."]
+        pub async fn update_pool(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdatePoolRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.video.livestream.v1.LivestreamService/UpdatePool",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

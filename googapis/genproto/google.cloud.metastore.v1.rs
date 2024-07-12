@@ -192,6 +192,10 @@ pub struct HiveMetastoreConfig {
     /// while omitting this field from the request's `service`.
     #[prost(message, optional, tag = "3")]
     pub kerberos_config: ::core::option::Option<KerberosConfig>,
+    /// The protocol to use for the metastore service endpoint. If unspecified,
+    /// defaults to `THRIFT`.
+    #[prost(enumeration = "hive_metastore_config::EndpointProtocol", tag = "4")]
+    pub endpoint_protocol: i32,
     /// A mapping of Hive metastore version to the auxiliary version
     /// configuration. When specified, a secondary Hive metastore service is
     /// created along with the primary service. All auxiliary versions must be less
@@ -203,6 +207,20 @@ pub struct HiveMetastoreConfig {
     #[prost(map = "string, message", tag = "5")]
     pub auxiliary_versions:
         ::std::collections::HashMap<::prost::alloc::string::String, AuxiliaryVersionConfig>,
+}
+/// Nested message and enum types in `HiveMetastoreConfig`.
+pub mod hive_metastore_config {
+    /// Protocols available for serving the metastore service endpoint.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum EndpointProtocol {
+        /// The protocol is not set.
+        Unspecified = 0,
+        /// Use the legacy Apache Thrift protocol for the metastore service endpoint.
+        Thrift = 1,
+        /// Use the modernized gRPC protocol for the metastore service endpoint.
+        Grpc = 2,
+    }
 }
 /// Configuration information for a Kerberos principal.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -271,6 +289,8 @@ pub struct AuxiliaryVersionConfig {
     pub network_config: ::core::option::Option<NetworkConfig>,
 }
 /// Network configuration for the Dataproc Metastore service.
+///
+/// Next available ID: 4
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NetworkConfig {
     /// Immutable. The consumer-side network configuration for the Dataproc
@@ -281,12 +301,18 @@ pub struct NetworkConfig {
 /// Nested message and enum types in `NetworkConfig`.
 pub mod network_config {
     /// Contains information of the customer's network configurations.
+    ///
+    /// Next available ID: 5
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Consumer {
         /// Output only. The URI of the endpoint used to access the metastore
         /// service.
         #[prost(string, tag = "3")]
         pub endpoint_uri: ::prost::alloc::string::String,
+        /// Output only. The location of the endpoint URI. Format:
+        /// `projects/{project}/locations/{location}`.
+        #[prost(string, tag = "4")]
+        pub endpoint_location: ::prost::alloc::string::String,
         #[prost(oneof = "consumer::VpcResource", tags = "1")]
         pub vpc_resource: ::core::option::Option<consumer::VpcResource>,
     }
@@ -378,6 +404,10 @@ pub mod metadata_import {
         /// to import metadata. It must begin with `gs://`.
         #[prost(string, tag = "2")]
         pub gcs_uri: ::prost::alloc::string::String,
+        /// The name of the source database.
+        #[deprecated]
+        #[prost(string, tag = "3")]
+        pub source_database: ::prost::alloc::string::String,
         /// Optional. The type of the database dump. If unspecified, defaults to
         /// `MYSQL`.
         #[prost(enumeration = "super::database_dump_spec::Type", tag = "4")]
@@ -1167,6 +1197,95 @@ pub mod database_dump_spec {
         Avro = 2,
     }
 }
+/// Request message for
+/// \[DataprocMetastore.QueryMetadata][google.cloud.metastore.v1.DataprocMetastore.QueryMetadata\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryMetadataRequest {
+    /// Required. The relative resource name of the metastore service to query
+    /// metadata, in the following format:
+    ///
+    /// `projects/{project_id}/locations/{location_id}/services/{service_id}`.
+    #[prost(string, tag = "1")]
+    pub service: ::prost::alloc::string::String,
+    /// Required. A read-only SQL query to execute against the metadata database.
+    /// The query cannot change or mutate the data.
+    #[prost(string, tag = "2")]
+    pub query: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[DataprocMetastore.QueryMetadata][google.cloud.metastore.v1.DataprocMetastore.QueryMetadata\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryMetadataResponse {
+    /// The manifest URI  is link to a JSON instance in Cloud Storage.
+    /// This instance manifests immediately along with QueryMetadataResponse. The
+    /// content of the URI is not retriable until the long-running operation query
+    /// against the metadata finishes.
+    #[prost(string, tag = "1")]
+    pub result_manifest_uri: ::prost::alloc::string::String,
+}
+/// Error details in public error message for
+/// \[DataprocMetastore.QueryMetadata][google.cloud.metastore.v1.DataprocMetastore.QueryMetadata\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ErrorDetails {
+    /// Additional structured details about this error.
+    ///
+    /// Keys define the failure items.
+    /// Value describes the exception or details of the item.
+    #[prost(map = "string, string", tag = "1")]
+    pub details:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// Request message for
+/// \[DataprocMetastore.MoveTableToDatabase][google.cloud.metastore.v1.DataprocMetastore.MoveTableToDatabase\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MoveTableToDatabaseRequest {
+    /// Required. The relative resource name of the metastore service to mutate
+    /// metadata, in the following format:
+    ///
+    /// `projects/{project_id}/locations/{location_id}/services/{service_id}`.
+    #[prost(string, tag = "1")]
+    pub service: ::prost::alloc::string::String,
+    /// Required. The name of the table to be moved.
+    #[prost(string, tag = "2")]
+    pub table_name: ::prost::alloc::string::String,
+    /// Required. The name of the database where the table resides.
+    #[prost(string, tag = "3")]
+    pub db_name: ::prost::alloc::string::String,
+    /// Required. The name of the database where the table should be moved.
+    #[prost(string, tag = "4")]
+    pub destination_db_name: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[DataprocMetastore.MoveTableToDatabase][google.cloud.metastore.v1.DataprocMetastore.MoveTableToDatabase\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MoveTableToDatabaseResponse {}
+/// Request message for
+/// \[DataprocMetastore.AlterMetadataResourceLocation][google.cloud.metastore.v1.DataprocMetastore.AlterMetadataResourceLocation\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AlterMetadataResourceLocationRequest {
+    /// Required. The relative resource name of the metastore service to mutate
+    /// metadata, in the following format:
+    ///
+    /// `projects/{project_id}/locations/{location_id}/services/{service_id}`.
+    #[prost(string, tag = "1")]
+    pub service: ::prost::alloc::string::String,
+    /// Required. The relative metadata resource name in the following format.
+    ///
+    /// `databases/{database_id}`
+    /// or
+    /// `databases/{database_id}/tables/{table_id}`
+    /// or
+    /// `databases/{database_id}/tables/{table_id}/partitions/{partition_id}`
+    #[prost(string, tag = "2")]
+    pub resource_name: ::prost::alloc::string::String,
+    /// Required. The new location URI for the metadata resource.
+    #[prost(string, tag = "3")]
+    pub location_uri: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[DataprocMetastore.AlterMetadataResourceLocation][google.cloud.metastore.v1.DataprocMetastore.AlterMetadataResourceLocation\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AlterMetadataResourceLocationResponse {}
 #[doc = r" Generated client implementations."]
 pub mod dataproc_metastore_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -1516,6 +1635,69 @@ pub mod dataproc_metastore_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Query DPMS metadata."]
+        pub async fn query_metadata(
+            &mut self,
+            request: impl tonic::IntoRequest<super::QueryMetadataRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.metastore.v1.DataprocMetastore/QueryMetadata",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Move a table to another database."]
+        pub async fn move_table_to_database(
+            &mut self,
+            request: impl tonic::IntoRequest<super::MoveTableToDatabaseRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.metastore.v1.DataprocMetastore/MoveTableToDatabase",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Alter metadata resource location. The metadata resource can be a database,"]
+        #[doc = " table, or partition. This functionality only updates the parent directory"]
+        #[doc = " for the respective metadata resource and does not transfer any existing"]
+        #[doc = " data to the new location."]
+        pub async fn alter_metadata_resource_location(
+            &mut self,
+            request: impl tonic::IntoRequest<super::AlterMetadataResourceLocationRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.metastore.v1.DataprocMetastore/AlterMetadataResourceLocation",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 /// Represents a federation of multiple backend metastores.
@@ -1610,6 +1792,8 @@ pub mod backend_metastore {
     pub enum MetastoreType {
         /// The metastore type is not set.
         Unspecified = 0,
+        /// The backend metastore is BigQuery.
+        Bigquery = 2,
         /// The backend metastore is Dataproc Metastore.
         DataprocMetastore = 3,
     }

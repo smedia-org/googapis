@@ -17,27 +17,28 @@ pub struct Workflow {
     /// following properties of a workflow:
     ///
     /// - [Service account]\[google.cloud.workflows.v1.Workflow.service_account\]
-    /// - [Workflow code to be executed]\[google.cloud.workflows.v1.Workflow.source_contents\]
+    /// - [Workflow code to be
+    /// executed]\[google.cloud.workflows.v1.Workflow.source_contents\]
     ///
-    /// The format is "000001-a4d", where the first 6 characters define
+    /// The format is "000001-a4d", where the first six characters define
     /// the zero-padded revision ordinal number. They are followed by a hyphen and
-    /// 3 hexadecimal random characters.
+    /// three hexadecimal random characters.
     #[prost(string, tag = "4")]
     pub revision_id: ::prost::alloc::string::String,
-    /// Output only. The timestamp of when the workflow was created.
+    /// Output only. The timestamp for when the workflow was created.
     #[prost(message, optional, tag = "5")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. The last update timestamp of the workflow.
+    /// Output only. The timestamp for when the workflow was last updated.
     #[prost(message, optional, tag = "6")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Output only. The timestamp that the latest revision of the workflow
-    /// was created.
+    /// Output only. The timestamp for the latest revision of the workflow's
+    /// creation.
     #[prost(message, optional, tag = "7")]
     pub revision_create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Labels associated with this workflow.
     /// Labels can contain at most 64 entries. Keys and values can be no longer
     /// than 63 characters and can only contain lowercase letters, numeric
-    /// characters, underscores and dashes. Label keys must start with a letter.
+    /// characters, underscores, and dashes. Label keys must start with a letter.
     /// International characters are allowed.
     #[prost(map = "string, string", tag = "8")]
     pub labels:
@@ -56,6 +57,37 @@ pub struct Workflow {
     /// revision.
     #[prost(string, tag = "9")]
     pub service_account: ::prost::alloc::string::String,
+    /// Optional. The resource name of a KMS crypto key used to encrypt or decrypt
+    /// the data associated with the workflow.
+    ///
+    /// Format:
+    /// projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{cryptoKey}
+    ///
+    /// Using `-` as a wildcard for the `{project}` or not providing one at all
+    /// will infer the project from the account.
+    ///
+    /// If not provided, data associated with the workflow will not be
+    /// CMEK-encrypted.
+    #[prost(string, tag = "11")]
+    pub crypto_key_name: ::prost::alloc::string::String,
+    /// Output only. Error regarding the state of the workflow. For example, this
+    /// field will have error details if the execution data is unavailable due to
+    /// revoked KMS key permissions.
+    #[prost(message, optional, tag = "12")]
+    pub state_error: ::core::option::Option<workflow::StateError>,
+    /// Optional. Describes the level of platform logging to apply to calls and
+    /// call responses during executions of this workflow. If both the workflow and
+    /// the execution specify a logging level, the execution level takes
+    /// precedence.
+    #[prost(enumeration = "workflow::CallLogLevel", tag = "13")]
+    pub call_log_level: i32,
+    /// Optional. User-defined environment variables associated with this workflow
+    /// revision. This map has a maximum length of 20. Each string can take up to
+    /// 40KiB. Keys cannot be empty strings and cannot start with “GOOGLE” or
+    /// “WORKFLOWS".
+    #[prost(map = "string, string", tag = "14")]
+    pub user_env_vars:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     /// Required. Location of the workflow source code.
     /// Modifying this field for an existing workflow results in a new workflow
     /// revision.
@@ -64,8 +96,31 @@ pub struct Workflow {
 }
 /// Nested message and enum types in `Workflow`.
 pub mod workflow {
-    /// Describes the current state of workflow deployment. More states may be
-    /// added in the future.
+    /// Describes an error related to the current state of the workflow.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct StateError {
+        /// Provides specifics about the error.
+        #[prost(string, tag = "1")]
+        pub details: ::prost::alloc::string::String,
+        /// The type of this state error.
+        #[prost(enumeration = "state_error::Type", tag = "2")]
+        pub r#type: i32,
+    }
+    /// Nested message and enum types in `StateError`.
+    pub mod state_error {
+        /// Describes the possibled types of a state error.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum Type {
+            /// No type specified.
+            Unspecified = 0,
+            /// Caused by an issue with KMS.
+            KmsError = 1,
+        }
+    }
+    /// Describes the current state of workflow deployment.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum State {
@@ -73,6 +128,23 @@ pub mod workflow {
         Unspecified = 0,
         /// The workflow has been deployed successfully and is serving.
         Active = 1,
+        /// Workflow data is unavailable. See the `state_error` field.
+        Unavailable = 2,
+    }
+    /// Describes the level of platform logging to apply to calls and call
+    /// responses during workflow executions.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CallLogLevel {
+        /// No call logging level specified.
+        Unspecified = 0,
+        /// Log all call steps within workflows, all call returns, and all exceptions
+        /// raised.
+        LogAllCalls = 1,
+        /// Log only exceptions that are raised from call steps within workflows.
+        LogErrorsOnly = 2,
+        /// Explicitly log nothing.
+        LogNone = 3,
     }
     /// Required. Location of the workflow source code.
     /// Modifying this field for an existing workflow results in a new workflow
@@ -93,10 +165,10 @@ pub struct ListWorkflowsRequest {
     /// Format: projects/{project}/locations/{location}
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Maximum number of workflows to return per call. The service may return
-    /// fewer than this value. If the value is not specified, a default value of
-    /// 500 will be used. The maximum permitted value is 1000 and values greater
-    /// than 1000 will be coerced down to 1000.
+    /// Maximum number of workflows to return per call. The service might return
+    /// fewer than this value even if not at the end of the collection. If a value
+    /// is not specified, a default value of 500 is used. The maximum permitted
+    /// value is 1000 and values greater than 1000 are coerced down to 1000.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// A page token, received from a previous `ListWorkflows` call.
@@ -109,10 +181,10 @@ pub struct ListWorkflowsRequest {
     /// Filter to restrict results to specific workflows.
     #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
-    /// Comma-separated list of fields that that specify the order of the results.
+    /// Comma-separated list of fields that specify the order of the results.
     /// Default sorting order for a field is ascending. To specify descending order
-    /// for a field, append a " desc" suffix.
-    /// If not specified, the results will be returned in an unspecified order.
+    /// for a field, append a "desc" suffix.
+    /// If not specified, the results are returned in an unspecified order.
     #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
 }
@@ -121,7 +193,7 @@ pub struct ListWorkflowsRequest {
 /// method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListWorkflowsResponse {
-    /// The workflows which match the request.
+    /// The workflows that match the request.
     #[prost(message, repeated, tag = "1")]
     pub workflows: ::prost::alloc::vec::Vec<Workflow>,
     /// A token, which can be sent as `page_token` to retrieve the next page.
@@ -136,10 +208,17 @@ pub struct ListWorkflowsResponse {
 /// \[GetWorkflow][google.cloud.workflows.v1.Workflows.GetWorkflow\] method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetWorkflowRequest {
-    /// Required. Name of the workflow which information should be retrieved.
+    /// Required. Name of the workflow for which information should be retrieved.
     /// Format: projects/{project}/locations/{location}/workflows/{workflow}
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// Optional. The revision of the workflow to retrieve. If the revision_id is
+    /// empty, the latest revision is retrieved.
+    /// The format is "000001-a4d", where the first six characters define
+    /// the zero-padded decimal revision number. They are followed by a hyphen and
+    /// three hexadecimal characters.
+    #[prost(string, tag = "2")]
+    pub revision_id: ::prost::alloc::string::String,
 }
 /// Request for the
 /// \[CreateWorkflow][google.cloud.workflows.v1.Workflows.CreateWorkflow\]
@@ -258,7 +337,7 @@ pub mod workflows_client {
             self.inner = self.inner.accept_gzip();
             self
         }
-        #[doc = " Lists Workflows in a given project and location."]
+        #[doc = " Lists workflows in a given project and location."]
         #[doc = " The default order is not specified."]
         pub async fn list_workflows(
             &mut self,
@@ -276,7 +355,7 @@ pub mod workflows_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Gets details of a single Workflow."]
+        #[doc = " Gets details of a single workflow."]
         pub async fn get_workflow(
             &mut self,
             request: impl tonic::IntoRequest<super::GetWorkflowRequest>,
@@ -295,7 +374,7 @@ pub mod workflows_client {
         }
         #[doc = " Creates a new workflow. If a workflow with the specified name already"]
         #[doc = " exists in the specified project and location, the long running operation"]
-        #[doc = " will return [ALREADY_EXISTS][google.rpc.Code.ALREADY_EXISTS] error."]
+        #[doc = " returns a [ALREADY_EXISTS][google.rpc.Code.ALREADY_EXISTS] error."]
         pub async fn create_workflow(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateWorkflowRequest>,
@@ -339,8 +418,8 @@ pub mod workflows_client {
         }
         #[doc = " Updates an existing workflow."]
         #[doc = " Running this method has no impact on already running executions of the"]
-        #[doc = " workflow. A new revision of the workflow may be created as a result of a"]
-        #[doc = " successful update operation. In that case, such revision will be used"]
+        #[doc = " workflow. A new revision of the workflow might be created as a result of a"]
+        #[doc = " successful update operation. In that case, the new revision is used"]
         #[doc = " in new workflow executions."]
         pub async fn update_workflow(
             &mut self,

@@ -132,6 +132,25 @@ pub struct TimeZone {
     #[prost(string, tag = "2")]
     pub version: ::prost::alloc::string::String,
 }
+/// Represents an amount of money with its currency type.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Money {
+    /// The three-letter currency code defined in ISO 4217.
+    #[prost(string, tag = "1")]
+    pub currency_code: ::prost::alloc::string::String,
+    /// The whole units of the amount.
+    /// For example if `currencyCode` is `"USD"`, then 1 unit is one US dollar.
+    #[prost(int64, tag = "2")]
+    pub units: i64,
+    /// Number of nano (10^-9) units of the amount.
+    /// The value must be between -999,999,999 and +999,999,999 inclusive.
+    /// If `units` is positive, `nanos` must be positive or zero.
+    /// If `units` is zero, `nanos` can be positive, zero, or negative.
+    /// If `units` is negative, `nanos` must be negative or zero.
+    /// For example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.
+    #[prost(int32, tag = "3")]
+    pub nanos: i32,
+}
 /// Represents a color in the RGBA color space. This representation is designed
 /// for simplicity of conversion to/from color representations in various
 /// languages over compactness. For example, the fields of this representation
@@ -331,25 +350,6 @@ pub struct Expr {
     /// reporting, e.g. a file name and a position in the file.
     #[prost(string, tag = "4")]
     pub location: ::prost::alloc::string::String,
-}
-/// Represents an amount of money with its currency type.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Money {
-    /// The three-letter currency code defined in ISO 4217.
-    #[prost(string, tag = "1")]
-    pub currency_code: ::prost::alloc::string::String,
-    /// The whole units of the amount.
-    /// For example if `currencyCode` is `"USD"`, then 1 unit is one US dollar.
-    #[prost(int64, tag = "2")]
-    pub units: i64,
-    /// Number of nano (10^-9) units of the amount.
-    /// The value must be between -999,999,999 and +999,999,999 inclusive.
-    /// If `units` is positive, `nanos` must be positive or zero.
-    /// If `units` is zero, `nanos` can be positive, zero, or negative.
-    /// If `units` is negative, `nanos` must be negative or zero.
-    /// For example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.
-    #[prost(int32, tag = "3")]
-    pub nanos: i32,
 }
 /// Represents a time interval, encoded as a Timestamp start (inclusive) and a
 /// Timestamp end (exclusive).
@@ -637,48 +637,6 @@ pub enum CalendarPeriod {
     /// A year.
     Year = 7,
 }
-/// Represents a fraction in terms of a numerator divided by a denominator.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Fraction {
-    /// The numerator in the fraction, e.g. 2 in 2/3.
-    #[prost(int64, tag = "1")]
-    pub numerator: i64,
-    /// The value by which the numerator is divided, e.g. 3 in 2/3. Must be
-    /// positive.
-    #[prost(int64, tag = "2")]
-    pub denominator: i64,
-}
-/// Represents a month in the Gregorian calendar.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum Month {
-    /// The unspecified month.
-    Unspecified = 0,
-    /// The month of January.
-    January = 1,
-    /// The month of February.
-    February = 2,
-    /// The month of March.
-    March = 3,
-    /// The month of April.
-    April = 4,
-    /// The month of May.
-    May = 5,
-    /// The month of June.
-    June = 6,
-    /// The month of July.
-    July = 7,
-    /// The month of August.
-    August = 8,
-    /// The month of September.
-    September = 9,
-    /// The month of October.
-    October = 10,
-    /// The month of November.
-    November = 11,
-    /// The month of December.
-    December = 12,
-}
 /// An object representing a phone number, suitable as an API wire format.
 ///
 /// This representation:
@@ -778,6 +736,48 @@ pub mod phone_number {
         #[prost(message, tag = "2")]
         ShortCode(ShortCode),
     }
+}
+/// Represents a fraction in terms of a numerator divided by a denominator.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Fraction {
+    /// The numerator in the fraction, e.g. 2 in 2/3.
+    #[prost(int64, tag = "1")]
+    pub numerator: i64,
+    /// The value by which the numerator is divided, e.g. 3 in 2/3. Must be
+    /// positive.
+    #[prost(int64, tag = "2")]
+    pub denominator: i64,
+}
+/// Represents a month in the Gregorian calendar.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Month {
+    /// The unspecified month.
+    Unspecified = 0,
+    /// The month of January.
+    January = 1,
+    /// The month of February.
+    February = 2,
+    /// The month of March.
+    March = 3,
+    /// The month of April.
+    April = 4,
+    /// The month of May.
+    May = 5,
+    /// The month of June.
+    June = 6,
+    /// The month of July.
+    July = 7,
+    /// The month of August.
+    August = 8,
+    /// The month of September.
+    September = 9,
+    /// The month of October.
+    October = 10,
+    /// The month of November.
+    November = 11,
+    /// The month of December.
+    December = 12,
 }
 /// A quaternion is defined as the quotient of two directed lines in a
 /// three-dimensional space or equivalently as the quotient of two Euclidean

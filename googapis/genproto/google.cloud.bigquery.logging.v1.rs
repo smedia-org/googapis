@@ -596,6 +596,9 @@ pub struct JobStatistics {
     #[deprecated]
     #[prost(message, repeated, tag = "14")]
     pub reservation_usage: ::prost::alloc::vec::Vec<job_statistics::ReservationResourceUsage>,
+    /// Reservation name or "unreserved" for on-demand resource usage.
+    #[prost(string, tag = "16")]
+    pub reservation: ::prost::alloc::string::String,
     /// The first N tables accessed by the query job. Older queries that
     /// reference a large number of tables may not have all of their
     /// tables in this list. You can use the total_tables_processed count to

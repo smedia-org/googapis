@@ -192,9 +192,24 @@ pub struct TableFieldSchema {
     /// (<https://cloud.google.com/bigquery/docs/default-values>) for this field.
     #[prost(string, tag = "10")]
     pub default_value_expression: ::prost::alloc::string::String,
+    /// Optional. The subtype of the RANGE, if the type of this field is RANGE. If
+    /// the type is RANGE, this field is required. Possible values for the field
+    /// element type of a RANGE include:
+    /// * DATE
+    /// * DATETIME
+    /// * TIMESTAMP
+    #[prost(message, optional, tag = "11")]
+    pub range_element_type: ::core::option::Option<table_field_schema::FieldElementType>,
 }
 /// Nested message and enum types in `TableFieldSchema`.
 pub mod table_field_schema {
+    /// Represents the type of a field element.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FieldElementType {
+        /// Required. The type of a field element.
+        #[prost(enumeration = "Type", tag = "1")]
+        pub r#type: i32,
+    }
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum Type {
@@ -230,6 +245,8 @@ pub mod table_field_schema {
         Interval = 14,
         /// JSON, String
         Json = 15,
+        /// RANGE
+        Range = 16,
     }
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -282,6 +299,13 @@ pub struct ReadSession {
     /// metadata from the table which might be incomplete or stale.
     #[prost(int64, tag = "12")]
     pub estimated_total_bytes_scanned: i64,
+    /// Output only. A pre-projected estimate of the total physical size of files
+    /// (in bytes) that this session will scan when all streams are consumed. This
+    /// estimate is independent of the selected columns and can be based on
+    /// incomplete or stale metadata from the table.  This field is only set for
+    /// BigLake tables.
+    #[prost(int64, tag = "15")]
+    pub estimated_total_physical_file_size: i64,
     /// Output only. An estimate on the number of rows present in this session's
     /// streams. This estimate is based on metadata from the table which might be
     /// incomplete or stale.
@@ -375,13 +399,21 @@ pub mod read_session {
         #[prost(string, tag = "2")]
         pub row_restriction: ::prost::alloc::string::String,
         /// Optional. Specifies a table sampling percentage. Specifically, the query
-        /// planner will use TABLESAMPLE SYSTEM (sample_percentage PERCENT). This
-        /// samples at the file-level. It will randomly choose for each file whether
-        /// to include that file in the sample returned. Note, that if the table only
-        /// has one file, then TABLESAMPLE SYSTEM will select that file and return
-        /// all returnable rows contained within.
+        /// planner will use TABLESAMPLE SYSTEM (sample_percentage PERCENT). The
+        /// sampling percentage is applied at the data block granularity. It will
+        /// randomly choose for each data block whether to read the rows in that data
+        /// block. For more details, see
+        /// <https://cloud.google.com/bigquery/docs/table-sampling>)
         #[prost(double, optional, tag = "5")]
         pub sample_percentage: ::core::option::Option<f64>,
+        /// Optional. Set response_compression_codec when creating a read session to
+        /// enable application-level compression of ReadRows responses.
+        #[prost(
+            enumeration = "table_read_options::ResponseCompressionCodec",
+            optional,
+            tag = "6"
+        )]
+        pub response_compression_codec: ::core::option::Option<i32>,
         #[prost(
             oneof = "table_read_options::OutputFormatSerializationOptions",
             tags = "3, 4"
@@ -391,6 +423,23 @@ pub mod read_session {
     }
     /// Nested message and enum types in `TableReadOptions`.
     pub mod table_read_options {
+        /// Specifies which compression codec to attempt on the entire serialized
+        /// response payload (either Arrow record batch or Avro rows). This is
+        /// not to be confused with the Apache Arrow native compression codecs
+        /// specified in ArrowSerializationOptions. For performance reasons, when
+        /// creating a read session requesting Arrow responses, setting both native
+        /// Arrow compression and application-level response compression will not be
+        /// allowed - choose, at most, one kind of compression.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum ResponseCompressionCodec {
+            /// Default is no compression.
+            Unspecified = 0,
+            /// Use raw LZ4 compression.
+            Lz4 = 2,
+        }
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum OutputFormatSerializationOptions {
             /// Optional. Options specific to the Apache Arrow output format.
@@ -613,6 +662,22 @@ pub struct ReadRowsResponse {
     /// the current throttling status.
     #[prost(message, optional, tag = "5")]
     pub throttle_state: ::core::option::Option<ThrottleState>,
+    /// Optional. If the row data in this ReadRowsResponse is compressed, then
+    /// uncompressed byte size is the original size of the uncompressed row data.
+    /// If it is set to a value greater than 0, then decompress into a buffer of
+    /// size uncompressed_byte_size using the compression codec that was requested
+    /// during session creation time and which is specified in
+    /// TableReadOptions.response_compression_codec in ReadSession.
+    /// This value is not set if no response_compression_codec was not requested
+    /// and it is -1 if the requested compression would not have reduced the size
+    /// of this ReadRowsResponse's row data. This attempts to match Apache Arrow's
+    /// behavior described here <https://github.com/apache/arrow/issues/15102> where
+    /// the uncompressed length may be set to -1 to indicate that the data that
+    /// follows is not compressed, which can be useful for cases where compression
+    /// does not yield appreciable savings. When uncompressed_byte_size is not
+    /// greater than 0, the client should skip decompression.
+    #[prost(int64, optional, tag = "9")]
+    pub uncompressed_byte_size: ::core::option::Option<i64>,
     /// Row data is returned in format specified during session creation.
     #[prost(oneof = "read_rows_response::Rows", tags = "3, 4")]
     pub rows: ::core::option::Option<read_rows_response::Rows>,
@@ -693,18 +758,23 @@ pub struct CreateWriteStreamRequest {
 }
 /// Request message for `AppendRows`.
 ///
-/// Due to the nature of AppendRows being a bidirectional streaming RPC, certain
-/// parts of the AppendRowsRequest need only be specified for the first request
-/// sent each time the gRPC network connection is opened/reopened.
+/// Because AppendRows is a bidirectional streaming RPC, certain parts of the
+/// AppendRowsRequest need only be specified for the first request before
+/// switching table destinations. You can also switch table destinations within
+/// the same connection for the default stream.
 ///
 /// The size of a single AppendRowsRequest must be less than 10 MB in size.
 /// Requests larger than this return an error, typically `INVALID_ARGUMENT`.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AppendRowsRequest {
-    /// Required. The write_stream identifies the target of the append operation,
-    /// and only needs to be specified as part of the first request on the gRPC
-    /// connection. If provided for subsequent requests, it must match the value of
-    /// the first request.
+    /// Required. The write_stream identifies the append operation. It must be
+    /// provided in the following scenarios:
+    ///
+    /// * In the first request to an AppendRows connection.
+    ///
+    /// * In all subsequent requests to an AppendRows connection, if you use the
+    /// same connection to write to multiple tables or change the input schema for
+    /// default streams.
     ///
     /// For explicitly created write streams, the format is:
     ///
@@ -713,6 +783,22 @@ pub struct AppendRowsRequest {
     /// For the special default stream, the format is:
     ///
     /// * `projects/{project}/datasets/{dataset}/tables/{table}/streams/_default`.
+    ///
+    /// An example of a possible sequence of requests with write_stream fields
+    /// within a single connection:
+    ///
+    /// * r1: {write_stream: stream_name_1}
+    ///
+    /// * r2: {write_stream: /*omit*/}
+    ///
+    /// * r3: {write_stream: /*omit*/}
+    ///
+    /// * r4: {write_stream: stream_name_2}
+    ///
+    /// * r5: {write_stream: stream_name_2}
+    ///
+    /// The destination changed in request_4, so the write_stream field must be
+    /// populated in all subsequent requests in this stream.
     #[prost(string, tag = "1")]
     pub write_stream: ::prost::alloc::string::String,
     /// If present, the write is only performed if the next append offset is same
@@ -749,6 +835,20 @@ pub struct AppendRowsRequest {
     )]
     pub missing_value_interpretations:
         ::std::collections::HashMap<::prost::alloc::string::String, i32>,
+    /// Optional. Default missing value interpretation for all columns in the
+    /// table. When a value is specified on an `AppendRowsRequest`, it is applied
+    /// to all requests on the connection from that point forward, until a
+    /// subsequent `AppendRowsRequest` sets it to a different value.
+    /// `missing_value_interpretation` can override
+    /// `default_missing_value_interpretation`. For example, if you want to write
+    /// `NULL` instead of using default values for some columns, you can set
+    /// `default_missing_value_interpretation` to `DEFAULT_VALUE` and at the same
+    /// time, set `missing_value_interpretations` to `NULL_VALUE` on those columns.
+    #[prost(
+        enumeration = "append_rows_request::MissingValueInterpretation",
+        tag = "8"
+    )]
+    pub default_missing_value_interpretation: i32,
     /// Input rows. The `writer_schema` field must be specified at the initial
     /// request and currently, it will be ignored if specified in following
     /// requests. Following requests must have data in the same format as the
@@ -762,9 +862,14 @@ pub mod append_rows_request {
     /// requests.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ProtoData {
-        /// Proto schema used to serialize the data.  This value only needs to be
-        /// provided as part of the first request on a gRPC network connection,
-        /// and will be ignored for subsequent requests on the connection.
+        /// The protocol buffer schema used to serialize the data. Provide this value
+        /// whenever:
+        ///
+        /// * You send the first request of an RPC connection.
+        ///
+        /// * You change the input schema.
+        ///
+        /// * You specify a new destination table.
         #[prost(message, optional, tag = "1")]
         pub writer_schema: ::core::option::Option<super::ProtoSchema>,
         /// Serialized row data in protobuf message format.
@@ -774,10 +879,9 @@ pub mod append_rows_request {
         #[prost(message, optional, tag = "2")]
         pub rows: ::core::option::Option<super::ProtoRows>,
     }
-    /// An enum to indicate how to interpret missing values. Missing values are
-    /// fields present in user schema but missing in rows. A missing value can
-    /// represent a NULL or a column default value defined in BigQuery table
-    /// schema.
+    /// An enum to indicate how to interpret missing values of fields that are
+    /// present in user schema but missing in rows. A missing value can represent a
+    /// NULL or a column default value defined in BigQuery table schema.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum MissingValueInterpretation {
@@ -985,7 +1089,8 @@ pub mod storage_error {
         InvalidCmekProvided = 11,
         /// There is an encryption error while using customer-managed encryption key.
         CmekEncryptionError = 12,
-        /// Key Management Service (KMS) service returned an error.
+        /// Key Management Service (KMS) service returned an error, which can be
+        /// retried.
         KmsServiceError = 13,
         /// Permission denied while using customer-managed encryption key.
         KmsPermissionDenied = 14,

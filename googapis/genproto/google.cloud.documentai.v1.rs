@@ -121,6 +121,12 @@ pub struct Document {
     /// Placeholder. Revision history of this document.
     #[prost(message, repeated, tag = "13")]
     pub revisions: ::prost::alloc::vec::Vec<document::Revision>,
+    /// Parsed layout of the document.
+    #[prost(message, optional, tag = "17")]
+    pub document_layout: ::core::option::Option<document::DocumentLayout>,
+    /// Document chunked based on chunking config.
+    #[prost(message, optional, tag = "18")]
+    pub chunked_document: ::core::option::Option<document::ChunkedDocument>,
     /// Original source document from the user.
     #[prost(oneof = "document::Source", tags = "1, 2")]
     pub source: ::core::option::Option<document::Source>,
@@ -486,16 +492,16 @@ pub mod document {
                 /// Whether the text is underlined.
                 #[prost(bool, tag = "7")]
                 pub underlined: bool,
-                /// Whether the text is strikethrough.
+                /// Whether the text is strikethrough. This feature is not supported yet.
                 #[prost(bool, tag = "8")]
                 pub strikeout: bool,
-                /// Whether the text is a subscript.
+                /// Whether the text is a subscript. This feature is not supported yet.
                 #[prost(bool, tag = "9")]
                 pub subscript: bool,
-                /// Whether the text is a superscript.
+                /// Whether the text is a superscript. This feature is not supported yet.
                 #[prost(bool, tag = "10")]
                 pub superscript: bool,
-                /// Whether the text is in small caps.
+                /// Whether the text is in small caps. This feature is not supported yet.
                 #[prost(bool, tag = "11")]
                 pub smallcaps: bool,
                 /// TrueType weight on a scale `100` (thin) to `1000` (ultra-heavy).
@@ -884,7 +890,8 @@ pub mod document {
             #[prost(string, tag = "3")]
             pub layout_id: ::prost::alloc::string::String,
             /// Optional. Identifies the bounding polygon of a layout element on the
-            /// page.
+            /// page. If `layout_type` is set, the bounding polygon must be exactly the
+            /// same to the layout element it's referring to.
             #[prost(message, optional, tag = "4")]
             pub bounding_poly: ::core::option::Option<super::super::BoundingPoly>,
             /// Optional. Confidence of detected page element, if applicable. Range
@@ -1074,6 +1081,189 @@ pub mod document {
         #[prost(message, repeated, tag = "3")]
         pub provenance: ::prost::alloc::vec::Vec<Provenance>,
     }
+    /// Represents the parsed layout of a document as a collection of blocks that
+    /// the document is divided into.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DocumentLayout {
+        /// List of blocks in the document.
+        #[prost(message, repeated, tag = "1")]
+        pub blocks: ::prost::alloc::vec::Vec<document_layout::DocumentLayoutBlock>,
+    }
+    /// Nested message and enum types in `DocumentLayout`.
+    pub mod document_layout {
+        /// Represents a block. A block could be one of the various types (text,
+        /// table, list) supported.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct DocumentLayoutBlock {
+            /// ID of the block.
+            #[prost(string, tag = "1")]
+            pub block_id: ::prost::alloc::string::String,
+            /// Page span of the block.
+            #[prost(message, optional, tag = "5")]
+            pub page_span: ::core::option::Option<document_layout_block::LayoutPageSpan>,
+            #[prost(oneof = "document_layout_block::Block", tags = "2, 3, 4")]
+            pub block: ::core::option::Option<document_layout_block::Block>,
+        }
+        /// Nested message and enum types in `DocumentLayoutBlock`.
+        pub mod document_layout_block {
+            /// Represents where the block starts and ends in the document.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct LayoutPageSpan {
+                /// Page where block starts in the document.
+                #[prost(int32, tag = "1")]
+                pub page_start: i32,
+                /// Page where block ends in the document.
+                #[prost(int32, tag = "2")]
+                pub page_end: i32,
+            }
+            /// Represents a text type block.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct LayoutTextBlock {
+                /// Text content stored in the block.
+                #[prost(string, tag = "1")]
+                pub text: ::prost::alloc::string::String,
+                /// Type of the text in the block. Available options are: `paragraph`,
+                /// `subtitle`, `heading-1`, `heading-2`, `heading-3`, `heading-4`,
+                /// `heading-5`, `header`, `footer`.
+                #[prost(string, tag = "2")]
+                pub r#type: ::prost::alloc::string::String,
+                /// A text block could further have child blocks.
+                /// Repeated blocks support further hierarchies and nested blocks.
+                #[prost(message, repeated, tag = "3")]
+                pub blocks: ::prost::alloc::vec::Vec<super::DocumentLayoutBlock>,
+            }
+            /// Represents a table type block.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct LayoutTableBlock {
+                /// Header rows at the top of the table.
+                #[prost(message, repeated, tag = "1")]
+                pub header_rows: ::prost::alloc::vec::Vec<LayoutTableRow>,
+                /// Body rows containing main table content.
+                #[prost(message, repeated, tag = "2")]
+                pub body_rows: ::prost::alloc::vec::Vec<LayoutTableRow>,
+                /// Table caption/title.
+                #[prost(string, tag = "3")]
+                pub caption: ::prost::alloc::string::String,
+            }
+            /// Represents a row in a table.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct LayoutTableRow {
+                /// A table row is a list of table cells.
+                #[prost(message, repeated, tag = "1")]
+                pub cells: ::prost::alloc::vec::Vec<LayoutTableCell>,
+            }
+            /// Represents a cell in a table row.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct LayoutTableCell {
+                /// A table cell is a list of blocks.
+                /// Repeated blocks support further hierarchies and nested blocks.
+                #[prost(message, repeated, tag = "1")]
+                pub blocks: ::prost::alloc::vec::Vec<super::DocumentLayoutBlock>,
+                /// How many rows this cell spans.
+                #[prost(int32, tag = "2")]
+                pub row_span: i32,
+                /// How many columns this cell spans.
+                #[prost(int32, tag = "3")]
+                pub col_span: i32,
+            }
+            /// Represents a list type block.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct LayoutListBlock {
+                /// List entries that constitute a list block.
+                #[prost(message, repeated, tag = "1")]
+                pub list_entries: ::prost::alloc::vec::Vec<LayoutListEntry>,
+                /// Type of the list_entries (if exist). Available options are `ordered`
+                /// and `unordered`.
+                #[prost(string, tag = "2")]
+                pub r#type: ::prost::alloc::string::String,
+            }
+            /// Represents an entry in the list.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct LayoutListEntry {
+                /// A list entry is a list of blocks.
+                /// Repeated blocks support further hierarchies and nested blocks.
+                #[prost(message, repeated, tag = "1")]
+                pub blocks: ::prost::alloc::vec::Vec<super::DocumentLayoutBlock>,
+            }
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum Block {
+                /// Block consisting of text content.
+                #[prost(message, tag = "2")]
+                TextBlock(LayoutTextBlock),
+                /// Block consisting of table content/structure.
+                #[prost(message, tag = "3")]
+                TableBlock(LayoutTableBlock),
+                /// Block consisting of list content/structure.
+                #[prost(message, tag = "4")]
+                ListBlock(LayoutListBlock),
+            }
+        }
+    }
+    /// Represents the chunks that the document is divided into.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ChunkedDocument {
+        /// List of chunks.
+        #[prost(message, repeated, tag = "1")]
+        pub chunks: ::prost::alloc::vec::Vec<chunked_document::Chunk>,
+    }
+    /// Nested message and enum types in `ChunkedDocument`.
+    pub mod chunked_document {
+        /// Represents a chunk.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Chunk {
+            /// ID of the chunk.
+            #[prost(string, tag = "1")]
+            pub chunk_id: ::prost::alloc::string::String,
+            /// Unused.
+            #[prost(string, repeated, tag = "2")]
+            pub source_block_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// Text content of the chunk.
+            #[prost(string, tag = "3")]
+            pub content: ::prost::alloc::string::String,
+            /// Page span of the chunk.
+            #[prost(message, optional, tag = "4")]
+            pub page_span: ::core::option::Option<chunk::ChunkPageSpan>,
+            /// Page headers associated with the chunk.
+            #[prost(message, repeated, tag = "5")]
+            pub page_headers: ::prost::alloc::vec::Vec<chunk::ChunkPageHeader>,
+            /// Page footers associated with the chunk.
+            #[prost(message, repeated, tag = "6")]
+            pub page_footers: ::prost::alloc::vec::Vec<chunk::ChunkPageFooter>,
+        }
+        /// Nested message and enum types in `Chunk`.
+        pub mod chunk {
+            /// Represents where the chunk starts and ends in the document.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct ChunkPageSpan {
+                /// Page where chunk starts in the document.
+                #[prost(int32, tag = "1")]
+                pub page_start: i32,
+                /// Page where chunk ends in the document.
+                #[prost(int32, tag = "2")]
+                pub page_end: i32,
+            }
+            /// Represents the page header associated with the chunk.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct ChunkPageHeader {
+                /// Header in text format.
+                #[prost(string, tag = "1")]
+                pub text: ::prost::alloc::string::String,
+                /// Page span of the header.
+                #[prost(message, optional, tag = "2")]
+                pub page_span: ::core::option::Option<ChunkPageSpan>,
+            }
+            /// Represents the page footer associated with the chunk.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct ChunkPageFooter {
+                /// Footer in text format.
+                #[prost(string, tag = "1")]
+                pub text: ::prost::alloc::string::String,
+                /// Page span of the footer.
+                #[prost(message, optional, tag = "2")]
+                pub page_span: ::core::option::Option<ChunkPageSpan>,
+            }
+        }
+    }
     /// Original source document from the user.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Source {
@@ -1100,6 +1290,13 @@ pub struct RawDocument {
     /// \[content][google.cloud.documentai.v1.RawDocument.content\].
     #[prost(string, tag = "2")]
     pub mime_type: ::prost::alloc::string::String,
+    /// The display name of the document, it supports all Unicode characters except
+    /// the following:
+    /// `*`, `?`, `[`, `]`, `%`, `{`, `}`,`'`, `\"`, `,`
+    /// `~`, `=` and `:` are reserved.
+    /// If not specified, a default ID is generated.
+    #[prost(string, tag = "3")]
+    pub display_name: ::prost::alloc::string::String,
 }
 /// Specifies a document stored on Cloud Storage.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1191,6 +1388,77 @@ pub mod document_output_config {
         GcsOutputConfig(GcsOutputConfig),
     }
 }
+/// Config for Document OCR.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OcrConfig {
+    /// Hints for the OCR model.
+    #[prost(message, optional, tag = "2")]
+    pub hints: ::core::option::Option<ocr_config::Hints>,
+    /// Enables special handling for PDFs with existing text information. Results
+    /// in better text extraction quality in such PDF inputs.
+    #[prost(bool, tag = "3")]
+    pub enable_native_pdf_parsing: bool,
+    /// Enables intelligent document quality scores after OCR. Can help with
+    /// diagnosing why OCR responses are of poor quality for a given input.
+    /// Adds additional latency comparable to regular OCR to the process call.
+    #[prost(bool, tag = "4")]
+    pub enable_image_quality_scores: bool,
+    /// A list of advanced OCR options to further fine-tune OCR behavior. Current
+    /// valid values are:
+    ///
+    /// - `legacy_layout`: a heuristics layout detection algorithm, which serves as
+    /// an alternative to the current ML-based layout detection algorithm.
+    /// Customers can choose the best suitable layout algorithm based on their
+    /// situation.
+    #[prost(string, repeated, tag = "5")]
+    pub advanced_ocr_options: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Includes symbol level OCR information if set to true.
+    #[prost(bool, tag = "6")]
+    pub enable_symbol: bool,
+    /// Turn on font identification model and return font style information.
+    /// Deprecated, use
+    /// \[PremiumFeatures.compute_style_info][google.cloud.documentai.v1.OcrConfig.PremiumFeatures.compute_style_info\]
+    /// instead.
+    #[deprecated]
+    #[prost(bool, tag = "8")]
+    pub compute_style_info: bool,
+    /// Turn off character box detector in OCR engine. Character box detection is
+    /// enabled by default in OCR 2.0 (and later) processors.
+    #[prost(bool, tag = "10")]
+    pub disable_character_boxes_detection: bool,
+    /// Configurations for premium OCR features.
+    #[prost(message, optional, tag = "11")]
+    pub premium_features: ::core::option::Option<ocr_config::PremiumFeatures>,
+}
+/// Nested message and enum types in `OcrConfig`.
+pub mod ocr_config {
+    /// Hints for OCR Engine
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Hints {
+        /// List of BCP-47 language codes to use for OCR. In most cases, not
+        /// specifying it yields the best results since it enables automatic language
+        /// detection. For languages based on the Latin alphabet, setting hints is
+        /// not needed. In rare cases, when the language of the text in the
+        /// image is known, setting a hint will help get better results (although it
+        /// will be a significant hindrance if the hint is wrong).
+        #[prost(string, repeated, tag = "1")]
+        pub language_hints: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+    /// Configurations for premium OCR features.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PremiumFeatures {
+        /// Turn on selection mark detector in OCR engine. Only available in OCR 2.0
+        /// (and later) processors.
+        #[prost(bool, tag = "3")]
+        pub enable_selection_mark_detection: bool,
+        /// Turn on font identification model and return font style information.
+        #[prost(bool, tag = "4")]
+        pub compute_style_info: bool,
+        /// Turn on the model that can extract LaTeX math formulas.
+        #[prost(bool, tag = "5")]
+        pub enable_math_ocr: bool,
+    }
+}
 /// The schema defines the output of the processed document by a processor.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DocumentSchema {
@@ -1258,6 +1526,9 @@ pub mod document_schema {
             /// EntityType name.
             #[prost(string, tag = "1")]
             pub name: ::prost::alloc::string::String,
+            /// User defined name for the property.
+            #[prost(string, tag = "6")]
+            pub display_name: ::prost::alloc::string::String,
             /// A reference to the value type of the property.  This type is subject
             /// to the same conventions as the `Entity.base_types` field.
             #[prost(string, tag = "2")]
@@ -1270,14 +1541,14 @@ pub mod document_schema {
         /// Nested message and enum types in `Property`.
         pub mod property {
             /// Types of occurrences of the entity type in the document.  This
-            /// represents the number of instances of instances of an entity, not
-            /// number of mentions of an entity.  For example, a bank statement may
-            /// only have one `account_number`, but this account number may be
-            /// mentioned in several places on the document.  In this case the
-            /// 'account_number' would be considered a `REQUIRED_ONCE` entity type. If,
-            /// on the other hand, we expect a bank statement to contain the status of
-            /// multiple different accounts for the customers, the occurrence type will
-            /// be set to `REQUIRED_MULTIPLE`.
+            /// represents the number of instances, not mentions, of an entity.
+            /// For example, a bank statement might only have one
+            /// `account_number`, but this account number can be mentioned in several
+            /// places on the document.  In this case, the `account_number` is
+            /// considered a `REQUIRED_ONCE` entity type. If, on the other hand, we
+            /// expect a bank statement to contain the status of multiple different
+            /// accounts for the customers, the occurrence type is set to
+            /// `REQUIRED_MULTIPLE`.
             #[derive(
                 Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
             )]
@@ -1538,7 +1809,7 @@ pub mod common_operation_metadata {
 /// Its document-processing behavior is defined by that version.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProcessorVersion {
-    /// The resource name of the processor version.
+    /// Identifier. The resource name of the processor version.
     /// Format:
     /// `projects/{project}/locations/{location}/processors/{processor}/processorVersions/{processor_version}`
     #[prost(string, tag = "1")]
@@ -1549,7 +1820,7 @@ pub struct ProcessorVersion {
     /// The schema of the processor version. Describes the output.
     #[prost(message, optional, tag = "12")]
     pub document_schema: ::core::option::Option<DocumentSchema>,
-    /// The state of the processor version.
+    /// Output only. The state of the processor version.
     #[prost(enumeration = "processor_version::State", tag = "6")]
     pub state: i32,
     /// The time the processor version was created.
@@ -1564,12 +1835,21 @@ pub struct ProcessorVersion {
     /// The KMS key version with which data is encrypted.
     #[prost(string, tag = "10")]
     pub kms_key_version_name: ::prost::alloc::string::String,
-    /// Denotes that this `ProcessorVersion` is managed by Google.
+    /// Output only. Denotes that this `ProcessorVersion` is managed by Google.
     #[prost(bool, tag = "11")]
     pub google_managed: bool,
     /// If set, information about the eventual deprecation of this version.
     #[prost(message, optional, tag = "13")]
     pub deprecation_info: ::core::option::Option<processor_version::DeprecationInfo>,
+    /// Output only. The model type of this processor version.
+    #[prost(enumeration = "processor_version::ModelType", tag = "15")]
+    pub model_type: i32,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "16")]
+    pub satisfies_pzs: bool,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "17")]
+    pub satisfies_pzi: bool,
 }
 /// Nested message and enum types in `ProcessorVersion`.
 pub mod processor_version {
@@ -1606,6 +1886,27 @@ pub mod processor_version {
         /// The processor version is being imported.
         Importing = 8,
     }
+    /// The possible model types of the processor version.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ModelType {
+        /// The processor version has unspecified model type.
+        Unspecified = 0,
+        /// The processor version has generative model type.
+        Generative = 1,
+        /// The processor version has custom model type.
+        Custom = 2,
+    }
+}
+/// Contains the alias and the aliased resource name of processor version.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProcessorVersionAlias {
+    /// The alias in the form of `processor_version` resource name.
+    #[prost(string, tag = "1")]
+    pub alias: ::prost::alloc::string::String,
+    /// The resource name of aliased processor version.
+    #[prost(string, tag = "2")]
+    pub processor_version: ::prost::alloc::string::String,
 }
 /// The first-class citizen for Document AI. Each processor defines how to
 /// extract structural information from a document.
@@ -1629,6 +1930,9 @@ pub struct Processor {
     /// The default processor version.
     #[prost(string, tag = "9")]
     pub default_processor_version: ::prost::alloc::string::String,
+    /// Output only. The processor version aliases.
+    #[prost(message, repeated, tag = "10")]
+    pub processor_version_aliases: ::prost::alloc::vec::Vec<ProcessorVersionAlias>,
     /// Output only. Immutable. The http endpoint that can be called to invoke
     /// processing.
     #[prost(string, tag = "6")]
@@ -1640,6 +1944,12 @@ pub struct Processor {
     /// encryption and decryption in CMEK scenarios.
     #[prost(string, tag = "8")]
     pub kms_key_name: ::prost::alloc::string::String,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "12")]
+    pub satisfies_pzs: bool,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "13")]
+    pub satisfies_pzi: bool,
 }
 /// Nested message and enum types in `Processor`.
 pub mod processor {
@@ -1712,6 +2022,83 @@ pub mod processor_type {
         pub location_id: ::prost::alloc::string::String,
     }
 }
+/// Options for Process API
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProcessOptions {
+    /// Only applicable to `OCR_PROCESSOR` and `FORM_PARSER_PROCESSOR`.
+    /// Returns error if set on other processor types.
+    #[prost(message, optional, tag = "1")]
+    pub ocr_config: ::core::option::Option<OcrConfig>,
+    /// Optional. Only applicable to `LAYOUT_PARSER_PROCESSOR`.
+    /// Returns error if set on other processor types.
+    #[prost(message, optional, tag = "9")]
+    pub layout_config: ::core::option::Option<process_options::LayoutConfig>,
+    /// Optional. Override the schema of the
+    /// \[ProcessorVersion][google.cloud.documentai.v1.ProcessorVersion\]. Will
+    /// return an Invalid Argument error if this field is set when the underlying
+    /// \[ProcessorVersion][google.cloud.documentai.v1.ProcessorVersion\] doesn't
+    /// support schema override.
+    #[prost(message, optional, tag = "8")]
+    pub schema_override: ::core::option::Option<DocumentSchema>,
+    /// A subset of pages to process. If not specified, all pages are processed.
+    /// If a page range is set, only the given pages are extracted and processed
+    /// from the document. In the output document,
+    /// \[Document.Page.page_number][google.cloud.documentai.v1.Document.Page.page_number\]
+    /// refers to the page number in the original document. This configuration
+    /// only applies to sync requests.
+    #[prost(oneof = "process_options::PageRange", tags = "5, 6, 7")]
+    pub page_range: ::core::option::Option<process_options::PageRange>,
+}
+/// Nested message and enum types in `ProcessOptions`.
+pub mod process_options {
+    /// Serving config for layout parser processor.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct LayoutConfig {
+        /// Optional. Config for chunking in layout parser processor.
+        #[prost(message, optional, tag = "1")]
+        pub chunking_config: ::core::option::Option<layout_config::ChunkingConfig>,
+    }
+    /// Nested message and enum types in `LayoutConfig`.
+    pub mod layout_config {
+        /// Serving config for chunking.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct ChunkingConfig {
+            /// Optional. The chunk sizes to use when splitting documents, in order of
+            /// level.
+            #[prost(int32, tag = "1")]
+            pub chunk_size: i32,
+            /// Optional. Whether or not to include ancestor headings when splitting.
+            #[prost(bool, tag = "2")]
+            pub include_ancestor_headings: bool,
+        }
+    }
+    /// A list of individual page numbers.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct IndividualPageSelector {
+        /// Optional. Indices of the pages (starting from 1).
+        #[prost(int32, repeated, packed = "false", tag = "1")]
+        pub pages: ::prost::alloc::vec::Vec<i32>,
+    }
+    /// A subset of pages to process. If not specified, all pages are processed.
+    /// If a page range is set, only the given pages are extracted and processed
+    /// from the document. In the output document,
+    /// \[Document.Page.page_number][google.cloud.documentai.v1.Document.Page.page_number\]
+    /// refers to the page number in the original document. This configuration
+    /// only applies to sync requests.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum PageRange {
+        /// Which pages to process (1-indexed).
+        #[prost(message, tag = "5")]
+        IndividualPageSelector(IndividualPageSelector),
+        /// Only process certain pages from the start. Process all if the document
+        /// has fewer pages.
+        #[prost(int32, tag = "6")]
+        FromStart(i32),
+        /// Only process certain pages from the end, same as above.
+        #[prost(int32, tag = "7")]
+        FromEnd(i32),
+    }
+}
 /// Request message for the
 /// \[ProcessDocument][google.cloud.documentai.v1.DocumentProcessorService.ProcessDocument\]
 /// method.
@@ -1739,8 +2126,20 @@ pub struct ProcessRequest {
     /// the form of `{document_field_name}` or `pages.{page_field_name}`.
     #[prost(message, optional, tag = "6")]
     pub field_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Inference-time options for the process API
+    #[prost(message, optional, tag = "7")]
+    pub process_options: ::core::option::Option<ProcessOptions>,
+    /// Optional. The labels with user-defined metadata for the request.
+    ///
+    /// Label keys and values can be no longer than 63 characters
+    /// (Unicode codepoints) and can only contain lowercase letters, numeric
+    /// characters, underscores, and dashes. International characters are allowed.
+    /// Label values are optional. Label keys must start with a letter.
+    #[prost(map = "string, string", tag = "10")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     /// The document payload.
-    #[prost(oneof = "process_request::Source", tags = "4, 5")]
+    #[prost(oneof = "process_request::Source", tags = "4, 5, 8")]
     pub source: ::core::option::Option<process_request::Source>,
 }
 /// Nested message and enum types in `ProcessRequest`.
@@ -1754,6 +2153,9 @@ pub mod process_request {
         /// A raw document content (bytes).
         #[prost(message, tag = "5")]
         RawDocument(super::RawDocument),
+        /// A raw document on Google Cloud Storage.
+        #[prost(message, tag = "8")]
+        GcsDocument(super::GcsDocument),
     }
 }
 /// The status of human review on a processed document.
@@ -1835,6 +2237,18 @@ pub struct BatchProcessRequest {
     /// `false`.
     #[prost(bool, tag = "4")]
     pub skip_human_review: bool,
+    /// Inference-time options for the process API
+    #[prost(message, optional, tag = "7")]
+    pub process_options: ::core::option::Option<ProcessOptions>,
+    /// Optional. The labels with user-defined metadata for the request.
+    ///
+    /// Label keys and values can be no longer than 63 characters
+    /// (Unicode codepoints) and can only contain lowercase letters, numeric
+    /// characters, underscores, and dashes. International characters are allowed.
+    /// Label values are optional. Label keys must start with a letter.
+    #[prost(map = "string, string", tag = "9")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
 /// Response message for
 /// \[BatchProcessDocuments][google.cloud.documentai.v1.DocumentProcessorService.BatchProcessDocuments\].
@@ -2118,7 +2532,8 @@ pub struct CreateProcessorRequest {
     pub parent: ::prost::alloc::string::String,
     /// Required. The processor to be created, requires
     /// \[Processor.type][google.cloud.documentai.v1.Processor.type\] and
-    /// \[Processor.display_name]][\] to be set. Also, the
+    /// \[Processor.display_name][google.cloud.documentai.v1.Processor.display_name\]
+    /// to be set. Also, the
     /// \[Processor.kms_key_name][google.cloud.documentai.v1.Processor.kms_key_name\]
     /// field must be set if the processor is under CMEK.
     #[prost(message, optional, tag = "2")]
@@ -2244,6 +2659,11 @@ pub struct TrainProcessorVersionRequest {
     /// `projects/{project}/locations/{location}/processors/{processor}/processorVersions/{processorVersion}`.
     #[prost(string, tag = "8")]
     pub base_processor_version: ::prost::alloc::string::String,
+    #[prost(
+        oneof = "train_processor_version_request::ProcessorFlags",
+        tags = "5, 12"
+    )]
+    pub processor_flags: ::core::option::Option<train_processor_version_request::ProcessorFlags>,
 }
 /// Nested message and enum types in `TrainProcessorVersionRequest`.
 pub mod train_processor_version_request {
@@ -2257,6 +2677,53 @@ pub mod train_processor_version_request {
         /// The documents used for testing the trained version.
         #[prost(message, optional, tag = "4")]
         pub test_documents: ::core::option::Option<super::BatchDocumentsInputConfig>,
+    }
+    /// Options to control the training of the Custom Document Extraction (CDE)
+    /// Processor.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CustomDocumentExtractionOptions {
+        /// Training method to use for CDE training.
+        #[prost(
+            enumeration = "custom_document_extraction_options::TrainingMethod",
+            tag = "3"
+        )]
+        pub training_method: i32,
+    }
+    /// Nested message and enum types in `CustomDocumentExtractionOptions`.
+    pub mod custom_document_extraction_options {
+        /// Training Method for CDE. `TRAINING_METHOD_UNSPECIFIED` will fall back to
+        /// `MODEL_BASED`.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum TrainingMethod {
+            Unspecified = 0,
+            ModelBased = 1,
+            TemplateBased = 2,
+        }
+    }
+    /// Options to control foundation model tuning of the processor.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FoundationModelTuningOptions {
+        /// Optional. The number of steps to run for model tuning. Valid values are
+        /// between 1 and 400. If not provided, recommended steps will be used.
+        #[prost(int32, tag = "2")]
+        pub train_steps: i32,
+        /// Optional. The multiplier to apply to the recommended learning rate. Valid
+        /// values are between 0.1 and 10. If not provided, recommended learning rate
+        /// will be used.
+        #[prost(float, tag = "3")]
+        pub learning_rate_multiplier: f32,
+    }
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ProcessorFlags {
+        /// Options to control Custom Document Extraction (CDE) Processor.
+        #[prost(message, tag = "5")]
+        CustomDocumentExtractionOptions(CustomDocumentExtractionOptions),
+        /// Options to control foundation model tuning of a processor.
+        #[prost(message, tag = "12")]
+        FoundationModelTuningOptions(FoundationModelTuningOptions),
     }
 }
 /// The response for
@@ -2762,7 +3229,11 @@ pub mod document_processor_service_client {
         }
         #[doc = " Creates a processor from the"]
         #[doc = " [ProcessorType][google.cloud.documentai.v1.ProcessorType] provided. The"]
-        #[doc = " processor will be at `ENABLED` state by default after its creation."]
+        #[doc = " processor will be at `ENABLED` state by default after its creation. Note"]
+        #[doc = " that this method requires the `documentai.processors.create` permission on"]
+        #[doc = " the project, which is highly privileged. A user or service account with"]
+        #[doc = " this permission can create new processors that can interact with any gcs"]
+        #[doc = " bucket in your project."]
         pub async fn create_processor(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateProcessorRequest>,

@@ -11,8 +11,8 @@ pub struct BillingAccount {
     pub name: ::prost::alloc::string::String,
     /// Output only. True if the billing account is open, and will therefore be
     /// charged for any usage on associated projects. False if the billing account
-    /// is closed, and therefore projects associated with it will be unable to use
-    /// paid services.
+    /// is closed, and therefore projects associated with it are unable to use paid
+    /// services.
     #[prost(bool, tag = "2")]
     pub open: bool,
     /// The display name given to the billing account, such as `My Billing
@@ -26,6 +26,16 @@ pub struct BillingAccount {
     /// Otherwise this will be empty.
     #[prost(string, tag = "4")]
     pub master_billing_account: ::prost::alloc::string::String,
+    /// Output only. The billing account's parent resource identifier.
+    /// Use the `MoveBillingAccount` method to update the account's parent resource
+    /// if it is a organization.
+    /// Format:
+    ///   - `organizations/{organization_id}`, for example,
+    ///     `organizations/12345678`
+    ///   - `billingAccounts/{billing_account_id}`, for example,
+    ///     `billingAccounts/012345-567890-ABCDEF`
+    #[prost(string, tag = "6")]
+    pub parent: ::prost::alloc::string::String,
 }
 /// Encapsulation of billing information for a Google Cloud Console project. A
 /// project has at most one associated billing account at a time (but a billing
@@ -35,13 +45,12 @@ pub struct ProjectBillingInfo {
     /// Output only. The resource name for the `ProjectBillingInfo`; has the form
     /// `projects/{project_id}/billingInfo`. For example, the resource name for the
     /// billing information for project `tokyo-rain-123` would be
-    /// `projects/tokyo-rain-123/billingInfo`. This field is read-only.
+    /// `projects/tokyo-rain-123/billingInfo`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Output only. The ID of the project that this `ProjectBillingInfo`
     /// represents, such as `tokyo-rain-123`. This is a convenience field so that
-    /// you don't need to parse the `name` field to obtain a project ID. This field
-    /// is read-only.
+    /// you don't need to parse the `name` field to obtain a project ID.
     #[prost(string, tag = "2")]
     pub project_id: ::prost::alloc::string::String,
     /// The resource name of the billing account associated with the project, if
@@ -51,7 +60,7 @@ pub struct ProjectBillingInfo {
     /// Output only. True if the project is associated with an open billing
     /// account, to which usage on the project is charged. False if the project is
     /// associated with a closed billing account, or no billing account at all, and
-    /// therefore cannot use paid services. This field is read-only.
+    /// therefore cannot use paid services.
     #[prost(bool, tag = "4")]
     pub billing_enabled: bool,
 }
@@ -76,13 +85,22 @@ pub struct ListBillingAccountsRequest {
     #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
     /// Options for how to filter the returned billing accounts.
-    /// Currently this only supports filtering for
+    /// This only supports filtering for
     /// \[subaccounts\](<https://cloud.google.com/billing/docs/concepts>) under a
-    /// single provided reseller billing account.
-    /// (e.g. "master_billing_account=billingAccounts/012345-678901-ABCDEF").
+    /// single provided parent billing account.
+    /// (for example,
+    /// `master_billing_account=billingAccounts/012345-678901-ABCDEF`).
     /// Boolean algebra and other fields are not currently supported.
     #[prost(string, tag = "3")]
     pub filter: ::prost::alloc::string::String,
+    /// Optional. The parent resource to list billing accounts from.
+    /// Format:
+    ///   - `organizations/{organization_id}`, for example,
+    ///     `organizations/12345678`
+    ///   - `billingAccounts/{billing_account_id}`, for example,
+    ///     `billingAccounts/012345-567890-ABCDEF`
+    #[prost(string, tag = "4")]
+    pub parent: ::prost::alloc::string::String,
 }
 /// Response message for `ListBillingAccounts`.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -105,6 +123,12 @@ pub struct CreateBillingAccountRequest {
     /// account.
     #[prost(message, optional, tag = "1")]
     pub billing_account: ::core::option::Option<BillingAccount>,
+    /// Optional. The parent to create a billing account from.
+    /// Format:
+    ///   - `billingAccounts/{billing_account_id}`, for example,
+    ///      `billingAccounts/012345-567890-ABCDEF`
+    #[prost(string, tag = "2")]
+    pub parent: ::prost::alloc::string::String,
 }
 /// Request message for `UpdateBillingAccount`.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -168,10 +192,26 @@ pub struct UpdateProjectBillingInfoRequest {
     /// `projects/tokyo-rain-123`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The new billing information for the project. Read-only fields are ignored;
-    /// thus, you can leave empty all fields except `billing_account_name`.
+    /// The new billing information for the project. Output-only fields are
+    /// ignored; thus, you can leave empty all fields except
+    /// `billing_account_name`.
     #[prost(message, optional, tag = "2")]
     pub project_billing_info: ::core::option::Option<ProjectBillingInfo>,
+}
+/// Request message for `MoveBillingAccount` RPC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MoveBillingAccountRequest {
+    /// Required. The resource name of the billing account to move.
+    /// Must be of the form `billingAccounts/{billing_account_id}`.
+    /// The specified billing account cannot be a subaccount, since a subaccount
+    /// always belongs to the same organization as its parent account.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The resource name of the Organization to move
+    /// the billing account under.
+    /// Must be of the form `organizations/{organization_id}`.
+    #[prost(string, tag = "2")]
+    pub destination_parent: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod cloud_billing_client {
@@ -298,7 +338,7 @@ pub mod cloud_billing_client {
         #[doc = " typically given to billing account"]
         #[doc = " [administrators](https://cloud.google.com/billing/docs/how-to/billing-access)."]
         #[doc = " This method will return an error if the parent account has not been"]
-        #[doc = " provisioned as a reseller account."]
+        #[doc = " provisioned for subaccounts."]
         pub async fn create_billing_account(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateBillingAccountRequest>,
@@ -369,7 +409,8 @@ pub mod cloud_billing_client {
         #[doc = " account, even if the charge occurred before the new billing account was"]
         #[doc = " assigned to the project."]
         #[doc = ""]
-        #[doc = " The current authenticated user must have ownership privileges for both the"]
+        #[doc = " The current authenticated user must have ownership privileges for both"]
+        #[doc = " the"]
         #[doc = " [project](https://cloud.google.com/docs/permissions-overview#h.bgs0oxofvnoo"]
         #[doc = " ) and the [billing"]
         #[doc = " account](https://cloud.google.com/billing/docs/how-to/billing-access)."]
@@ -470,17 +511,34 @@ pub mod cloud_billing_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Changes which parent organization a billing account belongs to."]
+        pub async fn move_billing_account(
+            &mut self,
+            request: impl tonic::IntoRequest<super::MoveBillingAccountRequest>,
+        ) -> Result<tonic::Response<super::BillingAccount>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.billing.v1.CloudBilling/MoveBillingAccount",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 /// Encapsulates a single service in Google Cloud Platform.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Service {
     /// The resource name for the service.
-    /// Example: "services/DA34-426B-A397"
+    /// Example: "services/6F81-5844-456A"
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The identifier for the service.
-    /// Example: "DA34-426B-A397"
+    /// Example: "6F81-5844-456A"
     #[prost(string, tag = "2")]
     pub service_id: ::prost::alloc::string::String,
     /// A human readable display name for this service.
@@ -491,15 +549,15 @@ pub struct Service {
     #[prost(string, tag = "4")]
     pub business_entity_name: ::prost::alloc::string::String,
 }
-/// Encapsulates a single SKU in Google Cloud Platform
+/// Encapsulates a single SKU in Google Cloud
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Sku {
     /// The resource name for the SKU.
-    /// Example: "services/DA34-426B-A397/skus/AA95-CD31-42FE"
+    /// Example: "services/6F81-5844-456A/skus/D041-B8A1-6E0B"
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The identifier for the SKU.
-    /// Example: "AA95-CD31-42FE"
+    /// Example: "D041-B8A1-6E0B"
     #[prost(string, tag = "2")]
     pub sku_id: ::prost::alloc::string::String,
     /// A human readable description of the SKU, has a maximum length of 256
@@ -734,7 +792,7 @@ pub struct ListServicesResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSkusRequest {
     /// Required. The name of the service.
-    /// Example: "services/DA34-426B-A397"
+    /// Example: "services/6F81-5844-456A"
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Optional inclusive start time of the time range for which the pricing

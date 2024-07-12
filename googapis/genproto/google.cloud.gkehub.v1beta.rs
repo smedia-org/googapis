@@ -5,23 +5,24 @@ pub struct Feature {
     /// `projects/*/locations/*/features/*`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// GCP labels for this Feature.
+    /// Labels for this Feature.
     #[prost(map = "string, string", tag = "2")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     /// Output only. State of the Feature resource itself.
     #[prost(message, optional, tag = "3")]
     pub resource_state: ::core::option::Option<FeatureResourceState>,
-    /// Optional. Hub-wide Feature configuration. If this Feature does not support any
-    /// Hub-wide configuration, this field may be unused.
+    /// Optional. Hub-wide Feature configuration. If this Feature does not support
+    /// any Hub-wide configuration, this field may be unused.
     #[prost(message, optional, tag = "4")]
     pub spec: ::core::option::Option<CommonFeatureSpec>,
-    /// Optional. Membership-specific configuration for this Feature. If this Feature does
-    /// not support any per-Membership configuration, this field may be unused.
+    /// Optional. Membership-specific configuration for this Feature. If this
+    /// Feature does not support any per-Membership configuration, this field may
+    /// be unused.
     ///
     /// The keys indicate which Membership the configuration is for, in the form:
     ///
-    ///     projects/{p}/locations/{l}/memberships/{m}
+    /// `projects/{p}/locations/{l}/memberships/{m}`
     ///
     /// Where {p} is the project, {l} is a valid location and {m} is a valid
     /// Membership in this project at that location. {p} WILL match the Feature's
@@ -44,7 +45,7 @@ pub struct Feature {
     ///
     /// The keys indicate which Membership the state is for, in the form:
     ///
-    ///     projects/{p}/locations/{l}/memberships/{m}
+    /// `projects/{p}/locations/{l}/memberships/{m}`
     ///
     /// Where {p} is the project number, {l} is a valid location and {m} is a valid
     /// Membership in this project at that location. {p} MUST match the Feature's
@@ -155,9 +156,10 @@ pub struct CommonFeatureState {
 }
 /// MembershipFeatureSpec contains configuration information for a single
 /// Membership.
+/// NOTE: Please use snake case in your feature name.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MembershipFeatureSpec {
-    #[prost(oneof = "membership_feature_spec::FeatureSpec", tags = "106")]
+    #[prost(oneof = "membership_feature_spec::FeatureSpec", tags = "106, 116")]
     pub feature_spec: ::core::option::Option<membership_feature_spec::FeatureSpec>,
 }
 /// Nested message and enum types in `MembershipFeatureSpec`.
@@ -167,6 +169,9 @@ pub mod membership_feature_spec {
         /// Config Management-specific spec.
         #[prost(message, tag = "106")]
         Configmanagement(super::super::configmanagement::v1beta::MembershipSpec),
+        /// Anthos Service Mesh-specific spec
+        #[prost(message, tag = "116")]
+        Mesh(super::super::servicemesh::v1beta::MembershipSpec),
     }
 }
 /// MembershipFeatureState contains Feature status information for a single
@@ -176,14 +181,20 @@ pub struct MembershipFeatureState {
     /// The high-level state of this Feature for a single membership.
     #[prost(message, optional, tag = "1")]
     pub state: ::core::option::Option<FeatureState>,
-    #[prost(oneof = "membership_feature_state::FeatureState", tags = "104, 106")]
+    #[prost(
+        oneof = "membership_feature_state::FeatureState",
+        tags = "100, 104, 106"
+    )]
     pub feature_state: ::core::option::Option<membership_feature_state::FeatureState>,
 }
 /// Nested message and enum types in `MembershipFeatureState`.
 pub mod membership_feature_state {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum FeatureState {
-        /// Metering-specific spec.
+        /// Service Mesh-specific state.
+        #[prost(message, tag = "100")]
+        Servicemesh(super::super::servicemesh::v1beta::MembershipState),
+        /// Metering-specific state.
         #[prost(message, tag = "104")]
         Metering(super::super::metering::v1beta::MembershipState),
         /// Config Management-specific state.

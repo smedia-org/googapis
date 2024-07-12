@@ -2,7 +2,7 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateAssessmentRequest {
     /// Required. The name of the project in which the assessment will be created,
-    /// in the format "projects/{project}".
+    /// in the format `projects/{project}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The assessment details.
@@ -118,7 +118,7 @@ pub mod transaction_event {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AnnotateAssessmentRequest {
     /// Required. The resource name of the Assessment, in the format
-    /// "projects/{project}/assessments/{assessment}".
+    /// `projects/{project}/assessments/{assessment}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Optional. The annotation that will be assigned to the Event. This field can
@@ -126,8 +126,7 @@ pub struct AnnotateAssessmentRequest {
     /// whether the event is legitimate or fraudulent.
     #[prost(enumeration = "annotate_assessment_request::Annotation", tag = "2")]
     pub annotation: i32,
-    /// Optional. Optional reasons for the annotation that will be assigned to the
-    /// Event.
+    /// Optional. Reasons for the annotation that are assigned to the event.
     #[prost(
         enumeration = "annotate_assessment_request::Reason",
         repeated,
@@ -135,11 +134,15 @@ pub struct AnnotateAssessmentRequest {
         tag = "3"
     )]
     pub reasons: ::prost::alloc::vec::Vec<i32>,
-    /// Optional. Unique stable hashed user identifier to apply to the assessment.
-    /// This is an alternative to setting the hashed_account_id in
-    /// CreateAssessment, for example when the account identifier is not yet known
-    /// in the initial request. It is recommended that the identifier is hashed
-    /// using hmac-sha256 with stable secret.
+    /// Optional. A stable account identifier to apply to the assessment. This is
+    /// an alternative to setting `account_id` in `CreateAssessment`, for example
+    /// when a stable account identifier is not yet known in the initial request.
+    #[prost(string, tag = "7")]
+    pub account_id: ::prost::alloc::string::String,
+    /// Optional. A stable hashed account identifier to apply to the assessment.
+    /// This is an alternative to setting `hashed_account_id` in
+    /// `CreateAssessment`, for example when a stable account identifier is not yet
+    /// known in the initial request.
     #[prost(bytes = "vec", tag = "4")]
     pub hashed_account_id: ::prost::alloc::vec::Vec<u8>,
     /// Optional. If the assessment is part of a payment transaction, provide
@@ -254,18 +257,18 @@ pub mod endpoint_verification_info {
 /// Information about account verification, used for identity verification.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AccountVerificationInfo {
-    /// Endpoints that can be used for identity verification.
+    /// Optional. Endpoints that can be used for identity verification.
     #[prost(message, repeated, tag = "1")]
     pub endpoints: ::prost::alloc::vec::Vec<EndpointVerificationInfo>,
-    /// Language code preference for the verification message, set as a IETF BCP 47
-    /// language code.
+    /// Optional. Language code preference for the verification message, set as a
+    /// IETF BCP 47 language code.
     #[prost(string, tag = "3")]
     pub language_code: ::prost::alloc::string::String,
     /// Output only. Result of the latest account verification challenge.
     #[prost(enumeration = "account_verification_info::Result", tag = "7")]
     pub latest_verification_result: i32,
     /// Username of the account that is being verified. Deprecated. Customers
-    /// should now provide the hashed account ID field in Event.
+    /// should now provide the `account_id` field in `event.user_info`.
     #[deprecated]
     #[prost(string, tag = "2")]
     pub username: ::prost::alloc::string::String,
@@ -311,7 +314,7 @@ pub mod account_verification_info {
 /// Private password leak verification info.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivatePasswordLeakVerification {
-    /// Optional. Exactly 26-bit prefix of the SHA-256 hash of the canonicalized
+    /// Required. Exactly 26-bit prefix of the SHA-256 hash of the canonicalized
     /// username. It is used to look up password leaks associated with that hash
     /// prefix.
     #[prost(bytes = "vec", tag = "1")]
@@ -335,11 +338,11 @@ pub struct PrivatePasswordLeakVerification {
 /// A reCAPTCHA Enterprise assessment resource.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Assessment {
-    /// Output only. The resource name for the Assessment in the format
-    /// "projects/{project}/assessments/{assessment}".
+    /// Output only. Identifier. The resource name for the Assessment in the format
+    /// `projects/{project}/assessments/{assessment}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The event being assessed.
+    /// Optional. The event being assessed.
     #[prost(message, optional, tag = "2")]
     pub event: ::core::option::Option<Event>,
     /// Output only. The risk analysis result for the event being assessed.
@@ -348,21 +351,36 @@ pub struct Assessment {
     /// Output only. Properties of the provided event token.
     #[prost(message, optional, tag = "4")]
     pub token_properties: ::core::option::Option<TokenProperties>,
-    /// Account verification information for identity verification. The assessment
-    /// event must include a token and site key to use this feature.
+    /// Optional. Account verification information for identity verification. The
+    /// assessment event must include a token and site key to use this feature.
     #[prost(message, optional, tag = "5")]
     pub account_verification: ::core::option::Option<AccountVerificationInfo>,
-    /// Assessment returned by account defender when a hashed_account_id is
-    /// provided.
+    /// Output only. Assessment returned by account defender when an account
+    /// identifier is provided.
     #[prost(message, optional, tag = "6")]
     pub account_defender_assessment: ::core::option::Option<AccountDefenderAssessment>,
-    /// The private password leak verification field contains the parameters that
-    /// are used to to check for leaks privately without sharing user credentials.
+    /// Optional. The private password leak verification field contains the
+    /// parameters that are used to to check for leaks privately without sharing
+    /// user credentials.
     #[prost(message, optional, tag = "8")]
     pub private_password_leak_verification: ::core::option::Option<PrivatePasswordLeakVerification>,
-    /// Assessment returned by Fraud Prevention when TransactionData is provided.
+    /// Output only. Assessment returned when firewall policies belonging to the
+    /// project are evaluated using the field firewall_policy_evaluation.
+    #[prost(message, optional, tag = "10")]
+    pub firewall_policy_assessment: ::core::option::Option<FirewallPolicyAssessment>,
+    /// Output only. Assessment returned by Fraud Prevention when TransactionData
+    /// is provided.
     #[prost(message, optional, tag = "11")]
     pub fraud_prevention_assessment: ::core::option::Option<FraudPreventionAssessment>,
+    /// Output only. Fraud Signals specific to the users involved in a payment
+    /// transaction.
+    #[prost(message, optional, tag = "13")]
+    pub fraud_signals: ::core::option::Option<FraudSignals>,
+    /// Output only. Assessment returned when a site key, a token, and a phone
+    /// number as `user_id` are provided. Account defender and SMS toll fraud
+    /// protection need to be enabled.
+    #[prost(message, optional, tag = "12")]
+    pub phone_fraud_assessment: ::core::option::Option<PhoneFraudAssessment>,
 }
 /// The event being assessed.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -388,18 +406,72 @@ pub struct Event {
     /// already integrated with recaptcha enterprise.
     #[prost(string, tag = "5")]
     pub expected_action: ::prost::alloc::string::String,
-    /// Optional. Unique stable hashed user identifier for the request. The
-    /// identifier must be hashed using hmac-sha256 with stable secret.
+    /// Optional. Deprecated: use `user_info.account_id` instead.
+    /// Unique stable hashed user identifier for the request. The identifier must
+    /// be hashed using hmac-sha256 with stable secret.
+    #[deprecated]
     #[prost(bytes = "vec", tag = "6")]
     pub hashed_account_id: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. Flag for a reCAPTCHA express request for an assessment without a
+    /// token. If enabled, `site_key` must reference a SCORE key with WAF feature
+    /// set to EXPRESS.
+    #[prost(bool, tag = "14")]
+    pub express: bool,
+    /// Optional. The URI resource the user requested that triggered an assessment.
+    #[prost(string, tag = "8")]
+    pub requested_uri: ::prost::alloc::string::String,
+    /// Optional. Flag for running WAF token assessment.
+    /// If enabled, the token must be specified, and have been created by a
+    /// WAF-enabled key.
+    #[prost(bool, tag = "9")]
+    pub waf_token_assessment: bool,
+    /// Optional. JA3 fingerprint for SSL clients.
+    #[prost(string, tag = "10")]
+    pub ja3: ::prost::alloc::string::String,
+    /// Optional. HTTP header information about the request.
+    #[prost(string, repeated, tag = "11")]
+    pub headers: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Flag for enabling firewall policy config assessment.
+    /// If this flag is enabled, the firewall policy will be evaluated and a
+    /// suggested firewall action will be returned in the response.
+    #[prost(bool, tag = "12")]
+    pub firewall_policy_evaluation: bool,
     /// Optional. Data describing a payment transaction to be assessed. Sending
     /// this data enables reCAPTCHA Enterprise Fraud Prevention and the
     /// FraudPreventionAssessment component in the response.
     #[prost(message, optional, tag = "13")]
     pub transaction_data: ::core::option::Option<TransactionData>,
+    /// Optional. Information about the user that generates this event, when they
+    /// can be identified. They are often identified through the use of an account
+    /// for logged-in requests or login/registration requests, or by providing user
+    /// identifiers for guest actions like checkout.
+    #[prost(message, optional, tag = "15")]
+    pub user_info: ::core::option::Option<UserInfo>,
+    /// Optional. The Fraud Prevention setting for this assessment.
+    #[prost(enumeration = "event::FraudPrevention", tag = "17")]
+    pub fraud_prevention: i32,
+}
+/// Nested message and enum types in `Event`.
+pub mod event {
+    /// Setting that controls Fraud Prevention assessments.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum FraudPrevention {
+        /// Default, unspecified setting. If opted in for automatic detection,
+        /// `fraud_prevention_assessment` is returned based on the request.
+        /// Otherwise, `fraud_prevention_assessment` is returned if
+        /// `transaction_data` is present in the `Event` and Fraud Prevention is
+        /// enabled in the Google Cloud console.
+        Unspecified = 0,
+        /// Enable Fraud Prevention for this assessment, if Fraud Prevention is
+        /// enabled in the Google Cloud console.
+        Enabled = 1,
+        /// Disable Fraud Prevention for this assessment, regardless of opt-in
+        /// status or Google Cloud console settings.
+        Disabled = 2,
+    }
 }
 /// Transaction data associated with a payment protected by reCAPTCHA Enterprise.
-/// All fields are optional.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransactionData {
     /// Unique identifier for the transaction. This custom identifier can be used
@@ -408,7 +480,7 @@ pub struct TransactionData {
     /// same transaction id.
     #[prost(string, optional, tag = "11")]
     pub transaction_id: ::core::option::Option<::prost::alloc::string::String>,
-    /// The payment method for the transaction. The allowed values are:
+    /// Optional. The payment method for the transaction. The allowed values are:
     ///
     /// * credit-card
     /// * debit-card
@@ -419,38 +491,41 @@ pub struct TransactionData {
     /// custom-crypto)
     #[prost(string, tag = "1")]
     pub payment_method: ::prost::alloc::string::String,
-    /// The Bank Identification Number - generally the first 6 or 8 digits of the
-    /// card.
+    /// Optional. The Bank Identification Number - generally the first 6 or 8
+    /// digits of the card.
     #[prost(string, tag = "2")]
     pub card_bin: ::prost::alloc::string::String,
-    /// The last four digits of the card.
+    /// Optional. The last four digits of the card.
     #[prost(string, tag = "3")]
     pub card_last_four: ::prost::alloc::string::String,
-    /// The currency code in ISO-4217 format.
+    /// Optional. The currency code in ISO-4217 format.
     #[prost(string, tag = "4")]
     pub currency_code: ::prost::alloc::string::String,
-    /// The decimal value of the transaction in the specified currency.
+    /// Optional. The decimal value of the transaction in the specified currency.
     #[prost(double, tag = "5")]
     pub value: f64,
-    /// The value of shipping in the specified currency. 0 for free or no shipping.
+    /// Optional. The value of shipping in the specified currency. 0 for free or no
+    /// shipping.
     #[prost(double, tag = "12")]
     pub shipping_value: f64,
-    /// Destination address if this transaction involves shipping a physical item.
+    /// Optional. Destination address if this transaction involves shipping a
+    /// physical item.
     #[prost(message, optional, tag = "6")]
     pub shipping_address: ::core::option::Option<transaction_data::Address>,
-    /// Address associated with the payment method when applicable.
+    /// Optional. Address associated with the payment method when applicable.
     #[prost(message, optional, tag = "7")]
     pub billing_address: ::core::option::Option<transaction_data::Address>,
-    /// Information about the user paying/initiating the transaction.
+    /// Optional. Information about the user paying/initiating the transaction.
     #[prost(message, optional, tag = "8")]
     pub user: ::core::option::Option<transaction_data::User>,
-    /// Information about the user or users fulfilling the transaction.
+    /// Optional. Information about the user or users fulfilling the transaction.
     #[prost(message, repeated, tag = "13")]
     pub merchants: ::prost::alloc::vec::Vec<transaction_data::User>,
-    /// Items purchased in this transaction.
+    /// Optional. Items purchased in this transaction.
     #[prost(message, repeated, tag = "14")]
     pub items: ::prost::alloc::vec::Vec<transaction_data::Item>,
-    /// Information about the payment gateway's response to the transaction.
+    /// Optional. Information about the payment gateway's response to the
+    /// transaction.
     #[prost(message, optional, tag = "10")]
     pub gateway_info: ::core::option::Option<transaction_data::GatewayInfo>,
 }
@@ -459,105 +534,155 @@ pub mod transaction_data {
     /// Structured address format for billing and shipping addresses.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Address {
-        /// The recipient name, potentially including information such as "care of".
+        /// Optional. The recipient name, potentially including information such as
+        /// "care of".
         #[prost(string, tag = "1")]
         pub recipient: ::prost::alloc::string::String,
-        /// The first lines of the address. The first line generally contains the
-        /// street name and number, and further lines may include information such as
-        /// an apartment number.
+        /// Optional. The first lines of the address. The first line generally
+        /// contains the street name and number, and further lines may include
+        /// information such as an apartment number.
         #[prost(string, repeated, tag = "2")]
         pub address: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-        /// The town/city of the address.
+        /// Optional. The town/city of the address.
         #[prost(string, tag = "3")]
         pub locality: ::prost::alloc::string::String,
-        /// The state, province, or otherwise administrative area of the address.
+        /// Optional. The state, province, or otherwise administrative area of the
+        /// address.
         #[prost(string, tag = "4")]
         pub administrative_area: ::prost::alloc::string::String,
-        /// The CLDR country/region of the address.
+        /// Optional. The CLDR country/region of the address.
         #[prost(string, tag = "5")]
         pub region_code: ::prost::alloc::string::String,
-        /// The postal or ZIP code of the address.
+        /// Optional. The postal or ZIP code of the address.
         #[prost(string, tag = "6")]
         pub postal_code: ::prost::alloc::string::String,
     }
     /// Details about a user's account involved in the transaction.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct User {
-        /// Unique account identifier for this user. If using account defender,
-        /// this should match the hashed_account_id field. Otherwise, a unique and
-        /// persistent identifier for this account.
+        /// Optional. Unique account identifier for this user. If using account
+        /// defender, this should match the hashed_account_id field. Otherwise, a
+        /// unique and persistent identifier for this account.
         #[prost(string, tag = "6")]
         pub account_id: ::prost::alloc::string::String,
-        /// The epoch milliseconds of the user's account creation.
+        /// Optional. The epoch milliseconds of the user's account creation.
         #[prost(int64, tag = "1")]
         pub creation_ms: i64,
-        /// The email address of the user.
+        /// Optional. The email address of the user.
         #[prost(string, tag = "2")]
         pub email: ::prost::alloc::string::String,
-        /// Whether the email has been verified to be accessible by the user (OTP or
-        /// similar).
+        /// Optional. Whether the email has been verified to be accessible by the
+        /// user (OTP or similar).
         #[prost(bool, tag = "3")]
         pub email_verified: bool,
-        /// The phone number of the user, with country code.
+        /// Optional. The phone number of the user, with country code.
         #[prost(string, tag = "4")]
         pub phone_number: ::prost::alloc::string::String,
-        /// Whether the phone number has been verified to be accessible by the user
-        /// (OTP or similar).
+        /// Optional. Whether the phone number has been verified to be accessible by
+        /// the user (OTP or similar).
         #[prost(bool, tag = "5")]
         pub phone_verified: bool,
     }
     /// Line items being purchased in this transaction.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Item {
-        /// The full name of the item.
+        /// Optional. The full name of the item.
         #[prost(string, tag = "1")]
         pub name: ::prost::alloc::string::String,
-        /// The value per item that the user is paying, in the transaction currency,
-        /// after discounts.
+        /// Optional. The value per item that the user is paying, in the transaction
+        /// currency, after discounts.
         #[prost(double, tag = "2")]
         pub value: f64,
-        /// The quantity of this item that is being purchased.
+        /// Optional. The quantity of this item that is being purchased.
         #[prost(int64, tag = "3")]
         pub quantity: i64,
-        /// When a merchant is specified, its corresponding account_id. Necessary to
-        /// populate marketplace-style transactions.
+        /// Optional. When a merchant is specified, its corresponding account_id.
+        /// Necessary to populate marketplace-style transactions.
         #[prost(string, tag = "4")]
         pub merchant_account_id: ::prost::alloc::string::String,
     }
     /// Details about the transaction from the gateway.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct GatewayInfo {
-        /// Name of the gateway service (for example, stripe, square, paypal).
+        /// Optional. Name of the gateway service (for example, stripe, square,
+        /// paypal).
         #[prost(string, tag = "1")]
         pub name: ::prost::alloc::string::String,
-        /// Gateway response code describing the state of the transaction.
+        /// Optional. Gateway response code describing the state of the transaction.
         #[prost(string, tag = "2")]
         pub gateway_response_code: ::prost::alloc::string::String,
-        /// AVS response code from the gateway
+        /// Optional. AVS response code from the gateway
         /// (available only when reCAPTCHA Enterprise is called after authorization).
         #[prost(string, tag = "3")]
         pub avs_response_code: ::prost::alloc::string::String,
-        /// CVV response code from the gateway
+        /// Optional. CVV response code from the gateway
         /// (available only when reCAPTCHA Enterprise is called after authorization).
         #[prost(string, tag = "4")]
         pub cvv_response_code: ::prost::alloc::string::String,
     }
 }
+/// User information associated with a request protected by reCAPTCHA Enterprise.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserInfo {
+    /// Optional. Creation time for this account associated with this user. Leave
+    /// blank for non logged-in actions, guest checkout, or when there is no
+    /// account associated with the current user.
+    #[prost(message, optional, tag = "1")]
+    pub create_account_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Optional. For logged-in requests or login/registration requests, the unique
+    /// account identifier associated with this user. You can use the username if
+    /// it is stable (meaning it is the same for every request associated with the
+    /// same user), or any stable user ID of your choice. Leave blank for non
+    /// logged-in actions or guest checkout.
+    #[prost(string, tag = "2")]
+    pub account_id: ::prost::alloc::string::String,
+    /// Optional. Identifiers associated with this user or request.
+    #[prost(message, repeated, tag = "3")]
+    pub user_ids: ::prost::alloc::vec::Vec<UserId>,
+}
+/// An identifier associated with a user.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserId {
+    #[prost(oneof = "user_id::IdOneof", tags = "1, 2, 3")]
+    pub id_oneof: ::core::option::Option<user_id::IdOneof>,
+}
+/// Nested message and enum types in `UserId`.
+pub mod user_id {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum IdOneof {
+        /// Optional. An email address.
+        #[prost(string, tag = "1")]
+        Email(::prost::alloc::string::String),
+        /// Optional. A phone number. Should use the E.164 format.
+        #[prost(string, tag = "2")]
+        PhoneNumber(::prost::alloc::string::String),
+        /// Optional. A unique username, if different from all the other identifiers
+        /// and `account_id` that are provided. Can be a unique login handle or
+        /// display name for a user.
+        #[prost(string, tag = "3")]
+        Username(::prost::alloc::string::String),
+    }
+}
 /// Risk analysis result for an event.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RiskAnalysis {
-    /// Legitimate event score from 0.0 to 1.0.
+    /// Output only. Legitimate event score from 0.0 to 1.0.
     /// (1.0 means very likely legitimate traffic while 0.0 means very likely
     /// non-legitimate traffic).
     #[prost(float, tag = "1")]
     pub score: f32,
-    /// Reasons contributing to the risk analysis verdict.
+    /// Output only. Reasons contributing to the risk analysis verdict.
     #[prost(
         enumeration = "risk_analysis::ClassificationReason",
         repeated,
+        packed = "false",
         tag = "2"
     )]
     pub reasons: ::prost::alloc::vec::Vec<i32>,
+    /// Output only. Extended verdict reasons to be used for experimentation only.
+    /// The set of possible reasons is subject to change.
+    #[prost(string, repeated, tag = "3")]
+    pub extended_verdict_reasons: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Nested message and enum types in `RiskAnalysis`.
 pub mod risk_analysis {
@@ -588,31 +713,32 @@ pub mod risk_analysis {
 /// Properties of the provided event token.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TokenProperties {
-    /// Whether the provided user response token is valid. When valid = false, the
-    /// reason could be specified in invalid_reason or it could also be due to
-    /// a user failing to solve a challenge or a sitekey mismatch (i.e the sitekey
-    /// used to generate the token was different than the one specified in the
-    /// assessment).
+    /// Output only. Whether the provided user response token is valid. When valid
+    /// = false, the reason could be specified in invalid_reason or it could also
+    /// be due to a user failing to solve a challenge or a sitekey mismatch (i.e
+    /// the sitekey used to generate the token was different than the one specified
+    /// in the assessment).
     #[prost(bool, tag = "1")]
     pub valid: bool,
-    /// Reason associated with the response when valid = false.
+    /// Output only. Reason associated with the response when valid = false.
     #[prost(enumeration = "token_properties::InvalidReason", tag = "2")]
     pub invalid_reason: i32,
-    /// The timestamp corresponding to the generation of the token.
+    /// Output only. The timestamp corresponding to the generation of the token.
     #[prost(message, optional, tag = "3")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The hostname of the page on which the token was generated (Web keys only).
+    /// Output only. The hostname of the page on which the token was generated (Web
+    /// keys only).
     #[prost(string, tag = "4")]
     pub hostname: ::prost::alloc::string::String,
-    /// The name of the Android package with which the token was generated (Android
-    /// keys only).
+    /// Output only. The name of the Android package with which the token was
+    /// generated (Android keys only).
     #[prost(string, tag = "8")]
     pub android_package_name: ::prost::alloc::string::String,
-    /// The ID of the iOS bundle with which the token was generated (iOS keys
-    /// only).
+    /// Output only. The ID of the iOS bundle with which the token was generated
+    /// (iOS keys only).
     #[prost(string, tag = "9")]
     pub ios_bundle_id: ::prost::alloc::string::String,
-    /// Action name provided at token generation.
+    /// Output only. Action name provided at token generation.
     #[prost(string, tag = "5")]
     pub action: ::prost::alloc::string::String,
 }
@@ -642,19 +768,25 @@ pub mod token_properties {
 /// Assessment for Fraud Prevention.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FraudPreventionAssessment {
-    /// Probability (0-1) of this transaction being fraudulent. Summarizes the
-    /// combined risk of attack vectors below.
+    /// Output only. Probability of this transaction being fraudulent. Summarizes
+    /// the combined risk of attack vectors below. Values are from 0.0 (lowest)
+    /// to 1.0 (highest).
     #[prost(float, tag = "1")]
     pub transaction_risk: f32,
-    /// Assessment of this transaction for risk of a stolen instrument.
+    /// Output only. Assessment of this transaction for risk of a stolen
+    /// instrument.
     #[prost(message, optional, tag = "2")]
     pub stolen_instrument_verdict:
         ::core::option::Option<fraud_prevention_assessment::StolenInstrumentVerdict>,
-    /// Assessment of this transaction for risk of being part of a card testing
-    /// attack.
+    /// Output only. Assessment of this transaction for risk of being part of a
+    /// card testing attack.
     #[prost(message, optional, tag = "3")]
     pub card_testing_verdict:
         ::core::option::Option<fraud_prevention_assessment::CardTestingVerdict>,
+    /// Output only. Assessment of this transaction for behavioral trust.
+    #[prost(message, optional, tag = "4")]
+    pub behavioral_trust_verdict:
+        ::core::option::Option<fraud_prevention_assessment::BehavioralTrustVerdict>,
 }
 /// Nested message and enum types in `FraudPreventionAssessment`.
 pub mod fraud_prevention_assessment {
@@ -662,8 +794,8 @@ pub mod fraud_prevention_assessment {
     /// legitimate owner of the instrument being used for the purchase.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct StolenInstrumentVerdict {
-        /// Probability (0-1) of this transaction being executed with a stolen
-        /// instrument.
+        /// Output only. Probability of this transaction being executed with a stolen
+        /// instrument. Values are from 0.0 (lowest) to 1.0 (highest).
         #[prost(float, tag = "1")]
         pub risk: f32,
     }
@@ -671,19 +803,124 @@ pub mod fraud_prevention_assessment {
     /// fraudulently obtained cards or brute forcing their details.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct CardTestingVerdict {
-        /// Probability (0-1) of this transaction attempt being part of a card
-        /// testing attack.
+        /// Output only. Probability of this transaction attempt being part of a card
+        /// testing attack. Values are from 0.0 (lowest) to 1.0 (highest).
         #[prost(float, tag = "1")]
         pub risk: f32,
     }
+    /// Information about behavioral trust of the transaction.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BehavioralTrustVerdict {
+        /// Output only. Probability of this transaction attempt being executed in a
+        /// behaviorally trustworthy way. Values are from 0.0 (lowest) to 1.0
+        /// (highest).
+        #[prost(float, tag = "1")]
+        pub trust: f32,
+    }
+}
+/// Fraud signals describing users and cards involved in the transaction.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FraudSignals {
+    /// Output only. Signals describing the end user in this transaction.
+    #[prost(message, optional, tag = "1")]
+    pub user_signals: ::core::option::Option<fraud_signals::UserSignals>,
+    /// Output only. Signals describing the payment card or cards used in this
+    /// transaction.
+    #[prost(message, optional, tag = "2")]
+    pub card_signals: ::core::option::Option<fraud_signals::CardSignals>,
+}
+/// Nested message and enum types in `FraudSignals`.
+pub mod fraud_signals {
+    /// Signals describing the user involved in this transaction.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct UserSignals {
+        /// Output only. This user (based on email, phone, and other identifiers) has
+        /// been seen on the internet for at least this number of days.
+        #[prost(int32, tag = "1")]
+        pub active_days_lower_bound: i32,
+        /// Output only. Likelihood (from 0.0 to 1.0) this user includes synthetic
+        /// components in their identity, such as a randomly generated email address,
+        /// temporary phone number, or fake shipping address.
+        #[prost(float, tag = "2")]
+        pub synthetic_risk: f32,
+    }
+    /// Signals describing the payment card used in this transaction.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CardSignals {
+        /// Output only. The labels for the payment card in this transaction.
+        #[prost(
+            enumeration = "card_signals::CardLabel",
+            repeated,
+            packed = "false",
+            tag = "1"
+        )]
+        pub card_labels: ::prost::alloc::vec::Vec<i32>,
+    }
+    /// Nested message and enum types in `CardSignals`.
+    pub mod card_signals {
+        /// Risk labels describing the card being assessed, such as its funding
+        /// mechanism.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum CardLabel {
+            /// No label specified.
+            Unspecified = 0,
+            /// This card has been detected as prepaid.
+            Prepaid = 1,
+            /// This card has been detected as virtual, such as a card number generated
+            /// for a single transaction or merchant.
+            Virtual = 2,
+            /// This card has been detected as being used in an unexpected geographic
+            /// location.
+            UnexpectedLocation = 3,
+        }
+    }
+}
+/// Information about SMS toll fraud.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SmsTollFraudVerdict {
+    /// Output only. Probability of an SMS event being fraudulent.
+    /// Values are from 0.0 (lowest) to 1.0 (highest).
+    #[prost(float, tag = "1")]
+    pub risk: f32,
+    /// Output only. Reasons contributing to the SMS toll fraud verdict.
+    #[prost(
+        enumeration = "sms_toll_fraud_verdict::SmsTollFraudReason",
+        repeated,
+        packed = "false",
+        tag = "2"
+    )]
+    pub reasons: ::prost::alloc::vec::Vec<i32>,
+}
+/// Nested message and enum types in `SmsTollFraudVerdict`.
+pub mod sms_toll_fraud_verdict {
+    /// Reasons contributing to the SMS toll fraud verdict.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SmsTollFraudReason {
+        /// Default unspecified reason
+        Unspecified = 0,
+        /// The provided phone number was invalid
+        InvalidPhoneNumber = 1,
+    }
+}
+/// Assessment for Phone Fraud
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PhoneFraudAssessment {
+    /// Output only. Assessment of this phone event for risk of SMS toll fraud.
+    #[prost(message, optional, tag = "1")]
+    pub sms_toll_fraud_verdict: ::core::option::Option<SmsTollFraudVerdict>,
 }
 /// Account defender risk assessment.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AccountDefenderAssessment {
-    /// Labels for this request.
+    /// Output only. Labels for this request.
     #[prost(
         enumeration = "account_defender_assessment::AccountDefenderLabel",
         repeated,
+        packed = "false",
         tag = "1"
     )]
     pub labels: ::prost::alloc::vec::Vec<i32>,
@@ -714,7 +951,7 @@ pub mod account_defender_assessment {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateKeyRequest {
     /// Required. The name of the project in which the key will be created, in the
-    /// format "projects/{project}".
+    /// format `projects/{project}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. Information to create a reCAPTCHA Enterprise key.
@@ -725,7 +962,7 @@ pub struct CreateKeyRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListKeysRequest {
     /// Required. The name of the project that contains the keys that will be
-    /// listed, in the format "projects/{project}".
+    /// listed, in the format `projects/{project}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Optional. The maximum number of keys to return. Default is 10. Max limit is
@@ -752,7 +989,7 @@ pub struct ListKeysResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RetrieveLegacySecretKeyRequest {
     /// Required. The public key name linked to the requested secret key in the
-    /// format "projects/{project}/keys/{key}".
+    /// format `projects/{project}/keys/{key}`.
     #[prost(string, tag = "1")]
     pub key: ::prost::alloc::string::String,
 }
@@ -760,7 +997,7 @@ pub struct RetrieveLegacySecretKeyRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetKeyRequest {
     /// Required. The name of the requested key, in the format
-    /// "projects/{project}/keys/{key}".
+    /// `projects/{project}/keys/{key}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -779,15 +1016,95 @@ pub struct UpdateKeyRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteKeyRequest {
     /// Required. The name of the key to be deleted, in the format
-    /// "projects/{project}/keys/{key}".
+    /// `projects/{project}/keys/{key}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
+/// The create firewall policy request message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateFirewallPolicyRequest {
+    /// Required. The name of the project this policy will apply to, in the format
+    /// `projects/{project}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. Information to create the policy.
+    #[prost(message, optional, tag = "2")]
+    pub firewall_policy: ::core::option::Option<FirewallPolicy>,
+}
+/// The list firewall policies request message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListFirewallPoliciesRequest {
+    /// Required. The name of the project to list the policies for, in the format
+    /// `projects/{project}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of policies to return. Default is 10. Max
+    /// limit is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. The next_page_token value returned from a previous.
+    /// ListFirewallPoliciesRequest, if any.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response to request to list firewall policies belonging to a project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListFirewallPoliciesResponse {
+    /// Policy details.
+    #[prost(message, repeated, tag = "1")]
+    pub firewall_policies: ::prost::alloc::vec::Vec<FirewallPolicy>,
+    /// Token to retrieve the next page of results. It is set to empty if no
+    /// policies remain in results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// The get firewall policy request message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFirewallPolicyRequest {
+    /// Required. The name of the requested policy, in the format
+    /// `projects/{project}/firewallpolicies/{firewallpolicy}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// The update firewall policy request message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateFirewallPolicyRequest {
+    /// Required. The policy to update.
+    #[prost(message, optional, tag = "1")]
+    pub firewall_policy: ::core::option::Option<FirewallPolicy>,
+    /// Optional. The mask to control which fields of the policy get updated. If
+    /// the mask is not present, all fields will be updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// The delete firewall policy request message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteFirewallPolicyRequest {
+    /// Required. The name of the policy to be deleted, in the format
+    /// `projects/{project}/firewallpolicies/{firewallpolicy}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// The reorder firewall policies request message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReorderFirewallPoliciesRequest {
+    /// Required. The name of the project to list the policies for, in the format
+    /// `projects/{project}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. A list containing all policy names, in the new order. Each name
+    /// is in the format `projects/{project}/firewallpolicies/{firewallpolicy}`.
+    #[prost(string, repeated, tag = "2")]
+    pub names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// The reorder firewall policies response message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReorderFirewallPoliciesResponse {}
 /// The migrate key request message.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MigrateKeyRequest {
     /// Required. The name of the key to be migrated, in the format
-    /// "projects/{project}/keys/{key}".
+    /// `projects/{project}/keys/{key}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Optional. If true, skips the billing check.
@@ -805,15 +1122,15 @@ pub struct MigrateKeyRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetMetricsRequest {
     /// Required. The name of the requested metrics, in the format
-    /// "projects/{project}/keys/{key}/metrics".
+    /// `projects/{project}/keys/{key}/metrics`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Metrics for a single Key.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Metrics {
-    /// Output only. The name of the metrics, in the format
-    /// "projects/{project}/keys/{key}/metrics".
+    /// Output only. Identifier. The name of the metrics, in the format
+    /// `projects/{project}/keys/{key}/metrics`.
     #[prost(string, tag = "4")]
     pub name: ::prost::alloc::string::String,
     /// Inclusive start time aligned to a day (UTC).
@@ -844,35 +1161,35 @@ pub struct RetrieveLegacySecretKeyResponse {
 /// use reCAPTCHA Enterprise.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Key {
-    /// The resource name for the Key in the format
-    /// "projects/{project}/keys/{key}".
+    /// Identifier. The resource name for the Key in the format
+    /// `projects/{project}/keys/{key}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Human-readable display name of this key. Modifiable by user.
+    /// Required. Human-readable display name of this key. Modifiable by user.
     #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
-    /// See <a href="<https://cloud.google.com/recaptcha-enterprise/docs/labels">>
-    /// Creating and managing labels</a>.
+    /// Optional. See [Creating and managing labels]
+    /// (<https://cloud.google.com/recaptcha-enterprise/docs/labels>).
     #[prost(map = "string, string", tag = "6")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Output only. The timestamp corresponding to the creation of this Key.
+    /// Output only. The timestamp corresponding to the creation of this key.
     #[prost(message, optional, tag = "7")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Options for user acceptance testing.
+    /// Optional. Options for user acceptance testing.
     #[prost(message, optional, tag = "9")]
     pub testing_options: ::core::option::Option<TestingOptions>,
-    /// Settings for WAF
+    /// Optional. Settings for WAF
     #[prost(message, optional, tag = "10")]
     pub waf_settings: ::core::option::Option<WafSettings>,
-    /// Platform specific settings for this key. The key can only be used on a
+    /// Platform-specific settings for this key. The key can only be used on a
     /// platform for which the settings are enabled.
     #[prost(oneof = "key::PlatformSettings", tags = "3, 4, 5")]
     pub platform_settings: ::core::option::Option<key::PlatformSettings>,
 }
 /// Nested message and enum types in `Key`.
 pub mod key {
-    /// Platform specific settings for this key. The key can only be used on a
+    /// Platform-specific settings for this key. The key can only be used on a
     /// platform for which the settings are enabled.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum PlatformSettings {
@@ -890,13 +1207,13 @@ pub mod key {
 /// Options for user acceptance testing.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TestingOptions {
-    /// All assessments for this Key will return this score. Must be between 0
-    /// (likely not legitimate) and 1 (likely legitimate) inclusive.
+    /// Optional. All assessments for this Key will return this score. Must be
+    /// between 0 (likely not legitimate) and 1 (likely legitimate) inclusive.
     #[prost(float, tag = "1")]
     pub testing_score: f32,
-    /// For challenge-based keys only (CHECKBOX, INVISIBLE), all challenge requests
-    /// for this site will return nocaptcha if NOCAPTCHA, or an unsolvable
-    /// challenge if CHALLENGE.
+    /// Optional. For challenge-based keys only (CHECKBOX, INVISIBLE), all
+    /// challenge requests for this site will return nocaptcha if NOCAPTCHA, or an
+    /// unsolvable challenge if CHALLENGE.
     #[prost(enumeration = "testing_options::TestingChallenge", tag = "2")]
     pub testing_challenge: i32,
 }
@@ -921,25 +1238,25 @@ pub mod testing_options {
 /// Settings specific to keys that can be used by websites.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WebKeySettings {
-    /// If set to true, it means allowed_domains will not be enforced.
+    /// Optional. If set to true, it means allowed_domains will not be enforced.
     #[prost(bool, tag = "3")]
     pub allow_all_domains: bool,
-    /// Domains or subdomains of websites allowed to use the key. All subdomains
-    /// of an allowed domain are automatically allowed. A valid domain requires a
-    /// host and must not include any path, port, query or fragment.
+    /// Optional. Domains or subdomains of websites allowed to use the key. All
+    /// subdomains of an allowed domain are automatically allowed. A valid domain
+    /// requires a host and must not include any path, port, query or fragment.
     /// Examples: 'example.com' or 'subdomain.example.com'
     #[prost(string, repeated, tag = "1")]
     pub allowed_domains: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// If set to true, the key can be used on AMP (Accelerated Mobile Pages)
-    /// websites. This is supported only for the SCORE integration type.
+    /// Optional. If set to true, the key can be used on AMP (Accelerated Mobile
+    /// Pages) websites. This is supported only for the SCORE integration type.
     #[prost(bool, tag = "2")]
     pub allow_amp_traffic: bool,
     /// Required. Describes how this key is integrated with the website.
     #[prost(enumeration = "web_key_settings::IntegrationType", tag = "4")]
     pub integration_type: i32,
-    /// Settings for the frequency and difficulty at which this key triggers
-    /// captcha challenges. This should only be specified for IntegrationTypes
-    /// CHECKBOX and INVISIBLE.
+    /// Optional. Settings for the frequency and difficulty at which this key
+    /// triggers captcha challenges. This should only be specified for
+    /// IntegrationTypes CHECKBOX and INVISIBLE.
     #[prost(
         enumeration = "web_key_settings::ChallengeSecurityPreference",
         tag = "5"
@@ -984,24 +1301,52 @@ pub mod web_key_settings {
 /// Settings specific to keys that can be used by Android apps.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AndroidKeySettings {
-    /// If set to true, allowed_package_names are not enforced.
+    /// Optional. If set to true, allowed_package_names are not enforced.
     #[prost(bool, tag = "2")]
     pub allow_all_package_names: bool,
-    /// Android package names of apps allowed to use the key.
+    /// Optional. Android package names of apps allowed to use the key.
     /// Example: 'com.companyname.appname'
     #[prost(string, repeated, tag = "1")]
     pub allowed_package_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Set to true for keys that are used in an Android application that
+    /// is available for download in app stores in addition to the Google Play
+    /// Store.
+    #[prost(bool, tag = "3")]
+    pub support_non_google_app_store_distribution: bool,
 }
 /// Settings specific to keys that can be used by iOS apps.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IosKeySettings {
-    /// If set to true, allowed_bundle_ids are not enforced.
+    /// Optional. If set to true, allowed_bundle_ids are not enforced.
     #[prost(bool, tag = "2")]
     pub allow_all_bundle_ids: bool,
-    /// iOS bundle ids of apps allowed to use the key.
+    /// Optional. iOS bundle ids of apps allowed to use the key.
     /// Example: 'com.companyname.productname.appname'
     #[prost(string, repeated, tag = "1")]
     pub allowed_bundle_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Apple Developer account details for the app that is protected by
+    /// the reCAPTCHA Key. reCAPTCHA Enterprise leverages platform-specific checks
+    /// like Apple App Attest and Apple DeviceCheck to protect your app from abuse.
+    /// Providing these fields allows reCAPTCHA Enterprise to get a better
+    /// assessment of the integrity of your app.
+    #[prost(message, optional, tag = "3")]
+    pub apple_developer_id: ::core::option::Option<AppleDeveloperId>,
+}
+/// Contains fields that are required to perform Apple-specific integrity checks.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AppleDeveloperId {
+    /// Required. Input only. A private key (downloaded as a text file with a .p8
+    /// file extension) generated for your Apple Developer account. Ensure that
+    /// Apple DeviceCheck is enabled for the private key.
+    #[prost(string, tag = "1")]
+    pub private_key: ::prost::alloc::string::String,
+    /// Required. The Apple developer key ID (10-character string).
+    #[prost(string, tag = "2")]
+    pub key_id: ::prost::alloc::string::String,
+    /// Required. The Apple team ID (10-character string) owning the provisioning
+    /// profile used to build your application.
+    #[prost(string, tag = "3")]
+    pub team_id: ::prost::alloc::string::String,
 }
 /// Score distribution.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1044,6 +1389,137 @@ pub struct ChallengeMetrics {
     #[prost(int64, tag = "4")]
     pub passed_count: i64,
 }
+/// Policy config assessment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FirewallPolicyAssessment {
+    /// Output only. If the processing of a policy config fails, an error will be
+    /// populated and the firewall_policy will be left empty.
+    #[prost(message, optional, tag = "5")]
+    pub error: ::core::option::Option<super::super::super::rpc::Status>,
+    /// Output only. The policy that matched the request. If more than one policy
+    /// may match, this is the first match. If no policy matches the incoming
+    /// request, the policy field will be left empty.
+    #[prost(message, optional, tag = "8")]
+    pub firewall_policy: ::core::option::Option<FirewallPolicy>,
+}
+/// An individual action. Each action represents what to do if a policy
+/// matches.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FirewallAction {
+    #[prost(
+        oneof = "firewall_action::FirewallActionOneof",
+        tags = "1, 2, 6, 5, 3, 4"
+    )]
+    pub firewall_action_oneof: ::core::option::Option<firewall_action::FirewallActionOneof>,
+}
+/// Nested message and enum types in `FirewallAction`.
+pub mod firewall_action {
+    /// An allow action continues processing a request unimpeded.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AllowAction {}
+    /// A block action serves an HTTP error code a prevents the request from
+    /// hitting the backend.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BlockAction {}
+    /// An include reCAPTCHA script action involves injecting reCAPTCHA JavaScript
+    /// code into the HTML returned by the site backend. This reCAPTCHA
+    /// script is tasked with collecting user signals on the requested web page,
+    /// issuing tokens as a cookie within the site domain, and enabling their
+    /// utilization in subsequent page requests.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct IncludeRecaptchaScriptAction {}
+    /// A redirect action returns a 307 (temporary redirect) response, pointing
+    /// the user to a ReCaptcha interstitial page to attach a token.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct RedirectAction {}
+    /// A substitute action transparently serves a different page than the one
+    /// requested.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SubstituteAction {
+        /// Optional. The address to redirect to. The target is a relative path in
+        /// the current host. Example: "/blog/404.html".
+        #[prost(string, tag = "1")]
+        pub path: ::prost::alloc::string::String,
+    }
+    /// A set header action sets a header and forwards the request to the
+    /// backend. This can be used to trigger custom protection implemented on the
+    /// backend.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SetHeaderAction {
+        /// Optional. The header key to set in the request to the backend server.
+        #[prost(string, tag = "1")]
+        pub key: ::prost::alloc::string::String,
+        /// Optional. The header value to set in the request to the backend server.
+        #[prost(string, tag = "2")]
+        pub value: ::prost::alloc::string::String,
+    }
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum FirewallActionOneof {
+        /// The user request did not match any policy and should be allowed
+        /// access to the requested resource.
+        #[prost(message, tag = "1")]
+        Allow(AllowAction),
+        /// This action will deny access to a given page. The user will get an HTTP
+        /// error code.
+        #[prost(message, tag = "2")]
+        Block(BlockAction),
+        /// This action will inject reCAPTCHA JavaScript code into the HTML page
+        /// returned by the site backend.
+        #[prost(message, tag = "6")]
+        IncludeRecaptchaScript(IncludeRecaptchaScriptAction),
+        /// This action will redirect the request to a ReCaptcha interstitial to
+        /// attach a token.
+        #[prost(message, tag = "5")]
+        Redirect(RedirectAction),
+        /// This action will transparently serve a different page to an offending
+        /// user.
+        #[prost(message, tag = "3")]
+        Substitute(SubstituteAction),
+        /// This action will set a custom header but allow the request to continue
+        /// to the customer backend.
+        #[prost(message, tag = "4")]
+        SetHeader(SetHeaderAction),
+    }
+}
+/// A FirewallPolicy represents a single matching pattern and resulting actions
+/// to take.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FirewallPolicy {
+    /// Identifier. The resource name for the FirewallPolicy in the format
+    /// `projects/{project}/firewallpolicies/{firewallpolicy}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A description of what this policy aims to achieve, for
+    /// convenience purposes. The description can at most include 256 UTF-8
+    /// characters.
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    /// Optional. The path for which this policy applies, specified as a glob
+    /// pattern. For more information on glob, see the [manual
+    /// page](<https://man7.org/linux/man-pages/man7/glob.7.html>).
+    /// A path has a max length of 200 characters.
+    #[prost(string, tag = "4")]
+    pub path: ::prost::alloc::string::String,
+    /// Optional. A CEL (Common Expression Language) conditional expression that
+    /// specifies if this policy applies to an incoming user request. If this
+    /// condition evaluates to true and the requested path matched the path
+    /// pattern, the associated actions should be executed by the caller. The
+    /// condition string is checked for CEL syntax correctness on creation. For
+    /// more information, see the [CEL spec](<https://github.com/google/cel-spec>)
+    /// and its [language
+    /// definition](<https://github.com/google/cel-spec/blob/master/doc/langdef.md>).
+    /// A condition has a max length of 500 characters.
+    #[prost(string, tag = "5")]
+    pub condition: ::prost::alloc::string::String,
+    /// Optional. The actions that the caller should take regarding user access.
+    /// There should be at most one terminal action. A terminal action is any
+    /// action that forces a response, such as `AllowAction`,
+    /// `BlockAction` or `SubstituteAction`.
+    /// Zero or more non-terminal actions such as `SetHeader` might be
+    /// specified. A single policy can contain up to 16 actions.
+    #[prost(message, repeated, tag = "6")]
+    pub actions: ::prost::alloc::vec::Vec<FirewallAction>,
+}
 /// The request message to list memberships in a related account group.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListRelatedAccountGroupMembershipsRequest {
@@ -1080,7 +1556,7 @@ pub struct ListRelatedAccountGroupMembershipsResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListRelatedAccountGroupsRequest {
     /// Required. The name of the project to list related account groups from, in
-    /// the format "projects/{project}".
+    /// the format `projects/{project}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Optional. The maximum number of groups to return. The service might return
@@ -1113,12 +1589,21 @@ pub struct ListRelatedAccountGroupsResponse {
 pub struct SearchRelatedAccountGroupMembershipsRequest {
     /// Required. The name of the project to search related account group
     /// memberships from. Specify the project name in the following format:
-    /// "projects/{project}".
+    /// `projects/{project}`.
     #[prost(string, tag = "1")]
     pub project: ::prost::alloc::string::String,
-    /// Optional. The unique stable hashed user identifier we should search
-    /// connections to. The identifier should correspond to a `hashed_account_id`
-    /// provided in a previous `CreateAssessment` or `AnnotateAssessment` call.
+    /// Optional. The unique stable account identifier used to search connections.
+    /// The identifier should correspond to an `account_id` provided in a previous
+    /// `CreateAssessment` or `AnnotateAssessment` call. Either hashed_account_id
+    /// or account_id must be set, but not both.
+    #[prost(string, tag = "5")]
+    pub account_id: ::prost::alloc::string::String,
+    /// Optional. Deprecated: use `account_id` instead.
+    /// The unique stable hashed account identifier used to search connections. The
+    /// identifier should correspond to a `hashed_account_id` provided in a
+    /// previous `CreateAssessment` or `AnnotateAssessment` call. Either
+    /// hashed_account_id or account_id must be set, but not both.
+    #[deprecated]
     #[prost(bytes = "vec", tag = "2")]
     pub hashed_account_id: ::prost::alloc::vec::Vec<u8>,
     /// Optional. The maximum number of groups to return. The service might return
@@ -1150,20 +1635,28 @@ pub struct SearchRelatedAccountGroupMembershipsResponse {
 /// A membership in a group of related accounts.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RelatedAccountGroupMembership {
-    /// Required. The resource name for this membership in the format
+    /// Required. Identifier. The resource name for this membership in the format
     /// `projects/{project}/relatedaccountgroups/{relatedaccountgroup}/memberships/{membership}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The unique stable hashed user identifier of the member. The identifier
+    /// The unique stable account identifier of the member. The identifier
+    /// corresponds to an `account_id` provided in a previous `CreateAssessment` or
+    /// `AnnotateAssessment` call.
+    #[prost(string, tag = "4")]
+    pub account_id: ::prost::alloc::string::String,
+    /// Deprecated: use `account_id` instead.
+    /// The unique stable hashed account identifier of the member. The identifier
     /// corresponds to a `hashed_account_id` provided in a previous
     /// `CreateAssessment` or `AnnotateAssessment` call.
+    #[deprecated]
     #[prost(bytes = "vec", tag = "2")]
     pub hashed_account_id: ::prost::alloc::vec::Vec<u8>,
 }
 /// A group of related accounts.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RelatedAccountGroup {
-    /// Required. The resource name for the related account group in the format
+    /// Required. Identifier. The resource name for the related account group in
+    /// the format
     /// `projects/{project}/relatedaccountgroups/{related_account_group}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -1195,6 +1688,9 @@ pub mod waf_settings {
         SessionToken = 2,
         /// Use reCAPTCHA action-tokens to protect user actions.
         ActionToken = 3,
+        /// Use reCAPTCHA WAF express protection to protect any content other than
+        /// web pages, like APIs and IoT devices.
+        Express = 5,
     }
     /// Web Application Firewalls supported by reCAPTCHA Enterprise.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1204,6 +1700,10 @@ pub mod waf_settings {
         Unspecified = 0,
         /// Cloud Armor
         Ca = 1,
+        /// Fastly
+        Fastly = 3,
+        /// Cloudflare
+        Cloudflare = 4,
     }
 }
 #[doc = r" Generated client implementations."]
@@ -1395,7 +1895,7 @@ pub mod recaptcha_enterprise_service_client {
         #[doc = " Migrates an existing key from reCAPTCHA to reCAPTCHA Enterprise."]
         #[doc = " Once a key is migrated, it can be used from either product. SiteVerify"]
         #[doc = " requests are billed as CreateAssessment calls. You must be"]
-        #[doc = " authenticated as one of the current owners of the reCAPTCHA Site Key, and"]
+        #[doc = " authenticated as one of the current owners of the reCAPTCHA Key, and"]
         #[doc = " your user must have the reCAPTCHA Enterprise Admin IAM role in the"]
         #[doc = " destination project."]
         pub async fn migrate_key(
@@ -1430,6 +1930,101 @@ pub mod recaptcha_enterprise_service_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/GetMetrics",
             );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a new FirewallPolicy, specifying conditions at which reCAPTCHA"]
+        #[doc = " Enterprise actions can be executed."]
+        #[doc = " A project may have a maximum of 1000 policies."]
+        pub async fn create_firewall_policy(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateFirewallPolicyRequest>,
+        ) -> Result<tonic::Response<super::FirewallPolicy>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/CreateFirewallPolicy") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the list of all firewall policies that belong to a project."]
+        pub async fn list_firewall_policies(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListFirewallPoliciesRequest>,
+        ) -> Result<tonic::Response<super::ListFirewallPoliciesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/ListFirewallPolicies") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the specified firewall policy."]
+        pub async fn get_firewall_policy(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetFirewallPolicyRequest>,
+        ) -> Result<tonic::Response<super::FirewallPolicy>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/GetFirewallPolicy",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the specified firewall policy."]
+        pub async fn update_firewall_policy(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateFirewallPolicyRequest>,
+        ) -> Result<tonic::Response<super::FirewallPolicy>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/UpdateFirewallPolicy") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes the specified firewall policy."]
+        pub async fn delete_firewall_policy(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteFirewallPolicyRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/DeleteFirewallPolicy") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Reorders all firewall policies."]
+        pub async fn reorder_firewall_policies(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ReorderFirewallPoliciesRequest>,
+        ) -> Result<tonic::Response<super::ReorderFirewallPoliciesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.recaptchaenterprise.v1.RecaptchaEnterpriseService/ReorderFirewallPolicies") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " List groups of related accounts."]

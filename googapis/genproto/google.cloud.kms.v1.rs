@@ -101,6 +101,16 @@ pub struct CryptoKey {
     /// \[ProtectionLevels][google.cloud.kms.v1.ProtectionLevel\] in the future.
     #[prost(string, tag = "15")]
     pub crypto_key_backend: ::prost::alloc::string::String,
+    /// Optional. The policy used for Key Access Justifications Policy Enforcement.
+    /// If this field is present and this key is enrolled in Key Access
+    /// Justifications Policy Enforcement, the policy will be evaluated in encrypt,
+    /// decrypt, and sign operations, and the operation will fail if rejected by
+    /// the policy. The policy is defined by specifying zero or more allowed
+    /// justification codes.
+    /// <https://cloud.google.com/assured-workloads/key-access-justifications/docs/justification-codes>
+    /// By default, this field is absent, and all justification codes are allowed.
+    #[prost(message, optional, tag = "17")]
+    pub key_access_justifications_policy: ::core::option::Option<KeyAccessJustificationsPolicy>,
     /// Controls the rate of automatic rotation.
     #[prost(oneof = "crypto_key::RotationSchedule", tags = "8")]
     pub rotation_schedule: ::core::option::Option<crypto_key::RotationSchedule>,
@@ -133,6 +143,12 @@ pub mod crypto_key {
         /// and
         /// \[GetPublicKey][google.cloud.kms.v1.KeyManagementService.GetPublicKey\].
         AsymmetricDecrypt = 6,
+        /// \[CryptoKeys][google.cloud.kms.v1.CryptoKey\] with this purpose may be used
+        /// with \[RawEncrypt][google.cloud.kms.v1.KeyManagementService.RawEncrypt\]
+        /// and \[RawDecrypt][google.cloud.kms.v1.KeyManagementService.RawDecrypt\].
+        /// This purpose is meant to be used for interoperable symmetric
+        /// encryption and does not support automatic CryptoKey rotation.
+        RawEncryptDecrypt = 7,
         /// \[CryptoKeys][google.cloud.kms.v1.CryptoKey\] with this purpose may be used
         /// with \[MacSign][google.cloud.kms.v1.KeyManagementService.MacSign\].
         Mac = 9,
@@ -357,11 +373,11 @@ pub mod crypto_key_version {
     /// \[CryptoKey.purpose][google.cloud.kms.v1.CryptoKey.purpose\]
     /// \[ENCRYPT_DECRYPT][google.cloud.kms.v1.CryptoKey.CryptoKeyPurpose.ENCRYPT_DECRYPT\].
     ///
-    /// Algorithms beginning with "RSA_SIGN_" are usable with
+    /// Algorithms beginning with `RSA_SIGN_` are usable with
     /// \[CryptoKey.purpose][google.cloud.kms.v1.CryptoKey.purpose\]
     /// \[ASYMMETRIC_SIGN][google.cloud.kms.v1.CryptoKey.CryptoKeyPurpose.ASYMMETRIC_SIGN\].
     ///
-    /// The fields in the name after "RSA_SIGN_" correspond to the following
+    /// The fields in the name after `RSA_SIGN_` correspond to the following
     /// parameters: padding algorithm, modulus bit length, and digest algorithm.
     ///
     /// For PSS, the salt length used is equal to the length of digest
@@ -369,25 +385,25 @@ pub mod crypto_key_version {
     /// \[RSA_SIGN_PSS_2048_SHA256][google.cloud.kms.v1.CryptoKeyVersion.CryptoKeyVersionAlgorithm.RSA_SIGN_PSS_2048_SHA256\]
     /// will use PSS with a salt length of 256 bits or 32 bytes.
     ///
-    /// Algorithms beginning with "RSA_DECRYPT_" are usable with
+    /// Algorithms beginning with `RSA_DECRYPT_` are usable with
     /// \[CryptoKey.purpose][google.cloud.kms.v1.CryptoKey.purpose\]
     /// \[ASYMMETRIC_DECRYPT][google.cloud.kms.v1.CryptoKey.CryptoKeyPurpose.ASYMMETRIC_DECRYPT\].
     ///
-    /// The fields in the name after "RSA_DECRYPT_" correspond to the following
+    /// The fields in the name after `RSA_DECRYPT_` correspond to the following
     /// parameters: padding algorithm, modulus bit length, and digest algorithm.
     ///
-    /// Algorithms beginning with "EC_SIGN_" are usable with
+    /// Algorithms beginning with `EC_SIGN_` are usable with
     /// \[CryptoKey.purpose][google.cloud.kms.v1.CryptoKey.purpose\]
     /// \[ASYMMETRIC_SIGN][google.cloud.kms.v1.CryptoKey.CryptoKeyPurpose.ASYMMETRIC_SIGN\].
     ///
-    /// The fields in the name after "EC_SIGN_" correspond to the following
+    /// The fields in the name after `EC_SIGN_` correspond to the following
     /// parameters: elliptic curve, digest algorithm.
     ///
-    /// Algorithms beginning with "HMAC_" are usable with
+    /// Algorithms beginning with `HMAC_` are usable with
     /// \[CryptoKey.purpose][google.cloud.kms.v1.CryptoKey.purpose\]
     /// \[MAC][google.cloud.kms.v1.CryptoKey.CryptoKeyPurpose.MAC\].
     ///
-    /// The suffix following "HMAC_" corresponds to the hash algorithm being used
+    /// The suffix following `HMAC_` corresponds to the hash algorithm being used
     /// (eg. SHA256).
     ///
     /// For more information, see [Key purposes and algorithms]
@@ -399,6 +415,18 @@ pub mod crypto_key_version {
         Unspecified = 0,
         /// Creates symmetric encryption keys.
         GoogleSymmetricEncryption = 1,
+        /// AES-GCM (Galois Counter Mode) using 128-bit keys.
+        Aes128Gcm = 41,
+        /// AES-GCM (Galois Counter Mode) using 256-bit keys.
+        Aes256Gcm = 19,
+        /// AES-CBC (Cipher Block Chaining Mode) using 128-bit keys.
+        Aes128Cbc = 42,
+        /// AES-CBC (Cipher Block Chaining Mode) using 256-bit keys.
+        Aes256Cbc = 43,
+        /// AES-CTR (Counter Mode) using 128-bit keys.
+        Aes128Ctr = 44,
+        /// AES-CTR (Counter Mode) using 256-bit keys.
+        Aes256Ctr = 45,
         /// RSASSA-PSS 2048 bit key with a SHA256 digest.
         RsaSignPss2048Sha256 = 2,
         /// RSASSA-PSS 3072 bit key with a SHA256 digest.
@@ -448,6 +476,8 @@ pub mod crypto_key_version {
         /// Other hash functions can also be used:
         /// <https://cloud.google.com/kms/docs/create-validate-signatures#ecdsa_support_for_other_hash_algorithms>
         EcSignSecp256k1Sha256 = 31,
+        /// EdDSA on the Curve25519 in pure mode (taking data as input).
+        EcSignEd25519 = 40,
         /// HMAC-SHA256 signing with a 256 bit key.
         HmacSha256 = 32,
         /// HMAC-SHA1 signing with a 160 bit key.
@@ -542,7 +572,7 @@ pub mod crypto_key_version {
         Full = 1,
     }
 }
-/// The public key for a given
+/// The public keys for a given
 /// \[CryptoKeyVersion][google.cloud.kms.v1.CryptoKeyVersion\]. Obtained via
 /// \[GetPublicKey][google.cloud.kms.v1.KeyManagementService.GetPublicKey\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -781,6 +811,21 @@ pub struct ExternalProtectionLevelOptions {
     #[prost(string, tag = "2")]
     pub ekm_connection_key_path: ::prost::alloc::string::String,
 }
+/// A
+/// \[KeyAccessJustificationsPolicy][google.cloud.kms.v1.KeyAccessJustificationsPolicy\]
+/// specifies zero or more allowed
+/// \[AccessReason][google.cloud.kms.v1.AccessReason\] values for encrypt, decrypt,
+/// and sign operations on a \[CryptoKey][google.cloud.kms.v1.CryptoKey\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeyAccessJustificationsPolicy {
+    /// The list of allowed reasons for access to a
+    /// \[CryptoKey][google.cloud.kms.v1.CryptoKey\]. Zero allowed access reasons
+    /// means all encrypt, decrypt, and sign operations for the
+    /// \[CryptoKey][google.cloud.kms.v1.CryptoKey\] associated with this policy will
+    /// fail.
+    #[prost(enumeration = "AccessReason", repeated, tag = "1")]
+    pub allowed_access_reasons: ::prost::alloc::vec::Vec<i32>,
+}
 /// \[ProtectionLevel][google.cloud.kms.v1.ProtectionLevel\] specifies how
 /// cryptographic operations are performed. For more information, see [Protection
 /// levels] (<https://cloud.google.com/kms/docs/algorithms#protection_levels>).
@@ -797,6 +842,453 @@ pub enum ProtectionLevel {
     External = 3,
     /// Crypto operations are performed in an EKM-over-VPC backend.
     ExternalVpc = 4,
+}
+/// Describes the reason for a data access. Please refer to
+/// <https://cloud.google.com/assured-workloads/key-access-justifications/docs/justification-codes>
+/// for the detailed semantic meaning of justification reason codes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum AccessReason {
+    /// Unspecified access reason.
+    ReasonUnspecified = 0,
+    /// Customer-initiated support.
+    CustomerInitiatedSupport = 1,
+    /// Google-initiated access for system management and troubleshooting.
+    GoogleInitiatedService = 2,
+    /// Google-initiated access in response to a legal request or legal process.
+    ThirdPartyDataRequest = 3,
+    /// Google-initiated access for security, fraud, abuse, or compliance purposes.
+    GoogleInitiatedReview = 4,
+    /// Customer uses their account to perform any access to their own data which
+    /// their IAM policy authorizes.
+    CustomerInitiatedAccess = 5,
+    /// Google systems access customer data to help optimize the structure of the
+    /// data or quality for future uses by the customer.
+    GoogleInitiatedSystemOperation = 6,
+    /// No reason is expected for this key request.
+    ReasonNotExpected = 7,
+    /// Customer uses their account to perform any access to their own data which
+    /// their IAM policy authorizes, and one of the following is true:
+    ///
+    /// * A Google administrator has reset the root-access account associated with
+    ///   the user's organization within the past 7 days.
+    /// * A Google-initiated emergency access operation has interacted with a
+    ///   resource in the same project or folder as the currently accessed resource
+    ///   within the past 7 days.
+    ModifiedCustomerInitiatedAccess = 8,
+    /// Google systems access customer data to help optimize the structure of the
+    /// data or quality for future uses by the customer, and one of the following
+    /// is true:
+    ///
+    /// * A Google administrator has reset the root-access account associated with
+    ///   the user's organization within the past 7 days.
+    /// * A Google-initiated emergency access operation has interacted with a
+    ///   resource in the same project or folder as the currently accessed resource
+    ///   within the past 7 days.
+    ModifiedGoogleInitiatedSystemOperation = 9,
+    /// Google-initiated access to maintain system reliability.
+    GoogleResponseToProductionAlert = 10,
+    /// One of the following operations is being executed while simultaneously
+    /// encountering an internal technical issue which prevented a more precise
+    /// justification code from being generated:
+    ///
+    /// * Your account has been used to perform any access to your own data which
+    ///   your IAM policy authorizes.
+    /// * An automated Google system operates on encrypted customer data which your
+    ///   IAM policy authorizes.
+    /// * Customer-initiated Google support access.
+    /// * Google-initiated support access to protect system reliability.
+    CustomerAuthorizedWorkflowServicing = 11,
+}
+/// Request message for
+/// \[Autokey.CreateKeyHandle][google.cloud.kms.v1.Autokey.CreateKeyHandle\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateKeyHandleRequest {
+    /// Required. Name of the resource project and location to create the
+    /// \[KeyHandle][google.cloud.kms.v1.KeyHandle\] in, e.g.
+    /// `projects/{PROJECT_ID}/locations/{LOCATION}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Id of the \[KeyHandle][google.cloud.kms.v1.KeyHandle\]. Must be
+    /// unique to the resource project and location. If not provided by the caller,
+    /// a new UUID is used.
+    #[prost(string, tag = "2")]
+    pub key_handle_id: ::prost::alloc::string::String,
+    /// Required. \[KeyHandle][google.cloud.kms.v1.KeyHandle\] to create.
+    #[prost(message, optional, tag = "3")]
+    pub key_handle: ::core::option::Option<KeyHandle>,
+}
+/// Request message for \[GetKeyHandle][google.cloud.kms.v1.Autokey.GetKeyHandle\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetKeyHandleRequest {
+    /// Required. Name of the \[KeyHandle][google.cloud.kms.v1.KeyHandle\] resource,
+    /// e.g.
+    /// `projects/{PROJECT_ID}/locations/{LOCATION}/keyHandles/{KEY_HANDLE_ID}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Resource-oriented representation of a request to Cloud KMS Autokey and the
+/// resulting provisioning of a \[CryptoKey][google.cloud.kms.v1.CryptoKey\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeyHandle {
+    /// Identifier. Name of the \[KeyHandle][google.cloud.kms.v1.KeyHandle\]
+    /// resource, e.g.
+    /// `projects/{PROJECT_ID}/locations/{LOCATION}/keyHandles/{KEY_HANDLE_ID}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Name of a \[CryptoKey][google.cloud.kms.v1.CryptoKey\] that has
+    /// been provisioned for Customer Managed Encryption Key (CMEK) use in the
+    /// \[KeyHandle][google.cloud.kms.v1.KeyHandle\] project and location for the
+    /// requested resource type. The \[CryptoKey][google.cloud.kms.v1.CryptoKey\]
+    /// project will reflect the value configured in the
+    /// \[AutokeyConfig][google.cloud.kms.v1.AutokeyConfig\] on the resource
+    /// project's ancestor folder at the time of the
+    /// \[KeyHandle][google.cloud.kms.v1.KeyHandle\] creation. If more than one
+    /// ancestor folder has a configured
+    /// \[AutokeyConfig][google.cloud.kms.v1.AutokeyConfig\], the nearest of these
+    /// configurations is used.
+    #[prost(string, tag = "3")]
+    pub kms_key: ::prost::alloc::string::String,
+    /// Required. Indicates the resource type that the resulting
+    /// \[CryptoKey][google.cloud.kms.v1.CryptoKey\] is meant to protect, e.g.
+    /// `{SERVICE}.googleapis.com/{TYPE}`. See documentation for supported resource
+    /// types.
+    #[prost(string, tag = "4")]
+    pub resource_type_selector: ::prost::alloc::string::String,
+}
+/// Metadata message for
+/// \[CreateKeyHandle][google.cloud.kms.v1.Autokey.CreateKeyHandle\] long-running
+/// operation response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateKeyHandleMetadata {}
+/// Request message for
+/// \[Autokey.ListKeyHandles][google.cloud.kms.v1.Autokey.ListKeyHandles\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListKeyHandlesRequest {
+    /// Required. Name of the resource project and location from which to list
+    /// \[KeyHandles][google.cloud.kms.v1.KeyHandle\], e.g.
+    /// `projects/{PROJECT_ID}/locations/{LOCATION}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Filter to apply when listing
+    /// \[KeyHandles][google.cloud.kms.v1.KeyHandle\], e.g.
+    /// `resource_type_selector="{SERVICE}.googleapis.com/{TYPE}"`.
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[Autokey.ListKeyHandles][google.cloud.kms.v1.Autokey.ListKeyHandles\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListKeyHandlesResponse {
+    /// Resulting \[KeyHandles][google.cloud.kms.v1.KeyHandle\].
+    #[prost(message, repeated, tag = "1")]
+    pub key_handles: ::prost::alloc::vec::Vec<KeyHandle>,
+}
+#[doc = r" Generated client implementations."]
+pub mod autokey_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Provides interfaces for using Cloud KMS Autokey to provision new"]
+    #[doc = " [CryptoKeys][google.cloud.kms.v1.CryptoKey], ready for Customer Managed"]
+    #[doc = " Encryption Key (CMEK) use, on-demand. To support certain client tooling, this"]
+    #[doc = " feature is modeled around a [KeyHandle][google.cloud.kms.v1.KeyHandle]"]
+    #[doc = " resource: creating a [KeyHandle][google.cloud.kms.v1.KeyHandle] in a resource"]
+    #[doc = " project and given location triggers Cloud KMS Autokey to provision a"]
+    #[doc = " [CryptoKey][google.cloud.kms.v1.CryptoKey] in the configured key project and"]
+    #[doc = " the same location."]
+    #[doc = ""]
+    #[doc = " Prior to use in a given resource project,"]
+    #[doc = " [UpdateAutokeyConfig][google.cloud.kms.v1.AutokeyAdmin.UpdateAutokeyConfig]"]
+    #[doc = " should have been called on an ancestor folder, setting the key project where"]
+    #[doc = " Cloud KMS Autokey should create new"]
+    #[doc = " [CryptoKeys][google.cloud.kms.v1.CryptoKey]. See documentation for additional"]
+    #[doc = " prerequisites. To check what key project, if any, is currently configured on"]
+    #[doc = " a resource project's ancestor folder, see"]
+    #[doc = " [ShowEffectiveAutokeyConfig][google.cloud.kms.v1.AutokeyAdmin.ShowEffectiveAutokeyConfig]."]
+    #[derive(Debug, Clone)]
+    pub struct AutokeyClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> AutokeyClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> AutokeyClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            AutokeyClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a new [KeyHandle][google.cloud.kms.v1.KeyHandle], triggering the"]
+        #[doc = " provisioning of a new [CryptoKey][google.cloud.kms.v1.CryptoKey] for CMEK"]
+        #[doc = " use with the given resource type in the configured key project and the same"]
+        #[doc = " location. [GetOperation][Operations.GetOperation] should be used to resolve"]
+        #[doc = " the resulting long-running operation and get the resulting"]
+        #[doc = " [KeyHandle][google.cloud.kms.v1.KeyHandle] and"]
+        #[doc = " [CryptoKey][google.cloud.kms.v1.CryptoKey]."]
+        pub async fn create_key_handle(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateKeyHandleRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.kms.v1.Autokey/CreateKeyHandle",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the [KeyHandle][google.cloud.kms.v1.KeyHandle]."]
+        pub async fn get_key_handle(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetKeyHandleRequest>,
+        ) -> Result<tonic::Response<super::KeyHandle>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.cloud.kms.v1.Autokey/GetKeyHandle");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists [KeyHandles][google.cloud.kms.v1.KeyHandle]."]
+        pub async fn list_key_handles(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListKeyHandlesRequest>,
+        ) -> Result<tonic::Response<super::ListKeyHandlesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.cloud.kms.v1.Autokey/ListKeyHandles");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Request message for
+/// \[UpdateAutokeyConfig][google.cloud.kms.v1.AutokeyAdmin.UpdateAutokeyConfig\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateAutokeyConfigRequest {
+    /// Required. \[AutokeyConfig][google.cloud.kms.v1.AutokeyConfig\] with values to
+    /// update.
+    #[prost(message, optional, tag = "1")]
+    pub autokey_config: ::core::option::Option<AutokeyConfig>,
+    /// Required. Masks which fields of the
+    /// \[AutokeyConfig][google.cloud.kms.v1.AutokeyConfig\] to update, e.g.
+    /// `keyProject`.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request message for
+/// \[GetAutokeyConfig][google.cloud.kms.v1.AutokeyAdmin.GetAutokeyConfig\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetAutokeyConfigRequest {
+    /// Required. Name of the \[AutokeyConfig][google.cloud.kms.v1.AutokeyConfig\]
+    /// resource, e.g. `folders/{FOLDER_NUMBER}/autokeyConfig`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Cloud KMS Autokey configuration for a folder.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AutokeyConfig {
+    /// Identifier. Name of the \[AutokeyConfig][google.cloud.kms.v1.AutokeyConfig\]
+    /// resource, e.g. `folders/{FOLDER_NUMBER}/autokeyConfig`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. Name of the key project, e.g. `projects/{PROJECT_ID}` or
+    /// `projects/{PROJECT_NUMBER}`, where Cloud KMS Autokey will provision a new
+    /// \[CryptoKey][google.cloud.kms.v1.CryptoKey\] when a
+    /// \[KeyHandle][google.cloud.kms.v1.KeyHandle\] is created. On
+    /// \[UpdateAutokeyConfig][google.cloud.kms.v1.AutokeyAdmin.UpdateAutokeyConfig\],
+    /// the caller will require `cloudkms.cryptoKeys.setIamPolicy` permission on
+    /// this key project. Once configured, for Cloud KMS Autokey to function
+    /// properly, this key project must have the Cloud KMS API activated and the
+    /// Cloud KMS Service Agent for this key project must be granted the
+    /// `cloudkms.admin` role (or pertinent permissions). A request with an empty
+    /// key project field will clear the configuration.
+    #[prost(string, tag = "2")]
+    pub key_project: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[ShowEffectiveAutokeyConfig][google.cloud.kms.v1.AutokeyAdmin.ShowEffectiveAutokeyConfig\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ShowEffectiveAutokeyConfigRequest {
+    /// Required. Name of the resource project to the show effective Cloud KMS
+    /// Autokey configuration for. This may be helpful for interrogating the effect
+    /// of nested folder configurations on a given resource project.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[ShowEffectiveAutokeyConfig][google.cloud.kms.v1.AutokeyAdmin.ShowEffectiveAutokeyConfig\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ShowEffectiveAutokeyConfigResponse {
+    /// Name of the key project configured in the resource project's folder
+    /// ancestry.
+    #[prost(string, tag = "1")]
+    pub key_project: ::prost::alloc::string::String,
+}
+#[doc = r" Generated client implementations."]
+pub mod autokey_admin_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Provides interfaces for managing Cloud KMS Autokey folder-level"]
+    #[doc = " configurations. A configuration is inherited by all descendent projects. A"]
+    #[doc = " configuration at one folder overrides any other configurations in its"]
+    #[doc = " ancestry. Setting a configuration on a folder is a prerequisite for Cloud KMS"]
+    #[doc = " Autokey, so that users working in a descendant project can request"]
+    #[doc = " provisioned [CryptoKeys][google.cloud.kms.v1.CryptoKey], ready for Customer"]
+    #[doc = " Managed Encryption Key (CMEK) use, on-demand."]
+    #[derive(Debug, Clone)]
+    pub struct AutokeyAdminClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> AutokeyAdminClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> AutokeyAdminClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            AutokeyAdminClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Updates the [AutokeyConfig][google.cloud.kms.v1.AutokeyConfig] for a"]
+        #[doc = " folder. The caller must have both `cloudkms.autokeyConfigs.update`"]
+        #[doc = " permission on the parent folder and `cloudkms.cryptoKeys.setIamPolicy`"]
+        #[doc = " permission on the provided key project. A"]
+        #[doc = " [KeyHandle][google.cloud.kms.v1.KeyHandle] creation in the folder's"]
+        #[doc = " descendant projects will use this configuration to determine where to"]
+        #[doc = " create the resulting [CryptoKey][google.cloud.kms.v1.CryptoKey]."]
+        pub async fn update_autokey_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateAutokeyConfigRequest>,
+        ) -> Result<tonic::Response<super::AutokeyConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.kms.v1.AutokeyAdmin/UpdateAutokeyConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the [AutokeyConfig][google.cloud.kms.v1.AutokeyConfig] for a"]
+        #[doc = " folder."]
+        pub async fn get_autokey_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetAutokeyConfigRequest>,
+        ) -> Result<tonic::Response<super::AutokeyConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.kms.v1.AutokeyAdmin/GetAutokeyConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns the effective Cloud KMS Autokey configuration for a given project."]
+        pub async fn show_effective_autokey_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ShowEffectiveAutokeyConfigRequest>,
+        ) -> Result<tonic::Response<super::ShowEffectiveAutokeyConfigResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.kms.v1.AutokeyAdmin/ShowEffectiveAutokeyConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
 }
 /// Request message for
 /// \[EkmService.ListEkmConnections][google.cloud.kms.v1.EkmService.ListEkmConnections\].
@@ -1923,6 +2415,183 @@ pub struct DecryptRequest {
     pub additional_authenticated_data_crc32c: ::core::option::Option<i64>,
 }
 /// Request message for
+/// \[KeyManagementService.RawEncrypt][google.cloud.kms.v1.KeyManagementService.RawEncrypt\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RawEncryptRequest {
+    /// Required. The resource name of the
+    /// \[CryptoKeyVersion][google.cloud.kms.v1.CryptoKeyVersion\] to use for
+    /// encryption.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The data to encrypt. Must be no larger than 64KiB.
+    ///
+    /// The maximum size depends on the key version's
+    /// \[protection_level][google.cloud.kms.v1.CryptoKeyVersionTemplate.protection_level\].
+    /// For \[SOFTWARE][google.cloud.kms.v1.ProtectionLevel.SOFTWARE\] keys, the
+    /// plaintext must be no larger than 64KiB. For
+    /// \[HSM][google.cloud.kms.v1.ProtectionLevel.HSM\] keys, the combined length of
+    /// the plaintext and additional_authenticated_data fields must be no larger
+    /// than 8KiB.
+    #[prost(bytes = "vec", tag = "2")]
+    pub plaintext: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. Optional data that, if specified, must also be provided during
+    /// decryption through
+    /// \[RawDecryptRequest.additional_authenticated_data][google.cloud.kms.v1.RawDecryptRequest.additional_authenticated_data\].
+    ///
+    /// This field may only be used in conjunction with an
+    /// \[algorithm][google.cloud.kms.v1.CryptoKeyVersion.algorithm\] that accepts
+    /// additional authenticated data (for example, AES-GCM).
+    ///
+    /// The maximum size depends on the key version's
+    /// \[protection_level][google.cloud.kms.v1.CryptoKeyVersionTemplate.protection_level\].
+    /// For \[SOFTWARE][google.cloud.kms.v1.ProtectionLevel.SOFTWARE\] keys, the
+    /// plaintext must be no larger than 64KiB. For
+    /// \[HSM][google.cloud.kms.v1.ProtectionLevel.HSM\] keys, the combined length of
+    /// the plaintext and additional_authenticated_data fields must be no larger
+    /// than 8KiB.
+    #[prost(bytes = "vec", tag = "3")]
+    pub additional_authenticated_data: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. An optional CRC32C checksum of the
+    /// \[RawEncryptRequest.plaintext][google.cloud.kms.v1.RawEncryptRequest.plaintext\].
+    /// If specified,
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// verify the integrity of the received plaintext using this checksum.
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// report an error if the checksum verification fails. If you receive a
+    /// checksum error, your client should verify that CRC32C(plaintext) is equal
+    /// to plaintext_crc32c, and if so, perform a limited number of retries. A
+    /// persistent mismatch may indicate an issue in your computation of the CRC32C
+    /// checksum. Note: This field is defined as int64 for reasons of compatibility
+    /// across different languages. However, it is a non-negative integer, which
+    /// will never exceed 2^32-1, and can be safely downconverted to uint32 in
+    /// languages that support this type.
+    #[prost(message, optional, tag = "4")]
+    pub plaintext_crc32c: ::core::option::Option<i64>,
+    /// Optional. An optional CRC32C checksum of the
+    /// \[RawEncryptRequest.additional_authenticated_data][google.cloud.kms.v1.RawEncryptRequest.additional_authenticated_data\].
+    /// If specified,
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// verify the integrity of the received additional_authenticated_data using
+    /// this checksum.
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// report an error if the checksum verification fails. If you receive a
+    /// checksum error, your client should verify that
+    /// CRC32C(additional_authenticated_data) is equal to
+    /// additional_authenticated_data_crc32c, and if so, perform
+    /// a limited number of retries. A persistent mismatch may indicate an issue in
+    /// your computation of the CRC32C checksum.
+    /// Note: This field is defined as int64 for reasons of compatibility across
+    /// different languages. However, it is a non-negative integer, which will
+    /// never exceed 2^32-1, and can be safely downconverted to uint32 in languages
+    /// that support this type.
+    #[prost(message, optional, tag = "5")]
+    pub additional_authenticated_data_crc32c: ::core::option::Option<i64>,
+    /// Optional. A customer-supplied initialization vector that will be used for
+    /// encryption. If it is not provided for AES-CBC and AES-CTR, one will be
+    /// generated. It will be returned in
+    /// \[RawEncryptResponse.initialization_vector][google.cloud.kms.v1.RawEncryptResponse.initialization_vector\].
+    #[prost(bytes = "vec", tag = "6")]
+    pub initialization_vector: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. An optional CRC32C checksum of the
+    /// \[RawEncryptRequest.initialization_vector][google.cloud.kms.v1.RawEncryptRequest.initialization_vector\].
+    /// If specified,
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// verify the integrity of the received initialization_vector using this
+    /// checksum. \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\]
+    /// will report an error if the checksum verification fails. If you receive a
+    /// checksum error, your client should verify that
+    /// CRC32C(initialization_vector) is equal to
+    /// initialization_vector_crc32c, and if so, perform
+    /// a limited number of retries. A persistent mismatch may indicate an issue in
+    /// your computation of the CRC32C checksum.
+    /// Note: This field is defined as int64 for reasons of compatibility across
+    /// different languages. However, it is a non-negative integer, which will
+    /// never exceed 2^32-1, and can be safely downconverted to uint32 in languages
+    /// that support this type.
+    #[prost(message, optional, tag = "7")]
+    pub initialization_vector_crc32c: ::core::option::Option<i64>,
+}
+/// Request message for
+/// \[KeyManagementService.RawDecrypt][google.cloud.kms.v1.KeyManagementService.RawDecrypt\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RawDecryptRequest {
+    /// Required. The resource name of the
+    /// \[CryptoKeyVersion][google.cloud.kms.v1.CryptoKeyVersion\] to use for
+    /// decryption.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The encrypted data originally returned in
+    /// \[RawEncryptResponse.ciphertext][google.cloud.kms.v1.RawEncryptResponse.ciphertext\].
+    #[prost(bytes = "vec", tag = "2")]
+    pub ciphertext: ::prost::alloc::vec::Vec<u8>,
+    /// Optional. Optional data that must match the data originally supplied in
+    /// \[RawEncryptRequest.additional_authenticated_data][google.cloud.kms.v1.RawEncryptRequest.additional_authenticated_data\].
+    #[prost(bytes = "vec", tag = "3")]
+    pub additional_authenticated_data: ::prost::alloc::vec::Vec<u8>,
+    /// Required. The initialization vector (IV) used during encryption, which must
+    /// match the data originally provided in
+    /// \[RawEncryptResponse.initialization_vector][google.cloud.kms.v1.RawEncryptResponse.initialization_vector\].
+    #[prost(bytes = "vec", tag = "4")]
+    pub initialization_vector: ::prost::alloc::vec::Vec<u8>,
+    /// The length of the authentication tag that is appended to the end of
+    /// the ciphertext. If unspecified (0), the default value for the key's
+    /// algorithm will be used (for AES-GCM, the default value is 16).
+    #[prost(int32, tag = "5")]
+    pub tag_length: i32,
+    /// Optional. An optional CRC32C checksum of the
+    /// \[RawDecryptRequest.ciphertext][google.cloud.kms.v1.RawDecryptRequest.ciphertext\].
+    /// If specified,
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// verify the integrity of the received ciphertext using this checksum.
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// report an error if the checksum verification fails. If you receive a
+    /// checksum error, your client should verify that CRC32C(ciphertext) is equal
+    /// to ciphertext_crc32c, and if so, perform a limited number of retries. A
+    /// persistent mismatch may indicate an issue in your computation of the CRC32C
+    /// checksum. Note: This field is defined as int64 for reasons of compatibility
+    /// across different languages. However, it is a non-negative integer, which
+    /// will never exceed 2^32-1, and can be safely downconverted to uint32 in
+    /// languages that support this type.
+    #[prost(message, optional, tag = "6")]
+    pub ciphertext_crc32c: ::core::option::Option<i64>,
+    /// Optional. An optional CRC32C checksum of the
+    /// \[RawDecryptRequest.additional_authenticated_data][google.cloud.kms.v1.RawDecryptRequest.additional_authenticated_data\].
+    /// If specified,
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// verify the integrity of the received additional_authenticated_data using
+    /// this checksum.
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// report an error if the checksum verification fails. If you receive a
+    /// checksum error, your client should verify that
+    /// CRC32C(additional_authenticated_data) is equal to
+    /// additional_authenticated_data_crc32c, and if so, perform
+    /// a limited number of retries. A persistent mismatch may indicate an issue in
+    /// your computation of the CRC32C checksum.
+    /// Note: This field is defined as int64 for reasons of compatibility across
+    /// different languages. However, it is a non-negative integer, which will
+    /// never exceed 2^32-1, and can be safely downconverted to uint32 in languages
+    /// that support this type.
+    #[prost(message, optional, tag = "7")]
+    pub additional_authenticated_data_crc32c: ::core::option::Option<i64>,
+    /// Optional. An optional CRC32C checksum of the
+    /// \[RawDecryptRequest.initialization_vector][google.cloud.kms.v1.RawDecryptRequest.initialization_vector\].
+    /// If specified,
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] will
+    /// verify the integrity of the received initialization_vector using this
+    /// checksum. \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\]
+    /// will report an error if the checksum verification fails. If you receive a
+    /// checksum error, your client should verify that
+    /// CRC32C(initialization_vector) is equal to initialization_vector_crc32c, and
+    /// if so, perform a limited number of retries. A persistent mismatch may
+    /// indicate an issue in your computation of the CRC32C checksum.
+    /// Note: This field is defined as int64 for reasons of compatibility across
+    /// different languages. However, it is a non-negative integer, which will
+    /// never exceed 2^32-1, and can be safely downconverted to uint32 in languages
+    /// that support this type.
+    #[prost(message, optional, tag = "8")]
+    pub initialization_vector_crc32c: ::core::option::Option<i64>,
+}
+/// Request message for
 /// \[KeyManagementService.AsymmetricSign][google.cloud.kms.v1.KeyManagementService.AsymmetricSign\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AsymmetricSignRequest {
@@ -2234,6 +2903,181 @@ pub struct DecryptResponse {
     /// decryption.
     #[prost(enumeration = "ProtectionLevel", tag = "4")]
     pub protection_level: i32,
+}
+/// Response message for
+/// \[KeyManagementService.RawEncrypt][google.cloud.kms.v1.KeyManagementService.RawEncrypt\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RawEncryptResponse {
+    /// The encrypted data. In the case of AES-GCM, the authentication tag
+    /// is the \[tag_length][google.cloud.kms.v1.RawEncryptResponse.tag_length\]
+    /// bytes at the end of this field.
+    #[prost(bytes = "vec", tag = "1")]
+    pub ciphertext: ::prost::alloc::vec::Vec<u8>,
+    /// The initialization vector (IV) generated by the service during
+    /// encryption. This value must be stored and provided in
+    /// \[RawDecryptRequest.initialization_vector][google.cloud.kms.v1.RawDecryptRequest.initialization_vector\]
+    /// at decryption time.
+    #[prost(bytes = "vec", tag = "2")]
+    pub initialization_vector: ::prost::alloc::vec::Vec<u8>,
+    /// The length of the authentication tag that is appended to
+    /// the end of the ciphertext.
+    #[prost(int32, tag = "3")]
+    pub tag_length: i32,
+    /// Integrity verification field. A CRC32C checksum of the returned
+    /// \[RawEncryptResponse.ciphertext][google.cloud.kms.v1.RawEncryptResponse.ciphertext\].
+    /// An integrity check of ciphertext can be performed by computing the CRC32C
+    /// checksum of ciphertext and comparing your results to this field. Discard
+    /// the response in case of non-matching checksum values, and perform a limited
+    /// number of retries. A persistent mismatch may indicate an issue in your
+    /// computation of the CRC32C checksum. Note: This field is defined as int64
+    /// for reasons of compatibility across different languages. However, it is a
+    /// non-negative integer, which will never exceed 2^32-1, and can be safely
+    /// downconverted to uint32 in languages that support this type.
+    #[prost(message, optional, tag = "4")]
+    pub ciphertext_crc32c: ::core::option::Option<i64>,
+    /// Integrity verification field. A CRC32C checksum of the returned
+    /// \[RawEncryptResponse.initialization_vector][google.cloud.kms.v1.RawEncryptResponse.initialization_vector\].
+    /// An integrity check of initialization_vector can be performed by computing
+    /// the CRC32C checksum of initialization_vector and comparing your results to
+    /// this field. Discard the response in case of non-matching checksum values,
+    /// and perform a limited number of retries. A persistent mismatch may indicate
+    /// an issue in your computation of the CRC32C checksum. Note: This field is
+    /// defined as int64 for reasons of compatibility across different languages.
+    /// However, it is a non-negative integer, which will never exceed 2^32-1, and
+    /// can be safely downconverted to uint32 in languages that support this type.
+    #[prost(message, optional, tag = "5")]
+    pub initialization_vector_crc32c: ::core::option::Option<i64>,
+    /// Integrity verification field. A flag indicating whether
+    /// \[RawEncryptRequest.plaintext_crc32c][google.cloud.kms.v1.RawEncryptRequest.plaintext_crc32c\]
+    /// was received by
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] and used
+    /// for the integrity verification of the plaintext. A false value of this
+    /// field indicates either that
+    /// \[RawEncryptRequest.plaintext_crc32c][google.cloud.kms.v1.RawEncryptRequest.plaintext_crc32c\]
+    /// was left unset or that it was not delivered to
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\]. If you've
+    /// set
+    /// \[RawEncryptRequest.plaintext_crc32c][google.cloud.kms.v1.RawEncryptRequest.plaintext_crc32c\]
+    /// but this field is still false, discard the response and perform a limited
+    /// number of retries.
+    #[prost(bool, tag = "6")]
+    pub verified_plaintext_crc32c: bool,
+    /// Integrity verification field. A flag indicating whether
+    /// \[RawEncryptRequest.additional_authenticated_data_crc32c][google.cloud.kms.v1.RawEncryptRequest.additional_authenticated_data_crc32c\]
+    /// was received by
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] and used
+    /// for the integrity verification of additional_authenticated_data. A false
+    /// value of this field indicates either that //
+    /// \[RawEncryptRequest.additional_authenticated_data_crc32c][google.cloud.kms.v1.RawEncryptRequest.additional_authenticated_data_crc32c\]
+    /// was left unset or that it was not delivered to
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\]. If you've
+    /// set
+    /// \[RawEncryptRequest.additional_authenticated_data_crc32c][google.cloud.kms.v1.RawEncryptRequest.additional_authenticated_data_crc32c\]
+    /// but this field is still false, discard the response and perform a limited
+    /// number of retries.
+    #[prost(bool, tag = "7")]
+    pub verified_additional_authenticated_data_crc32c: bool,
+    /// Integrity verification field. A flag indicating whether
+    /// \[RawEncryptRequest.initialization_vector_crc32c][google.cloud.kms.v1.RawEncryptRequest.initialization_vector_crc32c\]
+    /// was received by
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] and used
+    /// for the integrity verification of initialization_vector. A false value of
+    /// this field indicates either that
+    /// \[RawEncryptRequest.initialization_vector_crc32c][google.cloud.kms.v1.RawEncryptRequest.initialization_vector_crc32c\]
+    /// was left unset or that it was not delivered to
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\]. If you've
+    /// set
+    /// \[RawEncryptRequest.initialization_vector_crc32c][google.cloud.kms.v1.RawEncryptRequest.initialization_vector_crc32c\]
+    /// but this field is still false, discard the response and perform a limited
+    /// number of retries.
+    #[prost(bool, tag = "10")]
+    pub verified_initialization_vector_crc32c: bool,
+    /// The resource name of the
+    /// \[CryptoKeyVersion][google.cloud.kms.v1.CryptoKeyVersion\] used in
+    /// encryption. Check this field to verify that the intended resource was used
+    /// for encryption.
+    #[prost(string, tag = "8")]
+    pub name: ::prost::alloc::string::String,
+    /// The \[ProtectionLevel][google.cloud.kms.v1.ProtectionLevel\] of the
+    /// \[CryptoKeyVersion][google.cloud.kms.v1.CryptoKeyVersion\] used in
+    /// encryption.
+    #[prost(enumeration = "ProtectionLevel", tag = "9")]
+    pub protection_level: i32,
+}
+/// Response message for
+/// \[KeyManagementService.RawDecrypt][google.cloud.kms.v1.KeyManagementService.RawDecrypt\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RawDecryptResponse {
+    /// The decrypted data.
+    #[prost(bytes = "vec", tag = "1")]
+    pub plaintext: ::prost::alloc::vec::Vec<u8>,
+    /// Integrity verification field. A CRC32C checksum of the returned
+    /// \[RawDecryptResponse.plaintext][google.cloud.kms.v1.RawDecryptResponse.plaintext\].
+    /// An integrity check of plaintext can be performed by computing the CRC32C
+    /// checksum of plaintext and comparing your results to this field. Discard the
+    /// response in case of non-matching checksum values, and perform a limited
+    /// number of retries. A persistent mismatch may indicate an issue in your
+    /// computation of the CRC32C checksum. Note: receiving this response message
+    /// indicates that
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] is able to
+    /// successfully decrypt the
+    /// \[ciphertext][google.cloud.kms.v1.RawDecryptRequest.ciphertext\].
+    /// Note: This field is defined as int64 for reasons of compatibility across
+    /// different languages. However, it is a non-negative integer, which will
+    /// never exceed 2^32-1, and can be safely downconverted to uint32 in languages
+    /// that support this type.
+    #[prost(message, optional, tag = "2")]
+    pub plaintext_crc32c: ::core::option::Option<i64>,
+    /// The \[ProtectionLevel][google.cloud.kms.v1.ProtectionLevel\] of the
+    /// \[CryptoKeyVersion][google.cloud.kms.v1.CryptoKeyVersion\] used in
+    /// decryption.
+    #[prost(enumeration = "ProtectionLevel", tag = "3")]
+    pub protection_level: i32,
+    /// Integrity verification field. A flag indicating whether
+    /// \[RawDecryptRequest.ciphertext_crc32c][google.cloud.kms.v1.RawDecryptRequest.ciphertext_crc32c\]
+    /// was received by
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] and used
+    /// for the integrity verification of the ciphertext. A false value of this
+    /// field indicates either that
+    /// \[RawDecryptRequest.ciphertext_crc32c][google.cloud.kms.v1.RawDecryptRequest.ciphertext_crc32c\]
+    /// was left unset or that it was not delivered to
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\]. If you've
+    /// set
+    /// \[RawDecryptRequest.ciphertext_crc32c][google.cloud.kms.v1.RawDecryptRequest.ciphertext_crc32c\]
+    /// but this field is still false, discard the response and perform a limited
+    /// number of retries.
+    #[prost(bool, tag = "4")]
+    pub verified_ciphertext_crc32c: bool,
+    /// Integrity verification field. A flag indicating whether
+    /// \[RawDecryptRequest.additional_authenticated_data_crc32c][google.cloud.kms.v1.RawDecryptRequest.additional_authenticated_data_crc32c\]
+    /// was received by
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] and used
+    /// for the integrity verification of additional_authenticated_data. A false
+    /// value of this field indicates either that //
+    /// \[RawDecryptRequest.additional_authenticated_data_crc32c][google.cloud.kms.v1.RawDecryptRequest.additional_authenticated_data_crc32c\]
+    /// was left unset or that it was not delivered to
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\]. If you've
+    /// set
+    /// \[RawDecryptRequest.additional_authenticated_data_crc32c][google.cloud.kms.v1.RawDecryptRequest.additional_authenticated_data_crc32c\]
+    /// but this field is still false, discard the response and perform a limited
+    /// number of retries.
+    #[prost(bool, tag = "5")]
+    pub verified_additional_authenticated_data_crc32c: bool,
+    /// Integrity verification field. A flag indicating whether
+    /// \[RawDecryptRequest.initialization_vector_crc32c][google.cloud.kms.v1.RawDecryptRequest.initialization_vector_crc32c\]
+    /// was received by
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\] and used
+    /// for the integrity verification of initialization_vector. A false value of
+    /// this field indicates either that
+    /// \[RawDecryptRequest.initialization_vector_crc32c][google.cloud.kms.v1.RawDecryptRequest.initialization_vector_crc32c\]
+    /// was left unset or that it was not delivered to
+    /// \[KeyManagementService][google.cloud.kms.v1.KeyManagementService\]. If you've
+    /// set
+    /// \[RawDecryptRequest.initialization_vector_crc32c][google.cloud.kms.v1.RawDecryptRequest.initialization_vector_crc32c\]
+    /// but this field is still false, discard the response and perform a limited
+    /// number of retries.
+    #[prost(bool, tag = "6")]
+    pub verified_initialization_vector_crc32c: bool,
 }
 /// Response message for
 /// \[KeyManagementService.AsymmetricSign][google.cloud.kms.v1.KeyManagementService.AsymmetricSign\].
@@ -3009,6 +3853,48 @@ pub mod key_management_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.kms.v1.KeyManagementService/Decrypt",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Encrypts data using portable cryptographic primitives. Most users should"]
+        #[doc = " choose [Encrypt][google.cloud.kms.v1.KeyManagementService.Encrypt] and"]
+        #[doc = " [Decrypt][google.cloud.kms.v1.KeyManagementService.Decrypt] rather than"]
+        #[doc = " their raw counterparts. The"]
+        #[doc = " [CryptoKey.purpose][google.cloud.kms.v1.CryptoKey.purpose] must be"]
+        #[doc = " [RAW_ENCRYPT_DECRYPT][google.cloud.kms.v1.CryptoKey.CryptoKeyPurpose.RAW_ENCRYPT_DECRYPT]."]
+        pub async fn raw_encrypt(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RawEncryptRequest>,
+        ) -> Result<tonic::Response<super::RawEncryptResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.kms.v1.KeyManagementService/RawEncrypt",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Decrypts data that was originally encrypted using a raw cryptographic"]
+        #[doc = " mechanism. The [CryptoKey.purpose][google.cloud.kms.v1.CryptoKey.purpose]"]
+        #[doc = " must be"]
+        #[doc = " [RAW_ENCRYPT_DECRYPT][google.cloud.kms.v1.CryptoKey.CryptoKeyPurpose.RAW_ENCRYPT_DECRYPT]."]
+        pub async fn raw_decrypt(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RawDecryptRequest>,
+        ) -> Result<tonic::Response<super::RawDecryptResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.kms.v1.KeyManagementService/RawDecrypt",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

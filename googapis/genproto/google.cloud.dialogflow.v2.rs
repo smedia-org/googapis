@@ -7,16 +7,16 @@ pub struct ValidationError {
     /// The names of the entries that the error is associated with.
     /// Format:
     ///
-    /// - "projects/<Project ID>/agent", if the error is associated with the entire
+    /// - `projects/<Project ID>/agent`, if the error is associated with the entire
     /// agent.
-    /// - "projects/<Project ID>/agent/intents/<Intent ID>", if the error is
+    /// - `projects/<Project ID>/agent/intents/<Intent ID>`, if the error is
     /// associated with certain intents.
-    /// - "projects/<Project
-    /// ID>/agent/intents/<Intent Id>/trainingPhrases/<Training Phrase ID>", if the
-    /// error is associated with certain intent training phrases.
-    /// - "projects/<Project ID>/agent/intents/<Intent Id>/parameters/<Parameter
-    /// ID>", if the error is associated with certain intent parameters.
-    /// - "projects/<Project ID>/agent/entities/<Entity ID>", if the error is
+    /// - `projects/<Project ID>/agent/intents/<Intent
+    /// Id>/trainingPhrases/<Training Phrase ID>`, if the error is associated with
+    /// certain intent training phrases.
+    /// - `projects/<Project ID>/agent/intents/<Intent Id>/parameters/<Parameter
+    /// ID>`, if the error is associated with certain intent parameters.
+    /// - `projects/<Project ID>/agent/entities/<Entity ID>`, if the error is
     /// associated with certain entities.
     #[prost(string, repeated, tag = "3")]
     pub entries: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -716,8 +716,7 @@ pub struct InputAudioConfig {
     #[prost(enumeration = "AudioEncoding", tag = "1")]
     pub audio_encoding: i32,
     /// Required. Sample rate (in Hertz) of the audio content sent in the query.
-    /// Refer to
-    /// [Cloud Speech API
+    /// Refer to [Cloud Speech API
     /// documentation](<https://cloud.google.com/speech-to-text/docs/basics>) for
     /// more details.
     #[prost(int32, tag = "2")]
@@ -744,9 +743,9 @@ pub struct InputAudioConfig {
     /// documentation](<https://cloud.google.com/speech-to-text/docs/basics#phrase-hints>)
     /// for more details.
     ///
-    /// This field is deprecated. Please use \[speech_contexts\]() instead. If you
-    /// specify both \[phrase_hints\]() and \[speech_contexts\](), Dialogflow will
-    /// treat the \[phrase_hints\]() as a single additional \[SpeechContext\]().
+    /// This field is deprecated. Please use \[`speech_contexts`\]() instead. If you
+    /// specify both \[`phrase_hints`\]() and \[`speech_contexts`\](), Dialogflow will
+    /// treat the \[`phrase_hints`\]() as a single additional \[`SpeechContext`\]().
     #[deprecated]
     #[prost(string, repeated, tag = "4")]
     pub phrase_hints: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -757,23 +756,9 @@ pub struct InputAudioConfig {
     /// for more details.
     #[prost(message, repeated, tag = "11")]
     pub speech_contexts: ::prost::alloc::vec::Vec<SpeechContext>,
-    /// Which Speech model to select for the given request. Select the
-    /// model best suited to your domain to get best results. If a model is not
-    /// explicitly specified, then we auto-select a model based on the parameters
-    /// in the InputAudioConfig.
-    /// If enhanced speech model is enabled for the agent and an enhanced
-    /// version of the specified model for the language does not exist, then the
-    /// speech is recognized using the standard version of the specified model.
-    /// Refer to
-    /// [Cloud Speech API
-    /// documentation](<https://cloud.google.com/speech-to-text/docs/basics#select-model>)
-    /// for more details.
-    /// If you specify a model, the following models typically have the best
-    /// performance:
-    ///
-    /// - phone_call (best for Agent Assist and telephony)
-    /// - latest_short (best for Dialogflow non-telephony)
-    /// - command_and_search (best for very short utterances and commands)
+    /// Optional. Which Speech model to select for the given request.
+    /// For more information, see
+    /// [Speech models](<https://cloud.google.com/dialogflow/es/docs/speech-models>).
     #[prost(string, tag = "7")]
     pub model: ::prost::alloc::string::String,
     /// Which variant of the [Speech
@@ -803,6 +788,12 @@ pub struct InputAudioConfig {
     /// Enable automatic punctuation option at the speech backend.
     #[prost(bool, tag = "17")]
     pub enable_automatic_punctuation: bool,
+    /// If `true`, the request will opt out for STT conformer model migration.
+    /// This field will be deprecated once force migration takes place in June
+    /// 2024. Please refer to [Dialogflow ES Speech model
+    /// migration](<https://cloud.google.com/dialogflow/es/docs/speech-model-migration>).
+    #[prost(bool, tag = "26")]
+    pub opt_out_conformer_model_migration: bool,
 }
 /// Description of which voice to use for speech synthesis.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -825,9 +816,9 @@ pub struct VoiceSelectionParams {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SynthesizeSpeechConfig {
     /// Optional. Speaking rate/speed, in the range [0.25, 4.0]. 1.0 is the normal
-    /// native speed supported by the specific voice. 2.0 is twice as fast, and
-    /// 0.5 is half as fast. If unset(0.0), defaults to the native 1.0 speed. Any
-    /// other values < 0.25 or > 4.0 will return an error.
+    /// native speed supported by the specific voice. 2.0 is twice as fast, and 0.5
+    /// is half as fast. If unset(0.0), defaults to the native 1.0 speed. Any other
+    /// values < 0.25 or > 4.0 will return an error.
     #[prost(double, tag = "1")]
     pub speaking_rate: f64,
     /// Optional. Speaking pitch, in the range [-20.0, 20.0]. 20 means increase 20
@@ -895,15 +886,74 @@ pub struct SpeechToTextConfig {
     /// error.
     #[prost(enumeration = "SpeechModelVariant", tag = "1")]
     pub speech_model_variant: i32,
-    /// Which Speech model to select. Select the model best suited to your domain
-    /// to get best results. If a model is not explicitly specified, then a default
-    /// model is used.
+    /// Which Speech model to select. Select the
+    /// model best suited to your domain to get best results. If a model is not
+    /// explicitly specified, then Dialogflow auto-selects a model based on other
+    /// parameters in the SpeechToTextConfig and Agent settings.
+    /// If enhanced speech model is enabled for the agent and an enhanced
+    /// version of the specified model for the language does not exist, then the
+    /// speech is recognized using the standard version of the specified model.
     /// Refer to
     /// [Cloud Speech API
     /// documentation](<https://cloud.google.com/speech-to-text/docs/basics#select-model>)
     /// for more details.
+    /// If you specify a model, the following models typically have the best
+    /// performance:
+    ///
+    /// - phone_call (best for Agent Assist and telephony)
+    /// - latest_short (best for Dialogflow non-telephony)
+    /// - command_and_search
+    ///
+    /// Leave this field unspecified to use
+    /// [Agent Speech
+    /// settings](<https://cloud.google.com/dialogflow/cx/docs/concept/agent#settings-speech>)
+    /// for model selection.
     #[prost(string, tag = "2")]
     pub model: ::prost::alloc::string::String,
+    /// Use timeout based endpointing, interpreting endpointer sensitivy as
+    /// seconds of timeout value.
+    #[prost(bool, tag = "11")]
+    pub use_timeout_based_endpointing: bool,
+}
+/// \[DTMF\](<https://en.wikipedia.org/wiki/Dual-tone_multi-frequency_signaling>)
+/// digit in Telephony Gateway.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum TelephonyDtmf {
+    /// Not specified. This value may be used to indicate an absent digit.
+    Unspecified = 0,
+    /// Number: '1'.
+    DtmfOne = 1,
+    /// Number: '2'.
+    DtmfTwo = 2,
+    /// Number: '3'.
+    DtmfThree = 3,
+    /// Number: '4'.
+    DtmfFour = 4,
+    /// Number: '5'.
+    DtmfFive = 5,
+    /// Number: '6'.
+    DtmfSix = 6,
+    /// Number: '7'.
+    DtmfSeven = 7,
+    /// Number: '8'.
+    DtmfEight = 8,
+    /// Number: '9'.
+    DtmfNine = 9,
+    /// Number: '0'.
+    DtmfZero = 10,
+    /// Letter: 'A'.
+    DtmfA = 11,
+    /// Letter: 'B'.
+    DtmfB = 12,
+    /// Letter: 'C'.
+    DtmfC = 13,
+    /// Letter: 'D'.
+    DtmfD = 14,
+    /// Asterisk/star: '*'.
+    DtmfStar = 15,
+    /// Pound/diamond/hash/square/gate/octothorpe: '#'.
+    DtmfPound = 16,
 }
 /// Audio encoding of the audio content sent in the conversational query request.
 /// Refer to the
@@ -1026,46 +1076,6 @@ pub enum OutputAudioEncoding {
     /// 8-bit samples that compand 14-bit audio samples using G.711 PCMU/mu-law.
     Mulaw = 5,
 }
-/// \[DTMF\](<https://en.wikipedia.org/wiki/Dual-tone_multi-frequency_signaling>)
-/// digit in Telephony Gateway.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum TelephonyDtmf {
-    /// Not specified. This value may be used to indicate an absent digit.
-    Unspecified = 0,
-    /// Number: '1'.
-    DtmfOne = 1,
-    /// Number: '2'.
-    DtmfTwo = 2,
-    /// Number: '3'.
-    DtmfThree = 3,
-    /// Number: '4'.
-    DtmfFour = 4,
-    /// Number: '5'.
-    DtmfFive = 5,
-    /// Number: '6'.
-    DtmfSix = 6,
-    /// Number: '7'.
-    DtmfSeven = 7,
-    /// Number: '8'.
-    DtmfEight = 8,
-    /// Number: '9'.
-    DtmfNine = 9,
-    /// Number: '0'.
-    DtmfZero = 10,
-    /// Letter: 'A'.
-    DtmfA = 11,
-    /// Letter: 'B'.
-    DtmfB = 12,
-    /// Letter: 'C'.
-    DtmfC = 13,
-    /// Letter: 'D'.
-    DtmfD = 14,
-    /// Asterisk/star: '*'.
-    DtmfStar = 15,
-    /// Pound/diamond/hash/square/gate/octothorpe: '#'.
-    DtmfPound = 16,
-}
 /// Dialogflow contexts are similar to natural language context. If a person says
 /// to you "they are orange", you need context in order to understand what "they"
 /// is referring to. Similarly, for Dialogflow to handle an end-user expression
@@ -1089,7 +1099,7 @@ pub struct Context {
     /// ID>/sessions/<Session ID>/contexts/<Context ID>`.
     ///
     /// The `Context ID` is always converted to lowercase, may only contain
-    /// characters in a-zA-Z0-9_-% and may be at most 250 bytes long.
+    /// characters in `a-zA-Z0-9_-%` and may be at most 250 bytes long.
     ///
     /// If `Environment ID` is not specified, we assume default 'draft'
     /// environment. If `User ID` is not specified, we assume default '-' user.
@@ -1114,16 +1124,14 @@ pub struct Context {
     /// map, associative array, symbol table, dictionary, or JSON object
     /// composed of a collection of (MapKey, MapValue) pairs:
     ///
-    /// -   MapKey type: string
-    /// -   MapKey value: parameter name
-    /// -   MapValue type:
-    ///     -   If parameter's entity type is a composite entity: map
-    ///     -   Else: depending on parameter value type, could be one of string,
-    ///         number, boolean, null, list or map
-    /// -   MapValue value:
-    ///     -   If parameter's entity type is a composite entity:
-    ///         map from composite entity property names to property values
-    ///     -   Else: parameter value
+    /// * MapKey type: string
+    /// * MapKey value: parameter name
+    /// * MapValue type: If parameter's entity type is a composite entity then use
+    /// map, otherwise, depending on the parameter value type, it could be one of
+    /// string, number, boolean, null, list or map.
+    /// * MapValue value: If parameter's entity type is a composite entity then use
+    /// map from composite entity property names to property values, otherwise,
+    /// use parameter value.
     #[prost(message, optional, tag = "3")]
     pub parameters: ::core::option::Option<::prost_types::Struct>,
 }
@@ -3604,12 +3612,12 @@ pub struct DetectIntentRequest {
     pub query_params: ::core::option::Option<QueryParameters>,
     /// Required. The input specification. It can be set to:
     ///
-    /// 1.  an audio config
-    ///     which instructs the speech recognizer how to process the speech audio,
+    /// 1. an audio config which instructs the speech recognizer how to process
+    /// the speech audio,
     ///
-    /// 2.  a conversational query in the form of text, or
+    /// 2. a conversational query in the form of text, or
     ///
-    /// 3.  an event that specifies which intent to trigger.
+    /// 3. an event that specifies which intent to trigger.
     #[prost(message, optional, tag = "3")]
     pub query_input: ::core::option::Option<QueryInput>,
     /// Instructs the speech synthesizer how to generate the output
@@ -3711,15 +3719,22 @@ pub struct QueryParameters {
     #[prost(map = "string, string", tag = "14")]
     pub webhook_headers:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// The platform of the virtual agent response messages.
+    ///
+    /// If not empty, only emits messages from this platform in the response.
+    /// Valid values are the enum names of
+    /// \[platform][google.cloud.dialogflow.v2.Intent.Message.platform\].
+    #[prost(string, tag = "18")]
+    pub platform: ::prost::alloc::string::String,
 }
 /// Represents the query input. It can contain either:
 ///
-/// 1.  An audio config which
-///     instructs the speech recognizer how to process the speech audio.
+/// 1. An audio config which instructs the speech recognizer how to process the
+/// speech audio.
 ///
-/// 2.  A conversational query in the form of text,.
+/// 2. A conversational query in the form of text.
 ///
-/// 3.  An event that specifies which intent to trigger.
+/// 3. An event that specifies which intent to trigger.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryInput {
     /// Required. The input specification.
@@ -3783,16 +3798,14 @@ pub struct QueryResult {
     /// map, associative array, symbol table, dictionary, or JSON object
     /// composed of a collection of (MapKey, MapValue) pairs:
     ///
-    /// -   MapKey type: string
-    /// -   MapKey value: parameter name
-    /// -   MapValue type:
-    ///     -   If parameter's entity type is a composite entity: map
-    ///     -   Else: depending on parameter value type, could be one of string,
-    ///         number, boolean, null, list or map
-    /// -   MapValue value:
-    ///     -   If parameter's entity type is a composite entity:
-    ///         map from composite entity property names to property values
-    ///     -   Else: parameter value
+    /// * MapKey type: string
+    /// * MapKey value: parameter name
+    /// * MapValue type: If parameter's entity type is a composite entity then use
+    /// map, otherwise, depending on the parameter value type, it could be one of
+    /// string, number, boolean, null, list or map.
+    /// * MapValue value: If parameter's entity type is a composite entity then use
+    /// map from composite entity property names to property values, otherwise,
+    /// use parameter value.
     #[prost(message, optional, tag = "4")]
     pub parameters: ::core::option::Option<::prost_types::Struct>,
     /// This field is set to:
@@ -3918,12 +3931,12 @@ pub struct StreamingDetectIntentRequest {
     pub query_params: ::core::option::Option<QueryParameters>,
     /// Required. The input specification. It can be set to:
     ///
-    /// 1.  an audio config which instructs the speech recognizer how to process
-    ///     the speech audio,
+    /// 1. an audio config which instructs the speech recognizer how to process
+    /// the speech audio,
     ///
-    /// 2.  a conversational query in the form of text, or
+    /// 2. a conversational query in the form of text, or
     ///
-    /// 3.  an event that specifies which intent to trigger.
+    /// 3. an event that specifies which intent to trigger.
     #[prost(message, optional, tag = "3")]
     pub query_input: ::core::option::Option<QueryInput>,
     /// Please use
@@ -4015,9 +4028,12 @@ pub struct CloudConversationDebuggingInfo {
     /// beginning of the stream.
     #[prost(message, optional, tag = "14")]
     pub single_utterance_end_time_offset: ::core::option::Option<::prost_types::Duration>,
-    /// No speech timeout settings observed at runtime.
+    /// No speech timeout settings for the stream.
     #[prost(message, optional, tag = "15")]
     pub no_speech_timeout: ::core::option::Option<::prost_types::Duration>,
+    /// Speech endpointing timeout settings for the stream.
+    #[prost(message, optional, tag = "19")]
+    pub endpointing_timeout: ::core::option::Option<::prost_types::Duration>,
     /// Whether the streaming terminates with an injected text query.
     #[prost(bool, tag = "16")]
     pub is_input_text: bool,
@@ -4162,8 +4178,8 @@ pub mod streaming_recognition_result {
         Unspecified = 0,
         /// Message contains a (possibly partial) transcript.
         Transcript = 1,
-        /// Event indicates that the server has detected the end of the user's speech
-        /// utterance and expects no additional inputs.
+        /// This event indicates that the server has detected the end of the user's
+        /// speech utterance and expects no additional inputs.
         /// Therefore, the server will not process additional audio (although it may
         /// subsequently return additional results). The client should stop sending
         /// additional audio data, half-close the gRPC connection, and wait for any
@@ -4173,7 +4189,6 @@ pub mod streaming_recognition_result {
         EndOfSingleUtterance = 2,
     }
 }
-/// ============================================================================
 /// Auxiliary proto messages.
 ///
 /// Represents the natural language text to be processed.
@@ -4206,16 +4221,14 @@ pub struct EventInput {
     /// map, associative array, symbol table, dictionary, or JSON object
     /// composed of a collection of (MapKey, MapValue) pairs:
     ///
-    /// -   MapKey type: string
-    /// -   MapKey value: parameter name
-    /// -   MapValue type:
-    ///     -   If parameter's entity type is a composite entity: map
-    ///     -   Else: depending on parameter value type, could be one of string,
-    ///         number, boolean, null, list or map
-    /// -   MapValue value:
-    ///     -   If parameter's entity type is a composite entity:
-    ///         map from composite entity property names to property values
-    ///     -   Else: parameter value
+    /// * MapKey type: string
+    /// * MapKey value: parameter name
+    /// * MapValue type: If parameter's entity type is a composite entity then use
+    /// map, otherwise, depending on the parameter value type, it could be one of
+    /// string, number, boolean, null, list or map.
+    /// * MapValue value: If parameter's entity type is a composite entity then use
+    /// map from composite entity property names to property values, otherwise,
+    /// use parameter value.
     #[prost(message, optional, tag = "2")]
     pub parameters: ::core::option::Option<::prost_types::Struct>,
     /// Required. The language of this query. See [Language
@@ -4619,7 +4632,7 @@ pub struct AnalyzeContentRequest {
     #[prost(string, tag = "11")]
     pub request_id: ::prost::alloc::string::String,
     /// Required. The input content.
-    #[prost(oneof = "analyze_content_request::Input", tags = "6, 8")]
+    #[prost(oneof = "analyze_content_request::Input", tags = "6, 8, 12")]
     pub input: ::core::option::Option<analyze_content_request::Input>,
 }
 /// Nested message and enum types in `AnalyzeContentRequest`.
@@ -4633,6 +4646,9 @@ pub mod analyze_content_request {
         /// An input event to send to Dialogflow.
         #[prost(message, tag = "8")]
         EventInput(super::EventInput),
+        /// An input representing the selection of a suggestion.
+        #[prost(message, tag = "12")]
+        SuggestionInput(super::SuggestionInput),
     }
 }
 /// The message in the response that indicates the parameters of DTMF.
@@ -4768,6 +4784,27 @@ pub struct StreamingAnalyzeContentRequest {
     /// CX agent.
     #[prost(message, optional, tag = "13")]
     pub cx_parameters: ::core::option::Option<::prost_types::Struct>,
+    /// Optional. Enable full bidirectional streaming. You can keep streaming the
+    /// audio until timeout, and there's no need to half close the stream to get
+    /// the response.
+    ///
+    /// Restrictions:
+    ///
+    /// - Timeout: 3 mins.
+    /// - Audio Encoding: only supports
+    /// \[AudioEncoding.AUDIO_ENCODING_LINEAR_16][google.cloud.dialogflow.v2.AudioEncoding.AUDIO_ENCODING_LINEAR_16\]
+    /// and
+    /// \[AudioEncoding.AUDIO_ENCODING_MULAW][google.cloud.dialogflow.v2.AudioEncoding.AUDIO_ENCODING_MULAW\]
+    /// - Lifecycle: conversation should be in `Assist Stage`, go to
+    ///   \[Conversation.CreateConversation][\] for more information.
+    ///
+    /// InvalidArgument Error will be returned if the one of restriction checks
+    /// failed.
+    ///
+    /// You can find more details in
+    /// <https://cloud.google.com/agent-assist/docs/extended-streaming>
+    #[prost(bool, tag = "11")]
+    pub enable_extended_streaming: bool,
     /// Enable partial virtual agent responses. If this flag is not enabled,
     /// response stream still contains only one final response even if some
     /// `Fulfillment`s in Dialogflow virtual agent have been configured to return
@@ -4808,7 +4845,7 @@ pub mod streaming_analyze_content_request {
         /// The UTF-8 encoded natural language text to be processed. Must be sent if
         /// `text_config` is set in the first message. Text length must not exceed
         /// 256 bytes for virtual agent interactions. The `input_text` field can be
-        /// only sent once.
+        /// only sent once, and would cancel the speech recognition if any ongoing.
         #[prost(string, tag = "6")]
         InputText(::prost::alloc::string::String),
         /// The DTMF digits used to invoke intent and fill in parameter value.
@@ -5173,6 +5210,57 @@ pub struct SmartReplyAnswer {
     #[prost(string, tag = "3")]
     pub answer_record: ::prost::alloc::string::String,
 }
+/// Represents an intent suggestion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IntentSuggestion {
+    /// The display name of the intent.
+    #[prost(string, tag = "1")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Human readable description for better understanding an intent like its
+    /// scope, content, result etc. Maximum character limit: 140 characters.
+    #[prost(string, tag = "5")]
+    pub description: ::prost::alloc::string::String,
+    /// The name of the intent.
+    #[prost(oneof = "intent_suggestion::Intent", tags = "2")]
+    pub intent: ::core::option::Option<intent_suggestion::Intent>,
+}
+/// Nested message and enum types in `IntentSuggestion`.
+pub mod intent_suggestion {
+    /// The name of the intent.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Intent {
+        /// The unique identifier of this
+        /// \[intent][google.cloud.dialogflow.v2.Intent\]. Format: `projects/<Project
+        /// ID>/locations/<Location ID>/agent/intents/<Intent ID>`.
+        #[prost(string, tag = "2")]
+        IntentV2(::prost::alloc::string::String),
+    }
+}
+/// Represents a Dialogflow assist answer.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DialogflowAssistAnswer {
+    /// The name of answer record, in the format of
+    /// "projects/<Project ID>/locations/<Location ID>/answerRecords/<Answer Record
+    /// ID>"
+    #[prost(string, tag = "2")]
+    pub answer_record: ::prost::alloc::string::String,
+    /// Result from DetectIntent for one matched intent.
+    #[prost(oneof = "dialogflow_assist_answer::Result", tags = "1, 5")]
+    pub result: ::core::option::Option<dialogflow_assist_answer::Result>,
+}
+/// Nested message and enum types in `DialogflowAssistAnswer`.
+pub mod dialogflow_assist_answer {
+    /// Result from DetectIntent for one matched intent.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Result {
+        /// Result from v2 agent.
+        #[prost(message, tag = "1")]
+        QueryResult(super::QueryResult),
+        /// An intent suggestion generated from conversation.
+        #[prost(message, tag = "5")]
+        IntentSuggestion(super::IntentSuggestion),
+    }
+}
 /// One response of different type of suggestion response which is used in
 /// the response of
 /// \[Participants.AnalyzeContent][google.cloud.dialogflow.v2.Participants.AnalyzeContent\]
@@ -5252,6 +5340,18 @@ pub struct MessageAnnotation {
     /// Indicates whether the text message contains entities.
     #[prost(bool, tag = "2")]
     pub contain_entities: bool,
+}
+/// Represents the selection of a suggestion.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SuggestionInput {
+    /// Required. The ID of a suggestion selected by the human agent.
+    /// The suggestion(s) were generated in a previous call to
+    /// request Dialogflow assist.
+    /// The format is:
+    /// `projects/<Project ID>/locations/<Location ID>/answerRecords/<Answer Record
+    /// ID>` where <Answer Record ID> is an alphanumeric string.
+    #[prost(string, tag = "1")]
+    pub answer_record: ::prost::alloc::string::String,
 }
 /// Represents the parameters of human assist query.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -5629,8 +5729,8 @@ pub struct AnswerFeedback {
     pub correctness_level: i32,
     /// Indicates whether the answer/item was clicked by the human agent
     /// or not. Default to false.
-    /// For knowledge search, the answer record is considered to be clicked if the
-    /// answer was copied or any URI was clicked.
+    /// For knowledge search and knowledge assist, the answer record is considered
+    /// to be clicked if the answer was copied or any URI was clicked.
     #[prost(bool, tag = "3")]
     pub clicked: bool,
     /// Time when the answer/item was clicked.
@@ -5712,6 +5812,10 @@ pub struct AgentAssistantFeedback {
     #[prost(message, optional, tag = "4")]
     pub summarization_feedback:
         ::core::option::Option<agent_assistant_feedback::SummarizationFeedback>,
+    /// Optional. Feedback for knowledge search.
+    #[prost(message, optional, tag = "5")]
+    pub knowledge_search_feedback:
+        ::core::option::Option<agent_assistant_feedback::KnowledgeSearchFeedback>,
 }
 /// Nested message and enum types in `AgentAssistantFeedback`.
 pub mod agent_assistant_feedback {
@@ -5727,6 +5831,29 @@ pub mod agent_assistant_feedback {
         /// Text of actual submitted summary.
         #[prost(string, tag = "3")]
         pub summary_text: ::prost::alloc::string::String,
+        /// Optional. Actual text sections of submitted summary.
+        #[prost(map = "string, string", tag = "4")]
+        pub text_sections: ::std::collections::HashMap<
+            ::prost::alloc::string::String,
+            ::prost::alloc::string::String,
+        >,
+    }
+    /// Feedback for knowledge search.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct KnowledgeSearchFeedback {
+        /// Whether the answer was copied by the human agent or not.
+        /// If the value is set to be true,
+        /// \[AnswerFeedback.clicked][google.cloud.dialogflow.v2.AnswerFeedback.clicked\]
+        /// will be updated to be true.
+        #[prost(bool, tag = "1")]
+        pub answer_copied: bool,
+        /// The URIs clicked by the human agent. The value is appended for each
+        /// \[UpdateAnswerRecordRequest][google.cloud.dialogflow.v2.UpdateAnswerRecordRequest\].
+        /// If the value is not empty,
+        /// \[AnswerFeedback.clicked][google.cloud.dialogflow.v2.AnswerFeedback.clicked\]
+        /// will be updated to be true.
+        #[prost(string, repeated, tag = "2")]
+        pub clicked_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     }
     /// Relevance of an answer.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -5766,7 +5893,7 @@ pub mod agent_assistant_feedback {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AgentAssistantRecord {
     /// Output only. The agent assist answer.
-    #[prost(oneof = "agent_assistant_record::Answer", tags = "5, 6")]
+    #[prost(oneof = "agent_assistant_record::Answer", tags = "5, 6, 7")]
     pub answer: ::core::option::Option<agent_assistant_record::Answer>,
 }
 /// Nested message and enum types in `AgentAssistantRecord`.
@@ -5780,6 +5907,9 @@ pub mod agent_assistant_record {
         /// Output only. The FAQ answer.
         #[prost(message, tag = "6")]
         FaqAnswer(super::FaqAnswer),
+        /// Output only. Dialogflow assist answer.
+        #[prost(message, tag = "7")]
+        DialogflowAssistAnswer(super::DialogflowAssistAnswer),
     }
 }
 #[doc = r" Generated client implementations."]
@@ -6033,6 +6163,12 @@ pub struct AutomatedAgentConfig {
     /// is used.
     #[prost(string, tag = "1")]
     pub agent: ::prost::alloc::string::String,
+    /// Optional. Configure lifetime of the Dialogflow session.
+    /// By default, a Dialogflow CX session remains active and its data is stored
+    /// for 30 minutes after the last request is sent for the session.
+    /// This value should be no longer than 1 day.
+    #[prost(message, optional, tag = "3")]
+    pub session_ttl: ::core::option::Option<::prost_types::Duration>,
 }
 /// Defines the Human Agent Assist to connect to a conversation.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -6078,9 +6214,20 @@ pub mod human_agent_assistant_config {
         /// Automatically iterates all participants and tries to compile
         /// suggestions.
         ///
-        /// Supported features: ARTICLE_SUGGESTION, FAQ, DIALOGFLOW_ASSIST.
+        /// Supported features: ARTICLE_SUGGESTION, FAQ, DIALOGFLOW_ASSIST,
+        /// KNOWLEDGE_ASSIST.
         #[prost(bool, tag = "3")]
         pub enable_event_based_suggestion: bool,
+        /// Optional. Disable the logging of search queries sent by human agents. It
+        /// can prevent those queries from being stored at answer records.
+        ///
+        /// Supported features: KNOWLEDGE_SEARCH.
+        #[prost(bool, tag = "14")]
+        pub disable_agent_query_logging: bool,
+        /// Optional. Enable including conversation context during query answer
+        /// generation. Supported features: KNOWLEDGE_SEARCH.
+        #[prost(bool, tag = "16")]
+        pub enable_conversation_augmented_query: bool,
         /// Settings of suggestion trigger.
         ///
         /// Currently, only ARTICLE_SUGGESTION and FAQ will use this field.
@@ -6141,7 +6288,8 @@ pub mod human_agent_assistant_config {
         /// If this field is not set, it defaults to 0.0, which means that all
         /// suggestions are returned.
         ///
-        /// Supported features: ARTICLE_SUGGESTION, FAQ, SMART_REPLY, SMART_COMPOSE.
+        /// Supported features: ARTICLE_SUGGESTION, FAQ, SMART_REPLY, SMART_COMPOSE,
+        /// KNOWLEDGE_SEARCH, KNOWLEDGE_ASSIST, ENTITY_EXTRACTION.
         #[prost(float, tag = "5")]
         pub confidence_threshold: f32,
         /// Determines how recent conversation context is filtered when generating
@@ -6149,6 +6297,10 @@ pub mod human_agent_assistant_config {
         #[prost(message, optional, tag = "7")]
         pub context_filter_settings:
             ::core::option::Option<suggestion_query_config::ContextFilterSettings>,
+        /// Optional. The customized sections chosen to return when requesting a
+        /// summary of a conversation.
+        #[prost(message, optional, tag = "8")]
+        pub sections: ::core::option::Option<suggestion_query_config::Sections>,
         /// Source of query.
         #[prost(oneof = "suggestion_query_config::QuerySource", tags = "1, 2, 3")]
         pub query_source: ::core::option::Option<suggestion_query_config::QuerySource>,
@@ -6185,11 +6337,28 @@ pub mod human_agent_assistant_config {
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct DialogflowQuerySource {
             /// Required. The name of a Dialogflow virtual agent used for end user side
-            /// intent detection and suggestion. Format: `projects/<Project Number/
+            /// intent detection and suggestion. Format: `projects/<Project
             /// ID>/locations/<Location ID>/agent`. When multiple agents are allowed in
             /// the same Dialogflow project.
             #[prost(string, tag = "1")]
             pub agent: ::prost::alloc::string::String,
+            /// Optional. The Dialogflow assist configuration for human agent.
+            #[prost(message, optional, tag = "3")]
+            pub human_agent_side_config:
+                ::core::option::Option<dialogflow_query_source::HumanAgentSideConfig>,
+        }
+        /// Nested message and enum types in `DialogflowQuerySource`.
+        pub mod dialogflow_query_source {
+            /// The configuration used for human agent side Dialogflow assist
+            /// suggestion.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct HumanAgentSideConfig {
+                /// Optional. The name of a dialogflow virtual agent used for intent
+                /// detection and suggestion triggered by human agent.
+                /// Format: `projects/<Project ID>/locations/<Location ID>/agent`.
+                #[prost(string, tag = "1")]
+                pub agent: ::prost::alloc::string::String,
+            }
         }
         /// Settings that determine how to filter recent conversation context when
         /// generating suggestions.
@@ -6205,6 +6374,55 @@ pub mod human_agent_assistant_config {
             /// If set to true, all messages from ivr stage are dropped.
             #[prost(bool, tag = "3")]
             pub drop_ivr_messages: bool,
+        }
+        /// Custom sections to return when requesting a summary of a conversation.
+        /// This is only supported when `baseline_model_version` == '2.0'.
+        ///
+        /// Supported features: CONVERSATION_SUMMARIZATION,
+        /// CONVERSATION_SUMMARIZATION_VOICE.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Sections {
+            /// The selected sections chosen to return when requesting a summary of a
+            /// conversation. A duplicate selected section will be treated as a single
+            /// selected section. If section types are not provided, the default will
+            /// be {SITUATION, ACTION, RESULT}.
+            #[prost(enumeration = "sections::SectionType", repeated, tag = "1")]
+            pub section_types: ::prost::alloc::vec::Vec<i32>,
+        }
+        /// Nested message and enum types in `Sections`.
+        pub mod sections {
+            /// Selectable sections to return when requesting a summary of a
+            /// conversation.
+            #[derive(
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+            )]
+            #[repr(i32)]
+            pub enum SectionType {
+                /// Undefined section type, does not return anything.
+                Unspecified = 0,
+                /// What the customer needs help with or has question about.
+                /// Section name: "situation".
+                Situation = 1,
+                /// What the agent does to help the customer.
+                /// Section name: "action".
+                Action = 2,
+                /// Result of the customer service. A single word describing the result
+                /// of the conversation.
+                /// Section name: "resolution".
+                Resolution = 3,
+                /// Reason for cancellation if the customer requests for a cancellation.
+                /// "N/A" otherwise.
+                /// Section name: "reason_for_cancellation".
+                ReasonForCancellation = 4,
+                /// "Unsatisfied" or "Satisfied" depending on the customer's feelings at
+                /// the end of the conversation.
+                /// Section name: "customer_satisfaction".
+                CustomerSatisfaction = 5,
+                /// Key entities extracted from the conversation, such as ticket number,
+                /// order number, dollar amount, etc.
+                /// Section names are prefixed by "entities/".
+                Entities = 6,
+            }
         }
         /// Source of query.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
@@ -6409,6 +6627,8 @@ pub mod suggestion_feature {
         Faq = 2,
         /// Run smart reply model for chat.
         SmartReply = 3,
+        /// Run knowledge search with text input from agent or text generated query.
+        KnowledgeSearch = 14,
     }
 }
 /// The request message for
@@ -6796,7 +7016,7 @@ pub struct CreateConversationRequest {
     /// auto-generated one to you.
     ///
     /// The conversation ID must be compliant with the regression fomula
-    /// "\[a-zA-Z][a-zA-Z0-9_-\]*" with the characters length in range of \[3,64\].
+    /// `\[a-zA-Z][a-zA-Z0-9_-\]*` with the characters length in range of \[3,64\].
     /// If the field is provided, the caller is resposible for
     /// 1. the uniqueness of the ID, otherwise the request will be rejected.
     /// 2. the consistency for whether to use custom ID or not under a project to
@@ -6943,7 +7163,7 @@ pub struct SuggestConversationSummaryRequest {
     /// suggestion. By default 500 and at most 1000.
     #[prost(int32, tag = "4")]
     pub context_size: i32,
-    /// Parameters for a human assist query.
+    /// Parameters for a human assist query. Only used for POC/demo purpose.
     #[prost(message, optional, tag = "5")]
     pub assist_query_params: ::core::option::Option<AssistQueryParameters>,
 }
@@ -6988,6 +7208,10 @@ pub mod suggest_conversation_summary_response {
         /// "projects/<Project ID>/answerRecords/<Answer Record ID>"
         #[prost(string, tag = "3")]
         pub answer_record: ::prost::alloc::string::String,
+        /// The baseline model version used to generate this summary. It is empty if
+        /// a baseline model was not used to generate this summary.
+        #[prost(string, tag = "5")]
+        pub baseline_model_version: ::prost::alloc::string::String,
     }
 }
 /// The request message for
@@ -7070,6 +7294,108 @@ pub mod generate_stateless_summary_response {
             ::prost::alloc::string::String,
             ::prost::alloc::string::String,
         >,
+        /// The baseline model version used to generate this summary. It is empty if
+        /// a baseline model was not used to generate this summary.
+        #[prost(string, tag = "4")]
+        pub baseline_model_version: ::prost::alloc::string::String,
+    }
+}
+/// The request message for
+/// \[Conversations.SearchKnowledge][google.cloud.dialogflow.v2.Conversations.SearchKnowledge\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchKnowledgeRequest {
+    /// The parent resource contains the conversation profile
+    /// Format: 'projects/<Project ID>' or `projects/<Project
+    /// ID>/locations/<Location ID>`.
+    #[prost(string, tag = "6")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The natural language text query for knowledge search.
+    #[prost(message, optional, tag = "1")]
+    pub query: ::core::option::Option<TextInput>,
+    /// Required. The conversation profile used to configure the search.
+    /// Format: `projects/<Project ID>/locations/<Location
+    /// ID>/conversationProfiles/<Conversation Profile ID>`.
+    #[prost(string, tag = "2")]
+    pub conversation_profile: ::prost::alloc::string::String,
+    /// The ID of the search session.
+    /// The session_id can be combined with Dialogflow V3 Agent ID retrieved from
+    /// conversation profile or on its own to identify a search session. The search
+    /// history of the same session will impact the search result. It's up to the
+    /// API caller to choose an appropriate `Session ID`. It can be a random number
+    /// or some type of session identifiers (preferably hashed). The length must
+    /// not exceed 36 characters.
+    #[prost(string, tag = "3")]
+    pub session_id: ::prost::alloc::string::String,
+    /// The conversation (between human agent and end user) where the search
+    /// request is triggered. Format: `projects/<Project ID>/locations/<Location
+    /// ID>/conversations/<Conversation ID>`.
+    #[prost(string, tag = "4")]
+    pub conversation: ::prost::alloc::string::String,
+    /// The name of the latest conversation message when the request is
+    /// triggered.
+    /// Format: `projects/<Project ID>/locations/<Location
+    /// ID>/conversations/<Conversation ID>/messages/<Message ID>`.
+    #[prost(string, tag = "5")]
+    pub latest_message: ::prost::alloc::string::String,
+}
+/// The response message for
+/// \[Conversations.SearchKnowledge][google.cloud.dialogflow.v2.Conversations.SearchKnowledge\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchKnowledgeResponse {
+    /// Most relevant snippets extracted from articles in the given knowledge base,
+    /// ordered by confidence.
+    #[prost(message, repeated, tag = "2")]
+    pub answers: ::prost::alloc::vec::Vec<SearchKnowledgeAnswer>,
+    /// The rewritten query used to search knowledge.
+    #[prost(string, tag = "3")]
+    pub rewritten_query: ::prost::alloc::string::String,
+}
+/// Represents a SearchKnowledge answer.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchKnowledgeAnswer {
+    /// The piece of text from the knowledge base documents that answers
+    /// the search query
+    #[prost(string, tag = "1")]
+    pub answer: ::prost::alloc::string::String,
+    /// The type of the answer.
+    #[prost(enumeration = "search_knowledge_answer::AnswerType", tag = "2")]
+    pub answer_type: i32,
+    /// All sources used to generate the answer.
+    #[prost(message, repeated, tag = "3")]
+    pub answer_sources: ::prost::alloc::vec::Vec<search_knowledge_answer::AnswerSource>,
+    /// The name of the answer record.
+    /// Format: `projects/<Project ID>/locations/<location ID>/answer
+    /// Records/<Answer Record ID>`
+    #[prost(string, tag = "5")]
+    pub answer_record: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `SearchKnowledgeAnswer`.
+pub mod search_knowledge_answer {
+    /// The sources of the answers.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AnswerSource {
+        /// The title of the article.
+        #[prost(string, tag = "1")]
+        pub title: ::prost::alloc::string::String,
+        /// The URI of the article.
+        #[prost(string, tag = "2")]
+        pub uri: ::prost::alloc::string::String,
+        /// The relevant snippet of the article.
+        #[prost(string, tag = "3")]
+        pub snippet: ::prost::alloc::string::String,
+    }
+    /// The type of the answer.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AnswerType {
+        /// The answer has a unspecified type.
+        Unspecified = 0,
+        /// The answer is from FAQ documents.
+        Faq = 1,
+        /// The answer is from generative model.
+        Generative = 2,
+        /// The answer is from intent matching.
+        Intent = 3,
     }
 }
 #[doc = r" Generated client implementations."]
@@ -7272,13 +7598,30 @@ pub mod conversations_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Get answers for the given query based on knowledge documents."]
+        pub async fn search_knowledge(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SearchKnowledgeRequest>,
+        ) -> Result<tonic::Response<super::SearchKnowledgeResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dialogflow.v2.Conversations/SearchKnowledge",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 /// Google Cloud Storage location for the inputs.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GcsSources {
     /// Required. Google Cloud Storage URIs for the inputs. A URI is of the form:
-    ///   gs://bucket/object-prefix-or-name
+    /// `gs://bucket/object-prefix-or-name`
     /// Whether a prefix or name is used depends on the use case.
     #[prost(string, repeated, tag = "2")]
     pub uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -7288,7 +7631,7 @@ pub struct GcsSources {
 pub struct GcsDestination {
     /// The Google Cloud Storage URIs for the output. A URI is of the
     /// form:
-    ///   gs://bucket/object-prefix-or-name
+    /// `gs://bucket/object-prefix-or-name`
     /// Whether a prefix or name is used depends on the use case. The requesting
     /// user must have "write-permission" to the bucket.
     #[prost(string, tag = "1")]
@@ -8522,7 +8865,7 @@ pub struct Document {
     ///
     /// If a reload fails with internal errors, the system will try to reload the
     /// document on the next day.
-    /// If a reload fails with non-retriable errors (e.g. PERMISION_DENIED), the
+    /// If a reload fails with non-retriable errors (e.g. PERMISSION_DENIED), the
     /// system will not try to reload the document anymore. You need to manually
     /// reload the document successfully by calling `ReloadDocument` and clear the
     /// errors.
@@ -8735,7 +9078,7 @@ pub mod import_documents_request {
     /// import more, Dialogflow will return an error.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Source {
-        /// The Google Cloud Storage location for the documents.
+        /// Optional. The Google Cloud Storage location for the documents.
         /// The path can include a wildcard.
         ///
         /// These URIs may have the forms

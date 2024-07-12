@@ -1,3 +1,346 @@
+/// Defines an answer.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Answer {
+    /// Immutable. Fully qualified name
+    /// `projects/{project}/locations/global/collections/{collection}/engines/{engine}/sessions/*/answers/*`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The state of the answer generation.
+    #[prost(enumeration = "answer::State", tag = "2")]
+    pub state: i32,
+    /// The textual answer.
+    #[prost(string, tag = "3")]
+    pub answer_text: ::prost::alloc::string::String,
+    /// Citations.
+    #[prost(message, repeated, tag = "4")]
+    pub citations: ::prost::alloc::vec::Vec<answer::Citation>,
+    /// References.
+    #[prost(message, repeated, tag = "5")]
+    pub references: ::prost::alloc::vec::Vec<answer::Reference>,
+    /// Suggested related questions.
+    #[prost(string, repeated, tag = "6")]
+    pub related_questions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Answer generation steps.
+    #[prost(message, repeated, tag = "7")]
+    pub steps: ::prost::alloc::vec::Vec<answer::Step>,
+    /// Query understanding information.
+    #[prost(message, optional, tag = "10")]
+    pub query_understanding_info: ::core::option::Option<answer::QueryUnderstandingInfo>,
+    /// Additional answer-skipped reasons. This provides the reason for ignored
+    /// cases. If nothing is skipped, this field is not set.
+    #[prost(enumeration = "answer::AnswerSkippedReason", repeated, tag = "11")]
+    pub answer_skipped_reasons: ::prost::alloc::vec::Vec<i32>,
+    /// Output only. Answer creation timestamp.
+    #[prost(message, optional, tag = "8")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Answer completed timestamp.
+    #[prost(message, optional, tag = "9")]
+    pub complete_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `Answer`.
+pub mod answer {
+    /// Citation info for a segment.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Citation {
+        /// Index indicates the start of the segment, measured in bytes (UTF-8
+        /// unicode).
+        #[prost(int64, tag = "1")]
+        pub start_index: i64,
+        /// End of the attributed segment, exclusive.
+        #[prost(int64, tag = "2")]
+        pub end_index: i64,
+        /// Citation sources for the attributed segment.
+        #[prost(message, repeated, tag = "3")]
+        pub sources: ::prost::alloc::vec::Vec<CitationSource>,
+    }
+    /// Citation source.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CitationSource {
+        /// ID of the citation source.
+        #[prost(string, tag = "1")]
+        pub reference_id: ::prost::alloc::string::String,
+    }
+    /// Reference.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Reference {
+        /// Search result content.
+        #[prost(oneof = "reference::Content", tags = "1, 2")]
+        pub content: ::core::option::Option<reference::Content>,
+    }
+    /// Nested message and enum types in `Reference`.
+    pub mod reference {
+        /// Unstructured document information.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct UnstructuredDocumentInfo {
+            /// Document resource name.
+            #[prost(string, tag = "1")]
+            pub document: ::prost::alloc::string::String,
+            /// URI for the document.
+            #[prost(string, tag = "2")]
+            pub uri: ::prost::alloc::string::String,
+            /// Title.
+            #[prost(string, tag = "3")]
+            pub title: ::prost::alloc::string::String,
+            /// List of cited chunk contents derived from document content.
+            #[prost(message, repeated, tag = "4")]
+            pub chunk_contents: ::prost::alloc::vec::Vec<unstructured_document_info::ChunkContent>,
+            /// The structured JSON metadata for the document.
+            /// It is populated from the struct data from the Chunk in search result.
+            #[prost(message, optional, tag = "5")]
+            pub struct_data: ::core::option::Option<::prost_types::Struct>,
+        }
+        /// Nested message and enum types in `UnstructuredDocumentInfo`.
+        pub mod unstructured_document_info {
+            /// Chunk content.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct ChunkContent {
+                /// Chunk textual content.
+                #[prost(string, tag = "1")]
+                pub content: ::prost::alloc::string::String,
+                /// Page identifier.
+                #[prost(string, tag = "2")]
+                pub page_identifier: ::prost::alloc::string::String,
+            }
+        }
+        /// Chunk information.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct ChunkInfo {
+            /// Chunk resource name.
+            #[prost(string, tag = "1")]
+            pub chunk: ::prost::alloc::string::String,
+            /// Chunk textual content.
+            #[prost(string, tag = "2")]
+            pub content: ::prost::alloc::string::String,
+            /// Relevance score.
+            #[prost(float, optional, tag = "3")]
+            pub relevance_score: ::core::option::Option<f32>,
+            /// Document metadata.
+            #[prost(message, optional, tag = "4")]
+            pub document_metadata: ::core::option::Option<chunk_info::DocumentMetadata>,
+        }
+        /// Nested message and enum types in `ChunkInfo`.
+        pub mod chunk_info {
+            /// Document metadata.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct DocumentMetadata {
+                /// Document resource name.
+                #[prost(string, tag = "1")]
+                pub document: ::prost::alloc::string::String,
+                /// URI for the document.
+                #[prost(string, tag = "2")]
+                pub uri: ::prost::alloc::string::String,
+                /// Title.
+                #[prost(string, tag = "3")]
+                pub title: ::prost::alloc::string::String,
+                /// Page identifier.
+                #[prost(string, tag = "4")]
+                pub page_identifier: ::prost::alloc::string::String,
+                /// The structured JSON metadata for the document.
+                /// It is populated from the struct data from the Chunk in search result.
+                #[prost(message, optional, tag = "5")]
+                pub struct_data: ::core::option::Option<::prost_types::Struct>,
+            }
+        }
+        /// Search result content.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Content {
+            /// Unstructured document information.
+            #[prost(message, tag = "1")]
+            UnstructuredDocumentInfo(UnstructuredDocumentInfo),
+            /// Chunk information.
+            #[prost(message, tag = "2")]
+            ChunkInfo(ChunkInfo),
+        }
+    }
+    /// Step information.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Step {
+        /// The state of the step.
+        #[prost(enumeration = "step::State", tag = "1")]
+        pub state: i32,
+        /// The description of the step.
+        #[prost(string, tag = "2")]
+        pub description: ::prost::alloc::string::String,
+        /// The thought of the step.
+        #[prost(string, tag = "3")]
+        pub thought: ::prost::alloc::string::String,
+        /// Actions.
+        #[prost(message, repeated, tag = "4")]
+        pub actions: ::prost::alloc::vec::Vec<step::Action>,
+    }
+    /// Nested message and enum types in `Step`.
+    pub mod step {
+        /// Action.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Action {
+            /// Observation.
+            #[prost(message, optional, tag = "3")]
+            pub observation: ::core::option::Option<action::Observation>,
+            /// The action.
+            #[prost(oneof = "action::Action", tags = "2")]
+            pub action: ::core::option::Option<action::Action>,
+        }
+        /// Nested message and enum types in `Action`.
+        pub mod action {
+            /// Search action.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct SearchAction {
+                /// The query to search.
+                #[prost(string, tag = "1")]
+                pub query: ::prost::alloc::string::String,
+            }
+            /// Observation.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct Observation {
+                /// Search results observed by the search action, it can be snippets info
+                /// or chunk info, depending on the citation type set by the user.
+                #[prost(message, repeated, tag = "2")]
+                pub search_results: ::prost::alloc::vec::Vec<observation::SearchResult>,
+            }
+            /// Nested message and enum types in `Observation`.
+            pub mod observation {
+                #[derive(Clone, PartialEq, ::prost::Message)]
+                pub struct SearchResult {
+                    /// Document resource name.
+                    #[prost(string, tag = "1")]
+                    pub document: ::prost::alloc::string::String,
+                    /// URI for the document.
+                    #[prost(string, tag = "2")]
+                    pub uri: ::prost::alloc::string::String,
+                    /// Title.
+                    #[prost(string, tag = "3")]
+                    pub title: ::prost::alloc::string::String,
+                    /// If citation_type is DOCUMENT_LEVEL_CITATION, populate document
+                    /// level snippets.
+                    #[prost(message, repeated, tag = "4")]
+                    pub snippet_info: ::prost::alloc::vec::Vec<search_result::SnippetInfo>,
+                    /// If citation_type is CHUNK_LEVEL_CITATION and chunk mode is on,
+                    /// populate chunk info.
+                    #[prost(message, repeated, tag = "5")]
+                    pub chunk_info: ::prost::alloc::vec::Vec<search_result::ChunkInfo>,
+                }
+                /// Nested message and enum types in `SearchResult`.
+                pub mod search_result {
+                    /// Snippet information.
+                    #[derive(Clone, PartialEq, ::prost::Message)]
+                    pub struct SnippetInfo {
+                        /// Snippet content.
+                        #[prost(string, tag = "1")]
+                        pub snippet: ::prost::alloc::string::String,
+                        /// Status of the snippet defined by the search team.
+                        #[prost(string, tag = "2")]
+                        pub snippet_status: ::prost::alloc::string::String,
+                    }
+                    /// Chunk information.
+                    #[derive(Clone, PartialEq, ::prost::Message)]
+                    pub struct ChunkInfo {
+                        /// Chunk resource name.
+                        #[prost(string, tag = "1")]
+                        pub chunk: ::prost::alloc::string::String,
+                        /// Chunk textual content.
+                        #[prost(string, tag = "2")]
+                        pub content: ::prost::alloc::string::String,
+                        /// Relevance score.
+                        #[prost(float, optional, tag = "3")]
+                        pub relevance_score: ::core::option::Option<f32>,
+                    }
+                }
+            }
+            /// The action.
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum Action {
+                /// Search action.
+                #[prost(message, tag = "2")]
+                SearchAction(SearchAction),
+            }
+        }
+        /// Enumeration of the state of the step.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum State {
+            /// Unknown.
+            Unspecified = 0,
+            /// Step is currently in progress.
+            InProgress = 1,
+            /// Step currently failed.
+            Failed = 2,
+            /// Step has succeeded.
+            Succeeded = 3,
+        }
+    }
+    /// Query understanding information.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QueryUnderstandingInfo {
+        /// Query classification information.
+        #[prost(message, repeated, tag = "1")]
+        pub query_classification_info:
+            ::prost::alloc::vec::Vec<query_understanding_info::QueryClassificationInfo>,
+    }
+    /// Nested message and enum types in `QueryUnderstandingInfo`.
+    pub mod query_understanding_info {
+        /// Query classification information.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct QueryClassificationInfo {
+            /// Query classification type.
+            #[prost(enumeration = "query_classification_info::Type", tag = "1")]
+            pub r#type: i32,
+            /// Classification output.
+            #[prost(bool, tag = "2")]
+            pub positive: bool,
+        }
+        /// Nested message and enum types in `QueryClassificationInfo`.
+        pub mod query_classification_info {
+            /// Query classification types.
+            #[derive(
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+            )]
+            #[repr(i32)]
+            pub enum Type {
+                /// Unspecified query classification type.
+                Unspecified = 0,
+                /// Adversarial query classification type.
+                AdversarialQuery = 1,
+                /// Non-answer-seeking query classification type.
+                NonAnswerSeekingQuery = 2,
+            }
+        }
+    }
+    /// Enumeration of the state of the answer generation.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unknown.
+        Unspecified = 0,
+        /// Answer generation is currently in progress.
+        InProgress = 1,
+        /// Answer generation currently failed.
+        Failed = 2,
+        /// Answer generation has succeeded.
+        Succeeded = 3,
+    }
+    /// An enum for answer skipped reasons.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum AnswerSkippedReason {
+        /// Default value. The answer skipped reason is not specified.
+        Unspecified = 0,
+        /// The adversarial query ignored case.
+        AdversarialQueryIgnored = 1,
+        /// The non-answer seeking query ignored case.
+        NonAnswerSeekingQueryIgnored = 2,
+        /// The out-of-domain query ignored case.
+        ///
+        /// Google skips the answer if there are no high-relevance search results.
+        OutOfDomainQueryIgnored = 3,
+        /// The potential policy violation case.
+        ///
+        /// Google skips the answer if there is a potential policy violation
+        /// detected. This includes content that may be violent or toxic.
+        PotentialPolicyViolation = 4,
+    }
+}
 /// A floating point interval.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Interval {
@@ -91,8 +434,7 @@ pub struct UserInfo {
     /// characters. Otherwise, an `INVALID_ARGUMENT` error is returned.
     #[prost(string, tag = "1")]
     pub user_id: ::prost::alloc::string::String,
-    /// User agent as included in the HTTP header. Required for getting
-    /// \[SearchResponse.sponsored_results][\].
+    /// User agent as included in the HTTP header.
     ///
     /// The field must be a UTF-8 encoded string with a length limit of 1,000
     /// characters. Otherwise, an `INVALID_ARGUMENT` error is returned.
@@ -105,6 +447,1476 @@ pub struct UserInfo {
     /// is set.
     #[prost(string, tag = "2")]
     pub user_agent: ::prost::alloc::string::String,
+}
+/// Defines embedding config, used for bring your own embeddings feature.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EmbeddingConfig {
+    /// Full field path in the schema mapped as embedding field.
+    #[prost(string, tag = "1")]
+    pub field_path: ::prost::alloc::string::String,
+}
+/// Double list.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DoubleList {
+    /// Double values.
+    #[prost(double, repeated, tag = "1")]
+    pub values: ::prost::alloc::vec::Vec<f64>,
+}
+/// The industry vertical associated with the
+/// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\].
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum IndustryVertical {
+    /// Value used when unset.
+    Unspecified = 0,
+    /// The generic vertical for documents that are not specific to any industry
+    /// vertical.
+    Generic = 1,
+    /// The media industry vertical.
+    Media = 2,
+    /// The healthcare FHIR vertical.
+    HealthcareFhir = 7,
+}
+/// The type of solution.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SolutionType {
+    /// Default value.
+    Unspecified = 0,
+    /// Used for Recommendations AI.
+    Recommendation = 1,
+    /// Used for Discovery Search.
+    Search = 2,
+    /// Used for use cases related to the Generative AI agent.
+    Chat = 3,
+    /// Used for use cases related to the Generative Chat agent.
+    /// It's used for Generative chat engine only, the associated data stores
+    /// must enrolled with `SOLUTION_TYPE_CHAT` solution.
+    GenerativeChat = 4,
+}
+/// Defines a further subdivision of `SolutionType`.
+/// Specifically applies to
+/// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SearchUseCase {
+    /// Value used when unset. Will not occur in CSS.
+    Unspecified = 0,
+    /// Search use case. Expects the traffic has a non-empty
+    /// \[query][google.cloud.discoveryengine.v1beta.SearchRequest.query\].
+    Search = 1,
+    /// Browse use case. Expects the traffic has an empty
+    /// \[query][google.cloud.discoveryengine.v1beta.SearchRequest.query\].
+    Browse = 2,
+}
+/// Tiers of search features. Different tiers might have different
+/// pricing. To learn more, check the pricing documentation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SearchTier {
+    /// Default value when the enum is unspecified. This is invalid to use.
+    Unspecified = 0,
+    /// Standard tier.
+    Standard = 1,
+    /// Enterprise tier.
+    Enterprise = 2,
+}
+/// Add-on that provides additional functionality for search.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum SearchAddOn {
+    /// Default value when the enum is unspecified. This is invalid to use.
+    Unspecified = 0,
+    /// Large language model add-on.
+    Llm = 1,
+}
+/// Suggestion deny list entry identifying the phrase to block from suggestions
+/// and the applied operation for the phrase.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SuggestionDenyListEntry {
+    /// Required. Phrase to block from suggestions served. Can be maximum 125
+    /// characters.
+    #[prost(string, tag = "1")]
+    pub block_phrase: ::prost::alloc::string::String,
+    /// Required. The match operator to apply for this phrase. Whether to block the
+    /// exact phrase, or block any suggestions containing this phrase.
+    #[prost(enumeration = "suggestion_deny_list_entry::MatchOperator", tag = "2")]
+    pub match_operator: i32,
+}
+/// Nested message and enum types in `SuggestionDenyListEntry`.
+pub mod suggestion_deny_list_entry {
+    /// Operator for matching with the generated suggestions.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum MatchOperator {
+        /// Default value. Should not be used
+        Unspecified = 0,
+        /// If the suggestion is an exact match to the block_phrase, then block it.
+        ExactMatch = 1,
+        /// If the suggestion contains the block_phrase, then block it.
+        Contains = 2,
+    }
+}
+/// Document captures all raw metadata information of items to be recommended or
+/// searched.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Document {
+    /// Immutable. The full resource name of the document.
+    /// Format:
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/branches/{branch}/documents/{document_id}`.
+    ///
+    /// This field must be a UTF-8 encoded string with a length limit of 1024
+    /// characters.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Immutable. The identifier of the document.
+    ///
+    /// Id should conform to \[RFC-1034\](<https://tools.ietf.org/html/rfc1034>)
+    /// standard with a length limit of 63 characters.
+    #[prost(string, tag = "2")]
+    pub id: ::prost::alloc::string::String,
+    /// The identifier of the schema located in the same data store.
+    #[prost(string, tag = "3")]
+    pub schema_id: ::prost::alloc::string::String,
+    /// The unstructured data linked to this document. Content must be set if this
+    /// document is under a
+    /// `CONTENT_REQUIRED` data store.
+    #[prost(message, optional, tag = "10")]
+    pub content: ::core::option::Option<document::Content>,
+    /// The identifier of the parent document. Currently supports at most two level
+    /// document hierarchy.
+    ///
+    /// Id should conform to \[RFC-1034\](<https://tools.ietf.org/html/rfc1034>)
+    /// standard with a length limit of 63 characters.
+    #[prost(string, tag = "7")]
+    pub parent_document_id: ::prost::alloc::string::String,
+    /// Output only. This field is OUTPUT_ONLY.
+    /// It contains derived data that are not in the original input document.
+    #[prost(message, optional, tag = "6")]
+    pub derived_struct_data: ::core::option::Option<::prost_types::Struct>,
+    /// Output only. The last time the document was indexed. If this field is set,
+    /// the document could be returned in search results.
+    ///
+    /// This field is OUTPUT_ONLY. If this field is not populated, it means the
+    /// document has never been indexed.
+    #[prost(message, optional, tag = "13")]
+    pub index_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Data representation. One of
+    /// \[struct_data][google.cloud.discoveryengine.v1beta.Document.struct_data\] or
+    /// \[json_data][google.cloud.discoveryengine.v1beta.Document.json_data\] should
+    /// be provided otherwise an `INVALID_ARGUMENT` error is thrown.
+    #[prost(oneof = "document::Data", tags = "4, 5")]
+    pub data: ::core::option::Option<document::Data>,
+}
+/// Nested message and enum types in `Document`.
+pub mod document {
+    /// Unstructured data linked to this document.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Content {
+        /// The MIME type of the content. Supported types:
+        ///
+        /// * `application/pdf` (PDF, only native PDFs are supported for now)
+        /// * `text/html` (HTML)
+        /// * `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (DOCX)
+        /// * `application/vnd.openxmlformats-officedocument.presentationml.presentation` (PPTX)
+        /// * `text/plain` (TXT)
+        ///
+        /// See <https://www.iana.org/assignments/media-types/media-types.xhtml.>
+        #[prost(string, tag = "1")]
+        pub mime_type: ::prost::alloc::string::String,
+        #[prost(oneof = "content::Content", tags = "2, 3")]
+        pub content: ::core::option::Option<content::Content>,
+    }
+    /// Nested message and enum types in `Content`.
+    pub mod content {
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Content {
+            /// The content represented as a stream of bytes. The maximum length is
+            /// 1,000,000 bytes (1 MB / ~0.95 MiB).
+            ///
+            /// Note: As with all `bytes` fields, this field is represented as pure
+            /// binary in Protocol Buffers and base64-encoded string in JSON. For
+            /// example, `abc123!?$*&()'-=@~` should be represented as
+            /// `YWJjMTIzIT8kKiYoKSctPUB+` in JSON. See
+            /// <https://developers.google.com/protocol-buffers/docs/proto3#json.>
+            #[prost(bytes, tag = "2")]
+            RawBytes(::prost::alloc::vec::Vec<u8>),
+            /// The URI of the content. Only Cloud Storage URIs (e.g.
+            /// `gs://bucket-name/path/to/file`) are supported. The maximum file size
+            /// is 2.5 MB for text-based formats, 100 MB for other formats.
+            #[prost(string, tag = "3")]
+            Uri(::prost::alloc::string::String),
+        }
+    }
+    /// Data representation. One of
+    /// \[struct_data][google.cloud.discoveryengine.v1beta.Document.struct_data\] or
+    /// \[json_data][google.cloud.discoveryengine.v1beta.Document.json_data\] should
+    /// be provided otherwise an `INVALID_ARGUMENT` error is thrown.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Data {
+        /// The structured JSON data for the document. It should conform to the
+        /// registered \[Schema][google.cloud.discoveryengine.v1beta.Schema\] or an
+        /// `INVALID_ARGUMENT` error is thrown.
+        #[prost(message, tag = "4")]
+        StructData(::prost_types::Struct),
+        /// The JSON string representation of the document. It should conform to the
+        /// registered \[Schema][google.cloud.discoveryengine.v1beta.Schema\] or an
+        /// `INVALID_ARGUMENT` error is thrown.
+        #[prost(string, tag = "5")]
+        JsonData(::prost::alloc::string::String),
+    }
+}
+/// UserEvent captures all metadata information Discovery Engine API needs to
+/// know about how end users interact with your website.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserEvent {
+    /// Required. User event type. Allowed values are:
+    ///
+    /// Generic values:
+    ///
+    /// * `search`: Search for Documents.
+    /// * `view-item`: Detailed page view of a Document.
+    /// * `view-item-list`: View of a panel or ordered list of Documents.
+    /// * `view-home-page`: View of the home page.
+    /// * `view-category-page`: View of a category page, e.g. Home > Men > Jeans
+    ///
+    /// Retail-related values:
+    ///
+    /// * `add-to-cart`: Add an item(s) to cart, e.g. in Retail online shopping
+    /// * `purchase`: Purchase an item(s)
+    ///
+    /// Media-related values:
+    ///
+    /// * `media-play`: Start/resume watching a video, playing a song, etc.
+    /// * `media-complete`: Finished or stopped midway through a video, song, etc.
+    #[prost(string, tag = "1")]
+    pub event_type: ::prost::alloc::string::String,
+    /// Required. A unique identifier for tracking visitors.
+    ///
+    /// For example, this could be implemented with an HTTP cookie, which should be
+    /// able to uniquely identify a visitor on a single device. This unique
+    /// identifier should not change if the visitor log in/out of the website.
+    ///
+    /// Do not set the field to the same fixed ID for different users. This mixes
+    /// the event history of those users together, which results in degraded model
+    /// quality.
+    ///
+    /// The field must be a UTF-8 encoded string with a length limit of 128
+    /// characters. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    ///
+    /// The field should not contain PII or user-data. We recommend to use Google
+    /// Analytics [Client
+    /// ID](<https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#clientId>)
+    /// for this field.
+    #[prost(string, tag = "2")]
+    pub user_pseudo_id: ::prost::alloc::string::String,
+    /// The \[Engine][google.cloud.discoveryengine.v1beta.Engine\] resource name, in
+    /// the form of
+    /// `projects/{project}/locations/{location}/collections/{collection_id}/engines/{engine_id}`.
+    ///
+    /// Optional. Only required for
+    /// \[Engine][google.cloud.discoveryengine.v1beta.Engine\] produced user events.
+    /// For example, user events from blended search.
+    #[prost(string, tag = "19")]
+    pub engine: ::prost::alloc::string::String,
+    /// The \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] resource
+    /// full name, of the form
+    /// `projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}`.
+    ///
+    /// Optional. Only required for user events whose data store can't by
+    /// determined by
+    /// \[UserEvent.engine][google.cloud.discoveryengine.v1beta.UserEvent.engine\] or
+    /// \[UserEvent.documents][google.cloud.discoveryengine.v1beta.UserEvent.documents\].
+    /// If data store is set in the parent of write/import/collect user event
+    /// requests, this field can be omitted.
+    #[prost(string, tag = "20")]
+    pub data_store: ::prost::alloc::string::String,
+    /// Only required for
+    /// \[UserEventService.ImportUserEvents][google.cloud.discoveryengine.v1beta.UserEventService.ImportUserEvents\]
+    /// method. Timestamp of when the user event happened.
+    #[prost(message, optional, tag = "3")]
+    pub event_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Information about the end user.
+    #[prost(message, optional, tag = "4")]
+    pub user_info: ::core::option::Option<UserInfo>,
+    /// Should set to true if the request is made directly from the end user, in
+    /// which case the
+    /// \[UserEvent.user_info.user_agent][google.cloud.discoveryengine.v1beta.UserInfo.user_agent\]
+    /// can be populated from the HTTP request.
+    ///
+    /// This flag should be set only if the API request is made directly from the
+    /// end user such as a mobile app (and not if a gateway or a server is
+    /// processing and pushing the user events).
+    ///
+    /// This should not be set when using the JavaScript tag in
+    /// \[UserEventService.CollectUserEvent][google.cloud.discoveryengine.v1beta.UserEventService.CollectUserEvent\].
+    #[prost(bool, tag = "5")]
+    pub direct_user_request: bool,
+    /// A unique identifier for tracking a visitor session with a length limit of
+    /// 128 bytes. A session is an aggregation of an end user behavior in a time
+    /// span.
+    ///
+    /// A general guideline to populate the session_id:
+    ///
+    /// 1. If user has no activity for 30 min, a new session_id should be assigned.
+    /// 2. The session_id should be unique across users, suggest use uuid or add
+    /// \[UserEvent.user_pseudo_id][google.cloud.discoveryengine.v1beta.UserEvent.user_pseudo_id\]
+    /// as prefix.
+    #[prost(string, tag = "6")]
+    pub session_id: ::prost::alloc::string::String,
+    /// Page metadata such as categories and other critical information for certain
+    /// event types such as `view-category-page`.
+    #[prost(message, optional, tag = "7")]
+    pub page_info: ::core::option::Option<PageInfo>,
+    /// Token to attribute an API response to user action(s) to trigger the event.
+    ///
+    /// Highly recommended for user events that are the result of
+    /// \[RecommendationService.Recommend][google.cloud.discoveryengine.v1beta.RecommendationService.Recommend\].
+    /// This field enables accurate attribution of recommendation model
+    /// performance.
+    ///
+    /// The value must be one of:
+    ///
+    /// * \[RecommendResponse.attribution_token][google.cloud.discoveryengine.v1beta.RecommendResponse.attribution_token\] for events that are the result of
+    /// \[RecommendationService.Recommend][google.cloud.discoveryengine.v1beta.RecommendationService.Recommend\].
+    /// * \[SearchResponse.attribution_token][google.cloud.discoveryengine.v1beta.SearchResponse.attribution_token\] for events that are the result of
+    /// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\].
+    ///
+    /// This token enables us to accurately attribute page view or conversion
+    /// completion back to the event and the particular predict response containing
+    /// this clicked/purchased product. If user clicks on product K in the
+    /// recommendation results, pass
+    /// \[RecommendResponse.attribution_token][google.cloud.discoveryengine.v1beta.RecommendResponse.attribution_token\]
+    /// as a URL parameter to product K's page. When recording events on product
+    /// K's page, log the
+    /// \[RecommendResponse.attribution_token][google.cloud.discoveryengine.v1beta.RecommendResponse.attribution_token\]
+    /// to this field.
+    #[prost(string, tag = "8")]
+    pub attribution_token: ::prost::alloc::string::String,
+    /// The filter syntax consists of an expression language for constructing a
+    /// predicate from one or more fields of the documents being filtered.
+    ///
+    /// One example is for `search` events, the associated
+    /// \[SearchRequest][google.cloud.discoveryengine.v1beta.SearchRequest\] may
+    /// contain a filter expression in
+    /// \[SearchRequest.filter][google.cloud.discoveryengine.v1beta.SearchRequest.filter\]
+    /// conforming to <https://google.aip.dev/160#filtering.>
+    ///
+    /// Similarly, for `view-item-list` events that are generated from a
+    /// \[RecommendRequest][google.cloud.discoveryengine.v1beta.RecommendRequest\],
+    /// this field may be populated directly from
+    /// \[RecommendRequest.filter][google.cloud.discoveryengine.v1beta.RecommendRequest.filter\]
+    /// conforming to <https://google.aip.dev/160#filtering.>
+    ///
+    /// The value must be a UTF-8 encoded string with a length limit of 1,000
+    /// characters. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    #[prost(string, tag = "9")]
+    pub filter: ::prost::alloc::string::String,
+    /// List of \[Document][google.cloud.discoveryengine.v1beta.Document\]s
+    /// associated with this user event.
+    ///
+    /// This field is optional except for the following event types:
+    ///
+    /// * `view-item`
+    /// * `add-to-cart`
+    /// * `purchase`
+    /// * `media-play`
+    /// * `media-complete`
+    ///
+    /// In a `search` event, this field represents the documents returned to the
+    /// end user on the current page (the end user may have not finished browsing
+    /// the whole page yet). When a new page is returned to the end user, after
+    /// pagination/filtering/ordering even for the same query, a new `search` event
+    /// with different
+    /// \[UserEvent.documents][google.cloud.discoveryengine.v1beta.UserEvent.documents\]
+    /// is desired.
+    #[prost(message, repeated, tag = "10")]
+    pub documents: ::prost::alloc::vec::Vec<DocumentInfo>,
+    /// Panel metadata associated with this user event.
+    #[prost(message, optional, tag = "11")]
+    pub panel: ::core::option::Option<PanelInfo>,
+    /// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
+    /// details related to the event.
+    ///
+    /// This field should be set for `search` event.
+    #[prost(message, optional, tag = "12")]
+    pub search_info: ::core::option::Option<SearchInfo>,
+    /// \[CompletionService.CompleteQuery][google.cloud.discoveryengine.v1beta.CompletionService.CompleteQuery\]
+    /// details related to the event.
+    ///
+    /// This field should be set for `search` event when autocomplete function is
+    /// enabled and the user clicks a suggestion for search.
+    #[prost(message, optional, tag = "13")]
+    pub completion_info: ::core::option::Option<CompletionInfo>,
+    /// The transaction metadata (if any) associated with this user event.
+    #[prost(message, optional, tag = "14")]
+    pub transaction_info: ::core::option::Option<TransactionInfo>,
+    /// A list of identifiers for the independent experiment groups this user event
+    /// belongs to. This is used to distinguish between user events associated with
+    /// different experiment setups.
+    #[prost(string, repeated, tag = "15")]
+    pub tag_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The promotion IDs if this is an event associated with promotions.
+    /// Currently, this field is restricted to at most one ID.
+    #[prost(string, repeated, tag = "16")]
+    pub promotion_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Extra user event features to include in the recommendation model.
+    /// These attributes must NOT contain data that needs to be parsed or processed
+    /// further, e.g. JSON or other encodings.
+    ///
+    /// If you provide custom attributes for ingested user events, also include
+    /// them in the user events that you associate with prediction requests. Custom
+    /// attribute formatting must be consistent between imported events and events
+    /// provided with prediction requests. This lets the Discovery Engine API use
+    /// those custom attributes when training models and serving predictions, which
+    /// helps improve recommendation quality.
+    ///
+    /// This field needs to pass all below criteria, otherwise an
+    /// `INVALID_ARGUMENT` error is returned:
+    ///
+    /// * The key must be a UTF-8 encoded string with a length limit of 5,000
+    ///   characters.
+    /// * For text attributes, at most 400 values are allowed. Empty values are not
+    ///   allowed. Each value must be a UTF-8 encoded string with a length limit of
+    ///   256 characters.
+    /// * For number attributes, at most 400 values are allowed.
+    ///
+    /// For product recommendations, an example of extra user information is
+    /// `traffic_channel`, which is how a user arrives at the site. Users can
+    /// arrive
+    /// at the site by coming to the site directly, coming through Google
+    /// search, or in other ways.
+    #[prost(map = "string, message", tag = "17")]
+    pub attributes: ::std::collections::HashMap<::prost::alloc::string::String, CustomAttribute>,
+    /// Media-specific info.
+    #[prost(message, optional, tag = "18")]
+    pub media_info: ::core::option::Option<MediaInfo>,
+}
+/// Detailed page information.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PageInfo {
+    /// A unique ID of a web page view.
+    ///
+    /// This should be kept the same for all user events triggered from the same
+    /// pageview. For example, an item detail page view could trigger multiple
+    /// events as the user is browsing the page. The `pageview_id` property should
+    /// be kept the same for all these events so that they can be grouped together
+    /// properly.
+    ///
+    /// When using the client side event reporting with JavaScript pixel and Google
+    /// Tag Manager, this value is filled in automatically.
+    #[prost(string, tag = "1")]
+    pub pageview_id: ::prost::alloc::string::String,
+    /// The most specific category associated with a category page.
+    ///
+    /// To represent full path of category, use '>' sign to separate different
+    /// hierarchies. If '>' is part of the category name, replace it with
+    /// other character(s).
+    ///
+    /// Category pages include special pages such as sales or promotions. For
+    /// instance, a special sale page may have the category hierarchy:
+    /// `"pageCategory" : "Sales > 2017 Black Friday Deals"`.
+    ///
+    /// Required for `view-category-page` events. Other event types should not set
+    /// this field. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    #[prost(string, tag = "2")]
+    pub page_category: ::prost::alloc::string::String,
+    /// Complete URL (window.location.href) of the user's current page.
+    ///
+    /// When using the client side event reporting with JavaScript pixel and Google
+    /// Tag Manager, this value is filled in automatically. Maximum length 5,000
+    /// characters.
+    #[prost(string, tag = "3")]
+    pub uri: ::prost::alloc::string::String,
+    /// The referrer URL of the current page.
+    ///
+    /// When using the client side event reporting with JavaScript pixel and Google
+    /// Tag Manager, this value is filled in automatically. However, some browser
+    /// privacy restrictions may cause this field to be empty.
+    #[prost(string, tag = "4")]
+    pub referrer_uri: ::prost::alloc::string::String,
+}
+/// Detailed search information.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchInfo {
+    /// The user's search query.
+    ///
+    /// See
+    /// \[SearchRequest.query][google.cloud.discoveryengine.v1beta.SearchRequest.query\]
+    /// for definition.
+    ///
+    /// The value must be a UTF-8 encoded string with a length limit of 5,000
+    /// characters. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    ///
+    /// At least one of
+    /// \[search_query][google.cloud.discoveryengine.v1beta.SearchInfo.search_query\]
+    /// or
+    /// \[PageInfo.page_category][google.cloud.discoveryengine.v1beta.PageInfo.page_category\]
+    /// is required for `search` events. Other event types should not set this
+    /// field. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    #[prost(string, tag = "1")]
+    pub search_query: ::prost::alloc::string::String,
+    /// The order in which products are returned, if applicable.
+    ///
+    /// See
+    /// \[SearchRequest.order_by][google.cloud.discoveryengine.v1beta.SearchRequest.order_by\]
+    /// for definition and syntax.
+    ///
+    /// The value must be a UTF-8 encoded string with a length limit of 1,000
+    /// characters. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    ///
+    /// This can only be set for `search` events. Other event types should not set
+    /// this field. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    #[prost(string, tag = "2")]
+    pub order_by: ::prost::alloc::string::String,
+    /// An integer that specifies the current offset for pagination (the 0-indexed
+    /// starting location, amongst the products deemed by the API as relevant).
+    ///
+    /// See
+    /// \[SearchRequest.offset][google.cloud.discoveryengine.v1beta.SearchRequest.offset\]
+    /// for definition.
+    ///
+    /// If this field is negative, an `INVALID_ARGUMENT` is returned.
+    ///
+    /// This can only be set for `search` events. Other event types should not set
+    /// this field. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    #[prost(int32, optional, tag = "3")]
+    pub offset: ::core::option::Option<i32>,
+}
+/// Detailed completion information including completion attribution token and
+/// clicked completion info.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CompletionInfo {
+    /// End user selected
+    /// \[CompleteQueryResponse.QuerySuggestion.suggestion][google.cloud.discoveryengine.v1beta.CompleteQueryResponse.QuerySuggestion.suggestion\].
+    #[prost(string, tag = "1")]
+    pub selected_suggestion: ::prost::alloc::string::String,
+    /// End user selected
+    /// \[CompleteQueryResponse.QuerySuggestion.suggestion][google.cloud.discoveryengine.v1beta.CompleteQueryResponse.QuerySuggestion.suggestion\]
+    /// position, starting from 0.
+    #[prost(int32, tag = "2")]
+    pub selected_position: i32,
+}
+/// A transaction represents the entire purchase transaction.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TransactionInfo {
+    /// Required. Total non-zero value associated with the transaction. This value
+    /// may include shipping, tax, or other adjustments to the total value that you
+    /// want to include.
+    #[prost(float, optional, tag = "1")]
+    pub value: ::core::option::Option<f32>,
+    /// Required. Currency code. Use three-character ISO-4217 code.
+    #[prost(string, tag = "2")]
+    pub currency: ::prost::alloc::string::String,
+    /// The transaction ID with a length limit of 128 characters.
+    #[prost(string, tag = "3")]
+    pub transaction_id: ::prost::alloc::string::String,
+    /// All the taxes associated with the transaction.
+    #[prost(float, optional, tag = "4")]
+    pub tax: ::core::option::Option<f32>,
+    /// All the costs associated with the products. These can be manufacturing
+    /// costs, shipping expenses not borne by the end user, or any other costs,
+    /// such that:
+    ///
+    /// * Profit =
+    /// \[value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\] -
+    /// \[tax][google.cloud.discoveryengine.v1beta.TransactionInfo.tax\] -
+    /// \[cost][google.cloud.discoveryengine.v1beta.TransactionInfo.cost\]
+    #[prost(float, optional, tag = "5")]
+    pub cost: ::core::option::Option<f32>,
+    /// The total discount(s) value applied to this transaction.
+    /// This figure should be excluded from
+    /// \[TransactionInfo.value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\]
+    ///
+    /// For example, if a user paid
+    /// \[TransactionInfo.value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\]
+    /// amount, then nominal (pre-discount) value of the transaction is the sum of
+    /// \[TransactionInfo.value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\]
+    /// and
+    /// \[TransactionInfo.discount_value][google.cloud.discoveryengine.v1beta.TransactionInfo.discount_value\]
+    ///
+    /// This means that profit is calculated the same way, regardless of the
+    /// discount value, and that
+    /// \[TransactionInfo.discount_value][google.cloud.discoveryengine.v1beta.TransactionInfo.discount_value\]
+    /// can be larger than
+    /// \[TransactionInfo.value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\]:
+    ///
+    /// * Profit =
+    /// \[value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\] -
+    /// \[tax][google.cloud.discoveryengine.v1beta.TransactionInfo.tax\] -
+    /// \[cost][google.cloud.discoveryengine.v1beta.TransactionInfo.cost\]
+    #[prost(float, optional, tag = "6")]
+    pub discount_value: ::core::option::Option<f32>,
+}
+/// Detailed document information associated with a user event.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DocumentInfo {
+    /// Quantity of the Document associated with the user event. Defaults to 1.
+    ///
+    /// For example, this field is 2 if two quantities of the same Document
+    /// are involved in a `add-to-cart` event.
+    ///
+    /// Required for events of the following event types:
+    ///
+    /// * `add-to-cart`
+    /// * `purchase`
+    #[prost(int32, optional, tag = "3")]
+    pub quantity: ::core::option::Option<i32>,
+    /// The promotion IDs associated with this Document.
+    /// Currently, this field is restricted to at most one ID.
+    #[prost(string, repeated, tag = "4")]
+    pub promotion_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// A required descriptor of the associated
+    /// \[Document][google.cloud.discoveryengine.v1beta.Document\].
+    ///
+    /// * If \[id][google.cloud.discoveryengine.v1beta.DocumentInfo.id\] is
+    /// specified, then the default values for
+    /// `{location}`, `{collection_id}`, `{data_store_id}`, and `{branch_id}` are
+    /// used when annotating with the stored Document.
+    ///
+    /// * If \[name][google.cloud.discoveryengine.v1beta.DocumentInfo.name\] is
+    /// specified, then the provided values (default values allowed) for
+    /// `{location}`, `{collection_id}`, `{data_store_id}`, and
+    /// `{branch_id}` are used when annotating with the stored Document.
+    #[prost(oneof = "document_info::DocumentDescriptor", tags = "1, 2, 6")]
+    pub document_descriptor: ::core::option::Option<document_info::DocumentDescriptor>,
+}
+/// Nested message and enum types in `DocumentInfo`.
+pub mod document_info {
+    /// A required descriptor of the associated
+    /// \[Document][google.cloud.discoveryengine.v1beta.Document\].
+    ///
+    /// * If \[id][google.cloud.discoveryengine.v1beta.DocumentInfo.id\] is
+    /// specified, then the default values for
+    /// `{location}`, `{collection_id}`, `{data_store_id}`, and `{branch_id}` are
+    /// used when annotating with the stored Document.
+    ///
+    /// * If \[name][google.cloud.discoveryengine.v1beta.DocumentInfo.name\] is
+    /// specified, then the provided values (default values allowed) for
+    /// `{location}`, `{collection_id}`, `{data_store_id}`, and
+    /// `{branch_id}` are used when annotating with the stored Document.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum DocumentDescriptor {
+        /// The \[Document][google.cloud.discoveryengine.v1beta.Document\] resource ID.
+        #[prost(string, tag = "1")]
+        Id(::prost::alloc::string::String),
+        /// The \[Document][google.cloud.discoveryengine.v1beta.Document\] resource
+        /// full name, of the form:
+        /// `projects/{project_id}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}/branches/{branch_id}/documents/{document_id}`
+        #[prost(string, tag = "2")]
+        Name(::prost::alloc::string::String),
+        /// The \[Document][google.cloud.discoveryengine.v1beta.Document\] URI - only
+        /// allowed for website data stores.
+        #[prost(string, tag = "6")]
+        Uri(::prost::alloc::string::String),
+    }
+}
+/// Detailed panel information associated with a user event.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PanelInfo {
+    /// Required. The panel ID.
+    #[prost(string, tag = "2")]
+    pub panel_id: ::prost::alloc::string::String,
+    /// The display name of the panel.
+    #[prost(string, tag = "3")]
+    pub display_name: ::prost::alloc::string::String,
+    /// The ordered position of the panel, if shown to the user with other panels.
+    /// If set, then
+    /// \[total_panels][google.cloud.discoveryengine.v1beta.PanelInfo.total_panels\]
+    /// must also be set.
+    #[prost(int32, optional, tag = "4")]
+    pub panel_position: ::core::option::Option<i32>,
+    /// The total number of panels, including this one, shown to the user.
+    /// Must be set if
+    /// \[panel_position][google.cloud.discoveryengine.v1beta.PanelInfo.panel_position\]
+    /// is set.
+    #[prost(int32, optional, tag = "5")]
+    pub total_panels: ::core::option::Option<i32>,
+}
+/// Media-specific user event information.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MediaInfo {
+    /// The media progress time in seconds, if applicable.
+    /// For example, if the end user has finished 90 seconds of a playback video,
+    /// then
+    /// \[MediaInfo.media_progress_duration.seconds][google.protobuf.Duration.seconds\]
+    /// should be set to 90.
+    #[prost(message, optional, tag = "1")]
+    pub media_progress_duration: ::core::option::Option<::prost_types::Duration>,
+    /// Media progress should be computed using only the
+    /// \[media_progress_duration][google.cloud.discoveryengine.v1beta.MediaInfo.media_progress_duration\]
+    /// relative to the media total length.
+    ///
+    /// This value must be between `[0, 1.0]` inclusive.
+    ///
+    /// If this is not a playback or the progress cannot be computed (e.g. ongoing
+    /// livestream), this field should be unset.
+    #[prost(float, optional, tag = "2")]
+    pub media_progress_percentage: ::core::option::Option<f32>,
+}
+/// Cloud Storage location for input content.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GcsSource {
+    /// Required. Cloud Storage URIs to input files. Each URI can be up to
+    /// 2000 characters long. URIs can match the full object path (for example,
+    /// `gs://bucket/directory/object.json`) or a pattern matching one or more
+    /// files, such as `gs://bucket/directory/*.json`.
+    ///
+    /// A request can contain at most 100 files (or 100,000 files if `data_schema`
+    /// is `content`). Each file can be up to 2 GB (or 100 MB if `data_schema` is
+    /// `content`).
+    #[prost(string, repeated, tag = "1")]
+    pub input_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The schema to use when parsing the data from the source.
+    ///
+    /// Supported values for document imports:
+    ///
+    /// * `document` (default): One JSON
+    /// \[Document][google.cloud.discoveryengine.v1beta.Document\] per line. Each
+    /// document must
+    ///   have a valid
+    ///   \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\].
+    /// * `content`: Unstructured data (e.g. PDF, HTML). Each file matched by
+    ///   `input_uris` becomes a document, with the ID set to the first 128
+    ///   bits of SHA256(URI) encoded as a hex string.
+    /// * `custom`: One custom data JSON per row in arbitrary format that conforms
+    ///   to the defined \[Schema][google.cloud.discoveryengine.v1beta.Schema\] of
+    ///   the data store. This can only be used by the GENERIC Data Store vertical.
+    /// * `csv`: A CSV file with header conforming to the defined
+    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\] of the
+    ///   data store. Each entry after the header is imported as a Document.
+    ///   This can only be used by the GENERIC Data Store vertical.
+    ///
+    /// Supported values for user event imports:
+    ///
+    /// * `user_event` (default): One JSON
+    /// \[UserEvent][google.cloud.discoveryengine.v1beta.UserEvent\] per line.
+    #[prost(string, tag = "2")]
+    pub data_schema: ::prost::alloc::string::String,
+}
+/// BigQuery source import data from.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigQuerySource {
+    /// The project ID (can be project # or ID) that the BigQuery source is in with
+    /// a length limit of 128 characters. If not specified, inherits the project
+    /// ID from the parent request.
+    #[prost(string, tag = "1")]
+    pub project_id: ::prost::alloc::string::String,
+    /// Required. The BigQuery data set to copy the data from with a length limit
+    /// of 1,024 characters.
+    #[prost(string, tag = "2")]
+    pub dataset_id: ::prost::alloc::string::String,
+    /// Required. The BigQuery table to copy the data from with a length limit of
+    /// 1,024 characters.
+    #[prost(string, tag = "3")]
+    pub table_id: ::prost::alloc::string::String,
+    /// Intermediate Cloud Storage directory used for the import with a length
+    /// limit of 2,000 characters. Can be specified if one wants to have the
+    /// BigQuery export to a specific Cloud Storage directory.
+    #[prost(string, tag = "4")]
+    pub gcs_staging_dir: ::prost::alloc::string::String,
+    /// The schema to use when parsing the data from the source.
+    ///
+    /// Supported values for user event imports:
+    ///
+    /// * `user_event` (default): One
+    /// \[UserEvent][google.cloud.discoveryengine.v1beta.UserEvent\] per row.
+    ///
+    /// Supported values for document imports:
+    ///
+    /// * `document` (default): One
+    /// \[Document][google.cloud.discoveryengine.v1beta.Document\] format per
+    ///   row. Each document must have a valid
+    ///   \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\] and one of
+    ///   \[Document.json_data][google.cloud.discoveryengine.v1beta.Document.json_data\]
+    ///   or
+    ///   \[Document.struct_data][google.cloud.discoveryengine.v1beta.Document.struct_data\].
+    /// * `custom`: One custom data per row in arbitrary format that conforms to
+    ///   the defined \[Schema][google.cloud.discoveryengine.v1beta.Schema\] of the
+    ///   data store. This can only be used by the GENERIC Data Store vertical.
+    #[prost(string, tag = "6")]
+    pub data_schema: ::prost::alloc::string::String,
+    /// BigQuery table partition info. Leave this empty if the BigQuery table
+    /// is not partitioned.
+    #[prost(oneof = "big_query_source::Partition", tags = "5")]
+    pub partition: ::core::option::Option<big_query_source::Partition>,
+}
+/// Nested message and enum types in `BigQuerySource`.
+pub mod big_query_source {
+    /// BigQuery table partition info. Leave this empty if the BigQuery table
+    /// is not partitioned.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Partition {
+        /// BigQuery time partitioned table's _PARTITIONDATE in YYYY-MM-DD format.
+        #[prost(message, tag = "5")]
+        PartitionDate(super::super::super::super::r#type::Date),
+    }
+}
+/// The Spanner source for importing data
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SpannerSource {
+    /// The project ID that the Spanner source is in with a length limit of 128
+    /// characters. If not specified, inherits the project ID from the parent
+    /// request.
+    #[prost(string, tag = "1")]
+    pub project_id: ::prost::alloc::string::String,
+    /// Required. The instance ID of the source Spanner table.
+    #[prost(string, tag = "2")]
+    pub instance_id: ::prost::alloc::string::String,
+    /// Required. The database ID of the source Spanner table.
+    #[prost(string, tag = "3")]
+    pub database_id: ::prost::alloc::string::String,
+    /// Required. The table name of the Spanner database that needs to be imported.
+    #[prost(string, tag = "4")]
+    pub table_id: ::prost::alloc::string::String,
+    /// Whether to apply data boost on Spanner export. Enabling this option will
+    /// incur additional cost. More info can be found
+    /// \[here\](<https://cloud.google.com/spanner/docs/databoost/databoost-overview#billing_and_quotas>).
+    #[prost(bool, tag = "5")]
+    pub enable_data_boost: bool,
+}
+/// The Bigtable Options object that contains information to support
+/// the import.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigtableOptions {
+    /// The field name used for saving row key value in the document. The name has
+    /// to match the pattern `\[a-zA-Z0-9][a-zA-Z0-9-_\]*`.
+    #[prost(string, tag = "1")]
+    pub key_field_name: ::prost::alloc::string::String,
+    /// The mapping from family names to an object that contains column families
+    /// level information for the given column family. If a family is not present
+    /// in this map it will be ignored.
+    #[prost(map = "string, message", tag = "2")]
+    pub families: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        bigtable_options::BigtableColumnFamily,
+    >,
+}
+/// Nested message and enum types in `BigtableOptions`.
+pub mod bigtable_options {
+    /// The column family of the Bigtable.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BigtableColumnFamily {
+        /// The field name to use for this column family in the document. The
+        /// name has to match the pattern `\[a-zA-Z0-9][a-zA-Z0-9-_\]*`. If not set,
+        /// it is parsed from the family name with best effort. However, due to
+        /// different naming patterns, field name collisions could happen, where
+        /// parsing behavior is undefined.
+        #[prost(string, tag = "1")]
+        pub field_name: ::prost::alloc::string::String,
+        /// The encoding mode of the values when the type is not STRING.
+        /// Acceptable encoding values are:
+        ///
+        /// * `TEXT`: indicates values are alphanumeric text strings.
+        /// * `BINARY`: indicates values are encoded using `HBase Bytes.toBytes`
+        /// family of functions. This can be overridden for a specific column
+        /// by listing that column in `columns` and specifying an encoding for it.
+        #[prost(enumeration = "Encoding", tag = "2")]
+        pub encoding: i32,
+        /// The type of values in this column family.
+        /// The values are expected to be encoded using `HBase Bytes.toBytes`
+        /// function when the encoding value is set to `BINARY`.
+        #[prost(enumeration = "Type", tag = "3")]
+        pub r#type: i32,
+        /// The list of objects that contains column level information for each
+        /// column. If a column is not present in this list it will be ignored.
+        #[prost(message, repeated, tag = "4")]
+        pub columns: ::prost::alloc::vec::Vec<BigtableColumn>,
+    }
+    /// The column of the Bigtable.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BigtableColumn {
+        /// Required. Qualifier of the column. If it cannot be decoded with utf-8,
+        /// use a base-64 encoded string instead.
+        #[prost(bytes = "vec", tag = "1")]
+        pub qualifier: ::prost::alloc::vec::Vec<u8>,
+        /// The field name to use for this column in the document. The name has to
+        /// match the pattern `\[a-zA-Z0-9][a-zA-Z0-9-_\]*`.
+        /// If not set, it is parsed from the qualifier bytes with best effort.
+        /// However, due to different naming patterns, field name collisions could
+        /// happen, where parsing behavior is undefined.
+        #[prost(string, tag = "2")]
+        pub field_name: ::prost::alloc::string::String,
+        /// The encoding mode of the values when the type is not `STRING`.
+        /// Acceptable encoding values are:
+        ///
+        /// * `TEXT`: indicates values are alphanumeric text strings.
+        /// * `BINARY`: indicates values are encoded using `HBase Bytes.toBytes`
+        /// family of functions. This can be overridden for a specific column
+        /// by listing that column in `columns` and specifying an encoding for it.
+        #[prost(enumeration = "Encoding", tag = "3")]
+        pub encoding: i32,
+        /// The type of values in this column family.
+        /// The values are expected to be encoded using `HBase Bytes.toBytes`
+        /// function when the encoding value is set to `BINARY`.
+        #[prost(enumeration = "Type", tag = "4")]
+        pub r#type: i32,
+    }
+    /// The type of values in a Bigtable column or column family.
+    /// The values are expected to be encoded using
+    /// [HBase
+    /// Bytes.toBytes](<https://hbase.apache.org/apidocs/org/apache/hadoop/hbase/util/Bytes.html>)
+    /// function when the encoding value is set to `BINARY`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Type {
+        /// The type is unspecified.
+        Unspecified = 0,
+        /// String type.
+        String = 1,
+        /// Numerical type.
+        Number = 2,
+        /// Integer type.
+        Integer = 3,
+        /// Variable length integer type.
+        VarInteger = 4,
+        /// BigDecimal type.
+        BigNumeric = 5,
+        /// Boolean type.
+        Boolean = 6,
+        /// JSON type.
+        Json = 7,
+    }
+    /// The encoding mode of a Bigtable column or column family.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Encoding {
+        /// The encoding is unspecified.
+        Unspecified = 0,
+        /// Text encoding.
+        Text = 1,
+        /// Binary encoding.
+        Binary = 2,
+    }
+}
+/// The Cloud Bigtable source for importing data.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigtableSource {
+    /// The project ID that the Bigtable source is in with a length limit of 128
+    /// characters. If not specified, inherits the project ID from the parent
+    /// request.
+    #[prost(string, tag = "1")]
+    pub project_id: ::prost::alloc::string::String,
+    /// Required. The instance ID of the Cloud Bigtable that needs to be imported.
+    #[prost(string, tag = "2")]
+    pub instance_id: ::prost::alloc::string::String,
+    /// Required. The table ID of the Cloud Bigtable that needs to be imported.
+    #[prost(string, tag = "3")]
+    pub table_id: ::prost::alloc::string::String,
+    /// Required. Bigtable options that contains information needed when parsing
+    /// data into typed structures. For example, column type annotations.
+    #[prost(message, optional, tag = "4")]
+    pub bigtable_options: ::core::option::Option<BigtableOptions>,
+}
+/// Cloud FhirStore source import data from.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FhirStoreSource {
+    /// Required. The full resource name of the FHIR store to import data from, in
+    /// the format of
+    /// `projects/{project}/locations/{location}/datasets/{dataset}/fhirStores/{fhir_store}`.
+    #[prost(string, tag = "1")]
+    pub fhir_store: ::prost::alloc::string::String,
+    /// Intermediate Cloud Storage directory used for the import with a length
+    /// limit of 2,000 characters. Can be specified if one wants to have the
+    /// FhirStore export to a specific Cloud Storage directory.
+    #[prost(string, tag = "2")]
+    pub gcs_staging_dir: ::prost::alloc::string::String,
+}
+/// Cloud SQL source import data from.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudSqlSource {
+    /// The project ID that the Cloud SQL source is in with a length limit of 128
+    /// characters. If not specified, inherits the project ID from the parent
+    /// request.
+    #[prost(string, tag = "1")]
+    pub project_id: ::prost::alloc::string::String,
+    /// Required. The Cloud SQL instance to copy the data from with a length limit
+    /// of 256 characters.
+    #[prost(string, tag = "2")]
+    pub instance_id: ::prost::alloc::string::String,
+    /// Required. The Cloud SQL database to copy the data from with a length limit
+    /// of 256 characters.
+    #[prost(string, tag = "3")]
+    pub database_id: ::prost::alloc::string::String,
+    /// Required. The Cloud SQL table to copy the data from with a length limit of
+    /// 256 characters.
+    #[prost(string, tag = "4")]
+    pub table_id: ::prost::alloc::string::String,
+    /// Intermediate Cloud Storage directory used for the import with a length
+    /// limit of 2,000 characters. Can be specified if one wants to have the
+    /// Cloud SQL export to a specific Cloud Storage directory.
+    ///
+    /// Ensure that the Cloud SQL service account has the necessary Cloud
+    /// Storage Admin permissions to access the specified Cloud Storage directory.
+    #[prost(string, tag = "5")]
+    pub gcs_staging_dir: ::prost::alloc::string::String,
+    /// Option for serverless export. Enabling this option will incur additional
+    /// cost. More info can be found
+    /// \[here\](<https://cloud.google.com/sql/pricing#serverless>).
+    #[prost(bool, tag = "6")]
+    pub offload: bool,
+}
+/// Firestore source import data from.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FirestoreSource {
+    /// The project ID that the Cloud SQL source is in with a length limit of 128
+    /// characters. If not specified, inherits the project ID from the parent
+    /// request.
+    #[prost(string, tag = "1")]
+    pub project_id: ::prost::alloc::string::String,
+    /// Required. The Firestore database to copy the data from with a length limit
+    /// of 256 characters.
+    #[prost(string, tag = "2")]
+    pub database_id: ::prost::alloc::string::String,
+    /// Required. The Firestore collection (or entity) to copy the data from with a
+    /// length limit of 1,500 characters.
+    #[prost(string, tag = "3")]
+    pub collection_id: ::prost::alloc::string::String,
+    /// Intermediate Cloud Storage directory used for the import with a length
+    /// limit of 2,000 characters. Can be specified if one wants to have the
+    /// Firestore export to a specific Cloud Storage directory.
+    ///
+    /// Ensure that the Firestore service account has the necessary Cloud
+    /// Storage Admin permissions to access the specified Cloud Storage directory.
+    #[prost(string, tag = "4")]
+    pub gcs_staging_dir: ::prost::alloc::string::String,
+}
+/// Configuration of destination for Import related errors.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportErrorConfig {
+    /// Required. Errors destination.
+    #[prost(oneof = "import_error_config::Destination", tags = "1")]
+    pub destination: ::core::option::Option<import_error_config::Destination>,
+}
+/// Nested message and enum types in `ImportErrorConfig`.
+pub mod import_error_config {
+    /// Required. Errors destination.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Destination {
+        /// Cloud Storage prefix for import errors. This must be an empty,
+        /// existing Cloud Storage directory. Import errors are written to
+        /// sharded files in this directory, one per line, as a JSON-encoded
+        /// `google.rpc.Status` message.
+        #[prost(string, tag = "1")]
+        GcsPrefix(::prost::alloc::string::String),
+    }
+}
+/// Request message for the ImportUserEvents request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportUserEventsRequest {
+    /// Required. Parent DataStore resource name, of the form
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The desired location of errors incurred during the Import. Cannot be set
+    /// for inline user event imports.
+    #[prost(message, optional, tag = "5")]
+    pub error_config: ::core::option::Option<ImportErrorConfig>,
+    /// Required - The desired input source of the user event data.
+    #[prost(oneof = "import_user_events_request::Source", tags = "2, 3, 4")]
+    pub source: ::core::option::Option<import_user_events_request::Source>,
+}
+/// Nested message and enum types in `ImportUserEventsRequest`.
+pub mod import_user_events_request {
+    /// The inline source for the input config for ImportUserEvents method.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InlineSource {
+        /// Required. A list of user events to import. Recommended max of 10k items.
+        #[prost(message, repeated, tag = "1")]
+        pub user_events: ::prost::alloc::vec::Vec<super::UserEvent>,
+    }
+    /// Required - The desired input source of the user event data.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Source {
+        /// The Inline source for the input content for UserEvents.
+        #[prost(message, tag = "2")]
+        InlineSource(InlineSource),
+        /// Cloud Storage location for the input content.
+        #[prost(message, tag = "3")]
+        GcsSource(super::GcsSource),
+        /// BigQuery input source.
+        #[prost(message, tag = "4")]
+        BigquerySource(super::BigQuerySource),
+    }
+}
+/// Response of the ImportUserEventsRequest. If the long running
+/// operation was successful, then this message is returned by the
+/// google.longrunning.Operations.response field if the operation was successful.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportUserEventsResponse {
+    /// A sample of errors encountered while processing the request.
+    #[prost(message, repeated, tag = "1")]
+    pub error_samples: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
+    /// Echoes the destination for the complete errors if this field was set in
+    /// the request.
+    #[prost(message, optional, tag = "2")]
+    pub error_config: ::core::option::Option<ImportErrorConfig>,
+    /// Count of user events imported with complete existing Documents.
+    #[prost(int64, tag = "3")]
+    pub joined_events_count: i64,
+    /// Count of user events imported, but with Document information not found
+    /// in the existing Branch.
+    #[prost(int64, tag = "4")]
+    pub unjoined_events_count: i64,
+}
+/// Metadata related to the progress of the Import operation. This is
+/// returned by the google.longrunning.Operation.metadata field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportUserEventsMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Count of entries that were processed successfully.
+    #[prost(int64, tag = "3")]
+    pub success_count: i64,
+    /// Count of entries that encountered errors while processing.
+    #[prost(int64, tag = "4")]
+    pub failure_count: i64,
+}
+/// Metadata related to the progress of the ImportDocuments operation. This is
+/// returned by the google.longrunning.Operation.metadata field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportDocumentsMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Count of entries that were processed successfully.
+    #[prost(int64, tag = "3")]
+    pub success_count: i64,
+    /// Count of entries that encountered errors while processing.
+    #[prost(int64, tag = "4")]
+    pub failure_count: i64,
+    /// Total count of entries that were processed.
+    #[prost(int64, tag = "5")]
+    pub total_count: i64,
+}
+/// Request message for Import methods.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportDocumentsRequest {
+    /// Required. The parent branch resource name, such as
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/branches/{branch}`.
+    /// Requires create/update permission.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The desired location of errors incurred during the Import.
+    #[prost(message, optional, tag = "5")]
+    pub error_config: ::core::option::Option<ImportErrorConfig>,
+    /// The mode of reconciliation between existing documents and the documents to
+    /// be imported. Defaults to
+    /// \[ReconciliationMode.INCREMENTAL][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest.ReconciliationMode.INCREMENTAL\].
+    #[prost(
+        enumeration = "import_documents_request::ReconciliationMode",
+        tag = "6"
+    )]
+    pub reconciliation_mode: i32,
+    /// Indicates which fields in the provided imported documents to update. If
+    /// not set, the default is to update all fields.
+    #[prost(message, optional, tag = "7")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Whether to automatically generate IDs for the documents if absent.
+    ///
+    /// If set to `true`,
+    /// \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\]s are
+    /// automatically generated based on the hash of the payload, where IDs may not
+    /// be consistent during multiple imports. In which case
+    /// \[ReconciliationMode.FULL][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest.ReconciliationMode.FULL\]
+    /// is highly recommended to avoid duplicate contents. If unset or set to
+    /// `false`, \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\]s
+    /// have to be specified using
+    /// \[id_field][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest.id_field\],
+    /// otherwise, documents without IDs fail to be imported.
+    ///
+    /// Supported data sources:
+    ///
+    /// * \[GcsSource][google.cloud.discoveryengine.v1beta.GcsSource\].
+    /// \[GcsSource.data_schema][google.cloud.discoveryengine.v1beta.GcsSource.data_schema\]
+    /// must be `custom` or `csv`. Otherwise, an INVALID_ARGUMENT error is thrown.
+    /// * \[BigQuerySource][google.cloud.discoveryengine.v1beta.BigQuerySource\].
+    /// \[BigQuerySource.data_schema][google.cloud.discoveryengine.v1beta.BigQuerySource.data_schema\]
+    /// must be `custom` or `csv`. Otherwise, an INVALID_ARGUMENT error is thrown.
+    /// * \[SpannerSource][google.cloud.discoveryengine.v1beta.SpannerSource\].
+    /// * \[CloudSqlSource][google.cloud.discoveryengine.v1beta.CloudSqlSource\].
+    /// * \[FirestoreSource][google.cloud.discoveryengine.v1beta.FirestoreSource\].
+    /// * \[BigtableSource][google.cloud.discoveryengine.v1beta.BigtableSource\].
+    #[prost(bool, tag = "8")]
+    pub auto_generate_ids: bool,
+    /// The field indicates the ID field or column to be used as unique IDs of
+    /// the documents.
+    ///
+    /// For \[GcsSource][google.cloud.discoveryengine.v1beta.GcsSource\] it is the
+    /// key of the JSON field. For instance, `my_id` for JSON `{"my_id":
+    /// "some_uuid"}`. For others, it may be the column name of the table where the
+    /// unique ids are stored.
+    ///
+    /// The values of the JSON field or the table column are used as the
+    /// \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\]s. The JSON
+    /// field or the table column must be of string type, and the values must be
+    /// set as valid strings conform to
+    /// \[RFC-1034\](<https://tools.ietf.org/html/rfc1034>) with 1-63 characters.
+    /// Otherwise, documents without valid IDs fail to be imported.
+    ///
+    /// Only set this field when
+    /// \[auto_generate_ids][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest.auto_generate_ids\]
+    /// is unset or set as `false`. Otherwise, an INVALID_ARGUMENT error is thrown.
+    ///
+    /// If it is unset, a default value `_id` is used when importing from the
+    /// allowed data sources.
+    ///
+    /// Supported data sources:
+    ///
+    /// * \[GcsSource][google.cloud.discoveryengine.v1beta.GcsSource\].
+    /// \[GcsSource.data_schema][google.cloud.discoveryengine.v1beta.GcsSource.data_schema\]
+    /// must be `custom` or `csv`. Otherwise, an INVALID_ARGUMENT error is thrown.
+    /// * \[BigQuerySource][google.cloud.discoveryengine.v1beta.BigQuerySource\].
+    /// \[BigQuerySource.data_schema][google.cloud.discoveryengine.v1beta.BigQuerySource.data_schema\]
+    /// must be `custom` or `csv`. Otherwise, an INVALID_ARGUMENT error is thrown.
+    /// * \[SpannerSource][google.cloud.discoveryengine.v1beta.SpannerSource\].
+    /// * \[CloudSqlSource][google.cloud.discoveryengine.v1beta.CloudSqlSource\].
+    /// * \[FirestoreSource][google.cloud.discoveryengine.v1beta.FirestoreSource\].
+    /// * \[BigtableSource][google.cloud.discoveryengine.v1beta.BigtableSource\].
+    #[prost(string, tag = "9")]
+    pub id_field: ::prost::alloc::string::String,
+    /// Required. The source of the input.
+    #[prost(
+        oneof = "import_documents_request::Source",
+        tags = "2, 3, 4, 10, 11, 12, 13, 15"
+    )]
+    pub source: ::core::option::Option<import_documents_request::Source>,
+}
+/// Nested message and enum types in `ImportDocumentsRequest`.
+pub mod import_documents_request {
+    /// The inline source for the input config for ImportDocuments method.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InlineSource {
+        /// Required. A list of documents to update/create. Each document must have a
+        /// valid \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\].
+        /// Recommended max of 100 items.
+        #[prost(message, repeated, tag = "1")]
+        pub documents: ::prost::alloc::vec::Vec<super::Document>,
+    }
+    /// Indicates how imported documents are reconciled with the existing documents
+    /// created or imported before.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ReconciliationMode {
+        /// Defaults to `INCREMENTAL`.
+        Unspecified = 0,
+        /// Inserts new documents or updates existing documents.
+        Incremental = 1,
+        /// Calculates diff and replaces the entire document dataset. Existing
+        /// documents may be deleted if they are not present in the source location.
+        Full = 2,
+    }
+    /// Required. The source of the input.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Source {
+        /// The Inline source for the input content for documents.
+        #[prost(message, tag = "2")]
+        InlineSource(InlineSource),
+        /// Cloud Storage location for the input content.
+        #[prost(message, tag = "3")]
+        GcsSource(super::GcsSource),
+        /// BigQuery input source.
+        #[prost(message, tag = "4")]
+        BigquerySource(super::BigQuerySource),
+        /// FhirStore input source.
+        #[prost(message, tag = "10")]
+        FhirStoreSource(super::FhirStoreSource),
+        /// Spanner input source.
+        #[prost(message, tag = "11")]
+        SpannerSource(super::SpannerSource),
+        /// Cloud SQL input source.
+        #[prost(message, tag = "12")]
+        CloudSqlSource(super::CloudSqlSource),
+        /// Firestore input source.
+        #[prost(message, tag = "13")]
+        FirestoreSource(super::FirestoreSource),
+        /// Cloud Bigtable input source.
+        #[prost(message, tag = "15")]
+        BigtableSource(super::BigtableSource),
+    }
+}
+/// Response of the
+/// \[ImportDocumentsRequest][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest\].
+/// If the long running operation is done, then this message is returned by the
+/// google.longrunning.Operations.response field if the operation was successful.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportDocumentsResponse {
+    /// A sample of errors encountered while processing the request.
+    #[prost(message, repeated, tag = "1")]
+    pub error_samples: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
+    /// Echoes the destination for the complete errors in the request if set.
+    #[prost(message, optional, tag = "2")]
+    pub error_config: ::core::option::Option<ImportErrorConfig>,
+}
+/// Request message for
+/// \[CompletionService.ImportSuggestionDenyListEntries][google.cloud.discoveryengine.v1beta.CompletionService.ImportSuggestionDenyListEntries\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportSuggestionDenyListEntriesRequest {
+    /// Required. The parent data store resource name for which to import denylist
+    /// entries. Follows pattern projects/*/locations/*/collections/*/dataStores/*.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The source of the updated SuggestionDenyList.
+    #[prost(
+        oneof = "import_suggestion_deny_list_entries_request::Source",
+        tags = "2, 3"
+    )]
+    pub source: ::core::option::Option<import_suggestion_deny_list_entries_request::Source>,
+}
+/// Nested message and enum types in `ImportSuggestionDenyListEntriesRequest`.
+pub mod import_suggestion_deny_list_entries_request {
+    /// The inline source for SuggestionDenyListEntry.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InlineSource {
+        /// Required. A list of all denylist entries to import. Max of 1000 items.
+        #[prost(message, repeated, tag = "1")]
+        pub entries: ::prost::alloc::vec::Vec<super::SuggestionDenyListEntry>,
+    }
+    /// The source of the updated SuggestionDenyList.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Source {
+        /// The Inline source for the input content for suggestion deny list entries.
+        #[prost(message, tag = "2")]
+        InlineSource(InlineSource),
+        /// Cloud Storage location for the input content.
+        ///
+        /// Only 1 file can be specified that contains all entries to import.
+        /// Supported values `gcs_source.schema` for autocomplete suggestion deny
+        /// list entry imports:
+        ///
+        /// * `suggestion_deny_list` (default): One JSON \[SuggestionDenyListEntry\]
+        /// per line.
+        #[prost(message, tag = "3")]
+        GcsSource(super::GcsSource),
+    }
+}
+/// Response message for
+/// \[CompletionService.ImportSuggestionDenyListEntries][google.cloud.discoveryengine.v1beta.CompletionService.ImportSuggestionDenyListEntries\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportSuggestionDenyListEntriesResponse {
+    /// A sample of errors encountered while processing the request.
+    #[prost(message, repeated, tag = "1")]
+    pub error_samples: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
+    /// Count of deny list entries successfully imported.
+    #[prost(int64, tag = "2")]
+    pub imported_entries_count: i64,
+    /// Count of deny list entries that failed to be imported.
+    #[prost(int64, tag = "3")]
+    pub failed_entries_count: i64,
+}
+/// Metadata related to the progress of the ImportSuggestionDenyListEntries
+/// operation. This is returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportSuggestionDenyListEntriesMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[DocumentService.PurgeDocuments][google.cloud.discoveryengine.v1beta.DocumentService.PurgeDocuments\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PurgeDocumentsRequest {
+    /// Required. The parent resource name, such as
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/branches/{branch}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. Filter matching documents to purge. Only currently supported
+    /// value is
+    /// `*` (all items).
+    #[prost(string, tag = "2")]
+    pub filter: ::prost::alloc::string::String,
+    /// Actually performs the purge. If `force` is set to false, return the
+    /// expected purge count without deleting any documents.
+    #[prost(bool, tag = "3")]
+    pub force: bool,
+}
+/// Response message for
+/// \[DocumentService.PurgeDocuments][google.cloud.discoveryengine.v1beta.DocumentService.PurgeDocuments\]
+/// method. If the long running operation is successfully done, then this message
+/// is returned by the google.longrunning.Operations.response field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PurgeDocumentsResponse {
+    /// The total count of documents purged as a result of the operation.
+    #[prost(int64, tag = "1")]
+    pub purge_count: i64,
+    /// A sample of document names that will be deleted. Only populated if `force`
+    /// is set to false. A max of 100 names will be returned and the names are
+    /// chosen at random.
+    #[prost(string, repeated, tag = "2")]
+    pub purge_sample: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Metadata related to the progress of the PurgeDocuments operation.
+/// This will be returned by the google.longrunning.Operation.metadata field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PurgeDocumentsMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Count of entries that were deleted successfully.
+    #[prost(int64, tag = "3")]
+    pub success_count: i64,
+    /// Count of entries that encountered errors while processing.
+    #[prost(int64, tag = "4")]
+    pub failure_count: i64,
+    /// Count of entries that were ignored as entries were not found.
+    #[prost(int64, tag = "5")]
+    pub ignored_count: i64,
+}
+/// Request message for
+/// \[CompletionService.PurgeSuggestionDenyListEntries][google.cloud.discoveryengine.v1beta.CompletionService.PurgeSuggestionDenyListEntries\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PurgeSuggestionDenyListEntriesRequest {
+    /// Required. The parent data store resource name for which to import denylist
+    /// entries. Follows pattern projects/*/locations/*/collections/*/dataStores/*.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[CompletionService.PurgeSuggestionDenyListEntries][google.cloud.discoveryengine.v1beta.CompletionService.PurgeSuggestionDenyListEntries\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PurgeSuggestionDenyListEntriesResponse {
+    /// Number of suggestion deny list entries purged.
+    #[prost(int64, tag = "1")]
+    pub purge_count: i64,
+    /// A sample of errors encountered while processing the request.
+    #[prost(message, repeated, tag = "2")]
+    pub error_samples: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
+}
+/// Metadata related to the progress of the PurgeSuggestionDenyListEntries
+/// operation. This is returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PurgeSuggestionDenyListEntriesMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Request message for
 /// \[CompletionService.CompleteQuery][google.cloud.discoveryengine.v1beta.CompletionService.CompleteQuery\]
@@ -120,8 +1932,9 @@ pub struct CompleteQueryRequest {
     /// 128 characters.
     #[prost(string, tag = "2")]
     pub query: ::prost::alloc::string::String,
-    /// Selects data model of query suggestions for serving. Currently supported
-    /// values:
+    /// Specifies the autocomplete data model. This overrides any model specified
+    /// in the Configuration > Autocomplete section of the Cloud console. Currently
+    /// supported values:
     ///
     /// * `document` - Using suggestions generated from user-imported documents.
     /// * `search-history` - Using suggestions generated from the past history of
@@ -135,9 +1948,7 @@ pub struct CompleteQueryRequest {
     /// Default values:
     ///
     /// * `document` is the default model for regular dataStores.
-    /// * `search-history` is the default model for
-    /// \[IndustryVertical.SITE_SEARCH][google.cloud.discoveryengine.v1beta.IndustryVertical.SITE_SEARCH\]
-    /// dataStores.
+    /// * `search-history` is the default model for site search dataStores.
     #[prost(string, tag = "3")]
     pub query_model: ::prost::alloc::string::String,
     /// A unique identifier for tracking visitors. For example, this could be
@@ -156,6 +1967,12 @@ pub struct CompleteQueryRequest {
     /// characters. Otherwise, an `INVALID_ARGUMENT` error is returned.
     #[prost(string, tag = "4")]
     pub user_pseudo_id: ::prost::alloc::string::String,
+    /// Indicates if tail suggestions should be returned if there are no
+    /// suggestions that match the full query. Even if set to true, if there are
+    /// suggestions that match the full query, those are returned and no
+    /// tail suggestions are returned.
+    #[prost(bool, tag = "5")]
+    pub include_tail_suggestions: bool,
 }
 /// Response message for
 /// \[CompletionService.CompleteQuery][google.cloud.discoveryengine.v1beta.CompletionService.CompleteQuery\]
@@ -166,6 +1983,12 @@ pub struct CompleteQueryResponse {
     /// the first result is a top suggestion.
     #[prost(message, repeated, tag = "1")]
     pub query_suggestions: ::prost::alloc::vec::Vec<complete_query_response::QuerySuggestion>,
+    /// True if the returned suggestions are all tail suggestions.
+    ///
+    /// For tail matching to be triggered, include_tail_suggestions in the request
+    /// must be true and there must be no suggestions that match the full query.
+    #[prost(bool, tag = "2")]
+    pub tail_match_triggered: bool,
 }
 /// Nested message and enum types in `CompleteQueryResponse`.
 pub mod complete_query_response {
@@ -175,6 +1998,12 @@ pub mod complete_query_response {
         /// The suggestion for the query.
         #[prost(string, tag = "1")]
         pub suggestion: ::prost::alloc::string::String,
+        /// The unique document field paths that serve as the source of this
+        /// suggestion if it was generated from completable fields.
+        ///
+        /// This field is only populated for the document-completable model.
+        #[prost(string, repeated, tag = "2")]
+        pub completable_field_paths: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     }
 }
 #[doc = r" Generated client implementations."]
@@ -244,944 +2073,3110 @@ pub mod completion_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Imports all"]
+        #[doc = " [SuggestionDenyListEntry][google.cloud.discoveryengine.v1beta.SuggestionDenyListEntry]"]
+        #[doc = " for a DataStore."]
+        pub async fn import_suggestion_deny_list_entries(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ImportSuggestionDenyListEntriesRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.CompletionService/ImportSuggestionDenyListEntries") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Permanently deletes all"]
+        #[doc = " [SuggestionDenyListEntry][google.cloud.discoveryengine.v1beta.SuggestionDenyListEntry]"]
+        #[doc = " for a DataStore."]
+        pub async fn purge_suggestion_deny_list_entries(
+            &mut self,
+            request: impl tonic::IntoRequest<super::PurgeSuggestionDenyListEntriesRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.CompletionService/PurgeSuggestionDenyListEntries") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
-/// Document captures all raw metadata information of items to be recommended or
-/// searched.
+/// Defines circumstances to be checked before allowing a behavior
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Document {
-    /// Immutable. The full resource name of the document.
+pub struct Condition {
+    /// Search only
+    /// A list of terms to match the query on.
+    ///
+    /// Maximum of 10 query terms.
+    #[prost(message, repeated, tag = "2")]
+    pub query_terms: ::prost::alloc::vec::Vec<condition::QueryTerm>,
+    /// Range of time(s) specifying when condition is active.
+    ///
+    /// Maximum of 10 time ranges.
+    #[prost(message, repeated, tag = "3")]
+    pub active_time_range: ::prost::alloc::vec::Vec<condition::TimeRange>,
+}
+/// Nested message and enum types in `Condition`.
+pub mod condition {
+    /// Matcher for search request query
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QueryTerm {
+        /// The specific query value to match against
+        ///
+        /// Must be lowercase, must be UTF-8.
+        /// Can have at most 3 space separated terms if full_match is true.
+        /// Cannot be an empty string.
+        /// Maximum length of 5000 characters.
+        #[prost(string, tag = "1")]
+        pub value: ::prost::alloc::string::String,
+        /// Whether the search query needs to exactly match the query term.
+        #[prost(bool, tag = "2")]
+        pub full_match: bool,
+    }
+    /// Used for time-dependent conditions.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct TimeRange {
+        /// Start of time range.
+        ///
+        /// Range is inclusive.
+        #[prost(message, optional, tag = "1")]
+        pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+        /// End of time range.
+        ///
+        /// Range is inclusive.
+        /// Must be in the future.
+        #[prost(message, optional, tag = "2")]
+        pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    }
+}
+/// Defines a conditioned behavior to employ during serving.
+/// Must be attached to a
+/// \[ServingConfig][google.cloud.discoveryengine.v1beta.ServingConfig\] to be
+/// considered at serving time. Permitted actions dependent on `SolutionType`.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Control {
+    /// Immutable. Fully qualified name
+    /// `projects/*/locations/global/dataStore/*/controls/*`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Human readable name. The identifier used in UI views.
+    ///
+    /// Must be UTF-8 encoded string. Length limit is 128 characters.
+    /// Otherwise an INVALID ARGUMENT error is thrown.
+    #[prost(string, tag = "2")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Output only. List of all
+    /// \[ServingConfig][google.cloud.discoveryengine.v1beta.ServingConfig\] ids this
+    /// control is attached to. May take up to 10 minutes to update after changes.
+    #[prost(string, repeated, tag = "3")]
+    pub associated_serving_config_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Required. Immutable. What solution the control belongs to.
+    ///
+    /// Must be compatible with vertical of resource.
+    /// Otherwise an INVALID ARGUMENT error is thrown.
+    #[prost(enumeration = "SolutionType", tag = "4")]
+    pub solution_type: i32,
+    /// Specifies the use case for the control.
+    /// Affects what condition fields can be set.
+    /// Only applies to
+    /// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+    /// Currently only allow one use case per control.
+    /// Must be set when solution_type is
+    /// \[SolutionType.SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+    #[prost(enumeration = "SearchUseCase", repeated, tag = "8")]
+    pub use_cases: ::prost::alloc::vec::Vec<i32>,
+    /// Determines when the associated action will trigger.
+    ///
+    /// Omit to always apply the action.
+    /// Currently only a single condition may be specified.
+    /// Otherwise an INVALID ARGUMENT error is thrown.
+    #[prost(message, repeated, tag = "5")]
+    pub conditions: ::prost::alloc::vec::Vec<Condition>,
+    /// Actions are restricted by Vertical and Solution
+    ///
+    /// Required.
+    #[prost(oneof = "control::Action", tags = "6, 7, 9, 10")]
+    pub action: ::core::option::Option<control::Action>,
+}
+/// Nested message and enum types in `Control`.
+pub mod control {
+    /// Adjusts order of products in returned list.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BoostAction {
+        /// Required. Strength of the boost, which should be in [-1, 1]. Negative
+        /// boost means demotion. Default is 0.0 (No-op).
+        #[prost(float, tag = "1")]
+        pub boost: f32,
+        /// Required. Specifies which products to apply the boost to.
+        ///
+        /// If no filter is provided all products will be boosted (No-op).
+        /// Syntax documentation:
+        /// <https://cloud.google.com/retail/docs/filter-and-order>
+        /// Maximum length is 5000 characters.
+        /// Otherwise an INVALID ARGUMENT error is thrown.
+        #[prost(string, tag = "2")]
+        pub filter: ::prost::alloc::string::String,
+        /// Required. Specifies which data store's documents can be boosted by this
+        /// control. Full data store name e.g.
+        /// projects/123/locations/global/collections/default_collection/dataStores/default_data_store
+        #[prost(string, tag = "3")]
+        pub data_store: ::prost::alloc::string::String,
+    }
+    /// Specified which products may be included in results.
+    /// Uses same filter as boost.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FilterAction {
+        /// Required. A filter to apply on the matching condition results.
+        ///
+        /// Required
+        /// Syntax documentation:
+        /// <https://cloud.google.com/retail/docs/filter-and-order>
+        /// Maximum length is 5000 characters. Otherwise an INVALID
+        /// ARGUMENT error is thrown.
+        #[prost(string, tag = "1")]
+        pub filter: ::prost::alloc::string::String,
+        /// Required. Specifies which data store's documents can be filtered by this
+        /// control. Full data store name e.g.
+        /// projects/123/locations/global/collections/default_collection/dataStores/default_data_store
+        #[prost(string, tag = "2")]
+        pub data_store: ::prost::alloc::string::String,
+    }
+    /// Redirects a shopper to the provided URI.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct RedirectAction {
+        /// Required. The URI to which the shopper will be redirected.
+        ///
+        /// Required.
+        /// URI must have length equal or less than 2000 characters.
+        /// Otherwise an INVALID ARGUMENT error is thrown.
+        #[prost(string, tag = "1")]
+        pub redirect_uri: ::prost::alloc::string::String,
+    }
+    /// Creates a set of terms that will act as synonyms of one another.
+    ///
+    /// Example: "happy" will also be considered as "glad", "glad" will also be
+    /// considered as "happy".
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SynonymsAction {
+        /// Defines a set of synonyms.
+        /// Can specify up to 100 synonyms.
+        /// Must specify at least 2 synonyms. Otherwise an INVALID ARGUMENT error is
+        /// thrown.
+        #[prost(string, repeated, tag = "1")]
+        pub synonyms: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+    /// Actions are restricted by Vertical and Solution
+    ///
+    /// Required.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Action {
+        /// Defines a boost-type control
+        #[prost(message, tag = "6")]
+        BoostAction(BoostAction),
+        /// Defines a filter-type control
+        /// Currently not supported by Recommendation
+        #[prost(message, tag = "7")]
+        FilterAction(FilterAction),
+        /// Defines a redirect-type control.
+        #[prost(message, tag = "9")]
+        RedirectAction(RedirectAction),
+        /// Treats a group of terms as synonyms of one another.
+        #[prost(message, tag = "10")]
+        SynonymsAction(SynonymsAction),
+    }
+}
+/// Request for CreateControl method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateControlRequest {
+    /// Required. Full resource name of parent data store. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/dataStores/{data_store_id}`
+    /// or
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/engines/{engine_id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The Control to create.
+    #[prost(message, optional, tag = "2")]
+    pub control: ::core::option::Option<Control>,
+    /// Required. The ID to use for the Control, which will become the final
+    /// component of the Control's resource name.
+    ///
+    /// This value must be within 1-63 characters.
+    /// Valid characters are /\[a-z][0-9\]-_/.
+    #[prost(string, tag = "3")]
+    pub control_id: ::prost::alloc::string::String,
+}
+/// Request for UpdateControl method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateControlRequest {
+    /// Required. The Control to update.
+    #[prost(message, optional, tag = "1")]
+    pub control: ::core::option::Option<Control>,
+    /// Optional. Indicates which fields in the provided
+    /// \[Control][google.cloud.discoveryengine.v1beta.Control\] to update. The
+    /// following are NOT supported:
+    ///
+    /// * \[Control.name][google.cloud.discoveryengine.v1beta.Control.name\]
+    /// * \[Control.solution_type][google.cloud.discoveryengine.v1beta.Control.solution_type\]
+    ///
+    /// If not set or empty, all supported fields are updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request for DeleteControl method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteControlRequest {
+    /// Required. The resource name of the Control to delete. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/dataStores/{data_store_id}/controls/{control_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for GetControl method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetControlRequest {
+    /// Required. The resource name of the Control to get. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/dataStores/{data_store_id}/controls/{control_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for ListControls method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListControlsRequest {
+    /// Required. The data store resource name. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/dataStores/{data_store_id}`
+    /// or
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/engines/{engine_id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Maximum number of results to return. If unspecified, defaults
+    /// to 50. Max allowed value is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token, received from a previous `ListControls` call.
+    /// Provide this to retrieve the subsequent page.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. A filter to apply on the list results. Supported features:
+    ///
+    /// * List all the products under the parent branch if
+    /// \[filter][google.cloud.discoveryengine.v1beta.ListControlsRequest.filter\] is
+    /// unset. Currently this field is unsupported.
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Response for ListControls method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListControlsResponse {
+    /// All the Controls for a given data store.
+    #[prost(message, repeated, tag = "1")]
+    pub controls: ::prost::alloc::vec::Vec<Control>,
+    /// Pagination token, if not returned indicates the last page.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+#[doc = r" Generated client implementations."]
+pub mod control_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for performing CRUD operations on Controls."]
+    #[doc = " Controls allow for custom logic to be implemented in the serving path."]
+    #[doc = " Controls need to be attached to a Serving Config to be considered during a"]
+    #[doc = " request."]
+    #[derive(Debug, Clone)]
+    pub struct ControlServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> ControlServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ControlServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ControlServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a Control."]
+        #[doc = ""]
+        #[doc = " By default 1000 controls are allowed for a data store."]
+        #[doc = " A request can be submitted to adjust this limit."]
+        #[doc = " If the [Control][google.cloud.discoveryengine.v1beta.Control] to create"]
+        #[doc = " already exists, an ALREADY_EXISTS error is returned."]
+        pub async fn create_control(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateControlRequest>,
+        ) -> Result<tonic::Response<super::Control>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ControlService/CreateControl",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a Control."]
+        #[doc = ""]
+        #[doc = " If the [Control][google.cloud.discoveryengine.v1beta.Control] to delete"]
+        #[doc = " does not exist, a NOT_FOUND error is returned."]
+        pub async fn delete_control(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteControlRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ControlService/DeleteControl",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a Control."]
+        #[doc = ""]
+        #[doc = " [Control][google.cloud.discoveryengine.v1beta.Control] action type cannot"]
+        #[doc = " be changed. If the [Control][google.cloud.discoveryengine.v1beta.Control]"]
+        #[doc = " to update does not exist, a NOT_FOUND error is returned."]
+        pub async fn update_control(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateControlRequest>,
+        ) -> Result<tonic::Response<super::Control>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ControlService/UpdateControl",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a Control."]
+        pub async fn get_control(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetControlRequest>,
+        ) -> Result<tonic::Response<super::Control>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ControlService/GetControl",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all Controls by their parent"]
+        #[doc = " [DataStore][google.cloud.discoveryengine.v1beta.DataStore]."]
+        pub async fn list_controls(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListControlsRequest>,
+        ) -> Result<tonic::Response<super::ListControlsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ControlService/ListControls",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Request message for
+/// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchRequest {
+    /// Required. The resource name of the Search serving config, such as
+    /// `projects/*/locations/global/collections/default_collection/engines/*/servingConfigs/default_serving_config`,
+    /// or
+    /// `projects/*/locations/global/collections/default_collection/dataStores/default_data_store/servingConfigs/default_serving_config`.
+    /// This field is used to identify the serving configuration name, set
+    /// of models used to make the search.
+    #[prost(string, tag = "1")]
+    pub serving_config: ::prost::alloc::string::String,
+    /// The branch resource name, such as
+    /// `projects/*/locations/global/collections/default_collection/dataStores/default_data_store/branches/0`.
+    ///
+    /// Use `default_branch` as the branch ID or leave this field empty, to search
+    /// documents under the default branch.
+    #[prost(string, tag = "2")]
+    pub branch: ::prost::alloc::string::String,
+    /// Raw search query.
+    #[prost(string, tag = "3")]
+    pub query: ::prost::alloc::string::String,
+    /// Raw image query.
+    #[prost(message, optional, tag = "19")]
+    pub image_query: ::core::option::Option<search_request::ImageQuery>,
+    /// Maximum number of \[Document][google.cloud.discoveryengine.v1beta.Document\]s
+    /// to return. The maximum allowed value depends on the data type. Values above
+    /// the maximum value are coerced to the maximum value.
+    ///
+    /// * Websites with basic indexing: Default `10`, Maximum `25`.
+    /// * Websites with advanced indexing: Default `25`, Maximum `50`.
+    /// * Other: Default `50`, Maximum `100`.
+    ///
+    /// If this field is negative, an  `INVALID_ARGUMENT` is returned.
+    #[prost(int32, tag = "4")]
+    pub page_size: i32,
+    /// A page token received from a previous
+    /// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
+    /// call. Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
+    /// must match the call that provided the page token. Otherwise, an
+    ///  `INVALID_ARGUMENT`  error is returned.
+    #[prost(string, tag = "5")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A 0-indexed integer that specifies the current offset (that is, starting
+    /// result location, amongst the
+    /// \[Document][google.cloud.discoveryengine.v1beta.Document\]s deemed by the API
+    /// as relevant) in search results. This field is only considered if
+    /// \[page_token][google.cloud.discoveryengine.v1beta.SearchRequest.page_token\]
+    /// is unset.
+    ///
+    /// If this field is negative, an  `INVALID_ARGUMENT`  is returned.
+    #[prost(int32, tag = "6")]
+    pub offset: i32,
+    /// Specs defining dataStores to filter on in a search call and configurations
+    /// for those dataStores. This is only considered for engines with multiple
+    /// dataStores use case. For single dataStore within an engine, they should
+    /// use the specs at the top level.
+    #[prost(message, repeated, tag = "32")]
+    pub data_store_specs: ::prost::alloc::vec::Vec<search_request::DataStoreSpec>,
+    /// The filter syntax consists of an expression language for constructing a
+    /// predicate from one or more fields of the documents being filtered. Filter
+    /// expression is case-sensitive.
+    ///
+    /// If this field is unrecognizable, an  `INVALID_ARGUMENT`  is returned.
+    ///
+    /// Filtering in Vertex AI Search is done by mapping the LHS filter key to a
+    /// key property defined in the Vertex AI Search backend -- this mapping is
+    /// defined by the customer in their schema. For example a media customer might
+    /// have a field 'name' in their schema. In this case the filter would look
+    /// like this: filter --> name:'ANY("king kong")'
+    ///
+    /// For more information about filtering including syntax and filter
+    /// operators, see
+    /// \[Filter\](<https://cloud.google.com/generative-ai-app-builder/docs/filter-search-metadata>)
+    #[prost(string, tag = "7")]
+    pub filter: ::prost::alloc::string::String,
+    /// The default filter that is applied when a user performs a search without
+    /// checking any filters on the search page.
+    ///
+    /// The filter applied to every search request when quality improvement such as
+    /// query expansion is needed. In the case a query does not have a sufficient
+    /// amount of results this filter will be used to determine whether or not to
+    /// enable the query expansion flow. The original filter will still be used for
+    /// the query expanded search.
+    /// This field is strongly recommended to achieve high search quality.
+    ///
+    /// For more information about filter syntax, see
+    /// \[SearchRequest.filter][google.cloud.discoveryengine.v1beta.SearchRequest.filter\].
+    #[prost(string, tag = "29")]
+    pub canonical_filter: ::prost::alloc::string::String,
+    /// The order in which documents are returned. Documents can be ordered by
+    /// a field in an \[Document][google.cloud.discoveryengine.v1beta.Document\]
+    /// object. Leave it unset if ordered by relevance. `order_by` expression is
+    /// case-sensitive.
+    ///
+    /// For more information on ordering for retail search, see
+    /// \[Ordering\](<https://cloud.google.com/retail/docs/filter-and-order#order>)
+    ///
+    /// If this field is unrecognizable, an `INVALID_ARGUMENT` is returned.
+    #[prost(string, tag = "8")]
+    pub order_by: ::prost::alloc::string::String,
+    /// Information about the end user.
+    /// Highly recommended for analytics.
+    /// \[UserInfo.user_agent][google.cloud.discoveryengine.v1beta.UserInfo.user_agent\]
+    /// is used to deduce `device_type` for analytics.
+    #[prost(message, optional, tag = "21")]
+    pub user_info: ::core::option::Option<UserInfo>,
+    /// Facet specifications for faceted search. If empty, no facets are returned.
+    ///
+    /// A maximum of 100 values are allowed. Otherwise, an  `INVALID_ARGUMENT`
+    /// error is returned.
+    #[prost(message, repeated, tag = "9")]
+    pub facet_specs: ::prost::alloc::vec::Vec<search_request::FacetSpec>,
+    /// Boost specification to boost certain documents.
+    /// For more information on boosting, see
+    /// \[Boosting\](<https://cloud.google.com/generative-ai-app-builder/docs/boost-search-results>)
+    #[prost(message, optional, tag = "10")]
+    pub boost_spec: ::core::option::Option<search_request::BoostSpec>,
+    /// Additional search parameters.
+    ///
+    /// For public website search only, supported values are:
+    ///
+    /// * `user_country_code`: string. Default empty. If set to non-empty, results
+    ///    are restricted or boosted based on the location provided.
+    ///    For example, `user_country_code: "au"`
+    ///
+    ///    For available codes see [Country
+    ///    Codes](<https://developers.google.com/custom-search/docs/json_api_reference#countryCodes>)
+    ///
+    /// * `search_type`: double. Default empty. Enables non-webpage searching
+    ///    depending on the value. The only valid non-default value is 1,
+    ///    which enables image searching.
+    ///    For example, `search_type: 1`
+    #[prost(map = "string, message", tag = "11")]
+    pub params: ::std::collections::HashMap<::prost::alloc::string::String, ::prost_types::Value>,
+    /// The query expansion specification that specifies the conditions under which
+    /// query expansion occurs.
+    #[prost(message, optional, tag = "13")]
+    pub query_expansion_spec: ::core::option::Option<search_request::QueryExpansionSpec>,
+    /// The spell correction specification that specifies the mode under
+    /// which spell correction takes effect.
+    #[prost(message, optional, tag = "14")]
+    pub spell_correction_spec: ::core::option::Option<search_request::SpellCorrectionSpec>,
+    /// A unique identifier for tracking visitors. For example, this could be
+    /// implemented with an HTTP cookie, which should be able to uniquely identify
+    /// a visitor on a single device. This unique identifier should not change if
+    /// the visitor logs in or out of the website.
+    ///
+    /// This field should NOT have a fixed value such as `unknown_visitor`.
+    ///
+    /// This should be the same identifier as
+    /// \[UserEvent.user_pseudo_id][google.cloud.discoveryengine.v1beta.UserEvent.user_pseudo_id\]
+    /// and
+    /// \[CompleteQueryRequest.user_pseudo_id][google.cloud.discoveryengine.v1beta.CompleteQueryRequest.user_pseudo_id\]
+    ///
+    /// The field must be a UTF-8 encoded string with a length limit of 128
+    /// characters. Otherwise, an  `INVALID_ARGUMENT`  error is returned.
+    #[prost(string, tag = "15")]
+    pub user_pseudo_id: ::prost::alloc::string::String,
+    /// A specification for configuring the behavior of content search.
+    #[prost(message, optional, tag = "24")]
+    pub content_search_spec: ::core::option::Option<search_request::ContentSearchSpec>,
+    /// Uses the provided embedding to do additional semantic document retrieval.
+    /// The retrieval is based on the dot product of
+    /// \[SearchRequest.EmbeddingSpec.EmbeddingVector.vector][google.cloud.discoveryengine.v1beta.SearchRequest.EmbeddingSpec.EmbeddingVector.vector\]
+    /// and the document embedding that is provided in
+    /// \[SearchRequest.EmbeddingSpec.EmbeddingVector.field_path][google.cloud.discoveryengine.v1beta.SearchRequest.EmbeddingSpec.EmbeddingVector.field_path\].
+    ///
+    /// If
+    /// \[SearchRequest.EmbeddingSpec.EmbeddingVector.field_path][google.cloud.discoveryengine.v1beta.SearchRequest.EmbeddingSpec.EmbeddingVector.field_path\]
+    /// is not provided, it will use
+    /// \[ServingConfig.EmbeddingConfig.field_path][google.cloud.discoveryengine.v1beta.ServingConfig.embedding_config\].
+    #[prost(message, optional, tag = "23")]
+    pub embedding_spec: ::core::option::Option<search_request::EmbeddingSpec>,
+    /// The ranking expression controls the customized ranking on retrieval
+    /// documents. This overrides
+    /// \[ServingConfig.ranking_expression][google.cloud.discoveryengine.v1beta.ServingConfig.ranking_expression\].
+    /// The ranking expression is a single function or multiple functions that are
+    /// joint by "+".
+    ///   * ranking_expression = function, { " + ", function };
+    /// Supported functions:
+    ///   * double * relevance_score
+    ///   * double * dotProduct(embedding_field_path)
+    /// Function variables:
+    ///   `relevance_score`: pre-defined keywords, used for measure relevance
+    ///   between query and document.
+    ///   `embedding_field_path`: the document embedding field
+    ///   used with query embedding vector.
+    ///   `dotProduct`: embedding function between embedding_field_path and query
+    ///   embedding vector.
+    ///
+    ///  Example ranking expression:
+    ///    If document has an embedding field doc_embedding, the ranking expression
+    ///    could be `0.5 * relevance_score + 0.3 * dotProduct(doc_embedding)`.
+    #[prost(string, tag = "26")]
+    pub ranking_expression: ::prost::alloc::string::String,
+    /// Whether to turn on safe search. This is only supported for
+    /// website search.
+    #[prost(bool, tag = "20")]
+    pub safe_search: bool,
+    /// The user labels applied to a resource must meet the following requirements:
+    ///
+    /// * Each resource can have multiple labels, up to a maximum of 64.
+    /// * Each label must be a key-value pair.
+    /// * Keys have a minimum length of 1 character and a maximum length of 63
+    ///   characters and cannot be empty. Values can be empty and have a maximum
+    ///   length of 63 characters.
+    /// * Keys and values can contain only lowercase letters, numeric characters,
+    ///   underscores, and dashes. All characters must use UTF-8 encoding, and
+    ///   international characters are allowed.
+    /// * The key portion of a label must be unique. However, you can use the same
+    ///   key with multiple resources.
+    /// * Keys must start with a lowercase letter or international character.
+    ///
+    /// See [Google Cloud
+    /// Document](<https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements>)
+    /// for more details.
+    #[prost(map = "string, string", tag = "22")]
+    pub user_labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// Nested message and enum types in `SearchRequest`.
+pub mod search_request {
+    /// Specifies the image query input.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ImageQuery {
+        #[prost(oneof = "image_query::Image", tags = "1")]
+        pub image: ::core::option::Option<image_query::Image>,
+    }
+    /// Nested message and enum types in `ImageQuery`.
+    pub mod image_query {
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Image {
+            /// Base64 encoded image bytes. Supported image formats: JPEG, PNG, and
+            /// BMP.
+            #[prost(string, tag = "1")]
+            ImageBytes(::prost::alloc::string::String),
+        }
+    }
+    /// A struct to define data stores to filter on in a search call and
+    /// configurations for those data stores. A maximum of 1 DataStoreSpec per
+    /// data_store is allowed. Otherwise, an `INVALID_ARGUMENT` error is returned.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DataStoreSpec {
+        /// Required. Full resource name of
+        /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], such as
+        /// `projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}`.
+        #[prost(string, tag = "1")]
+        pub data_store: ::prost::alloc::string::String,
+    }
+    /// A facet specification to perform faceted search.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FacetSpec {
+        /// Required. The facet key specification.
+        #[prost(message, optional, tag = "1")]
+        pub facet_key: ::core::option::Option<facet_spec::FacetKey>,
+        /// Maximum facet values that are returned for this facet. If
+        /// unspecified, defaults to 20. The maximum allowed value is 300. Values
+        /// above 300 are coerced to 300.
+        ///
+        /// If this field is negative, an  `INVALID_ARGUMENT`  is returned.
+        #[prost(int32, tag = "2")]
+        pub limit: i32,
+        /// List of keys to exclude when faceting.
+        ///
+        ///
+        /// By default,
+        /// \[FacetKey.key][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.key\]
+        /// is not excluded from the filter unless it is listed in this field.
+        ///
+        /// Listing a facet key in this field allows its values to appear as facet
+        /// results, even when they are filtered out of search results. Using this
+        /// field does not affect what search results are returned.
+        ///
+        /// For example, suppose there are 100 documents with the color facet "Red"
+        /// and 200 documents with the color facet "Blue". A query containing the
+        /// filter "color:ANY("Red")" and having "color" as
+        /// \[FacetKey.key][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.key\]
+        /// would by default return only "Red" documents in the search results, and
+        /// also return "Red" with count 100 as the only color facet. Although there
+        /// are also blue documents available, "Blue" would not be shown as an
+        /// available facet value.
+        ///
+        /// If "color" is listed in "excludedFilterKeys", then the query returns the
+        /// facet values "Red" with count 100 and "Blue" with count 200, because the
+        /// "color" key is now excluded from the filter. Because this field doesn't
+        /// affect search results, the search results are still correctly filtered to
+        /// return only "Red" documents.
+        ///
+        /// A maximum of 100 values are allowed. Otherwise, an  `INVALID_ARGUMENT`
+        /// error is returned.
+        #[prost(string, repeated, tag = "3")]
+        pub excluded_filter_keys: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Enables dynamic position for this facet. If set to true, the position of
+        /// this facet among all facets in the response is determined automatically.
+        /// If dynamic facets are enabled, it is ordered together.
+        /// If set to false, the position of this facet in the
+        /// response is the same as in the request, and it is ranked before
+        /// the facets with dynamic position enable and all dynamic facets.
+        ///
+        /// For example, you may always want to have rating facet returned in
+        /// the response, but it's not necessarily to always display the rating facet
+        /// at the top. In that case, you can set enable_dynamic_position to true so
+        /// that the position of rating facet in response is determined
+        /// automatically.
+        ///
+        /// Another example, assuming you have the following facets in the request:
+        ///
+        /// * "rating", enable_dynamic_position = true
+        ///
+        /// * "price", enable_dynamic_position = false
+        ///
+        /// * "brands", enable_dynamic_position = false
+        ///
+        /// And also you have a dynamic facets enabled, which generates a facet
+        /// `gender`. Then the final order of the facets in the response can be
+        /// ("price", "brands", "rating", "gender") or ("price", "brands", "gender",
+        /// "rating") depends on how API orders "gender" and "rating" facets.
+        /// However, notice that "price" and "brands" are always
+        /// ranked at first and second position because their enable_dynamic_position
+        /// is false.
+        #[prost(bool, tag = "4")]
+        pub enable_dynamic_position: bool,
+    }
+    /// Nested message and enum types in `FacetSpec`.
+    pub mod facet_spec {
+        /// Specifies how a facet is computed.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct FacetKey {
+            /// Required. Supported textual and numerical facet keys in
+            /// \[Document][google.cloud.discoveryengine.v1beta.Document\] object, over
+            /// which the facet values are computed. Facet key is case-sensitive.
+            #[prost(string, tag = "1")]
+            pub key: ::prost::alloc::string::String,
+            /// Set only if values should be bucketed into intervals. Must be set
+            /// for facets with numerical values. Must not be set for facet with text
+            /// values. Maximum number of intervals is 30.
+            #[prost(message, repeated, tag = "2")]
+            pub intervals: ::prost::alloc::vec::Vec<super::super::Interval>,
+            /// Only get facet for the given restricted values. Only supported on
+            /// textual fields. For example, suppose "category" has three values
+            /// "Action > 2022", "Action > 2021" and "Sci-Fi > 2022". If set
+            /// "restricted_values" to "Action > 2022", the "category" facet only
+            /// contains "Action > 2022". Only supported on textual fields. Maximum
+            /// is 10.
+            #[prost(string, repeated, tag = "3")]
+            pub restricted_values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// Only get facet values that start with the given string prefix. For
+            /// example, suppose "category" has three values "Action > 2022",
+            /// "Action > 2021" and "Sci-Fi > 2022". If set "prefixes" to "Action", the
+            /// "category" facet only contains "Action > 2022" and "Action > 2021".
+            /// Only supported on textual fields. Maximum is 10.
+            #[prost(string, repeated, tag = "4")]
+            pub prefixes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// Only get facet values that contain the given strings. For example,
+            /// suppose "category" has three values "Action > 2022",
+            /// "Action > 2021" and "Sci-Fi > 2022". If set "contains" to "2022", the
+            /// "category" facet only contains "Action > 2022" and "Sci-Fi > 2022".
+            /// Only supported on textual fields. Maximum is 10.
+            #[prost(string, repeated, tag = "5")]
+            pub contains: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// True to make facet keys case insensitive when getting faceting
+            /// values with prefixes or contains; false otherwise.
+            #[prost(bool, tag = "6")]
+            pub case_insensitive: bool,
+            /// The order in which documents are returned.
+            ///
+            /// Allowed values are:
+            ///
+            /// * "count desc", which means order by
+            /// \[SearchResponse.Facet.values.count][google.cloud.discoveryengine.v1beta.SearchResponse.Facet.FacetValue.count\]
+            /// descending.
+            ///
+            /// * "value desc", which means order by
+            /// \[SearchResponse.Facet.values.value][google.cloud.discoveryengine.v1beta.SearchResponse.Facet.FacetValue.value\]
+            /// descending.
+            ///   Only applies to textual facets.
+            ///
+            /// If not set, textual values are sorted in [natural
+            /// order](<https://en.wikipedia.org/wiki/Natural_sort_order>); numerical
+            /// intervals are sorted in the order given by
+            /// \[FacetSpec.FacetKey.intervals][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.intervals\].
+            #[prost(string, tag = "7")]
+            pub order_by: ::prost::alloc::string::String,
+        }
+    }
+    /// Boost specification to boost certain documents.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct BoostSpec {
+        /// Condition boost specifications. If a document matches multiple conditions
+        /// in the specifictions, boost scores from these specifications are all
+        /// applied and combined in a non-linear way. Maximum number of
+        /// specifications is 20.
+        #[prost(message, repeated, tag = "1")]
+        pub condition_boost_specs: ::prost::alloc::vec::Vec<boost_spec::ConditionBoostSpec>,
+    }
+    /// Nested message and enum types in `BoostSpec`.
+    pub mod boost_spec {
+        /// Boost applies to documents which match a condition.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct ConditionBoostSpec {
+            /// An expression which specifies a boost condition. The syntax and
+            /// supported fields are the same as a filter expression. See
+            /// \[SearchRequest.filter][google.cloud.discoveryengine.v1beta.SearchRequest.filter\]
+            /// for detail syntax and limitations.
+            ///
+            /// Examples:
+            ///
+            /// * To boost documents with document ID "doc_1" or "doc_2", and
+            /// color "Red" or "Blue":
+            /// `(document_id: ANY("doc_1", "doc_2")) AND (color: ANY("Red", "Blue"))`
+            #[prost(string, tag = "1")]
+            pub condition: ::prost::alloc::string::String,
+            /// Strength of the condition boost, which should be in [-1, 1]. Negative
+            /// boost means demotion. Default is 0.0.
+            ///
+            /// Setting to 1.0 gives the document a big promotion. However, it does
+            /// not necessarily mean that the boosted document will be the top result
+            /// at all times, nor that other documents will be excluded. Results
+            /// could still be shown even when none of them matches the condition.
+            /// And results that are significantly more relevant to the search query
+            /// can still trump your heavily favored but irrelevant documents.
+            ///
+            /// Setting to -1.0 gives the document a big demotion. However, results
+            /// that are deeply relevant might still be shown. The document will have
+            /// an upstream battle to get a fairly high ranking, but it is not
+            /// blocked out completely.
+            ///
+            /// Setting to 0.0 means no boost applied. The boosting condition is
+            /// ignored. Only one of the (condition, boost) combination or the
+            /// boost_control_spec below are set. If both are set then the global boost
+            /// is ignored and the more fine-grained boost_control_spec is applied.
+            #[prost(float, tag = "2")]
+            pub boost: f32,
+            /// Complex specification for custom ranking based on customer defined
+            /// attribute value.
+            #[prost(message, optional, tag = "3")]
+            pub boost_control_spec: ::core::option::Option<condition_boost_spec::BoostControlSpec>,
+        }
+        /// Nested message and enum types in `ConditionBoostSpec`.
+        pub mod condition_boost_spec {
+            /// Specification for custom ranking based on customer specified attribute
+            /// value. It provides more controls for customized ranking than the simple
+            /// (condition, boost) combination above.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct BoostControlSpec {
+                /// The name of the field whose value will be used to determine the
+                /// boost amount.
+                #[prost(string, tag = "1")]
+                pub field_name: ::prost::alloc::string::String,
+                /// The attribute type to be used to determine the boost amount. The
+                /// attribute value can be derived from the field value of the specified
+                /// field_name. In the case of numerical it is straightforward i.e.
+                /// attribute_value = numerical_field_value. In the case of freshness
+                /// however, attribute_value = (time.now() - datetime_field_value).
+                #[prost(enumeration = "boost_control_spec::AttributeType", tag = "2")]
+                pub attribute_type: i32,
+                /// The interpolation type to be applied to connect the control points
+                /// listed below.
+                #[prost(enumeration = "boost_control_spec::InterpolationType", tag = "3")]
+                pub interpolation_type: i32,
+                /// The control points used to define the curve. The monotonic function
+                /// (defined through the interpolation_type above) passes through the
+                /// control points listed here.
+                #[prost(message, repeated, tag = "4")]
+                pub control_points: ::prost::alloc::vec::Vec<boost_control_spec::ControlPoint>,
+            }
+            /// Nested message and enum types in `BoostControlSpec`.
+            pub mod boost_control_spec {
+                /// The control points used to define the curve. The curve defined
+                /// through these control points can only be monotonically increasing
+                /// or decreasing(constant values are acceptable).
+                #[derive(Clone, PartialEq, ::prost::Message)]
+                pub struct ControlPoint {
+                    /// Can be one of:
+                    /// 1. The numerical field value.
+                    /// 2. The duration spec for freshness:
+                    /// The value must be formatted as an XSD `dayTimeDuration` value (a
+                    /// restricted subset of an ISO 8601 duration value). The pattern for
+                    /// this is: `\[nD][T[nH][nM][nS]\]`.
+                    #[prost(string, tag = "1")]
+                    pub attribute_value: ::prost::alloc::string::String,
+                    /// The value between -1 to 1 by which to boost the score if the
+                    /// attribute_value evaluates to the value specified above.
+                    #[prost(float, tag = "2")]
+                    pub boost_amount: f32,
+                }
+                /// The attribute(or function) for which the custom ranking is to be
+                /// applied.
+                #[derive(
+                    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+                )]
+                #[repr(i32)]
+                pub enum AttributeType {
+                    /// Unspecified AttributeType.
+                    Unspecified = 0,
+                    /// The value of the numerical field will be used to dynamically update
+                    /// the boost amount. In this case, the attribute_value (the x value)
+                    /// of the control point will be the actual value of the numerical
+                    /// field for which the boost_amount is specified.
+                    Numerical = 1,
+                    /// For the freshness use case the attribute value will be the duration
+                    /// between the current time and the date in the datetime field
+                    /// specified. The value must be formatted as an XSD `dayTimeDuration`
+                    /// value (a restricted subset of an ISO 8601 duration value). The
+                    /// pattern for this is: `\[nD][T[nH][nM][nS]\]`.
+                    /// For example, `5D`, `3DT12H30M`, `T24H`.
+                    Freshness = 2,
+                }
+                /// The interpolation type to be applied. Default will be linear
+                /// (Piecewise Linear).
+                #[derive(
+                    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+                )]
+                #[repr(i32)]
+                pub enum InterpolationType {
+                    /// Interpolation type is unspecified. In this case, it defaults to
+                    /// Linear.
+                    Unspecified = 0,
+                    /// Piecewise linear interpolation will be applied.
+                    Linear = 1,
+                }
+            }
+        }
+    }
+    /// Specification to determine under which conditions query expansion should
+    /// occur.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QueryExpansionSpec {
+        /// The condition under which query expansion should occur. Default to
+        /// \[Condition.DISABLED][google.cloud.discoveryengine.v1beta.SearchRequest.QueryExpansionSpec.Condition.DISABLED\].
+        #[prost(enumeration = "query_expansion_spec::Condition", tag = "1")]
+        pub condition: i32,
+        /// Whether to pin unexpanded results. If this field is set to true,
+        /// unexpanded products are always at the top of the search results, followed
+        /// by the expanded results.
+        #[prost(bool, tag = "2")]
+        pub pin_unexpanded_results: bool,
+    }
+    /// Nested message and enum types in `QueryExpansionSpec`.
+    pub mod query_expansion_spec {
+        /// Enum describing under which condition query expansion should occur.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum Condition {
+            /// Unspecified query expansion condition. In this case, server behavior
+            /// defaults to
+            /// \[Condition.DISABLED][google.cloud.discoveryengine.v1beta.SearchRequest.QueryExpansionSpec.Condition.DISABLED\].
+            Unspecified = 0,
+            /// Disabled query expansion. Only the exact search query is used, even if
+            /// \[SearchResponse.total_size][google.cloud.discoveryengine.v1beta.SearchResponse.total_size\]
+            /// is zero.
+            Disabled = 1,
+            /// Automatic query expansion built by the Search API.
+            Auto = 2,
+        }
+    }
+    /// The specification for query spell correction.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SpellCorrectionSpec {
+        /// The mode under which spell correction
+        /// replaces the original search query. Defaults to
+        /// \[Mode.AUTO][google.cloud.discoveryengine.v1beta.SearchRequest.SpellCorrectionSpec.Mode.AUTO\].
+        #[prost(enumeration = "spell_correction_spec::Mode", tag = "1")]
+        pub mode: i32,
+    }
+    /// Nested message and enum types in `SpellCorrectionSpec`.
+    pub mod spell_correction_spec {
+        /// Enum describing under which mode spell correction should occur.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum Mode {
+            /// Unspecified spell correction mode. In this case, server behavior
+            /// defaults to
+            /// \[Mode.AUTO][google.cloud.discoveryengine.v1beta.SearchRequest.SpellCorrectionSpec.Mode.AUTO\].
+            Unspecified = 0,
+            /// Search API tries to find a spelling suggestion. If a suggestion is
+            /// found, it is put in the
+            /// \[SearchResponse.corrected_query][google.cloud.discoveryengine.v1beta.SearchResponse.corrected_query\].
+            /// The spelling suggestion won't be used as the search query.
+            SuggestionOnly = 1,
+            /// Automatic spell correction built by the Search API. Search will
+            /// be based on the corrected query if found.
+            Auto = 2,
+        }
+    }
+    /// A specification for configuring the behavior of content search.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ContentSearchSpec {
+        /// If `snippetSpec` is not specified, snippets are not included in the
+        /// search response.
+        #[prost(message, optional, tag = "1")]
+        pub snippet_spec: ::core::option::Option<content_search_spec::SnippetSpec>,
+        /// If `summarySpec` is not specified, summaries are not included in the
+        /// search response.
+        #[prost(message, optional, tag = "2")]
+        pub summary_spec: ::core::option::Option<content_search_spec::SummarySpec>,
+        /// If there is no extractive_content_spec provided, there will be no
+        /// extractive answer in the search response.
+        #[prost(message, optional, tag = "3")]
+        pub extractive_content_spec:
+            ::core::option::Option<content_search_spec::ExtractiveContentSpec>,
+    }
+    /// Nested message and enum types in `ContentSearchSpec`.
+    pub mod content_search_spec {
+        /// A specification for configuring snippets in a search response.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct SnippetSpec {
+            /// \[DEPRECATED\] This field is deprecated. To control snippet return, use
+            /// `return_snippet` field. For backwards compatibility, we will return
+            /// snippet if max_snippet_count > 0.
+            #[deprecated]
+            #[prost(int32, tag = "1")]
+            pub max_snippet_count: i32,
+            /// \[DEPRECATED\] This field is deprecated and will have no affect on the
+            /// snippet.
+            #[deprecated]
+            #[prost(bool, tag = "2")]
+            pub reference_only: bool,
+            /// If `true`, then return snippet. If no snippet can be generated, we
+            /// return "No snippet is available for this page." A `snippet_status` with
+            /// `SUCCESS` or `NO_SNIPPET_AVAILABLE` will also be returned.
+            #[prost(bool, tag = "3")]
+            pub return_snippet: bool,
+        }
+        /// A specification for configuring a summary returned in a search
+        /// response.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct SummarySpec {
+            /// The number of top results to generate the summary from. If the number
+            /// of results returned is less than `summaryResultCount`, the summary is
+            /// generated from all of the results.
+            ///
+            /// At most 10 results for documents mode, or 50 for chunks mode, can be
+            /// used to generate a summary. The chunks mode is used when
+            /// \[SearchRequest.ContentSearchSpec.search_result_mode][\] is set to
+            /// \[CHUNKS][SearchRequest.ContentSearchSpec.SearchResultMode.CHUNKS\].
+            #[prost(int32, tag = "1")]
+            pub summary_result_count: i32,
+            /// Specifies whether to include citations in the summary. The default
+            /// value is `false`.
+            ///
+            /// When this field is set to `true`, summaries include in-line citation
+            /// numbers.
+            ///
+            /// Example summary including citations:
+            ///
+            /// BigQuery is Google Cloud's fully managed and completely serverless
+            /// enterprise data warehouse \[1\]. BigQuery supports all data types, works
+            /// across clouds, and has built-in machine learning and business
+            /// intelligence, all within a unified platform [2, 3].
+            ///
+            /// The citation numbers refer to the returned search results and are
+            /// 1-indexed. For example, \[1\] means that the sentence is attributed to
+            /// the first search result. [2, 3] means that the sentence is attributed
+            /// to both the second and third search results.
+            #[prost(bool, tag = "2")]
+            pub include_citations: bool,
+            /// Specifies whether to filter out adversarial queries. The default value
+            /// is `false`.
+            ///
+            /// Google employs search-query classification to detect adversarial
+            /// queries. No summary is returned if the search query is classified as an
+            /// adversarial query. For example, a user might ask a question regarding
+            /// negative comments about the company or submit a query designed to
+            /// generate unsafe, policy-violating output. If this field is set to
+            /// `true`, we skip generating summaries for adversarial queries and return
+            /// fallback messages instead.
+            #[prost(bool, tag = "3")]
+            pub ignore_adversarial_query: bool,
+            /// Specifies whether to filter out queries that are not summary-seeking.
+            /// The default value is `false`.
+            ///
+            /// Google employs search-query classification to detect summary-seeking
+            /// queries. No summary is returned if the search query is classified as a
+            /// non-summary seeking query. For example, `why is the sky blue` and `Who
+            /// is the best soccer player in the world?` are summary-seeking queries,
+            /// but `SFO airport` and `world cup 2026` are not. They are most likely
+            /// navigational queries. If this field is set to `true`, we skip
+            /// generating summaries for non-summary seeking queries and return
+            /// fallback messages instead.
+            #[prost(bool, tag = "4")]
+            pub ignore_non_summary_seeking_query: bool,
+            /// If specified, the spec will be used to modify the prompt provided to
+            /// the LLM.
+            #[prost(message, optional, tag = "5")]
+            pub model_prompt_spec: ::core::option::Option<summary_spec::ModelPromptSpec>,
+            /// Language code for Summary. Use language tags defined by
+            /// \[BCP47\](<https://www.rfc-editor.org/rfc/bcp/bcp47.txt>).
+            /// Note: This is an experimental feature.
+            #[prost(string, tag = "6")]
+            pub language_code: ::prost::alloc::string::String,
+            /// If specified, the spec will be used to modify the model specification
+            /// provided to the LLM.
+            #[prost(message, optional, tag = "7")]
+            pub model_spec: ::core::option::Option<summary_spec::ModelSpec>,
+            /// If true, answer will be generated from most relevant chunks from top
+            /// search results. This feature will improve summary quality.
+            /// Note that with this feature enabled, not all top search results
+            /// will be referenced and included in the reference list, so the citation
+            /// source index only points to the search results listed in the reference
+            /// list.
+            #[prost(bool, tag = "8")]
+            pub use_semantic_chunks: bool,
+        }
+        /// Nested message and enum types in `SummarySpec`.
+        pub mod summary_spec {
+            /// Specification of the prompt to use with the model.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct ModelPromptSpec {
+                /// Text at the beginning of the prompt that instructs the assistant.
+                /// Examples are available in the user guide.
+                #[prost(string, tag = "1")]
+                pub preamble: ::prost::alloc::string::String,
+            }
+            /// Specification of the model.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct ModelSpec {
+                /// The model version used to generate the summary.
+                ///
+                /// Supported values are:
+                ///
+                /// * `stable`: string. Default value when no value is specified. Uses a
+                ///    generally available, fine-tuned model. For more information, see
+                ///    [Answer generation model versions and
+                ///    lifecycle](<https://cloud.google.com/generative-ai-app-builder/docs/answer-generation-models>).
+                /// * `preview`: string. (Public preview) Uses a preview model. For more
+                ///    information, see
+                ///    [Answer generation model versions and
+                ///    lifecycle](<https://cloud.google.com/generative-ai-app-builder/docs/answer-generation-models>).
+                #[prost(string, tag = "1")]
+                pub version: ::prost::alloc::string::String,
+            }
+        }
+        /// A specification for configuring the extractive content in a search
+        /// response.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct ExtractiveContentSpec {
+            /// The maximum number of extractive answers returned in each search
+            /// result.
+            ///
+            /// An extractive answer is a verbatim answer extracted from the original
+            /// document, which provides a precise and contextually relevant answer to
+            /// the search query.
+            ///
+            /// If the number of matching answers is less than the
+            /// `max_extractive_answer_count`, return all of the answers. Otherwise,
+            /// return the `max_extractive_answer_count`.
+            ///
+            /// At most five answers are returned for each
+            /// \[SearchResult][google.cloud.discoveryengine.v1beta.SearchResponse.SearchResult\].
+            #[prost(int32, tag = "1")]
+            pub max_extractive_answer_count: i32,
+            /// The max number of extractive segments returned in each search result.
+            /// Only applied if the
+            /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] is set to
+            /// \[DataStore.ContentConfig.CONTENT_REQUIRED][google.cloud.discoveryengine.v1beta.DataStore.ContentConfig.CONTENT_REQUIRED\]
+            /// or
+            /// \[DataStore.solution_types][google.cloud.discoveryengine.v1beta.DataStore.solution_types\]
+            /// is
+            /// \[SOLUTION_TYPE_CHAT][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_CHAT\].
+            ///
+            /// An extractive segment is a text segment extracted from the original
+            /// document that is relevant to the search query, and, in general, more
+            /// verbose than an extractive answer. The segment could then be used as
+            /// input for LLMs to generate summaries and answers.
+            ///
+            /// If the number of matching segments is less than
+            /// `max_extractive_segment_count`, return all of the segments. Otherwise,
+            /// return the `max_extractive_segment_count`.
+            #[prost(int32, tag = "2")]
+            pub max_extractive_segment_count: i32,
+            /// Specifies whether to return the confidence score from the extractive
+            /// segments in each search result. This feature is available only for new
+            /// or allowlisted data stores. To allowlist your data store,
+            /// contact your Customer Engineer. The default value is `false`.
+            #[prost(bool, tag = "3")]
+            pub return_extractive_segment_score: bool,
+            /// Specifies whether to also include the adjacent from each selected
+            /// segments.
+            /// Return at most `num_previous_segments` segments before each selected
+            /// segments.
+            #[prost(int32, tag = "4")]
+            pub num_previous_segments: i32,
+            /// Return at most `num_next_segments` segments after each selected
+            /// segments.
+            #[prost(int32, tag = "5")]
+            pub num_next_segments: i32,
+        }
+    }
+    /// The specification that uses customized query embedding vector to do
+    /// semantic document retrieval.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct EmbeddingSpec {
+        /// The embedding vector used for retrieval. Limit to 1.
+        #[prost(message, repeated, tag = "1")]
+        pub embedding_vectors: ::prost::alloc::vec::Vec<embedding_spec::EmbeddingVector>,
+    }
+    /// Nested message and enum types in `EmbeddingSpec`.
+    pub mod embedding_spec {
+        /// Embedding vector.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct EmbeddingVector {
+            /// Embedding field path in schema.
+            #[prost(string, tag = "1")]
+            pub field_path: ::prost::alloc::string::String,
+            /// Query embedding vector.
+            #[prost(float, repeated, tag = "2")]
+            pub vector: ::prost::alloc::vec::Vec<f32>,
+        }
+    }
+}
+/// Response message for
+/// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchResponse {
+    /// A list of matched documents. The order represents the ranking.
+    #[prost(message, repeated, tag = "1")]
+    pub results: ::prost::alloc::vec::Vec<search_response::SearchResult>,
+    /// Results of facets requested by user.
+    #[prost(message, repeated, tag = "2")]
+    pub facets: ::prost::alloc::vec::Vec<search_response::Facet>,
+    /// Guided search result.
+    #[prost(message, optional, tag = "8")]
+    pub guided_search_result: ::core::option::Option<search_response::GuidedSearchResult>,
+    /// The estimated total count of matched items irrespective of pagination. The
+    /// count of
+    /// \[results][google.cloud.discoveryengine.v1beta.SearchResponse.results\]
+    /// returned by pagination may be less than the
+    /// \[total_size][google.cloud.discoveryengine.v1beta.SearchResponse.total_size\]
+    /// that matches.
+    #[prost(int32, tag = "3")]
+    pub total_size: i32,
+    /// A unique search token. This should be included in the
+    /// \[UserEvent][google.cloud.discoveryengine.v1beta.UserEvent\] logs resulting
+    /// from this search, which enables accurate attribution of search model
+    /// performance.
+    #[prost(string, tag = "4")]
+    pub attribution_token: ::prost::alloc::string::String,
+    /// The URI of a customer-defined redirect page. If redirect action is
+    /// triggered, no search is performed, and only
+    /// \[redirect_uri][google.cloud.discoveryengine.v1beta.SearchResponse.redirect_uri\]
+    /// and
+    /// \[attribution_token][google.cloud.discoveryengine.v1beta.SearchResponse.attribution_token\]
+    /// are set in the response.
+    #[prost(string, tag = "12")]
+    pub redirect_uri: ::prost::alloc::string::String,
+    /// A token that can be sent as
+    /// \[SearchRequest.page_token][google.cloud.discoveryengine.v1beta.SearchRequest.page_token\]
+    /// to retrieve the next page. If this field is omitted, there are no
+    /// subsequent pages.
+    #[prost(string, tag = "5")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Contains the spell corrected query, if found. If the spell correction type
+    /// is AUTOMATIC, then the search results are based on corrected_query.
+    /// Otherwise the original query is used for search.
+    #[prost(string, tag = "7")]
+    pub corrected_query: ::prost::alloc::string::String,
+    /// A summary as part of the search results.
+    /// This field is only returned if
+    /// \[SearchRequest.ContentSearchSpec.summary_spec][google.cloud.discoveryengine.v1beta.SearchRequest.ContentSearchSpec.summary_spec\]
+    /// is set.
+    #[prost(message, optional, tag = "9")]
+    pub summary: ::core::option::Option<search_response::Summary>,
+    /// Controls applied as part of the Control service.
+    #[prost(string, repeated, tag = "10")]
+    pub applied_controls: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "16")]
+    pub geo_search_debug_info: ::prost::alloc::vec::Vec<search_response::GeoSearchDebugInfo>,
+    /// Query expansion information for the returned results.
+    #[prost(message, optional, tag = "14")]
+    pub query_expansion_info: ::core::option::Option<search_response::QueryExpansionInfo>,
+}
+/// Nested message and enum types in `SearchResponse`.
+pub mod search_response {
+    /// Represents the search results.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SearchResult {
+        /// \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\] of the
+        /// searched \[Document][google.cloud.discoveryengine.v1beta.Document\].
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+        /// The document data snippet in the search response. Only fields that are
+        /// marked as `retrievable` are populated.
+        #[prost(message, optional, tag = "2")]
+        pub document: ::core::option::Option<super::Document>,
+        /// Google provided available scores.
+        #[prost(map = "string, message", tag = "4")]
+        pub model_scores:
+            ::std::collections::HashMap<::prost::alloc::string::String, super::DoubleList>,
+    }
+    /// A facet result.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Facet {
+        /// The key for this facet. For example, `"colors"` or `"price"`. It matches
+        /// \[SearchRequest.FacetSpec.FacetKey.key][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.key\].
+        #[prost(string, tag = "1")]
+        pub key: ::prost::alloc::string::String,
+        /// The facet values for this field.
+        #[prost(message, repeated, tag = "2")]
+        pub values: ::prost::alloc::vec::Vec<facet::FacetValue>,
+        /// Whether the facet is dynamically generated.
+        #[prost(bool, tag = "3")]
+        pub dynamic_facet: bool,
+    }
+    /// Nested message and enum types in `Facet`.
+    pub mod facet {
+        /// A facet value which contains value names and their count.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct FacetValue {
+            /// Number of items that have this facet value.
+            #[prost(int64, tag = "3")]
+            pub count: i64,
+            /// A facet value which contains values.
+            #[prost(oneof = "facet_value::FacetValue", tags = "1, 2")]
+            pub facet_value: ::core::option::Option<facet_value::FacetValue>,
+        }
+        /// Nested message and enum types in `FacetValue`.
+        pub mod facet_value {
+            /// A facet value which contains values.
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum FacetValue {
+                /// Text value of a facet, such as "Black" for facet "colors".
+                #[prost(string, tag = "1")]
+                Value(::prost::alloc::string::String),
+                /// Interval value for a facet, such as [10, 20) for facet "price". It
+                /// matches
+                /// \[SearchRequest.FacetSpec.FacetKey.intervals][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.intervals\].
+                #[prost(message, tag = "2")]
+                Interval(super::super::super::Interval),
+            }
+        }
+    }
+    /// Guided search result. The guided search helps user to refine the search
+    /// results and narrow down to the real needs from a broaded search results.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct GuidedSearchResult {
+        /// A list of ranked refinement attributes.
+        #[prost(message, repeated, tag = "1")]
+        pub refinement_attributes:
+            ::prost::alloc::vec::Vec<guided_search_result::RefinementAttribute>,
+        /// Suggested follow-up questions.
+        #[prost(string, repeated, tag = "2")]
+        pub follow_up_questions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    }
+    /// Nested message and enum types in `GuidedSearchResult`.
+    pub mod guided_search_result {
+        /// Useful attribute for search result refinements.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct RefinementAttribute {
+            /// Attribute key used to refine the results. For example, `"movie_type"`.
+            #[prost(string, tag = "1")]
+            pub attribute_key: ::prost::alloc::string::String,
+            /// Attribute value used to refine the results. For example, `"drama"`.
+            #[prost(string, tag = "2")]
+            pub attribute_value: ::prost::alloc::string::String,
+        }
+    }
+    /// Summary of the top N search results specified by the summary spec.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Summary {
+        /// The summary content.
+        #[prost(string, tag = "1")]
+        pub summary_text: ::prost::alloc::string::String,
+        /// Additional summary-skipped reasons. This provides the reason for ignored
+        /// cases. If nothing is skipped, this field is not set.
+        #[prost(enumeration = "summary::SummarySkippedReason", repeated, tag = "2")]
+        pub summary_skipped_reasons: ::prost::alloc::vec::Vec<i32>,
+        /// A collection of Safety Attribute categories and their associated
+        /// confidence scores.
+        #[prost(message, optional, tag = "3")]
+        pub safety_attributes: ::core::option::Option<summary::SafetyAttributes>,
+        /// Summary with metadata information.
+        #[prost(message, optional, tag = "4")]
+        pub summary_with_metadata: ::core::option::Option<summary::SummaryWithMetadata>,
+    }
+    /// Nested message and enum types in `Summary`.
+    pub mod summary {
+        /// Safety Attribute categories and their associated confidence scores.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct SafetyAttributes {
+            /// The display names of Safety Attribute categories associated with the
+            /// generated content. Order matches the Scores.
+            #[prost(string, repeated, tag = "1")]
+            pub categories: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// The confidence scores of the each category, higher
+            /// value means higher confidence. Order matches the Categories.
+            #[prost(float, repeated, tag = "2")]
+            pub scores: ::prost::alloc::vec::Vec<f32>,
+        }
+        /// Citation metadata.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct CitationMetadata {
+            /// Citations for segments.
+            #[prost(message, repeated, tag = "1")]
+            pub citations: ::prost::alloc::vec::Vec<Citation>,
+        }
+        /// Citation info for a segment.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Citation {
+            /// Index indicates the start of the segment, measured in bytes/unicode.
+            #[prost(int64, tag = "1")]
+            pub start_index: i64,
+            /// End of the attributed segment, exclusive.
+            #[prost(int64, tag = "2")]
+            pub end_index: i64,
+            /// Citation sources for the attributed segment.
+            #[prost(message, repeated, tag = "3")]
+            pub sources: ::prost::alloc::vec::Vec<CitationSource>,
+        }
+        /// Citation source.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct CitationSource {
+            /// Document reference index from SummaryWithMetadata.references.
+            /// It is 0-indexed and the value will be zero if the reference_index is
+            /// not set explicitly.
+            #[prost(int64, tag = "4")]
+            pub reference_index: i64,
+        }
+        /// Document reference.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Reference {
+            /// Title of the document.
+            #[prost(string, tag = "1")]
+            pub title: ::prost::alloc::string::String,
+            /// Required.
+            /// \[Document.name][google.cloud.discoveryengine.v1beta.Document.name\] of
+            /// the document. Full resource name of the referenced document, in the
+            /// format
+            /// `projects/*/locations/*/collections/*/dataStores/*/branches/*/documents/*`.
+            #[prost(string, tag = "2")]
+            pub document: ::prost::alloc::string::String,
+            /// Cloud Storage or HTTP uri for the document.
+            #[prost(string, tag = "3")]
+            pub uri: ::prost::alloc::string::String,
+            /// List of cited chunk contents derived from document content.
+            #[prost(message, repeated, tag = "4")]
+            pub chunk_contents: ::prost::alloc::vec::Vec<reference::ChunkContent>,
+        }
+        /// Nested message and enum types in `Reference`.
+        pub mod reference {
+            /// Chunk content.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct ChunkContent {
+                /// Chunk textual content.
+                #[prost(string, tag = "1")]
+                pub content: ::prost::alloc::string::String,
+                /// Page identifier.
+                #[prost(string, tag = "2")]
+                pub page_identifier: ::prost::alloc::string::String,
+            }
+        }
+        /// Summary with metadata information.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct SummaryWithMetadata {
+            /// Summary text with no citation information.
+            #[prost(string, tag = "1")]
+            pub summary: ::prost::alloc::string::String,
+            /// Citation metadata for given summary.
+            #[prost(message, optional, tag = "2")]
+            pub citation_metadata: ::core::option::Option<CitationMetadata>,
+            /// Document References.
+            #[prost(message, repeated, tag = "3")]
+            pub references: ::prost::alloc::vec::Vec<Reference>,
+        }
+        /// An Enum for summary-skipped reasons.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum SummarySkippedReason {
+            /// Default value. The summary skipped reason is not specified.
+            Unspecified = 0,
+            /// The adversarial query ignored case.
+            ///
+            /// Only populated when
+            /// \[SummarySpec.ignore_adversarial_query][google.cloud.discoveryengine.v1beta.SearchRequest.ContentSearchSpec.SummarySpec.ignore_adversarial_query\]
+            /// is set to `true`.
+            AdversarialQueryIgnored = 1,
+            /// The non-summary seeking query ignored case.
+            ///
+            /// Only populated when
+            /// \[SummarySpec.ignore_non_summary_seeking_query][google.cloud.discoveryengine.v1beta.SearchRequest.ContentSearchSpec.SummarySpec.ignore_non_summary_seeking_query\]
+            /// is set to `true`.
+            NonSummarySeekingQueryIgnored = 2,
+            /// The out-of-domain query ignored case.
+            ///
+            /// Google skips the summary if there are no high-relevance search results.
+            /// For example, the data store contains facts about company A but the
+            /// user query is asking questions about company B.
+            OutOfDomainQueryIgnored = 3,
+            /// The potential policy violation case.
+            ///
+            /// Google skips the summary if there is a potential policy violation
+            /// detected. This includes content that may be violent or toxic.
+            PotentialPolicyViolation = 4,
+            /// The LLM addon not enabled case.
+            ///
+            /// Google skips the summary if the LLM addon is not enabled.
+            LlmAddonNotEnabled = 5,
+        }
+    }
+    /// Debug information specifically related to forward geocoding issues arising
+    /// from Geolocation Search.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct GeoSearchDebugInfo {
+        /// The address from which forward geocoding ingestion produced issues.
+        #[prost(string, tag = "1")]
+        pub original_address_query: ::prost::alloc::string::String,
+        /// The error produced.
+        #[prost(string, tag = "2")]
+        pub error_message: ::prost::alloc::string::String,
+    }
+    /// Information describing query expansion including whether expansion has
+    /// occurred.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QueryExpansionInfo {
+        /// Bool describing whether query expansion has occurred.
+        #[prost(bool, tag = "1")]
+        pub expanded_query: bool,
+        /// Number of pinned results. This field will only be set when expansion
+        /// happens and
+        /// \[SearchRequest.QueryExpansionSpec.pin_unexpanded_results][google.cloud.discoveryengine.v1beta.SearchRequest.QueryExpansionSpec.pin_unexpanded_results\]
+        /// is set to true.
+        #[prost(int64, tag = "2")]
+        pub pinned_result_count: i64,
+    }
+}
+#[doc = r" Generated client implementations."]
+pub mod search_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for search."]
+    #[derive(Debug, Clone)]
+    pub struct SearchServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> SearchServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> SearchServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            SearchServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Performs a search."]
+        pub async fn search(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SearchRequest>,
+        ) -> Result<tonic::Response<super::SearchResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SearchService/Search",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// External conversation proto definition.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Conversation {
+    /// Immutable. Fully qualified name
+    /// `projects/{project}/locations/global/collections/{collection}/dataStore/*/conversations/*`
+    /// or
+    /// `projects/{project}/locations/global/collections/{collection}/engines/*/conversations/*`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The state of the Conversation.
+    #[prost(enumeration = "conversation::State", tag = "2")]
+    pub state: i32,
+    /// A unique identifier for tracking users.
+    #[prost(string, tag = "3")]
+    pub user_pseudo_id: ::prost::alloc::string::String,
+    /// Conversation messages.
+    #[prost(message, repeated, tag = "4")]
+    pub messages: ::prost::alloc::vec::Vec<ConversationMessage>,
+    /// Output only. The time the conversation started.
+    #[prost(message, optional, tag = "5")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The time the conversation finished.
+    #[prost(message, optional, tag = "6")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `Conversation`.
+pub mod conversation {
+    /// Enumeration of the state of the conversation.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unknown.
+        Unspecified = 0,
+        /// Conversation is currently open.
+        InProgress = 1,
+        /// Conversation has been completed.
+        Completed = 2,
+    }
+}
+/// Defines a reply message to user.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Reply {
+    /// DEPRECATED: use `summary` instead.
+    /// Text reply.
+    #[deprecated]
+    #[prost(string, tag = "1")]
+    pub reply: ::prost::alloc::string::String,
+    /// References in the reply.
+    #[deprecated]
+    #[prost(message, repeated, tag = "2")]
+    pub references: ::prost::alloc::vec::Vec<reply::Reference>,
+    /// Summary based on search results.
+    #[prost(message, optional, tag = "3")]
+    pub summary: ::core::option::Option<search_response::Summary>,
+}
+/// Nested message and enum types in `Reply`.
+pub mod reply {
+    /// Defines reference in reply.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Reference {
+        /// URI link reference.
+        #[prost(string, tag = "1")]
+        pub uri: ::prost::alloc::string::String,
+        /// Anchor text.
+        #[prost(string, tag = "2")]
+        pub anchor_text: ::prost::alloc::string::String,
+        /// Anchor text start index.
+        #[prost(int32, tag = "3")]
+        pub start: i32,
+        /// Anchor text end index.
+        #[prost(int32, tag = "4")]
+        pub end: i32,
+    }
+}
+/// Defines context of the conversation
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConversationContext {
+    /// The current list of documents the user is seeing.
+    /// It contains the document resource references.
+    #[prost(string, repeated, tag = "1")]
+    pub context_documents: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The current active document the user opened.
+    /// It contains the document resource reference.
+    #[prost(string, tag = "2")]
+    pub active_document: ::prost::alloc::string::String,
+}
+/// Defines text input.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TextInput {
+    /// Text input.
+    #[prost(string, tag = "1")]
+    pub input: ::prost::alloc::string::String,
+    /// Conversation context of the input.
+    #[prost(message, optional, tag = "2")]
+    pub context: ::core::option::Option<ConversationContext>,
+}
+/// Defines a conversation message.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConversationMessage {
+    /// Output only. Message creation timestamp.
+    #[prost(message, optional, tag = "3")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    #[prost(oneof = "conversation_message::Message", tags = "1, 2")]
+    pub message: ::core::option::Option<conversation_message::Message>,
+}
+/// Nested message and enum types in `ConversationMessage`.
+pub mod conversation_message {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Message {
+        /// User text input.
+        #[prost(message, tag = "1")]
+        UserInput(super::TextInput),
+        /// Search reply.
+        #[prost(message, tag = "2")]
+        Reply(super::Reply),
+    }
+}
+/// External session proto definition.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Session {
+    /// Immutable. Fully qualified name
+    /// `projects/{project}/locations/global/collections/{collection}/engines/{engine}/sessions/*`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The state of the session.
+    #[prost(enumeration = "session::State", tag = "2")]
+    pub state: i32,
+    /// A unique identifier for tracking users.
+    #[prost(string, tag = "3")]
+    pub user_pseudo_id: ::prost::alloc::string::String,
+    /// Turns.
+    #[prost(message, repeated, tag = "4")]
+    pub turns: ::prost::alloc::vec::Vec<session::Turn>,
+    /// Output only. The time the session started.
+    #[prost(message, optional, tag = "5")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The time the session finished.
+    #[prost(message, optional, tag = "6")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `Session`.
+pub mod session {
+    /// Represents a turn, including a query from the user and a
+    /// answer from service.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Turn {
+        /// The user query.
+        #[prost(message, optional, tag = "1")]
+        pub query: ::core::option::Option<super::Query>,
+        /// The resource name of the answer to the user query.
+        ///
+        /// Only set if the answer generation (/answer API call) happened in this
+        /// turn.
+        #[prost(string, tag = "2")]
+        pub answer: ::prost::alloc::string::String,
+    }
+    /// Enumeration of the state of the session.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// State is unspecified.
+        Unspecified = 0,
+        /// The session is currently open.
+        InProgress = 1,
+    }
+}
+/// Defines a user inputed query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Query {
+    /// Unique Id for the query.
+    #[prost(string, tag = "1")]
+    pub query_id: ::prost::alloc::string::String,
+    /// Query content.
+    #[prost(oneof = "query::Content", tags = "2")]
+    pub content: ::core::option::Option<query::Content>,
+}
+/// Nested message and enum types in `Query`.
+pub mod query {
+    /// Query content.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Content {
+        /// Plain text.
+        #[prost(string, tag = "2")]
+        Text(::prost::alloc::string::String),
+    }
+}
+/// Request message for
+/// \[ConversationalSearchService.ConverseConversation][google.cloud.discoveryengine.v1beta.ConversationalSearchService.ConverseConversation\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConverseConversationRequest {
+    /// Required. The resource name of the Conversation to get. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}/conversations/{conversation_id}`.
+    /// Use
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}/conversations/-`
+    /// to activate auto session mode, which automatically creates a new
+    /// conversation inside a ConverseConversation session.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Current user input.
+    #[prost(message, optional, tag = "2")]
+    pub query: ::core::option::Option<TextInput>,
+    /// The resource name of the Serving Config to use. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}/servingConfigs/{serving_config_id}`
+    /// If this is not set, the default serving config will be used.
+    #[prost(string, tag = "3")]
+    pub serving_config: ::prost::alloc::string::String,
+    /// The conversation to be used by auto session only. The name field will be
+    /// ignored as we automatically assign new name for the conversation in auto
+    /// session.
+    #[prost(message, optional, tag = "5")]
+    pub conversation: ::core::option::Option<Conversation>,
+    /// Whether to turn on safe search.
+    #[prost(bool, tag = "6")]
+    pub safe_search: bool,
+    /// The user labels applied to a resource must meet the following requirements:
+    ///
+    /// * Each resource can have multiple labels, up to a maximum of 64.
+    /// * Each label must be a key-value pair.
+    /// * Keys have a minimum length of 1 character and a maximum length of 63
+    ///   characters and cannot be empty. Values can be empty and have a maximum
+    ///   length of 63 characters.
+    /// * Keys and values can contain only lowercase letters, numeric characters,
+    ///   underscores, and dashes. All characters must use UTF-8 encoding, and
+    ///   international characters are allowed.
+    /// * The key portion of a label must be unique. However, you can use the same
+    ///   key with multiple resources.
+    /// * Keys must start with a lowercase letter or international character.
+    ///
+    /// See [Google Cloud
+    /// Document](<https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements>)
+    /// for more details.
+    #[prost(map = "string, string", tag = "7")]
+    pub user_labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// A specification for configuring the summary returned in the response.
+    #[prost(message, optional, tag = "8")]
+    pub summary_spec: ::core::option::Option<search_request::content_search_spec::SummarySpec>,
+    /// The filter syntax consists of an expression language for constructing a
+    /// predicate from one or more fields of the documents being filtered. Filter
+    /// expression is case-sensitive. This will be used to filter search results
+    /// which may affect the summary response.
+    ///
+    /// If this field is unrecognizable, an  `INVALID_ARGUMENT`  is returned.
+    ///
+    /// Filtering in Vertex AI Search is done by mapping the LHS filter key to a
+    /// key property defined in the Vertex AI Search backend -- this mapping is
+    /// defined by the customer in their schema. For example a media customer might
+    /// have a field 'name' in their schema. In this case the filter would look
+    /// like this: filter --> name:'ANY("king kong")'
+    ///
+    /// For more information about filtering including syntax and filter
+    /// operators, see
+    /// \[Filter\](<https://cloud.google.com/generative-ai-app-builder/docs/filter-search-metadata>)
+    #[prost(string, tag = "9")]
+    pub filter: ::prost::alloc::string::String,
+    /// Boost specification to boost certain documents in search results which may
+    /// affect the converse response. For more information on boosting, see
+    /// \[Boosting\](<https://cloud.google.com/retail/docs/boosting#boost>)
+    #[prost(message, optional, tag = "10")]
+    pub boost_spec: ::core::option::Option<search_request::BoostSpec>,
+}
+/// Response message for
+/// \[ConversationalSearchService.ConverseConversation][google.cloud.discoveryengine.v1beta.ConversationalSearchService.ConverseConversation\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConverseConversationResponse {
+    /// Answer to the current query.
+    #[prost(message, optional, tag = "1")]
+    pub reply: ::core::option::Option<Reply>,
+    /// Updated conversation including the answer.
+    #[prost(message, optional, tag = "2")]
+    pub conversation: ::core::option::Option<Conversation>,
+    /// Suggested related questions.
+    #[prost(string, repeated, tag = "6")]
+    pub related_questions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Search Results.
+    #[prost(message, repeated, tag = "3")]
+    pub search_results: ::prost::alloc::vec::Vec<search_response::SearchResult>,
+}
+/// Request for CreateConversation method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateConversationRequest {
+    /// Required. Full resource name of parent data store. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The conversation to create.
+    #[prost(message, optional, tag = "2")]
+    pub conversation: ::core::option::Option<Conversation>,
+}
+/// Request for UpdateConversation method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateConversationRequest {
+    /// Required. The Conversation to update.
+    #[prost(message, optional, tag = "1")]
+    pub conversation: ::core::option::Option<Conversation>,
+    /// Indicates which fields in the provided
+    /// \[Conversation][google.cloud.discoveryengine.v1beta.Conversation\] to update.
+    /// The following are NOT supported:
+    ///
+    /// * \[Conversation.name][google.cloud.discoveryengine.v1beta.Conversation.name\]
+    ///
+    /// If not set or empty, all supported fields are updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request for DeleteConversation method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteConversationRequest {
+    /// Required. The resource name of the Conversation to delete. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}/conversations/{conversation_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for GetConversation method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetConversationRequest {
+    /// Required. The resource name of the Conversation to get. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}/conversations/{conversation_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for ListConversations method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListConversationsRequest {
+    /// Required. The data store resource name. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Maximum number of results to return. If unspecified, defaults
+    /// to 50. Max allowed value is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListConversations` call.
+    /// Provide this to retrieve the subsequent page.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A filter to apply on the list results. The supported features are:
+    /// user_pseudo_id, state.
+    ///
+    /// Example:
+    /// "user_pseudo_id = some_id"
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// A comma-separated list of fields to order by, sorted in ascending order.
+    /// Use "desc" after a field name for descending.
+    /// Supported fields:
+    ///   * `update_time`
+    ///   * `create_time`
+    ///   * `conversation_name`
+    ///
+    /// Example:
+    /// "update_time desc"
+    /// "create_time"
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response for ListConversations method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListConversationsResponse {
+    /// All the Conversations for a given data store.
+    #[prost(message, repeated, tag = "1")]
+    pub conversations: ::prost::alloc::vec::Vec<Conversation>,
+    /// Pagination token, if not returned indicates the last page.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[ConversationalSearchService.AnswerQuery][google.cloud.discoveryengine.v1beta.ConversationalSearchService.AnswerQuery\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnswerQueryRequest {
+    /// Required. The resource name of the Search serving config, such as
+    /// `projects/*/locations/global/collections/default_collection/engines/*/servingConfigs/default_serving_config`,
+    /// or
+    /// `projects/*/locations/global/collections/default_collection/dataStores/*/servingConfigs/default_serving_config`.
+    /// This field is used to identify the serving configuration name, set
+    /// of models used to make the search.
+    #[prost(string, tag = "1")]
+    pub serving_config: ::prost::alloc::string::String,
+    /// Required. Current user query.
+    #[prost(message, optional, tag = "2")]
+    pub query: ::core::option::Option<Query>,
+    /// The session resource name. Not required.
+    ///
+    /// When session field is not set, the API is in sessionless mode.
+    ///
+    /// We support auto session mode: users can use the wildcard symbol `-` as
+    /// session ID.  A new ID will be automatically generated and assigned.
+    #[prost(string, tag = "3")]
+    pub session: ::prost::alloc::string::String,
+    /// Model specification.
+    #[prost(message, optional, tag = "4")]
+    pub safety_spec: ::core::option::Option<answer_query_request::SafetySpec>,
+    /// Related questions specification.
+    #[prost(message, optional, tag = "5")]
+    pub related_questions_spec: ::core::option::Option<answer_query_request::RelatedQuestionsSpec>,
+    /// Answer generation specification.
+    #[prost(message, optional, tag = "7")]
+    pub answer_generation_spec: ::core::option::Option<answer_query_request::AnswerGenerationSpec>,
+    /// Search specification.
+    #[prost(message, optional, tag = "8")]
+    pub search_spec: ::core::option::Option<answer_query_request::SearchSpec>,
+    /// Query understanding specification.
+    #[prost(message, optional, tag = "9")]
+    pub query_understanding_spec:
+        ::core::option::Option<answer_query_request::QueryUnderstandingSpec>,
+    /// Asynchronous mode control.
+    ///
+    /// If enabled, the response will be returned with answer/session resource
+    /// name without final answer. The API users need to do the polling to get
+    /// the latest status of answer/session by calling
+    /// \[ConversationalSearchService.GetAnswer][google.cloud.discoveryengine.v1beta.ConversationalSearchService.GetAnswer\]
+    /// or
+    /// \[ConversationalSearchService.GetSession][google.cloud.discoveryengine.v1beta.ConversationalSearchService.GetSession\]
+    /// method.
+    #[prost(bool, tag = "10")]
+    pub asynchronous_mode: bool,
+    /// A unique identifier for tracking visitors. For example, this could be
+    /// implemented with an HTTP cookie, which should be able to uniquely identify
+    /// a visitor on a single device. This unique identifier should not change if
+    /// the visitor logs in or out of the website.
+    ///
+    /// This field should NOT have a fixed value such as `unknown_visitor`.
+    ///
+    /// The field must be a UTF-8 encoded string with a length limit of 128
+    /// characters. Otherwise, an  `INVALID_ARGUMENT`  error is returned.
+    #[prost(string, tag = "12")]
+    pub user_pseudo_id: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `AnswerQueryRequest`.
+pub mod answer_query_request {
+    /// Safety specification.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SafetySpec {
+        /// Enable the safety filtering on the answer response. It is false by
+        /// default.
+        #[prost(bool, tag = "1")]
+        pub enable: bool,
+    }
+    /// Related questions specification.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct RelatedQuestionsSpec {
+        /// Enable related questions feature if true.
+        #[prost(bool, tag = "1")]
+        pub enable: bool,
+    }
+    /// Answer generation specification.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AnswerGenerationSpec {
+        /// Answer generation model specification.
+        #[prost(message, optional, tag = "1")]
+        pub model_spec: ::core::option::Option<answer_generation_spec::ModelSpec>,
+        /// Answer generation prompt specification.
+        #[prost(message, optional, tag = "2")]
+        pub prompt_spec: ::core::option::Option<answer_generation_spec::PromptSpec>,
+        /// Specifies whether to include citation metadata in the answer. The default
+        /// value is `false`.
+        #[prost(bool, tag = "3")]
+        pub include_citations: bool,
+        /// Language code for Answer. Use language tags defined by
+        /// \[BCP47\](<https://www.rfc-editor.org/rfc/bcp/bcp47.txt>).
+        /// Note: This is an experimental feature.
+        #[prost(string, tag = "4")]
+        pub answer_language_code: ::prost::alloc::string::String,
+        /// Specifies whether to filter out adversarial queries. The default value
+        /// is `false`.
+        ///
+        /// Google employs search-query classification to detect adversarial
+        /// queries. No answer is returned if the search query is classified as an
+        /// adversarial query. For example, a user might ask a question regarding
+        /// negative comments about the company or submit a query designed to
+        /// generate unsafe, policy-violating output. If this field is set to
+        /// `true`, we skip generating answers for adversarial queries and return
+        /// fallback messages instead.
+        #[prost(bool, tag = "5")]
+        pub ignore_adversarial_query: bool,
+        /// Specifies whether to filter out queries that are not answer-seeking.
+        /// The default value is `false`.
+        ///
+        /// Google employs search-query classification to detect answer-seeking
+        /// queries. No answer is returned if the search query is classified as a
+        /// non-answer seeking query. If this field is set to `true`, we skip
+        /// generating answers for non-answer seeking queries and return
+        /// fallback messages instead.
+        #[prost(bool, tag = "6")]
+        pub ignore_non_answer_seeking_query: bool,
+        /// Specifies whether to filter out queries that have low relevance.
+        ///
+        /// If this field is set to `false`, all search results are used regardless
+        /// of relevance to generate answers. If set to `true` or unset, the behavior
+        /// will be determined automatically by the service.
+        #[prost(bool, optional, tag = "7")]
+        pub ignore_low_relevant_content: ::core::option::Option<bool>,
+    }
+    /// Nested message and enum types in `AnswerGenerationSpec`.
+    pub mod answer_generation_spec {
+        /// Answer Generation Model specification.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct ModelSpec {
+            /// Model version. If not set, it will use the default stable model.
+            /// Allowed values are: stable, preview.
+            #[prost(string, tag = "1")]
+            pub model_version: ::prost::alloc::string::String,
+        }
+        /// Answer generation prompt specification.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct PromptSpec {
+            /// Customized preamble.
+            #[prost(string, tag = "1")]
+            pub preamble: ::prost::alloc::string::String,
+        }
+    }
+    /// Search specification.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SearchSpec {
+        /// Search parameters to control the search behavior.
+        /// Or provide search result list to generate answer.
+        #[prost(oneof = "search_spec::Input", tags = "1, 2")]
+        pub input: ::core::option::Option<search_spec::Input>,
+    }
+    /// Nested message and enum types in `SearchSpec`.
+    pub mod search_spec {
+        /// Search parameters.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct SearchParams {
+            /// Number of search results to return.
+            /// The default value is 10.
+            #[prost(int32, tag = "1")]
+            pub max_return_results: i32,
+            /// The filter syntax consists of an expression language for constructing
+            /// a predicate from one or more fields of the documents being filtered.
+            /// Filter expression is case-sensitive. This will be used to filter
+            /// search results which may affect the Answer response.
+            ///
+            /// If this field is unrecognizable, an  `INVALID_ARGUMENT`  is returned.
+            ///
+            /// Filtering in Vertex AI Search is done by mapping the LHS filter key
+            /// to a key property defined in the Vertex AI Search backend -- this
+            /// mapping is defined by the customer in their schema. For example a
+            /// media customers might have a field 'name' in their schema. In this
+            /// case the filter would look like this: filter --> name:'ANY("king
+            /// kong")'
+            ///
+            /// For more information about filtering including syntax and filter
+            /// operators, see
+            /// \[Filter\](<https://cloud.google.com/generative-ai-app-builder/docs/filter-search-metadata>)
+            #[prost(string, tag = "2")]
+            pub filter: ::prost::alloc::string::String,
+            /// Boost specification to boost certain documents in search results which
+            /// may affect the answer query response. For more information on boosting,
+            /// see \[Boosting\](<https://cloud.google.com/retail/docs/boosting#boost>)
+            #[prost(message, optional, tag = "3")]
+            pub boost_spec: ::core::option::Option<super::super::search_request::BoostSpec>,
+            /// The order in which documents are returned. Documents can be ordered
+            /// by a field in an
+            /// \[Document][google.cloud.discoveryengine.v1beta.Document\] object. Leave
+            /// it unset if ordered by relevance. `order_by` expression is
+            /// case-sensitive. For more information on ordering, see
+            /// \[Ordering\](<https://cloud.google.com/retail/docs/filter-and-order#order>)
+            ///
+            /// If this field is unrecognizable, an `INVALID_ARGUMENT` is returned.
+            #[prost(string, tag = "4")]
+            pub order_by: ::prost::alloc::string::String,
+            /// Specs defining dataStores to filter on in a search call and
+            /// configurations for those dataStores. This is only considered for
+            /// engines with multiple dataStores use case. For single dataStore within
+            /// an engine, they should use the specs at the top level.
+            #[prost(message, repeated, tag = "7")]
+            pub data_store_specs:
+                ::prost::alloc::vec::Vec<super::super::search_request::DataStoreSpec>,
+        }
+        /// Search result list.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct SearchResultList {
+            /// Search results.
+            #[prost(message, repeated, tag = "1")]
+            pub search_results: ::prost::alloc::vec::Vec<search_result_list::SearchResult>,
+        }
+        /// Nested message and enum types in `SearchResultList`.
+        pub mod search_result_list {
+            /// Search result.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct SearchResult {
+                /// Search result content.
+                #[prost(oneof = "search_result::Content", tags = "1, 2")]
+                pub content: ::core::option::Option<search_result::Content>,
+            }
+            /// Nested message and enum types in `SearchResult`.
+            pub mod search_result {
+                /// Unstructured document information.
+                #[derive(Clone, PartialEq, ::prost::Message)]
+                pub struct UnstructuredDocumentInfo {
+                    /// Document resource name.
+                    #[prost(string, tag = "1")]
+                    pub document: ::prost::alloc::string::String,
+                    /// URI for the document.
+                    #[prost(string, tag = "2")]
+                    pub uri: ::prost::alloc::string::String,
+                    /// Title.
+                    #[prost(string, tag = "3")]
+                    pub title: ::prost::alloc::string::String,
+                    /// List of document contexts.
+                    #[prost(message, repeated, tag = "4")]
+                    pub document_contexts:
+                        ::prost::alloc::vec::Vec<unstructured_document_info::DocumentContext>,
+                    /// List of extractive segments.
+                    #[prost(message, repeated, tag = "5")]
+                    pub extractive_segments:
+                        ::prost::alloc::vec::Vec<unstructured_document_info::ExtractiveSegment>,
+                    /// List of extractive answers.
+                    #[prost(message, repeated, tag = "6")]
+                    pub extractive_answers:
+                        ::prost::alloc::vec::Vec<unstructured_document_info::ExtractiveAnswer>,
+                }
+                /// Nested message and enum types in `UnstructuredDocumentInfo`.
+                pub mod unstructured_document_info {
+                    /// Document context.
+                    #[derive(Clone, PartialEq, ::prost::Message)]
+                    pub struct DocumentContext {
+                        /// Page identifier.
+                        #[prost(string, tag = "1")]
+                        pub page_identifier: ::prost::alloc::string::String,
+                        /// Document content.
+                        #[prost(string, tag = "2")]
+                        pub content: ::prost::alloc::string::String,
+                    }
+                    /// Extractive segment.
+                    /// \[Guide\](<https://cloud.google.com/generative-ai-app-builder/docs/snippets#extractive-segments>)
+                    #[derive(Clone, PartialEq, ::prost::Message)]
+                    pub struct ExtractiveSegment {
+                        /// Page identifier.
+                        #[prost(string, tag = "1")]
+                        pub page_identifier: ::prost::alloc::string::String,
+                        /// Extractive segment content.
+                        #[prost(string, tag = "2")]
+                        pub content: ::prost::alloc::string::String,
+                    }
+                    /// Extractive answer.
+                    /// \[Guide\](<https://cloud.google.com/generative-ai-app-builder/docs/snippets#get-answers>)
+                    #[derive(Clone, PartialEq, ::prost::Message)]
+                    pub struct ExtractiveAnswer {
+                        /// Page identifier.
+                        #[prost(string, tag = "1")]
+                        pub page_identifier: ::prost::alloc::string::String,
+                        /// Extractive answer content.
+                        #[prost(string, tag = "2")]
+                        pub content: ::prost::alloc::string::String,
+                    }
+                }
+                /// Chunk information.
+                #[derive(Clone, PartialEq, ::prost::Message)]
+                pub struct ChunkInfo {
+                    /// Chunk resource name.
+                    #[prost(string, tag = "1")]
+                    pub chunk: ::prost::alloc::string::String,
+                    /// Chunk textual content.
+                    #[prost(string, tag = "2")]
+                    pub content: ::prost::alloc::string::String,
+                }
+                /// Search result content.
+                #[derive(Clone, PartialEq, ::prost::Oneof)]
+                pub enum Content {
+                    /// Unstructured document information.
+                    #[prost(message, tag = "1")]
+                    UnstructuredDocumentInfo(UnstructuredDocumentInfo),
+                    /// Chunk information.
+                    #[prost(message, tag = "2")]
+                    ChunkInfo(ChunkInfo),
+                }
+            }
+        }
+        /// Search parameters to control the search behavior.
+        /// Or provide search result list to generate answer.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Input {
+            /// Search parameters.
+            #[prost(message, tag = "1")]
+            SearchParams(SearchParams),
+            /// Search result list.
+            #[prost(message, tag = "2")]
+            SearchResultList(SearchResultList),
+        }
+    }
+    /// Query understanding specification.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QueryUnderstandingSpec {
+        /// Query classification specification.
+        #[prost(message, optional, tag = "1")]
+        pub query_classification_spec:
+            ::core::option::Option<query_understanding_spec::QueryClassificationSpec>,
+        /// Query rephraser specification.
+        #[prost(message, optional, tag = "2")]
+        pub query_rephraser_spec:
+            ::core::option::Option<query_understanding_spec::QueryRephraserSpec>,
+    }
+    /// Nested message and enum types in `QueryUnderstandingSpec`.
+    pub mod query_understanding_spec {
+        /// Query classification specification.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct QueryClassificationSpec {
+            /// Enabled query classification types.
+            #[prost(enumeration = "query_classification_spec::Type", repeated, tag = "1")]
+            pub types: ::prost::alloc::vec::Vec<i32>,
+        }
+        /// Nested message and enum types in `QueryClassificationSpec`.
+        pub mod query_classification_spec {
+            /// Query classification types.
+            #[derive(
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+            )]
+            #[repr(i32)]
+            pub enum Type {
+                /// Unspecified query classification type.
+                Unspecified = 0,
+                /// Adversarial query classification type.
+                AdversarialQuery = 1,
+                /// Non-answer-seeking query classification type.
+                NonAnswerSeekingQuery = 2,
+            }
+        }
+        /// Query rephraser specification.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct QueryRephraserSpec {
+            /// Disable query rephraser.
+            #[prost(bool, tag = "1")]
+            pub disable: bool,
+            /// Max rephrase steps.
+            /// The max number is 5 steps.
+            /// If not set or set to < 1, it will be set to 1 by default.
+            #[prost(int32, tag = "2")]
+            pub max_rephrase_steps: i32,
+        }
+    }
+}
+/// Response message for
+/// \[ConversationalSearchService.AnswerQuery][google.cloud.discoveryengine.v1beta.ConversationalSearchService.AnswerQuery\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AnswerQueryResponse {
+    /// Answer resource object.
+    /// If \[AnswerQueryRequest.StepSpec.max_step_count][\] is greater than 1,
+    /// use \[Answer.name][google.cloud.discoveryengine.v1beta.Answer.name\] to fetch
+    /// answer information using
+    /// \[ConversationalSearchService.GetAnswer][google.cloud.discoveryengine.v1beta.ConversationalSearchService.GetAnswer\]
+    /// API.
+    #[prost(message, optional, tag = "1")]
+    pub answer: ::core::option::Option<Answer>,
+    /// Session resource object.
+    /// It will be only available when session field is set and valid in the
+    /// \[AnswerQueryRequest][google.cloud.discoveryengine.v1beta.AnswerQueryRequest\]
+    /// request.
+    #[prost(message, optional, tag = "2")]
+    pub session: ::core::option::Option<Session>,
+    /// A global unique ID used for logging.
+    #[prost(string, tag = "3")]
+    pub answer_query_token: ::prost::alloc::string::String,
+}
+/// Request for GetAnswer method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetAnswerRequest {
+    /// Required. The resource name of the Answer to get. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/engines/{engine_id}/sessions/{session_id}/answers/{answer_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for CreateSession method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSessionRequest {
+    /// Required. Full resource name of parent data store. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The session to create.
+    #[prost(message, optional, tag = "2")]
+    pub session: ::core::option::Option<Session>,
+}
+/// Request for UpdateSession method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateSessionRequest {
+    /// Required. The Session to update.
+    #[prost(message, optional, tag = "1")]
+    pub session: ::core::option::Option<Session>,
+    /// Indicates which fields in the provided
+    /// \[Session][google.cloud.discoveryengine.v1beta.Session\] to update. The
+    /// following are NOT supported:
+    ///
+    /// * \[Session.name][google.cloud.discoveryengine.v1beta.Session.name\]
+    ///
+    /// If not set or empty, all supported fields are updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request for DeleteSession method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteSessionRequest {
+    /// Required. The resource name of the Session to delete. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}/sessions/{session_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for GetSession method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSessionRequest {
+    /// Required. The resource name of the Session to get. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}/sessions/{session_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for ListSessions method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSessionsRequest {
+    /// Required. The data store resource name. Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection}/dataStores/{data_store_id}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Maximum number of results to return. If unspecified, defaults
+    /// to 50. Max allowed value is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListSessions` call.
+    /// Provide this to retrieve the subsequent page.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// A filter to apply on the list results. The supported features are:
+    /// user_pseudo_id, state.
+    ///
+    /// Example:
+    /// "user_pseudo_id = some_id"
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// A comma-separated list of fields to order by, sorted in ascending order.
+    /// Use "desc" after a field name for descending.
+    /// Supported fields:
+    ///   * `update_time`
+    ///   * `create_time`
+    ///   * `session_name`
+    ///
+    /// Example:
+    /// "update_time desc"
+    /// "create_time"
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response for ListSessions method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSessionsResponse {
+    /// All the Sessions for a given data store.
+    #[prost(message, repeated, tag = "1")]
+    pub sessions: ::prost::alloc::vec::Vec<Session>,
+    /// Pagination token, if not returned indicates the last page.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+#[doc = r" Generated client implementations."]
+pub mod conversational_search_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for conversational search."]
+    #[derive(Debug, Clone)]
+    pub struct ConversationalSearchServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> ConversationalSearchServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ConversationalSearchServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ConversationalSearchServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Converses a conversation."]
+        pub async fn converse_conversation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ConverseConversationRequest>,
+        ) -> Result<tonic::Response<super::ConverseConversationResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.ConversationalSearchService/ConverseConversation") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a Conversation."]
+        #[doc = ""]
+        #[doc = " If the [Conversation][google.cloud.discoveryengine.v1beta.Conversation] to"]
+        #[doc = " create already exists, an ALREADY_EXISTS error is returned."]
+        pub async fn create_conversation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateConversationRequest>,
+        ) -> Result<tonic::Response<super::Conversation>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.ConversationalSearchService/CreateConversation") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a Conversation."]
+        #[doc = ""]
+        #[doc = " If the [Conversation][google.cloud.discoveryengine.v1beta.Conversation] to"]
+        #[doc = " delete does not exist, a NOT_FOUND error is returned."]
+        pub async fn delete_conversation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteConversationRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.ConversationalSearchService/DeleteConversation") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a Conversation."]
+        #[doc = ""]
+        #[doc = " [Conversation][google.cloud.discoveryengine.v1beta.Conversation] action"]
+        #[doc = " type cannot be changed. If the"]
+        #[doc = " [Conversation][google.cloud.discoveryengine.v1beta.Conversation] to update"]
+        #[doc = " does not exist, a NOT_FOUND error is returned."]
+        pub async fn update_conversation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateConversationRequest>,
+        ) -> Result<tonic::Response<super::Conversation>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.ConversationalSearchService/UpdateConversation") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a Conversation."]
+        pub async fn get_conversation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetConversationRequest>,
+        ) -> Result<tonic::Response<super::Conversation>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ConversationalSearchService/GetConversation",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all Conversations by their parent"]
+        #[doc = " [DataStore][google.cloud.discoveryengine.v1beta.DataStore]."]
+        pub async fn list_conversations(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListConversationsRequest>,
+        ) -> Result<tonic::Response<super::ListConversationsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.ConversationalSearchService/ListConversations") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Answer query method."]
+        pub async fn answer_query(
+            &mut self,
+            request: impl tonic::IntoRequest<super::AnswerQueryRequest>,
+        ) -> Result<tonic::Response<super::AnswerQueryResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ConversationalSearchService/AnswerQuery",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a Answer."]
+        pub async fn get_answer(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetAnswerRequest>,
+        ) -> Result<tonic::Response<super::Answer>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ConversationalSearchService/GetAnswer",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a Session."]
+        #[doc = ""]
+        #[doc = " If the [Session][google.cloud.discoveryengine.v1beta.Session] to create"]
+        #[doc = " already exists, an ALREADY_EXISTS error is returned."]
+        pub async fn create_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSessionRequest>,
+        ) -> Result<tonic::Response<super::Session>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ConversationalSearchService/CreateSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a Session."]
+        #[doc = ""]
+        #[doc = " If the [Session][google.cloud.discoveryengine.v1beta.Session] to delete"]
+        #[doc = " does not exist, a NOT_FOUND error is returned."]
+        pub async fn delete_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteSessionRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ConversationalSearchService/DeleteSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a Session."]
+        #[doc = ""]
+        #[doc = " [Session][google.cloud.discoveryengine.v1beta.Session] action type cannot"]
+        #[doc = " be changed. If the [Session][google.cloud.discoveryengine.v1beta.Session]"]
+        #[doc = " to update does not exist, a NOT_FOUND error is returned."]
+        pub async fn update_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateSessionRequest>,
+        ) -> Result<tonic::Response<super::Session>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ConversationalSearchService/UpdateSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a Session."]
+        pub async fn get_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSessionRequest>,
+        ) -> Result<tonic::Response<super::Session>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ConversationalSearchService/GetSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all Sessions by their parent"]
+        #[doc = " [DataStore][google.cloud.discoveryengine.v1beta.DataStore]."]
+        pub async fn list_sessions(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListSessionsRequest>,
+        ) -> Result<tonic::Response<super::ListSessionsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ConversationalSearchService/ListSessions",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Metadata that describes a custom tuned model.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CustomTuningModel {
+    /// Required. The fully qualified resource name of the model.
+    ///
     /// Format:
-    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/branches/{branch}/documents/{document_id}`.
+    /// `projects/{project_number}/locations/{location}/collections/{collection}/dataStores/{data_store}/customTuningModels/{custom_tuning_model}`
+    /// model must be an alpha-numerical string with limit of 40 characters.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The display name of the model.
+    #[prost(string, tag = "2")]
+    pub display_name: ::prost::alloc::string::String,
+    /// The version of the model.
+    #[prost(int64, tag = "3")]
+    pub model_version: i64,
+    /// The state that the model is in (e.g.`TRAINING` or `TRAINING_FAILED`).
+    #[prost(enumeration = "custom_tuning_model::ModelState", tag = "4")]
+    pub model_state: i32,
+    /// Timestamp the Model was created at.
+    #[prost(message, optional, tag = "5")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Timestamp the model training was initiated.
+    #[prost(message, optional, tag = "6")]
+    pub training_start_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `CustomTuningModel`.
+pub mod custom_tuning_model {
+    /// The state of the model.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ModelState {
+        /// Default value.
+        Unspecified = 0,
+        /// The model is in a paused training state.
+        TrainingPaused = 1,
+        /// The model is currently training.
+        Training = 2,
+        /// The model has successfully completed training.
+        TrainingComplete = 3,
+        /// The model is ready for serving.
+        ReadyForServing = 4,
+        /// The model training failed.
+        TrainingFailed = 5,
+    }
+}
+/// A singleton resource of
+/// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\]. It's empty when
+/// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] is created, which
+/// defaults to digital parser. The first call to
+/// \[DataStoreService.UpdateDocumentProcessingConfig][\] method will initialize
+/// the config.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DocumentProcessingConfig {
+    /// The full resource name of the Document Processing Config.
+    /// Format:
+    /// `projects/*/locations/*/collections/*/dataStores/*/documentProcessingConfig`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Configurations for default Document parser.
+    /// If not specified, we will configure it as default DigitalParsingConfig, and
+    /// the default parsing config will be applied to all file types for Document
+    /// parsing.
+    #[prost(message, optional, tag = "4")]
+    pub default_parsing_config: ::core::option::Option<document_processing_config::ParsingConfig>,
+    /// Map from file type to override the default parsing configuration based on
+    /// the file type. Supported keys:
+    ///
+    /// * `pdf`: Override parsing config for PDF files, either digital parsing, ocr
+    /// parsing or layout parsing is supported.
+    /// * `html`: Override parsing config for HTML files, only digital parsing and
+    /// or layout parsing are supported.
+    /// * `docx`: Override parsing config for DOCX files, only digital parsing and
+    /// or layout parsing are supported.
+    #[prost(map = "string, message", tag = "5")]
+    pub parsing_config_overrides: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        document_processing_config::ParsingConfig,
+    >,
+}
+/// Nested message and enum types in `DocumentProcessingConfig`.
+pub mod document_processing_config {
+    /// Related configurations applied to a specific type of document parser.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ParsingConfig {
+        /// Configs for document processing types.
+        #[prost(oneof = "parsing_config::TypeDedicatedConfig", tags = "1, 2")]
+        pub type_dedicated_config: ::core::option::Option<parsing_config::TypeDedicatedConfig>,
+    }
+    /// Nested message and enum types in `ParsingConfig`.
+    pub mod parsing_config {
+        /// The digital parsing configurations for documents.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct DigitalParsingConfig {}
+        /// The OCR parsing configurations for documents.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct OcrParsingConfig {
+            /// \[DEPRECATED\] This field is deprecated. To use the additional enhanced
+            /// document elements processing, please switch to `layout_parsing_config`.
+            #[deprecated]
+            #[prost(string, repeated, tag = "1")]
+            pub enhanced_document_elements:
+                ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// If true, will use native text instead of OCR text on pages containing
+            /// native text.
+            #[prost(bool, tag = "2")]
+            pub use_native_text: bool,
+        }
+        /// Configs for document processing types.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum TypeDedicatedConfig {
+            /// Configurations applied to digital parser.
+            #[prost(message, tag = "1")]
+            DigitalParsingConfig(DigitalParsingConfig),
+            /// Configurations applied to OCR parser. Currently it only applies to
+            /// PDFs.
+            #[prost(message, tag = "2")]
+            OcrParsingConfig(OcrParsingConfig),
+        }
+    }
+}
+/// Defines the structure and layout of a type of document data.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Schema {
+    /// Immutable. The full resource name of the schema, in the format of
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/schemas/{schema}`.
     ///
     /// This field must be a UTF-8 encoded string with a length limit of 1024
     /// characters.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Immutable. The identifier of the document.
-    ///
-    /// Id should conform to \[RFC-1034\](<https://tools.ietf.org/html/rfc1034>)
-    /// standard with a length limit of 63 characters.
-    #[prost(string, tag = "2")]
-    pub id: ::prost::alloc::string::String,
-    /// The identifier of the schema located in the same data store.
-    #[prost(string, tag = "3")]
-    pub schema_id: ::prost::alloc::string::String,
-    /// The unstructured data linked to this document. Content must be set if this
-    /// document is under a
-    /// `CONTENT_REQUIRED` data store.
-    #[prost(message, optional, tag = "10")]
-    pub content: ::core::option::Option<document::Content>,
-    /// The identifier of the parent document. Currently supports at most two level
-    /// document hierarchy.
-    ///
-    /// Id should conform to \[RFC-1034\](<https://tools.ietf.org/html/rfc1034>)
-    /// standard with a length limit of 63 characters.
-    #[prost(string, tag = "7")]
-    pub parent_document_id: ::prost::alloc::string::String,
-    /// Output only. This field is OUTPUT_ONLY.
-    /// It contains derived data that are not in the original input document.
-    #[prost(message, optional, tag = "6")]
-    pub derived_struct_data: ::core::option::Option<::prost_types::Struct>,
-    /// Data representation. One of
-    /// \[struct_data][google.cloud.discoveryengine.v1beta.Document.struct_data\] or
-    /// \[json_data][google.cloud.discoveryengine.v1beta.Document.json_data\] should
-    /// be provided otherwise an `INVALID_ARGUMENT` error is thrown.
-    #[prost(oneof = "document::Data", tags = "4, 5")]
-    pub data: ::core::option::Option<document::Data>,
+    /// Schema representation. One of
+    /// \[struct_schema][google.cloud.discoveryengine.v1beta.Schema.struct_schema\]
+    /// or \[json_schema][google.cloud.discoveryengine.v1beta.Schema.json_schema\]
+    /// should be provided otherwise an `INVALID_ARGUMENT` error is thrown.
+    #[prost(oneof = "schema::Schema", tags = "2, 3")]
+    pub schema: ::core::option::Option<schema::Schema>,
 }
-/// Nested message and enum types in `Document`.
-pub mod document {
-    /// Unstructured data linked to this document.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct Content {
-        /// The MIME type of the content. Supported types:
-        ///
-        /// * `application/pdf` (PDF, only native PDFs are supported for now)
-        /// * `text/html` (HTML)
-        /// * `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (DOCX)
-        /// * `application/vnd.openxmlformats-officedocument.presentationml.presentation` (PPTX)
-        /// * `text/plain` (TXT)
-        ///
-        /// See <https://www.iana.org/assignments/media-types/media-types.xhtml.>
-        #[prost(string, tag = "1")]
-        pub mime_type: ::prost::alloc::string::String,
-        #[prost(oneof = "content::Content", tags = "2, 3")]
-        pub content: ::core::option::Option<content::Content>,
-    }
-    /// Nested message and enum types in `Content`.
-    pub mod content {
-        #[derive(Clone, PartialEq, ::prost::Oneof)]
-        pub enum Content {
-            /// The content represented as a stream of bytes. The maximum length is
-            /// 1,000,000 bytes (1 MB / ~0.95 MiB).
-            ///
-            /// Note: As with all `bytes` fields, this field is represented as pure
-            /// binary in Protocol Buffers and base64-encoded string in JSON. For
-            /// example, `abc123!?$*&()'-=@~` should be represented as
-            /// `YWJjMTIzIT8kKiYoKSctPUB+` in JSON. See
-            /// <https://developers.google.com/protocol-buffers/docs/proto3#json.>
-            #[prost(bytes, tag = "2")]
-            RawBytes(::prost::alloc::vec::Vec<u8>),
-            /// The URI of the content. Only Cloud Storage URIs (e.g.
-            /// `gs://bucket-name/path/to/file`) are supported. The maximum file size
-            /// is 100 MB.
-            #[prost(string, tag = "3")]
-            Uri(::prost::alloc::string::String),
-        }
-    }
-    /// Data representation. One of
-    /// \[struct_data][google.cloud.discoveryengine.v1beta.Document.struct_data\] or
-    /// \[json_data][google.cloud.discoveryengine.v1beta.Document.json_data\] should
-    /// be provided otherwise an `INVALID_ARGUMENT` error is thrown.
+/// Nested message and enum types in `Schema`.
+pub mod schema {
+    /// Schema representation. One of
+    /// \[struct_schema][google.cloud.discoveryengine.v1beta.Schema.struct_schema\]
+    /// or \[json_schema][google.cloud.discoveryengine.v1beta.Schema.json_schema\]
+    /// should be provided otherwise an `INVALID_ARGUMENT` error is thrown.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Data {
-        /// The structured JSON data for the document. It should conform to the
-        /// registered
-        /// \[Schema.schema][google.cloud.discoveryengine.v1beta.Schema.schema\] or an
-        /// `INVALID_ARGUMENT` error is thrown.
-        #[prost(message, tag = "4")]
-        StructData(::prost_types::Struct),
-        /// The JSON string representation of the document. It should conform to the
-        /// registered
-        /// \[Schema.schema][google.cloud.discoveryengine.v1beta.Schema.schema\] or an
-        /// `INVALID_ARGUMENT` error is thrown.
-        #[prost(string, tag = "5")]
-        JsonData(::prost::alloc::string::String),
-    }
-}
-/// UserEvent captures all metadata information Discovery Engine API needs to
-/// know about how end users interact with customers' website.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct UserEvent {
-    /// Required. User event type. Allowed values are:
-    ///
-    /// Generic values:
-    ///
-    /// * `search`: Search for Documents.
-    /// * `view-item`: Detailed page view of a Document.
-    /// * `view-item-list`: View of a panel or ordered list of Documents.
-    /// * `view-home-page`: View of the home page.
-    /// * `view-category-page`: View of a category page, e.g. Home > Men > Jeans
-    ///
-    /// Retail-related values:
-    ///
-    /// * `add-to-cart`: Add an item(s) to cart, e.g. in Retail online shopping
-    /// * `purchase`: Purchase an item(s)
-    ///
-    /// Media-related values:
-    ///
-    /// * `media-play`: Start/resume watching a video, playing a song, etc.
-    /// * `media-complete`: Finished or stopped midway through a video, song, etc.
-    #[prost(string, tag = "1")]
-    pub event_type: ::prost::alloc::string::String,
-    /// Required. A unique identifier for tracking visitors.
-    ///
-    /// For example, this could be implemented with an HTTP cookie, which should be
-    /// able to uniquely identify a visitor on a single device. This unique
-    /// identifier should not change if the visitor log in/out of the website.
-    ///
-    /// Do not set the field to the same fixed ID for different users. This mixes
-    /// the event history of those users together, which results in degraded model
-    /// quality.
-    ///
-    /// The field must be a UTF-8 encoded string with a length limit of 128
-    /// characters. Otherwise, an INVALID_ARGUMENT error is returned.
-    ///
-    /// The field should not contain PII or user-data. We recommend to use Google
-    /// Analytics [Client
-    /// ID](<https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#clientId>)
-    /// for this field.
-    #[prost(string, tag = "2")]
-    pub user_pseudo_id: ::prost::alloc::string::String,
-    /// Only required for
-    /// \[UserEventService.ImportUserEvents][google.cloud.discoveryengine.v1beta.UserEventService.ImportUserEvents\]
-    /// method. Timestamp of when the user event happened.
-    #[prost(message, optional, tag = "3")]
-    pub event_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Information about the end user.
-    #[prost(message, optional, tag = "4")]
-    pub user_info: ::core::option::Option<UserInfo>,
-    /// Should set to true if the request is made directly from the end user, in
-    /// which case the
-    /// \[UserEvent.user_info.user_agent][google.cloud.discoveryengine.v1beta.UserInfo.user_agent\]
-    /// can be populated from the HTTP request.
-    ///
-    /// This flag should be set only if the API request is made directly from the
-    /// end user such as a mobile app (and not if a gateway or a server is
-    /// processing and pushing the user events).
-    ///
-    /// This should not be set when using the JavaScript tag in
-    /// \[UserEventService.CollectUserEvent][google.cloud.discoveryengine.v1beta.UserEventService.CollectUserEvent\].
-    #[prost(bool, tag = "5")]
-    pub direct_user_request: bool,
-    /// A unique identifier for tracking a visitor session with a length limit of
-    /// 128 bytes. A session is an aggregation of an end user behavior in a time
-    /// span.
-    ///
-    /// A general guideline to populate the session_id:
-    ///
-    /// 1. If user has no activity for 30 min, a new session_id should be assigned.
-    /// 2. The session_id should be unique across users, suggest use uuid or add
-    /// \[UserEvent.user_pseudo_id][google.cloud.discoveryengine.v1beta.UserEvent.user_pseudo_id\]
-    /// as prefix.
-    #[prost(string, tag = "6")]
-    pub session_id: ::prost::alloc::string::String,
-    /// Page metadata such as categories and other critical information for certain
-    /// event types such as `view-category-page`.
-    #[prost(message, optional, tag = "7")]
-    pub page_info: ::core::option::Option<PageInfo>,
-    /// Token to attribute an API response to user action(s) to trigger the event.
-    ///
-    /// Highly recommended for user events that are the result of
-    /// \[RecommendationService.Recommend][google.cloud.discoveryengine.v1beta.RecommendationService.Recommend\].
-    /// This field enables accurate attribution of recommendation model
-    /// performance.
-    ///
-    /// The value must be one of:
-    ///
-    /// * \[PredictResponse.attribution_token][\] for events that are the result of
-    /// \[RecommendationService.Recommend][google.cloud.discoveryengine.v1beta.RecommendationService.Recommend\].
-    /// * \[SearchResponse.attribution_token][google.cloud.discoveryengine.v1beta.SearchResponse.attribution_token\] for events that are the result of
-    /// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\].
-    /// * \[CompleteQueryResponse.attribution_token][\] for events that are the
-    /// result of
-    /// \[CompletionService.CompleteQuery][google.cloud.discoveryengine.v1beta.CompletionService.CompleteQuery\].
-    ///
-    /// This token enables us to accurately attribute page view or conversion
-    /// completion back to the event and the particular predict response containing
-    /// this clicked/purchased product. If user clicks on product K in the
-    /// recommendation results, pass \[PredictResponse.attribution_token][\] as a URL
-    /// parameter to product K's page. When recording events on product K's page,
-    /// log the \[PredictResponse.attribution_token][\] to this field.
-    #[prost(string, tag = "8")]
-    pub attribution_token: ::prost::alloc::string::String,
-    /// The filter syntax consists of an expression language for constructing a
-    /// predicate from one or more fields of the documents being filtered.
-    ///
-    /// One example is for `search` events, the associated
-    /// \[SearchRequest][google.cloud.discoveryengine.v1beta.SearchRequest\] may
-    /// contain a filter expression in
-    /// \[SearchRequest.filter][google.cloud.discoveryengine.v1beta.SearchRequest.filter\]
-    /// conforming to <https://google.aip.dev/160#filtering.>
-    ///
-    /// Similarly, for `view-item-list` events that are generated from a
-    /// \[RecommendationService.RecommendRequest][\], this field may be populated
-    /// directly from \[RecommendationService.RecommendRequest.filter][\] conforming
-    /// to <https://google.aip.dev/160#filtering.>
-    ///
-    /// The value must be a UTF-8 encoded string with a length limit of 1,000
-    /// characters. Otherwise, an INVALID_ARGUMENT error is returned.
-    #[prost(string, tag = "9")]
-    pub filter: ::prost::alloc::string::String,
-    /// List of Documents associated with this user event.
-    ///
-    /// This field is optional except for the following event types:
-    ///
-    /// * `view-item`
-    /// * `add-to-cart`
-    /// * `purchase`
-    /// * `media-play`
-    /// * `media-complete`
-    ///
-    /// In a `search` event, this field represents the documents returned to the
-    /// end user on the current page (the end user may have not finished browsing
-    /// the whole page yet). When a new page is returned to the end user, after
-    /// pagination/filtering/ordering even for the same query, a new `search` event
-    /// with different
-    /// \[UserEvent.documents][google.cloud.discoveryengine.v1beta.UserEvent.documents\]
-    /// is desired.
-    #[prost(message, repeated, tag = "10")]
-    pub documents: ::prost::alloc::vec::Vec<DocumentInfo>,
-    /// Panel metadata associated with this user event.
-    #[prost(message, optional, tag = "11")]
-    pub panel: ::core::option::Option<PanelInfo>,
-    /// Search API details related to the event.
-    ///
-    /// This field should be set for `search` event.
-    #[prost(message, optional, tag = "12")]
-    pub search_info: ::core::option::Option<SearchInfo>,
-    /// CompleteQuery API details related to the event.
-    ///
-    /// This field should be set for `search` event when autocomplete function is
-    /// enabled and the user clicks a suggestion for search.
-    #[prost(message, optional, tag = "13")]
-    pub completion_info: ::core::option::Option<CompletionInfo>,
-    /// The transaction metadata (if any) associated with this user event.
-    #[prost(message, optional, tag = "14")]
-    pub transaction_info: ::core::option::Option<TransactionInfo>,
-    /// A list of identifiers for the independent experiment groups this user event
-    /// belongs to. This is used to distinguish between user events associated with
-    /// different experiment setups on the customer end.
-    #[prost(string, repeated, tag = "15")]
-    pub tag_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// The promotion IDs if this is an event associated with promotions.
-    /// Currently, this field is restricted to at most one ID.
-    #[prost(string, repeated, tag = "16")]
-    pub promotion_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Extra user event features to include in the recommendation model.
-    /// These attributes must NOT contain data that needs to be parsed or processed
-    /// further, e.g. JSON or other encodings.
-    ///
-    /// If you provide custom attributes for ingested user events, also include
-    /// them in the user events that you associate with prediction requests. Custom
-    /// attribute formatting must be consistent between imported events and events
-    /// provided with prediction requests. This lets the Discovery Engine API use
-    /// those custom attributes when training models and serving predictions, which
-    /// helps improve recommendation quality.
-    ///
-    /// This field needs to pass all below criteria, otherwise an
-    /// `INVALID_ARGUMENT` error is returned:
-    ///
-    /// * The key must be a UTF-8 encoded string with a length limit of 5,000
-    ///   characters.
-    /// * For text attributes, at most 400 values are allowed. Empty values are not
-    ///   allowed. Each value must be a UTF-8 encoded string with a length limit of
-    ///   256 characters.
-    /// * For number attributes, at most 400 values are allowed.
-    ///
-    /// For product recommendations, an example of extra user information is
-    /// ` traffic_channel`, which is how a user arrives at the site. Users can
-    /// arrive
-    /// at the site by coming to the site directly, coming through Google
-    /// search, or in other ways.
-    #[prost(map = "string, message", tag = "17")]
-    pub attributes: ::std::collections::HashMap<::prost::alloc::string::String, CustomAttribute>,
-    /// Media-specific info.
-    #[prost(message, optional, tag = "18")]
-    pub media_info: ::core::option::Option<MediaInfo>,
-}
-/// Detailed page information.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PageInfo {
-    /// A unique ID of a web page view.
-    ///
-    /// This should be kept the same for all user events triggered from the same
-    /// pageview. For example, an item detail page view could trigger multiple
-    /// events as the user is browsing the page. The `pageViewId` property should
-    /// be kept the same for all these events so that they can be grouped together
-    /// properly.
-    ///
-    /// When using the client side event reporting with JavaScript pixel and Google
-    /// Tag Manager, this value is filled in automatically.
-    #[prost(string, tag = "1")]
-    pub pageview_id: ::prost::alloc::string::String,
-    /// The most specific category associated with a category page.
-    ///
-    /// To represent full path of category, use '>' sign to separate different
-    /// hierarchies. If '>' is part of the category name, please replace it with
-    /// other character(s).
-    ///
-    /// Category pages include special pages such as sales or promotions. For
-    /// instance, a special sale page may have the category hierarchy:
-    /// "pageCategory" : "Sales > 2017 Black Friday Deals".
-    ///
-    /// Required for `view-category-page` events. Other event types should not set
-    /// this field. Otherwise, an INVALID_ARGUMENT error is returned.
-    #[prost(string, tag = "2")]
-    pub page_category: ::prost::alloc::string::String,
-    /// Complete URL (window.location.href) of the user's current page.
-    ///
-    /// When using the client side event reporting with JavaScript pixel and Google
-    /// Tag Manager, this value is filled in automatically. Maximum length 5,000
-    /// characters.
-    #[prost(string, tag = "3")]
-    pub uri: ::prost::alloc::string::String,
-    /// The referrer URL of the current page.
-    ///
-    /// When using the client side event reporting with JavaScript pixel and Google
-    /// Tag Manager, this value is filled in automatically. However, some browser
-    /// privacy restrictions may cause this field to be empty.
-    #[prost(string, tag = "4")]
-    pub referrer_uri: ::prost::alloc::string::String,
-}
-/// Detailed search information.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SearchInfo {
-    /// The user's search query.
-    ///
-    /// See
-    /// \[SearchRequest.query][google.cloud.discoveryengine.v1beta.SearchRequest.query\]
-    /// for definition.
-    ///
-    /// The value must be a UTF-8 encoded string with a length limit of 5,000
-    /// characters. Otherwise, an INVALID_ARGUMENT error is returned.
-    ///
-    /// At least one of
-    /// \[search_query][google.cloud.discoveryengine.v1beta.SearchInfo.search_query\]
-    /// or
-    /// \[PageInfo.page_category][google.cloud.discoveryengine.v1beta.PageInfo.page_category\]
-    /// is required for `search` events. Other event types should not set this
-    /// field. Otherwise, an INVALID_ARGUMENT error is returned.
-    #[prost(string, tag = "1")]
-    pub search_query: ::prost::alloc::string::String,
-    /// The order in which products are returned, if applicable.
-    ///
-    /// See
-    /// \[SearchRequest.order_by][google.cloud.discoveryengine.v1beta.SearchRequest.order_by\]
-    /// for definition and syntax.
-    ///
-    /// The value must be a UTF-8 encoded string with a length limit of 1,000
-    /// characters. Otherwise, an INVALID_ARGUMENT error is returned.
-    ///
-    /// This can only be set for `search` events. Other event types should not set
-    /// this field. Otherwise, an INVALID_ARGUMENT error is returned.
-    #[prost(string, tag = "2")]
-    pub order_by: ::prost::alloc::string::String,
-    /// An integer that specifies the current offset for pagination (the 0-indexed
-    /// starting location, amongst the products deemed by the API as relevant).
-    ///
-    /// See
-    /// \[SearchRequest.offset][google.cloud.discoveryengine.v1beta.SearchRequest.offset\]
-    /// for definition.
-    ///
-    /// If this field is negative, an INVALID_ARGUMENT is returned.
-    ///
-    /// This can only be set for `search` events. Other event types should not set
-    /// this field. Otherwise, an INVALID_ARGUMENT error is returned.
-    #[prost(int32, optional, tag = "3")]
-    pub offset: ::core::option::Option<i32>,
-}
-/// Detailed completion information including completion attribution token and
-/// clicked completion info.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct CompletionInfo {
-    /// End user selected \[CompleteQueryResponse.CompletionResult.suggestion][\].
-    #[prost(string, tag = "1")]
-    pub selected_suggestion: ::prost::alloc::string::String,
-    /// End user selected \[CompleteQueryResponse.CompletionResult.suggestion][\]
-    /// position, starting from 0.
-    #[prost(int32, tag = "2")]
-    pub selected_position: i32,
-}
-/// A transaction represents the entire purchase transaction.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct TransactionInfo {
-    /// Required. Total non-zero value associated with the transaction. This value
-    /// may include shipping, tax, or other adjustments to the total value that you
-    /// want to include.
-    #[prost(float, optional, tag = "1")]
-    pub value: ::core::option::Option<f32>,
-    /// Required. Currency code. Use three-character ISO-4217 code.
-    #[prost(string, tag = "2")]
-    pub currency: ::prost::alloc::string::String,
-    /// The transaction ID with a length limit of 128 characters.
-    #[prost(string, tag = "3")]
-    pub transaction_id: ::prost::alloc::string::String,
-    /// All the taxes associated with the transaction.
-    #[prost(float, optional, tag = "4")]
-    pub tax: ::core::option::Option<f32>,
-    /// All the costs associated with the products. These can be manufacturing
-    /// costs, shipping expenses not borne by the end user, or any other costs,
-    /// such that:
-    ///
-    /// * Profit =
-    /// \[value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\] -
-    /// \[tax][google.cloud.discoveryengine.v1beta.TransactionInfo.tax\] -
-    /// \[cost][google.cloud.discoveryengine.v1beta.TransactionInfo.cost\]
-    #[prost(float, optional, tag = "5")]
-    pub cost: ::core::option::Option<f32>,
-    /// The total discount(s) value applied to this transaction.
-    /// This figure should be excluded from
-    /// \[TransactionInfo.value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\]
-    ///
-    /// For example, if a user paid
-    /// \[TransactionInfo.value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\]
-    /// amount, then nominal (pre-discount) value of the transaction is the sum of
-    /// \[TransactionInfo.value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\]
-    /// and
-    /// \[TransactionInfo.discount_value][google.cloud.discoveryengine.v1beta.TransactionInfo.discount_value\]
-    ///
-    /// This means that profit is calculated the same way, regardless of the
-    /// discount value, and that
-    /// \[TransactionInfo.discount_value][google.cloud.discoveryengine.v1beta.TransactionInfo.discount_value\]
-    /// can be larger than
-    /// \[TransactionInfo.value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\]:
-    ///
-    /// * Profit =
-    /// \[value][google.cloud.discoveryengine.v1beta.TransactionInfo.value\] -
-    /// \[tax][google.cloud.discoveryengine.v1beta.TransactionInfo.tax\] -
-    /// \[cost][google.cloud.discoveryengine.v1beta.TransactionInfo.cost\]
-    #[prost(float, optional, tag = "6")]
-    pub discount_value: ::core::option::Option<f32>,
-}
-/// Detailed document information associated with a user event.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct DocumentInfo {
-    /// Quantity of the Document associated with the user event. Defaults to 1.
-    ///
-    /// For example, this field will be 2 if two quantities of the same Document
-    /// are involved in a `add-to-cart` event.
-    ///
-    /// Required for events of the following event types:
-    ///
-    /// * `add-to-cart`
-    /// * `purchase`
-    #[prost(int32, optional, tag = "3")]
-    pub quantity: ::core::option::Option<i32>,
-    /// The promotion IDs associated with this Document.
-    /// Currently, this field is restricted to at most one ID.
-    #[prost(string, repeated, tag = "4")]
-    pub promotion_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// A required descriptor of the associated
-    /// \[Document][google.cloud.discoveryengine.v1beta.Document\].
-    ///
-    /// * If \[id][google.cloud.discoveryengine.v1beta.DocumentInfo.id\] is
-    /// specified, then the default values for
-    /// `{location}`, `{collection_id}`, `{data_store_id}`, and `{branch_id}` are
-    /// used when annotating with the stored Document.
-    ///
-    /// * If \[name][google.cloud.discoveryengine.v1beta.DocumentInfo.name\] is
-    /// specified, then the provided values (default values allowed) for
-    /// `{location}`, `{collection_id}`, `{data_store_id}`, and
-    /// `{branch_id}` are used when annotating with the stored Document.
-    #[prost(oneof = "document_info::DocumentDescriptor", tags = "1, 2")]
-    pub document_descriptor: ::core::option::Option<document_info::DocumentDescriptor>,
-}
-/// Nested message and enum types in `DocumentInfo`.
-pub mod document_info {
-    /// A required descriptor of the associated
-    /// \[Document][google.cloud.discoveryengine.v1beta.Document\].
-    ///
-    /// * If \[id][google.cloud.discoveryengine.v1beta.DocumentInfo.id\] is
-    /// specified, then the default values for
-    /// `{location}`, `{collection_id}`, `{data_store_id}`, and `{branch_id}` are
-    /// used when annotating with the stored Document.
-    ///
-    /// * If \[name][google.cloud.discoveryengine.v1beta.DocumentInfo.name\] is
-    /// specified, then the provided values (default values allowed) for
-    /// `{location}`, `{collection_id}`, `{data_store_id}`, and
-    /// `{branch_id}` are used when annotating with the stored Document.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum DocumentDescriptor {
-        /// Required. The Document resource ID.
-        #[prost(string, tag = "1")]
-        Id(::prost::alloc::string::String),
-        /// Required. The Document resource full name, of the form:
-        /// `projects/{project_id}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}/branches/{branch_id}/documents/{document_id}`
-        #[prost(string, tag = "2")]
-        Name(::prost::alloc::string::String),
-    }
-}
-/// Detailed panel information associated with a user event.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PanelInfo {
-    /// Required. The panel ID.
-    #[prost(string, tag = "2")]
-    pub panel_id: ::prost::alloc::string::String,
-    /// The display name of the panel.
-    #[prost(string, tag = "3")]
-    pub display_name: ::prost::alloc::string::String,
-    /// The ordered position of the panel, if shown to the user with other panels.
-    /// If set, then
-    /// \[total_panels][google.cloud.discoveryengine.v1beta.PanelInfo.total_panels\]
-    /// must also be set.
-    #[prost(int32, optional, tag = "4")]
-    pub panel_position: ::core::option::Option<i32>,
-    /// The total number of panels, including this one, shown to the user.
-    /// Must be set if
-    /// \[panel_position][google.cloud.discoveryengine.v1beta.PanelInfo.panel_position\]
-    /// is set.
-    #[prost(int32, optional, tag = "5")]
-    pub total_panels: ::core::option::Option<i32>,
-}
-/// Media-specific user event information.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct MediaInfo {
-    /// The media progress time in seconds, if applicable.
-    /// For example, if the end user has finished 90 seconds of a playback video,
-    /// then \[MediaInfo.media_progress_duration.seconds][Duration.seconds\] should
-    /// be set to 90.
-    #[prost(message, optional, tag = "1")]
-    pub media_progress_duration: ::core::option::Option<::prost_types::Duration>,
-    /// Media progress should be computed using only the media_progress_duration
-    /// relative to the media total length.
-    ///
-    /// This value must be between `[0, 1.0]` inclusive.
-    ///
-    /// If this is not a playback or the progress cannot be computed (e.g. ongoing
-    /// livestream), this field should be unset.
-    #[prost(float, optional, tag = "2")]
-    pub media_progress_percentage: ::core::option::Option<f32>,
-}
-/// Cloud Storage location for input content.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GcsSource {
-    /// Required. Cloud Storage URIs to input files. URI can be up to
-    /// 2000 characters long. URIs can match the full object path (for example,
-    /// `gs://bucket/directory/object.json`) or a pattern matching one or more
-    /// files, such as `gs://bucket/directory/*.json`.
-    ///
-    /// A request can contain at most 100 files (or 100,000 files if `data_schema`
-    /// is `content`). Each file can be up to 2 GB (or 100 MB if `data_schema` is
-    /// `content`).
-    #[prost(string, repeated, tag = "1")]
-    pub input_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// The schema to use when parsing the data from the source.
-    ///
-    /// Supported values for document imports:
-    ///
-    /// * `document` (default): One JSON
-    /// \[Document][google.cloud.discoveryengine.v1beta.Document\] per line. Each
-    /// document must
-    ///   have a valid
-    ///   \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\].
-    /// * `content`: Unstructured data (e.g. PDF, HTML). Each file matched by
-    ///   `input_uris` will become a document, with the ID set to the first 128
-    ///   bits of SHA256(URI) encoded as a hex string.
-    /// * `custom`: One custom data JSON per row in arbitrary format that conforms
-    ///   the defined \[Schema][google.cloud.discoveryengine.v1beta.Schema\] of the
-    ///   data store. This can only be used by the GENERIC Data Store vertical.
-    /// * `csv`: A CSV file with header conforming the defined
-    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\] of the
-    ///   data store. Each entry after the header will be imported as a Document.
-    ///   This can only be used by the GENERIC Data Store vertical.
-    ///
-    /// Supported values for user even imports:
-    ///
-    /// * `user_event` (default): One JSON
-    /// \[UserEvent][google.cloud.discoveryengine.v1beta.UserEvent\] per line.
-    #[prost(string, tag = "2")]
-    pub data_schema: ::prost::alloc::string::String,
-}
-/// BigQuery source import data from.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BigQuerySource {
-    /// The project ID (can be project # or ID) that the BigQuery source is in with
-    /// a length limit of 128 characters. If not specified, inherits the project
-    /// ID from the parent request.
-    #[prost(string, tag = "1")]
-    pub project_id: ::prost::alloc::string::String,
-    /// Required. The BigQuery data set to copy the data from with a length limit
-    /// of 1,024 characters.
-    #[prost(string, tag = "2")]
-    pub dataset_id: ::prost::alloc::string::String,
-    /// Required. The BigQuery table to copy the data from with a length limit of
-    /// 1,024 characters.
-    #[prost(string, tag = "3")]
-    pub table_id: ::prost::alloc::string::String,
-    /// Intermediate Cloud Storage directory used for the import with a length
-    /// limit of 2,000 characters. Can be specified if one wants to have the
-    /// BigQuery export to a specific Cloud Storage directory.
-    #[prost(string, tag = "4")]
-    pub gcs_staging_dir: ::prost::alloc::string::String,
-    /// The schema to use when parsing the data from the source.
-    ///
-    /// Supported values for user event imports:
-    ///
-    /// * `user_event` (default): One
-    /// \[UserEvent][google.cloud.discoveryengine.v1beta.UserEvent\] per row.
-    ///
-    /// Supported values for document imports:
-    ///
-    /// * `document` (default): One
-    /// \[Document][google.cloud.discoveryengine.v1beta.Document\] format per
-    ///   row. Each document must have a valid
-    ///   \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\] and one of
-    ///   \[Document.json_data][google.cloud.discoveryengine.v1beta.Document.json_data\]
-    ///   or
-    ///   \[Document.struct_data][google.cloud.discoveryengine.v1beta.Document.struct_data\].
-    /// * `custom`: One custom data per row in arbitrary format that conforms the
-    ///   defined \[Schema][google.cloud.discoveryengine.v1beta.Schema\] of the data
-    ///   store. This can only be used by the GENERIC Data Store vertical.
-    #[prost(string, tag = "6")]
-    pub data_schema: ::prost::alloc::string::String,
-    /// BigQuery table partition info. Leave this empty if the BigQuery table
-    /// is not partitioned.
-    #[prost(oneof = "big_query_source::Partition", tags = "5")]
-    pub partition: ::core::option::Option<big_query_source::Partition>,
-}
-/// Nested message and enum types in `BigQuerySource`.
-pub mod big_query_source {
-    /// BigQuery table partition info. Leave this empty if the BigQuery table
-    /// is not partitioned.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Partition {
-        /// BigQuery time partitioned table's _PARTITIONDATE in YYYY-MM-DD format.
-        #[prost(message, tag = "5")]
-        PartitionDate(super::super::super::super::r#type::Date),
-    }
-}
-/// Configuration of destination for Import related errors.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportErrorConfig {
-    /// Required. Errors destination.
-    #[prost(oneof = "import_error_config::Destination", tags = "1")]
-    pub destination: ::core::option::Option<import_error_config::Destination>,
-}
-/// Nested message and enum types in `ImportErrorConfig`.
-pub mod import_error_config {
-    /// Required. Errors destination.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Destination {
-        /// Cloud Storage prefix for import errors. This must be an empty,
-        /// existing Cloud Storage directory. Import errors will be written to
-        /// sharded files in this directory, one per line, as a JSON-encoded
-        /// `google.rpc.Status` message.
-        #[prost(string, tag = "1")]
-        GcsPrefix(::prost::alloc::string::String),
-    }
-}
-/// Request message for the ImportUserEvents request.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportUserEventsRequest {
-    /// Required. Parent DataStore resource name, of the form
-    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}`
-    #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// The desired location of errors incurred during the Import. Cannot be set
-    /// for inline user event imports.
-    #[prost(message, optional, tag = "5")]
-    pub error_config: ::core::option::Option<ImportErrorConfig>,
-    /// Required - The desired input source of the user event data.
-    #[prost(oneof = "import_user_events_request::Source", tags = "2, 3, 4")]
-    pub source: ::core::option::Option<import_user_events_request::Source>,
-}
-/// Nested message and enum types in `ImportUserEventsRequest`.
-pub mod import_user_events_request {
-    /// The inline source for the input config for ImportUserEvents method.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct InlineSource {
-        /// Required. A list of user events to import. Recommended max of 10k items.
-        #[prost(message, repeated, tag = "1")]
-        pub user_events: ::prost::alloc::vec::Vec<super::UserEvent>,
-    }
-    /// Required - The desired input source of the user event data.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Source {
-        /// The Inline source for the input content for UserEvents.
+    pub enum Schema {
+        /// The structured representation of the schema.
         #[prost(message, tag = "2")]
-        InlineSource(InlineSource),
-        /// Cloud Storage location for the input content.
-        #[prost(message, tag = "3")]
-        GcsSource(super::GcsSource),
-        /// BigQuery input source.
-        #[prost(message, tag = "4")]
-        BigquerySource(super::BigQuerySource),
+        StructSchema(::prost_types::Struct),
+        /// The JSON representation of the schema.
+        #[prost(string, tag = "3")]
+        JsonSchema(::prost::alloc::string::String),
     }
 }
-/// Response of the ImportUserEventsRequest. If the long running
-/// operation was successful, then this message is returned by the
-/// google.longrunning.Operations.response field if the operation was successful.
+/// DataStore captures global settings and configs at the DataStore level.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportUserEventsResponse {
-    /// A sample of errors encountered while processing the request.
-    #[prost(message, repeated, tag = "1")]
-    pub error_samples: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
-    /// Echoes the destination for the complete errors if this field was set in
-    /// the request.
-    #[prost(message, optional, tag = "2")]
-    pub error_config: ::core::option::Option<ImportErrorConfig>,
-    /// Count of user events imported with complete existing Documents.
-    #[prost(int64, tag = "3")]
-    pub joined_events_count: i64,
-    /// Count of user events imported, but with Document information not found
-    /// in the existing Branch.
-    #[prost(int64, tag = "4")]
-    pub unjoined_events_count: i64,
-}
-/// Metadata related to the progress of the Import operation. This will be
-/// returned by the google.longrunning.Operation.metadata field.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportUserEventsMetadata {
-    /// Operation create time.
-    #[prost(message, optional, tag = "1")]
-    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Operation last update time. If the operation is done, this is also the
-    /// finish time.
-    #[prost(message, optional, tag = "2")]
-    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Count of entries that were processed successfully.
-    #[prost(int64, tag = "3")]
-    pub success_count: i64,
-    /// Count of entries that encountered errors while processing.
-    #[prost(int64, tag = "4")]
-    pub failure_count: i64,
-}
-/// Metadata related to the progress of the ImportDocuments operation. This will
-/// be returned by the google.longrunning.Operation.metadata field.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportDocumentsMetadata {
-    /// Operation create time.
-    #[prost(message, optional, tag = "1")]
-    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Operation last update time. If the operation is done, this is also the
-    /// finish time.
-    #[prost(message, optional, tag = "2")]
-    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Count of entries that were processed successfully.
-    #[prost(int64, tag = "3")]
-    pub success_count: i64,
-    /// Count of entries that encountered errors while processing.
-    #[prost(int64, tag = "4")]
-    pub failure_count: i64,
-}
-/// Request message for Import methods.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportDocumentsRequest {
-    /// Required. The parent branch resource name, such as
-    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/branches/{branch}`.
-    /// Requires create/update permission.
+pub struct DataStore {
+    /// Immutable. The full resource name of the data store.
+    /// Format:
+    /// `projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}`.
+    ///
+    /// This field must be a UTF-8 encoded string with a length limit of 1024
+    /// characters.
     #[prost(string, tag = "1")]
-    pub parent: ::prost::alloc::string::String,
-    /// The desired location of errors incurred during the Import.
-    #[prost(message, optional, tag = "5")]
-    pub error_config: ::core::option::Option<ImportErrorConfig>,
-    /// The mode of reconciliation between existing documents and the documents to
-    /// be imported. Defaults to
-    /// \[ReconciliationMode.INCREMENTAL][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest.ReconciliationMode.INCREMENTAL\].
-    #[prost(
-        enumeration = "import_documents_request::ReconciliationMode",
-        tag = "6"
-    )]
-    pub reconciliation_mode: i32,
-    /// Whether to automatically generate IDs for the documents if absent.
+    pub name: ::prost::alloc::string::String,
+    /// Required. The data store display name.
     ///
-    /// If set to `true`,
-    /// \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\]s are
-    /// automatically generated based on the hash of the payload, where IDs may not
-    /// be consistent during multiple imports. In which case
-    /// \[ReconciliationMode.FULL][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest.ReconciliationMode.FULL\]
-    /// is highly recommended to avoid duplicate contents. If unset or set to
-    /// `false`, \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\]s
-    /// have to be specified using
-    /// \[id_field][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest.id_field\],
-    /// otherwises, documents without IDs will fail to be imported.
+    /// This field must be a UTF-8 encoded string with a length limit of 128
+    /// characters. Otherwise, an INVALID_ARGUMENT error is returned.
+    #[prost(string, tag = "2")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Immutable. The industry vertical that the data store registers.
+    #[prost(enumeration = "IndustryVertical", tag = "3")]
+    pub industry_vertical: i32,
+    /// The solutions that the data store enrolls. Available solutions for each
+    /// \[industry_vertical][google.cloud.discoveryengine.v1beta.DataStore.industry_vertical\]:
     ///
-    /// Only set this field when using
-    /// \[GcsSource][google.cloud.discoveryengine.v1beta.GcsSource\] or
-    /// \[BigQuerySource][google.cloud.discoveryengine.v1beta.BigQuerySource\], and
-    /// when
-    /// \[GcsSource.data_schema][google.cloud.discoveryengine.v1beta.GcsSource.data_schema\]
-    /// or
-    /// \[BigQuerySource.data_schema][google.cloud.discoveryengine.v1beta.BigQuerySource.data_schema\]
-    /// is `custom` or `csv`. Otherwise, an INVALID_ARGUMENT error is thrown.
-    #[prost(bool, tag = "8")]
-    pub auto_generate_ids: bool,
-    /// The field in the Cloud Storage and BigQuery sources that indicates the
-    /// unique IDs of the documents.
+    /// * `MEDIA`: `SOLUTION_TYPE_RECOMMENDATION` and `SOLUTION_TYPE_SEARCH`.
+    /// * `SITE_SEARCH`: `SOLUTION_TYPE_SEARCH` is automatically enrolled. Other
+    ///   solutions cannot be enrolled.
+    #[prost(enumeration = "SolutionType", repeated, tag = "5")]
+    pub solution_types: ::prost::alloc::vec::Vec<i32>,
+    /// Output only. The id of the default
+    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\] asscociated to this
+    /// data store.
+    #[prost(string, tag = "7")]
+    pub default_schema_id: ::prost::alloc::string::String,
+    /// Immutable. The content config of the data store. If this field is unset,
+    /// the server behavior defaults to
+    /// \[ContentConfig.NO_CONTENT][google.cloud.discoveryengine.v1beta.DataStore.ContentConfig.NO_CONTENT\].
+    #[prost(enumeration = "data_store::ContentConfig", tag = "6")]
+    pub content_config: i32,
+    /// Output only. Timestamp the
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] was created at.
+    #[prost(message, optional, tag = "4")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Configuration for Document understanding and enrichment.
+    #[prost(message, optional, tag = "27")]
+    pub document_processing_config: ::core::option::Option<DocumentProcessingConfig>,
+    /// The start schema to use for this
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] when
+    /// provisioning it. If unset, a default vertical specialized schema will be
+    /// used.
     ///
-    /// For \[GcsSource][google.cloud.discoveryengine.v1beta.GcsSource\] it is the
-    /// key of the JSON field. For instance, `my_id` for JSON `{"my_id":
-    /// "some_uuid"}`. For
-    /// \[BigQuerySource][google.cloud.discoveryengine.v1beta.BigQuerySource\] it is
-    /// the column name of the BigQuery table where the unique ids are stored.
+    /// This field is only used by \[CreateDataStore][\] API, and will be ignored if
+    /// used in other APIs. This field will be omitted from all API responses
+    /// including \[CreateDataStore][\] API. To retrieve a schema of a
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], use
+    /// \[SchemaService.GetSchema][google.cloud.discoveryengine.v1beta.SchemaService.GetSchema\]
+    /// API instead.
     ///
-    /// The values of the JSON field or the BigQuery column will be used as the
-    /// \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\]s. The JSON
-    /// field or the BigQuery column must be of string type, and the values must be
-    /// set as valid strings conform to
-    /// \[RFC-1034\](<https://tools.ietf.org/html/rfc1034>) with 1-63 characters.
-    /// Otherwise, documents without valid IDs will fail to be imported.
-    ///
-    /// Only set this field when using
-    /// \[GcsSource][google.cloud.discoveryengine.v1beta.GcsSource\] or
-    /// \[BigQuerySource][google.cloud.discoveryengine.v1beta.BigQuerySource\], and
-    /// when
-    /// \[GcsSource.data_schema][google.cloud.discoveryengine.v1beta.GcsSource.data_schema\]
-    /// or
-    /// \[BigQuerySource.data_schema][google.cloud.discoveryengine.v1beta.BigQuerySource.data_schema\]
-    /// is `custom`. And only set this field when
-    /// \[auto_generate_ids][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest.auto_generate_ids\]
-    /// is unset or set as `false`. Otherwise, an INVALID_ARGUMENT error is thrown.
-    ///
-    /// If it is unset, a default value `_id` is used when importing from the
-    /// allowed data sources.
-    #[prost(string, tag = "9")]
-    pub id_field: ::prost::alloc::string::String,
-    /// Required. The source of the input.
-    #[prost(oneof = "import_documents_request::Source", tags = "2, 3, 4")]
-    pub source: ::core::option::Option<import_documents_request::Source>,
+    /// The provided schema will be validated against certain rules on schema.
+    /// Learn more from [this
+    /// doc](<https://cloud.google.com/generative-ai-app-builder/docs/provide-schema>).
+    #[prost(message, optional, tag = "28")]
+    pub starting_schema: ::core::option::Option<Schema>,
 }
-/// Nested message and enum types in `ImportDocumentsRequest`.
-pub mod import_documents_request {
-    /// The inline source for the input config for ImportDocuments method.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct InlineSource {
-        /// Required. A list of documents to update/create. Each document must have a
-        /// valid \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\].
-        /// Recommended max of 100 items.
-        #[prost(message, repeated, tag = "1")]
-        pub documents: ::prost::alloc::vec::Vec<super::Document>,
-    }
-    /// Indicates how imported documents are reconciled with the existing documents
-    /// created or imported before.
+/// Nested message and enum types in `DataStore`.
+pub mod data_store {
+    /// Content config of the data store.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
-    pub enum ReconciliationMode {
-        /// Defaults to INCREMENTAL.
+    pub enum ContentConfig {
+        /// Default value.
         Unspecified = 0,
-        /// Inserts new documents or updates existing documents.
-        Incremental = 1,
-        /// Calculates diff and replaces the entire document dataset. Existing
-        /// documents may be deleted if they are not present in the source location.
-        Full = 2,
-    }
-    /// Required. The source of the input.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Source {
-        /// The Inline source for the input content for documents.
-        #[prost(message, tag = "2")]
-        InlineSource(InlineSource),
-        /// Cloud Storage location for the input content.
-        #[prost(message, tag = "3")]
-        GcsSource(super::GcsSource),
-        /// BigQuery input source.
-        #[prost(message, tag = "4")]
-        BigquerySource(super::BigQuerySource),
+        /// Only contains documents without any
+        /// \[Document.content][google.cloud.discoveryengine.v1beta.Document.content\].
+        NoContent = 1,
+        /// Only contains documents with
+        /// \[Document.content][google.cloud.discoveryengine.v1beta.Document.content\].
+        ContentRequired = 2,
+        /// The data store is used for public website search.
+        PublicWebsite = 3,
     }
 }
-/// Response of the
-/// \[ImportDocumentsRequest][google.cloud.discoveryengine.v1beta.ImportDocumentsRequest\].
-/// If the long running operation is done, then this message is returned by the
-/// google.longrunning.Operations.response field if the operation was successful.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportDocumentsResponse {
-    /// A sample of errors encountered while processing the request.
-    #[prost(message, repeated, tag = "1")]
-    pub error_samples: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
-    /// Echoes the destination for the complete errors in the request if set.
-    #[prost(message, optional, tag = "2")]
-    pub error_config: ::core::option::Option<ImportErrorConfig>,
-}
-/// Request message for
-/// \[DocumentService.PurgeDocuments][google.cloud.discoveryengine.v1beta.DocumentService.PurgeDocuments\]
+/// Request for
+/// \[DataStoreService.CreateDataStore][google.cloud.discoveryengine.v1beta.DataStoreService.CreateDataStore\]
 /// method.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PurgeDocumentsRequest {
+pub struct CreateDataStoreRequest {
     /// Required. The parent resource name, such as
-    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/branches/{branch}`.
+    /// `projects/{project}/locations/{location}/collections/{collection}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. Filter matching documents to purge. Only currently supported
-    /// value is
-    /// `*` (all items).
-    #[prost(string, tag = "2")]
-    pub filter: ::prost::alloc::string::String,
-    /// Actually performs the purge. If `force` is set to false, return the
-    /// expected purge count without deleting any documents.
-    #[prost(bool, tag = "3")]
-    pub force: bool,
+    /// Required. The \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] to
+    /// create.
+    #[prost(message, optional, tag = "2")]
+    pub data_store: ::core::option::Option<DataStore>,
+    /// Required. The ID to use for the
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], which will
+    /// become the final component of the
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\]'s resource name.
+    ///
+    /// This field must conform to \[RFC-1034\](<https://tools.ietf.org/html/rfc1034>)
+    /// standard with a length limit of 63 characters. Otherwise, an
+    /// INVALID_ARGUMENT error is returned.
+    #[prost(string, tag = "3")]
+    pub data_store_id: ::prost::alloc::string::String,
+    /// A boolean flag indicating whether user want to directly create an advanced
+    /// data store for site search.
+    /// If the data store is not configured as site
+    /// search (GENERIC vertical and PUBLIC_WEBSITE content_config), this flag will
+    /// be ignored.
+    #[prost(bool, tag = "4")]
+    pub create_advanced_site_search: bool,
 }
-/// Response message for
-/// \[DocumentService.PurgeDocuments][google.cloud.discoveryengine.v1beta.DocumentService.PurgeDocuments\]
-/// method. If the long running operation is successfully done, then this message
-/// is returned by the google.longrunning.Operations.response field.
+/// Request message for
+/// \[DataStoreService.GetDataStore][google.cloud.discoveryengine.v1beta.DataStoreService.GetDataStore\]
+/// method.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PurgeDocumentsResponse {
-    /// The total count of documents purged as a result of the operation.
-    #[prost(int64, tag = "1")]
-    pub purge_count: i64,
-    /// A sample of document names that will be deleted. Only populated if `force`
-    /// is set to false. A max of 100 names will be returned and the names are
-    /// chosen at random.
-    #[prost(string, repeated, tag = "2")]
-    pub purge_sample: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+pub struct GetDataStoreRequest {
+    /// Required. Full resource name of
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], such as
+    /// `projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}`.
+    ///
+    /// If the caller does not have permission to access the
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], regardless of
+    /// whether or not it exists, a PERMISSION_DENIED error is returned.
+    ///
+    /// If the requested \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\]
+    /// does not exist, a NOT_FOUND error is returned.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
 }
-/// Metadata related to the progress of the PurgeDocuments operation.
-/// This will be returned by the google.longrunning.Operation.metadata field.
+/// Metadata related to the progress of the
+/// \[DataStoreService.CreateDataStore][google.cloud.discoveryengine.v1beta.DataStoreService.CreateDataStore\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PurgeDocumentsMetadata {
+pub struct CreateDataStoreMetadata {
     /// Operation create time.
     #[prost(message, optional, tag = "1")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
@@ -1189,12 +5184,268 @@ pub struct PurgeDocumentsMetadata {
     /// finish time.
     #[prost(message, optional, tag = "2")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Count of entries that were deleted successfully.
-    #[prost(int64, tag = "3")]
-    pub success_count: i64,
-    /// Count of entries that encountered errors while processing.
-    #[prost(int64, tag = "4")]
-    pub failure_count: i64,
+}
+/// Request message for
+/// \[DataStoreService.ListDataStores][google.cloud.discoveryengine.v1beta.DataStoreService.ListDataStores\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDataStoresRequest {
+    /// Required. The parent branch resource name, such as
+    /// `projects/{project}/locations/{location}/collections/{collection_id}`.
+    ///
+    /// If the caller does not have permission to list
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\]s under this
+    /// location, regardless of whether or not this data store exists, a
+    /// PERMISSION_DENIED error is returned.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Maximum number of
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\]s to return. If
+    /// unspecified, defaults to 10. The maximum allowed value is 50. Values above
+    /// 50 will be coerced to 50.
+    ///
+    /// If this field is negative, an INVALID_ARGUMENT is returned.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token
+    /// \[ListDataStoresResponse.next_page_token][google.cloud.discoveryengine.v1beta.ListDataStoresResponse.next_page_token\],
+    /// received from a previous
+    /// \[DataStoreService.ListDataStores][google.cloud.discoveryengine.v1beta.DataStoreService.ListDataStores\]
+    /// call. Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// \[DataStoreService.ListDataStores][google.cloud.discoveryengine.v1beta.DataStoreService.ListDataStores\]
+    /// must match the call that provided the page token. Otherwise, an
+    /// INVALID_ARGUMENT error is returned.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Filter by solution type .
+    /// For example: `filter = 'solution_type:SOLUTION_TYPE_SEARCH'`
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[DataStoreService.ListDataStores][google.cloud.discoveryengine.v1beta.DataStoreService.ListDataStores\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDataStoresResponse {
+    /// All the customer's
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\]s.
+    #[prost(message, repeated, tag = "1")]
+    pub data_stores: ::prost::alloc::vec::Vec<DataStore>,
+    /// A token that can be sent as
+    /// \[ListDataStoresRequest.page_token][google.cloud.discoveryengine.v1beta.ListDataStoresRequest.page_token\]
+    /// to retrieve the next page. If this field is omitted, there are no
+    /// subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[DataStoreService.DeleteDataStore][google.cloud.discoveryengine.v1beta.DataStoreService.DeleteDataStore\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteDataStoreRequest {
+    /// Required. Full resource name of
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], such as
+    /// `projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}`.
+    ///
+    /// If the caller does not have permission to delete the
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], regardless of
+    /// whether or not it exists, a PERMISSION_DENIED error is returned.
+    ///
+    /// If the \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] to delete
+    /// does not exist, a NOT_FOUND error is returned.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[DataStoreService.UpdateDataStore][google.cloud.discoveryengine.v1beta.DataStoreService.UpdateDataStore\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateDataStoreRequest {
+    /// Required. The \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] to
+    /// update.
+    ///
+    /// If the caller does not have permission to update the
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], regardless of
+    /// whether or not it exists, a PERMISSION_DENIED error is returned.
+    ///
+    /// If the \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] to update
+    /// does not exist, a NOT_FOUND error is returned.
+    #[prost(message, optional, tag = "1")]
+    pub data_store: ::core::option::Option<DataStore>,
+    /// Indicates which fields in the provided
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] to update.
+    ///
+    /// If an unsupported or unknown field is provided, an INVALID_ARGUMENT error
+    /// is returned.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Metadata related to the progress of the
+/// \[DataStoreService.DeleteDataStore][google.cloud.discoveryengine.v1beta.DataStoreService.DeleteDataStore\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteDataStoreMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+#[doc = r" Generated client implementations."]
+pub mod data_store_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for managing"]
+    #[doc = " [DataStore][google.cloud.discoveryengine.v1beta.DataStore] configuration."]
+    #[derive(Debug, Clone)]
+    pub struct DataStoreServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> DataStoreServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> DataStoreServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            DataStoreServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a [DataStore][google.cloud.discoveryengine.v1beta.DataStore]."]
+        #[doc = ""]
+        #[doc = " DataStore is for storing"]
+        #[doc = " [Documents][google.cloud.discoveryengine.v1beta.Document]. To serve these"]
+        #[doc = " documents for Search, or Recommendation use case, an"]
+        #[doc = " [Engine][google.cloud.discoveryengine.v1beta.Engine] needs to be created"]
+        #[doc = " separately."]
+        pub async fn create_data_store(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateDataStoreRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.DataStoreService/CreateDataStore",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a [DataStore][google.cloud.discoveryengine.v1beta.DataStore]."]
+        pub async fn get_data_store(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDataStoreRequest>,
+        ) -> Result<tonic::Response<super::DataStore>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.DataStoreService/GetDataStore",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all the [DataStore][google.cloud.discoveryengine.v1beta.DataStore]s"]
+        #[doc = " associated with the project."]
+        pub async fn list_data_stores(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListDataStoresRequest>,
+        ) -> Result<tonic::Response<super::ListDataStoresResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.DataStoreService/ListDataStores",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a [DataStore][google.cloud.discoveryengine.v1beta.DataStore]."]
+        pub async fn delete_data_store(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteDataStoreRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.DataStoreService/DeleteDataStore",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a [DataStore][google.cloud.discoveryengine.v1beta.DataStore]"]
+        pub async fn update_data_store(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateDataStoreRequest>,
+        ) -> Result<tonic::Response<super::DataStore>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.DataStoreService/UpdateDataStore",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
 }
 /// Request message for
 /// \[DocumentService.GetDocument][google.cloud.discoveryengine.v1beta.DocumentService.GetDocument\]
@@ -1224,14 +5475,15 @@ pub struct ListDocumentsRequest {
     /// Use `default_branch` as the branch ID, to list documents under the default
     /// branch.
     ///
-    /// If the caller does not have permission to list \[Documents][\]s under this
+    /// If the caller does not have permission to list
+    /// \[Document][google.cloud.discoveryengine.v1beta.Document\]s under this
     /// branch, regardless of whether or not this branch exists, a
     /// `PERMISSION_DENIED` error is returned.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number of \[Document][google.cloud.discoveryengine.v1beta.Document\]s
     /// to return. If unspecified, defaults to 100. The maximum allowed value is
-    /// 1000. Values above 1000 will be coerced to 1000.
+    /// 1000. Values above 1000 are set to 1000.
     ///
     /// If this field is negative, an `INVALID_ARGUMENT` error is returned.
     #[prost(int32, tag = "2")]
@@ -1278,8 +5530,8 @@ pub struct CreateDocumentRequest {
     #[prost(message, optional, tag = "2")]
     pub document: ::core::option::Option<Document>,
     /// Required. The ID to use for the
-    /// \[Document][google.cloud.discoveryengine.v1beta.Document\], which will become
-    /// the final component of the
+    /// \[Document][google.cloud.discoveryengine.v1beta.Document\], which becomes the
+    /// final component of the
     /// \[Document.name][google.cloud.discoveryengine.v1beta.Document.name\].
     ///
     /// If the caller does not have permission to create the
@@ -1314,12 +5566,15 @@ pub struct UpdateDocumentRequest {
     /// is not set, a `NOT_FOUND` error is returned.
     #[prost(message, optional, tag = "1")]
     pub document: ::core::option::Option<Document>,
-    /// If set to true, and the
+    /// If set to `true` and the
     /// \[Document][google.cloud.discoveryengine.v1beta.Document\] is not found, a
-    /// new \[Document][google.cloud.discoveryengine.v1beta.Document\] will be
-    /// created.
+    /// new \[Document][google.cloud.discoveryengine.v1beta.Document\] is be created.
     #[prost(bool, tag = "2")]
     pub allow_missing: bool,
+    /// Indicates which fields in the provided imported 'document' to update. If
+    /// not set, by default updates all fields.
+    #[prost(message, optional, tag = "3")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Request message for
 /// \[DocumentService.DeleteDocument][google.cloud.discoveryengine.v1beta.DocumentService.DeleteDocument\]
@@ -1478,7 +5733,7 @@ pub mod document_service_client {
         }
         #[doc = " Bulk import of multiple"]
         #[doc = " [Document][google.cloud.discoveryengine.v1beta.Document]s. Request"]
-        #[doc = " processing may be synchronous. Non-existing items will be created."]
+        #[doc = " processing may be synchronous. Non-existing items are created."]
         #[doc = ""]
         #[doc = " Note: It is possible for a subset of the"]
         #[doc = " [Document][google.cloud.discoveryengine.v1beta.Document]s to be"]
@@ -1540,14 +5795,1146 @@ pub mod document_service_client {
         }
     }
 }
+/// Metadata that describes the training and serving parameters of an
+/// \[Engine][google.cloud.discoveryengine.v1beta.Engine\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Engine {
+    /// Immutable. The fully qualified resource name of the engine.
+    ///
+    /// This field must be a UTF-8 encoded string with a length limit of 1024
+    /// characters.
+    ///
+    /// Format:
+    /// `projects/{project_number}/locations/{location}/collections/{collection}/engines/{engine}`
+    /// engine should be 1-63 characters, and valid characters are
+    /// /\[a-z0-9][a-z0-9-_\]*/. Otherwise, an INVALID_ARGUMENT error is returned.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The display name of the engine. Should be human readable. UTF-8
+    /// encoded string with limit of 1024 characters.
+    #[prost(string, tag = "2")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Output only. Timestamp the Recommendation Engine was created at.
+    #[prost(message, optional, tag = "3")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Timestamp the Recommendation Engine was last updated.
+    #[prost(message, optional, tag = "4")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The data stores associated with this engine.
+    ///
+    /// For
+    /// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\]
+    /// and
+    /// \[SOLUTION_TYPE_RECOMMENDATION][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_RECOMMENDATION\]
+    /// type of engines, they can only associate with at most one data store.
+    ///
+    /// If
+    /// \[solution_type][google.cloud.discoveryengine.v1beta.Engine.solution_type\]
+    /// is
+    /// \[SOLUTION_TYPE_CHAT][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_CHAT\],
+    /// multiple \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\]s in the
+    /// same \[Collection][google.cloud.discoveryengine.v1beta.Collection\] can be
+    /// associated here.
+    ///
+    /// Note that when used in
+    /// \[CreateEngineRequest][google.cloud.discoveryengine.v1beta.CreateEngineRequest\],
+    /// one DataStore id must be provided as the system will use it for necessary
+    /// initializations.
+    #[prost(string, repeated, tag = "5")]
+    pub data_store_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Required. The solutions of the engine.
+    #[prost(enumeration = "SolutionType", tag = "6")]
+    pub solution_type: i32,
+    /// The industry vertical that the engine registers.
+    /// The restriction of the Engine industry vertical is based on
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\]: If unspecified,
+    /// default to `GENERIC`. Vertical on Engine has to match vertical of the
+    /// DataStore linked to the engine.
+    #[prost(enumeration = "IndustryVertical", tag = "16")]
+    pub industry_vertical: i32,
+    /// Common config spec that specifies the metadata of the engine.
+    #[prost(message, optional, tag = "15")]
+    pub common_config: ::core::option::Option<engine::CommonConfig>,
+    /// Additional config specs that defines the behavior of the engine.
+    #[prost(oneof = "engine::EngineConfig", tags = "11, 13")]
+    pub engine_config: ::core::option::Option<engine::EngineConfig>,
+    /// Engine metadata to monitor the status of the engine.
+    #[prost(oneof = "engine::EngineMetadata", tags = "12")]
+    pub engine_metadata: ::core::option::Option<engine::EngineMetadata>,
+}
+/// Nested message and enum types in `Engine`.
+pub mod engine {
+    /// Configurations for a Search Engine.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SearchEngineConfig {
+        /// The search feature tier of this engine.
+        ///
+        /// Different tiers might have different
+        /// pricing. To learn more, check the pricing documentation.
+        ///
+        /// Defaults to
+        /// \[SearchTier.SEARCH_TIER_STANDARD][google.cloud.discoveryengine.v1beta.SearchTier.SEARCH_TIER_STANDARD\]
+        /// if not specified.
+        #[prost(enumeration = "super::SearchTier", tag = "1")]
+        pub search_tier: i32,
+        /// The add-on that this search engine enables.
+        #[prost(enumeration = "super::SearchAddOn", repeated, tag = "2")]
+        pub search_add_ons: ::prost::alloc::vec::Vec<i32>,
+    }
+    /// Configurations for a Chat Engine.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ChatEngineConfig {
+        /// The configurationt generate the Dialogflow agent that is associated to
+        /// this Engine.
+        ///
+        /// Note that these configurations are one-time consumed by
+        /// and passed to Dialogflow service. It means they cannot be retrieved using
+        /// \[EngineService.GetEngine][google.cloud.discoveryengine.v1beta.EngineService.GetEngine\]
+        /// or
+        /// \[EngineService.ListEngines][google.cloud.discoveryengine.v1beta.EngineService.ListEngines\]
+        /// API after engine creation.
+        #[prost(message, optional, tag = "1")]
+        pub agent_creation_config: ::core::option::Option<chat_engine_config::AgentCreationConfig>,
+        /// The resource name of an exist Dialogflow agent to link to this Chat
+        /// Engine. Customers can either provide `agent_creation_config` to create
+        /// agent or provide an agent name that links the agent with the Chat engine.
+        ///
+        /// Format: `projects/<Project ID>/locations/<Location ID>/agents/<Agent
+        /// ID>`.
+        ///
+        /// Note that the `dialogflow_agent_to_link` are one-time consumed by and
+        /// passed to Dialogflow service. It means they cannot be retrieved using
+        /// \[EngineService.GetEngine][google.cloud.discoveryengine.v1beta.EngineService.GetEngine\]
+        /// or
+        /// \[EngineService.ListEngines][google.cloud.discoveryengine.v1beta.EngineService.ListEngines\]
+        /// API after engine creation. Use
+        /// \[ChatEngineMetadata.dialogflow_agent][google.cloud.discoveryengine.v1beta.Engine.ChatEngineMetadata.dialogflow_agent\]
+        /// for actual agent association after Engine is created.
+        #[prost(string, tag = "2")]
+        pub dialogflow_agent_to_link: ::prost::alloc::string::String,
+    }
+    /// Nested message and enum types in `ChatEngineConfig`.
+    pub mod chat_engine_config {
+        /// Configurations for generating a Dialogflow agent.
+        ///
+        /// Note that these configurations are one-time consumed by
+        /// and passed to Dialogflow service. It means they cannot be retrieved using
+        /// \[EngineService.GetEngine][google.cloud.discoveryengine.v1beta.EngineService.GetEngine\]
+        /// or
+        /// \[EngineService.ListEngines][google.cloud.discoveryengine.v1beta.EngineService.ListEngines\]
+        /// API after engine creation.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct AgentCreationConfig {
+            /// Name of the company, organization or other entity that the agent
+            /// represents. Used for knowledge connector LLM prompt and for knowledge
+            /// search.
+            #[prost(string, tag = "1")]
+            pub business: ::prost::alloc::string::String,
+            /// Required. The default language of the agent as a language tag.
+            /// See [Language
+            /// Support](<https://cloud.google.com/dialogflow/docs/reference/language>)
+            /// for a list of the currently supported language codes.
+            #[prost(string, tag = "2")]
+            pub default_language_code: ::prost::alloc::string::String,
+            /// Required. The time zone of the agent from the [time zone
+            /// database](<https://www.iana.org/time-zones>), e.g., America/New_York,
+            /// Europe/Paris.
+            #[prost(string, tag = "3")]
+            pub time_zone: ::prost::alloc::string::String,
+            /// Agent location for Agent creation, supported values: global/us/eu.
+            /// If not provided, us Engine will create Agent using us-central-1 by
+            /// default; eu Engine will create Agent using eu-west-1 by default.
+            #[prost(string, tag = "4")]
+            pub location: ::prost::alloc::string::String,
+        }
+    }
+    /// Common configurations for an Engine.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CommonConfig {
+        /// The name of the company, business or entity that is associated with the
+        /// engine. Setting this may help improve LLM related features.
+        #[prost(string, tag = "1")]
+        pub company_name: ::prost::alloc::string::String,
+    }
+    /// Additional information of a Chat Engine.
+    /// Fields in this message are output only.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ChatEngineMetadata {
+        /// The resource name of a Dialogflow agent, that this Chat Engine refers
+        /// to.
+        ///
+        /// Format: `projects/<Project ID>/locations/<Location ID>/agents/<Agent
+        /// ID>`.
+        #[prost(string, tag = "1")]
+        pub dialogflow_agent: ::prost::alloc::string::String,
+    }
+    /// Additional config specs that defines the behavior of the engine.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum EngineConfig {
+        /// Configurations for the Chat Engine. Only applicable if
+        /// \[solution_type][google.cloud.discoveryengine.v1beta.Engine.solution_type\]
+        /// is
+        /// \[SOLUTION_TYPE_CHAT][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_CHAT\].
+        #[prost(message, tag = "11")]
+        ChatEngineConfig(ChatEngineConfig),
+        /// Configurations for the Search Engine. Only applicable if
+        /// \[solution_type][google.cloud.discoveryengine.v1beta.Engine.solution_type\]
+        /// is
+        /// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+        #[prost(message, tag = "13")]
+        SearchEngineConfig(SearchEngineConfig),
+    }
+    /// Engine metadata to monitor the status of the engine.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum EngineMetadata {
+        /// Output only. Additional information of the Chat Engine. Only applicable
+        /// if
+        /// \[solution_type][google.cloud.discoveryengine.v1beta.Engine.solution_type\]
+        /// is
+        /// \[SOLUTION_TYPE_CHAT][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_CHAT\].
+        #[prost(message, tag = "12")]
+        ChatEngineMetadata(ChatEngineMetadata),
+    }
+}
+/// Request for
+/// \[EngineService.CreateEngine][google.cloud.discoveryengine.v1beta.EngineService.CreateEngine\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateEngineRequest {
+    /// Required. The parent resource name, such as
+    /// `projects/{project}/locations/{location}/collections/{collection}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The \[Engine][google.cloud.discoveryengine.v1beta.Engine\] to
+    /// create.
+    #[prost(message, optional, tag = "2")]
+    pub engine: ::core::option::Option<Engine>,
+    /// Required. The ID to use for the
+    /// \[Engine][google.cloud.discoveryengine.v1beta.Engine\], which will become the
+    /// final component of the
+    /// \[Engine][google.cloud.discoveryengine.v1beta.Engine\]'s resource name.
+    ///
+    /// This field must conform to \[RFC-1034\](<https://tools.ietf.org/html/rfc1034>)
+    /// standard with a length limit of 63 characters. Otherwise, an
+    /// INVALID_ARGUMENT error is returned.
+    #[prost(string, tag = "3")]
+    pub engine_id: ::prost::alloc::string::String,
+}
+/// Metadata related to the progress of the
+/// \[EngineService.CreateEngine][google.cloud.discoveryengine.v1beta.EngineService.CreateEngine\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateEngineMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[EngineService.DeleteEngine][google.cloud.discoveryengine.v1beta.EngineService.DeleteEngine\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteEngineRequest {
+    /// Required. Full resource name of
+    /// \[Engine][google.cloud.discoveryengine.v1beta.Engine\], such as
+    /// `projects/{project}/locations/{location}/collections/{collection_id}/engines/{engine_id}`.
+    ///
+    /// If the caller does not have permission to delete the
+    /// \[Engine][google.cloud.discoveryengine.v1beta.Engine\], regardless of whether
+    /// or not it exists, a PERMISSION_DENIED error is returned.
+    ///
+    /// If the \[Engine][google.cloud.discoveryengine.v1beta.Engine\] to delete does
+    /// not exist, a NOT_FOUND error is returned.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Metadata related to the progress of the
+/// \[EngineService.DeleteEngine][google.cloud.discoveryengine.v1beta.EngineService.DeleteEngine\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteEngineMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[EngineService.GetEngine][google.cloud.discoveryengine.v1beta.EngineService.GetEngine\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetEngineRequest {
+    /// Required. Full resource name of
+    /// \[Engine][google.cloud.discoveryengine.v1beta.Engine\], such as
+    /// `projects/{project}/locations/{location}/collections/{collection_id}/engines/{engine_id}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[EngineService.ListEngines][google.cloud.discoveryengine.v1beta.EngineService.ListEngines\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListEnginesRequest {
+    /// Required. The parent resource name, such as
+    /// `projects/{project}/locations/{location}/collections/{collection_id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Not supported.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. Not supported.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. Filter by solution type. For example:
+    /// solution_type=SOLUTION_TYPE_SEARCH
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[EngineService.ListEngines][google.cloud.discoveryengine.v1beta.EngineService.ListEngines\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListEnginesResponse {
+    /// All the customer's \[Engine][google.cloud.discoveryengine.v1beta.Engine\]s.
+    #[prost(message, repeated, tag = "1")]
+    pub engines: ::prost::alloc::vec::Vec<Engine>,
+    /// Not supported.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[EngineService.UpdateEngine][google.cloud.discoveryengine.v1beta.EngineService.UpdateEngine\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateEngineRequest {
+    /// Required. The \[Engine][google.cloud.discoveryengine.v1beta.Engine\] to
+    /// update.
+    ///
+    /// If the caller does not have permission to update the
+    /// \[Engine][google.cloud.discoveryengine.v1beta.Engine\], regardless of whether
+    /// or not it exists, a PERMISSION_DENIED error is returned.
+    ///
+    /// If the \[Engine][google.cloud.discoveryengine.v1beta.Engine\] to update does
+    /// not exist, a NOT_FOUND error is returned.
+    #[prost(message, optional, tag = "1")]
+    pub engine: ::core::option::Option<Engine>,
+    /// Indicates which fields in the provided
+    /// \[Engine][google.cloud.discoveryengine.v1beta.Engine\] to update.
+    ///
+    /// If an unsupported or unknown field is provided, an INVALID_ARGUMENT error
+    /// is returned.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request for pausing training of an engine.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PauseEngineRequest {
+    /// Required. The name of the engine to pause.
+    /// Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/engines/{engine_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for resuming training of an engine.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResumeEngineRequest {
+    /// Required. The name of the engine to resume.
+    /// Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/engines/{engine_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request to manually start a tuning process now (instead of waiting for
+/// the periodically scheduled tuning to happen).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TuneEngineRequest {
+    /// Required. The resource name of the engine to tune.
+    /// Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/engines/{engine_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Metadata associated with a tune operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TuneEngineMetadata {
+    /// Required. The resource name of the engine that this tune applies to.
+    /// Format:
+    /// `projects/{project_number}/locations/{location_id}/collections/{collection_id}/engines/{engine_id}`
+    #[prost(string, tag = "1")]
+    pub engine: ::prost::alloc::string::String,
+}
+/// Response associated with a tune operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TuneEngineResponse {}
+#[doc = r" Generated client implementations."]
+pub mod engine_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for managing [Engine][google.cloud.discoveryengine.v1beta.Engine]"]
+    #[doc = " configuration."]
+    #[derive(Debug, Clone)]
+    pub struct EngineServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> EngineServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> EngineServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            EngineServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Creates a [Engine][google.cloud.discoveryengine.v1beta.Engine]."]
+        pub async fn create_engine(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateEngineRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.EngineService/CreateEngine",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a [Engine][google.cloud.discoveryengine.v1beta.Engine]."]
+        pub async fn delete_engine(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteEngineRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.EngineService/DeleteEngine",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates an [Engine][google.cloud.discoveryengine.v1beta.Engine]"]
+        pub async fn update_engine(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateEngineRequest>,
+        ) -> Result<tonic::Response<super::Engine>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.EngineService/UpdateEngine",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a [Engine][google.cloud.discoveryengine.v1beta.Engine]."]
+        pub async fn get_engine(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetEngineRequest>,
+        ) -> Result<tonic::Response<super::Engine>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.EngineService/GetEngine",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all the [Engine][google.cloud.discoveryengine.v1beta.Engine]s"]
+        #[doc = " associated with the project."]
+        pub async fn list_engines(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListEnginesRequest>,
+        ) -> Result<tonic::Response<super::ListEnginesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.EngineService/ListEngines",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Pauses the training of an existing engine. Only applicable if"]
+        #[doc = " [SolutionType][google.cloud.discoveryengine.v1beta.SolutionType] is"]
+        #[doc = " [SOLUTION_TYPE_RECOMMENDATION][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_RECOMMENDATION]."]
+        pub async fn pause_engine(
+            &mut self,
+            request: impl tonic::IntoRequest<super::PauseEngineRequest>,
+        ) -> Result<tonic::Response<super::Engine>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.EngineService/PauseEngine",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Resumes the training of an existing engine. Only applicable if"]
+        #[doc = " [SolutionType][google.cloud.discoveryengine.v1beta.SolutionType] is"]
+        #[doc = " [SOLUTION_TYPE_RECOMMENDATION][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_RECOMMENDATION]."]
+        pub async fn resume_engine(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ResumeEngineRequest>,
+        ) -> Result<tonic::Response<super::Engine>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.EngineService/ResumeEngine",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Tunes an existing engine. Only applicable if"]
+        #[doc = " [SolutionType][google.cloud.discoveryengine.v1beta.SolutionType] is"]
+        #[doc = " [SOLUTION_TYPE_RECOMMENDATION][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_RECOMMENDATION]."]
+        pub async fn tune_engine(
+            &mut self,
+            request: impl tonic::IntoRequest<super::TuneEngineRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.EngineService/TuneEngine",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Grounding Fact.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GroundingFact {
+    /// Text content of the fact. Can be at most 10K characters long.
+    #[prost(string, tag = "1")]
+    pub fact_text: ::prost::alloc::string::String,
+    /// Attributes associated with the fact.
+    /// Common attributes include `source` (indicating where the fact was sourced
+    /// from), `author` (indicating the author of the fact), and so on.
+    #[prost(map = "string, string", tag = "2")]
+    pub attributes:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// Fact Chunk.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FactChunk {
+    /// Text content of the fact chunk. Can be at most 10K characters long.
+    #[prost(string, tag = "1")]
+    pub chunk_text: ::prost::alloc::string::String,
+    /// Source from which this fact chunk was retrieved. If it was retrieved
+    /// from the GroundingFacts provided in the request then this field will
+    /// contain the index of the specific fact from which this chunk was
+    /// retrieved.
+    #[prost(string, tag = "2")]
+    pub source: ::prost::alloc::string::String,
+    /// The index of this chunk. Currently, only used for the streaming mode.
+    #[prost(int32, tag = "4")]
+    pub index: i32,
+    /// More fine-grained information for the source reference.
+    #[prost(map = "string, string", tag = "3")]
+    pub source_metadata:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// Specification for the grounding check.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CheckGroundingSpec {
+    /// The threshold (in \[0,1\]) used for determining whether a fact must be
+    /// cited for a claim in the answer candidate. Choosing a higher threshold
+    /// will lead to fewer but very strong citations, while choosing a lower
+    /// threshold may lead to more but somewhat weaker citations. If unset, the
+    /// threshold will default to 0.6.
+    #[prost(double, optional, tag = "1")]
+    pub citation_threshold: ::core::option::Option<f64>,
+}
+/// Request message for
+/// \[GroundedGenerationService.CheckGrounding][google.cloud.discoveryengine.v1beta.GroundedGenerationService.CheckGrounding\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CheckGroundingRequest {
+    /// Required. The resource name of the grounding config, such as
+    /// `projects/*/locations/global/groundingConfigs/default_grounding_config`.
+    #[prost(string, tag = "1")]
+    pub grounding_config: ::prost::alloc::string::String,
+    /// Answer candidate to check. Can have a maximum length of 1024 characters.
+    #[prost(string, tag = "2")]
+    pub answer_candidate: ::prost::alloc::string::String,
+    /// List of facts for the grounding check.
+    /// We support up to 200 facts.
+    #[prost(message, repeated, tag = "3")]
+    pub facts: ::prost::alloc::vec::Vec<GroundingFact>,
+    /// Configuration of the grounding check.
+    #[prost(message, optional, tag = "4")]
+    pub grounding_spec: ::core::option::Option<CheckGroundingSpec>,
+    /// The user labels applied to a resource must meet the following requirements:
+    ///
+    /// * Each resource can have multiple labels, up to a maximum of 64.
+    /// * Each label must be a key-value pair.
+    /// * Keys have a minimum length of 1 character and a maximum length of 63
+    ///   characters and cannot be empty. Values can be empty and have a maximum
+    ///   length of 63 characters.
+    /// * Keys and values can contain only lowercase letters, numeric characters,
+    ///   underscores, and dashes. All characters must use UTF-8 encoding, and
+    ///   international characters are allowed.
+    /// * The key portion of a label must be unique. However, you can use the same
+    ///   key with multiple resources.
+    /// * Keys must start with a lowercase letter or international character.
+    ///
+    /// See [Google Cloud
+    /// Document](<https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements>)
+    /// for more details.
+    #[prost(map = "string, string", tag = "5")]
+    pub user_labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// Response message for the
+/// \[GroundedGenerationService.CheckGrounding][google.cloud.discoveryengine.v1beta.GroundedGenerationService.CheckGrounding\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CheckGroundingResponse {
+    /// The support score for the input answer candidate.
+    /// Higher the score, higher is the fraction of claims that are supported by
+    /// the provided facts. This is always set when a response is returned.
+    #[prost(float, optional, tag = "1")]
+    pub support_score: ::core::option::Option<f32>,
+    /// List of facts cited across all claims in the answer candidate.
+    /// These are derived from the facts supplied in the request.
+    #[prost(message, repeated, tag = "3")]
+    pub cited_chunks: ::prost::alloc::vec::Vec<FactChunk>,
+    /// Claim texts and citation info across all claims in the answer candidate.
+    #[prost(message, repeated, tag = "4")]
+    pub claims: ::prost::alloc::vec::Vec<check_grounding_response::Claim>,
+}
+/// Nested message and enum types in `CheckGroundingResponse`.
+pub mod check_grounding_response {
+    /// Text and citation info for a claim in the answer candidate.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Claim {
+        /// Position indicating the start of the claim in the answer candidate,
+        /// measured in bytes.
+        #[prost(int32, optional, tag = "1")]
+        pub start_pos: ::core::option::Option<i32>,
+        /// Position indicating the end of the claim in the answer candidate,
+        /// exclusive.
+        #[prost(int32, optional, tag = "2")]
+        pub end_pos: ::core::option::Option<i32>,
+        /// Text for the claim in the answer candidate. Always provided regardless of
+        /// whether citations or anti-citations are found.
+        #[prost(string, tag = "3")]
+        pub claim_text: ::prost::alloc::string::String,
+        /// A list of indices (into 'cited_chunks') specifying the citations
+        /// associated with the claim. For instance \[1,3,4\] means that
+        /// cited_chunks\[1\], cited_chunks\[3\], cited_chunks\[4\] are the facts cited
+        /// supporting for the claim. A citation to a fact indicates that the claim
+        /// is supported by the fact.
+        #[prost(int32, repeated, tag = "4")]
+        pub citation_indices: ::prost::alloc::vec::Vec<i32>,
+        /// Indicates that this claim required grounding check. When the system
+        /// decided this claim doesn't require attribution/grounding check, this
+        /// field will be set to false. In that case, no grounding check was done for
+        /// the claim and therefore
+        /// \[citation_indices][google.cloud.discoveryengine.v1beta.CheckGroundingResponse.Claim.citation_indices\],
+        /// and
+        /// \[anti_citation_indices][google.cloud.discoveryengine.v1beta.CheckGroundingResponse.Claim.anti_citation_indices\]
+        /// should not be returned.
+        #[prost(bool, optional, tag = "6")]
+        pub grounding_check_required: ::core::option::Option<bool>,
+    }
+}
+#[doc = r" Generated client implementations."]
+pub mod grounded_generation_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for grounded generation."]
+    #[derive(Debug, Clone)]
+    pub struct GroundedGenerationServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> GroundedGenerationServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> GroundedGenerationServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            GroundedGenerationServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Performs a grounding check."]
+        pub async fn check_grounding(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CheckGroundingRequest>,
+        ) -> Result<tonic::Response<super::CheckGroundingResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.GroundedGenerationService/CheckGrounding",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Metadata and configurations for a Google Cloud project in the service.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Project {
+    /// Output only. Full resource name of the project, for example
+    /// `projects/{project_number}`.
+    /// Note that when making requests, project number and project id are both
+    /// acceptable, but the server will always respond in project number.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. The timestamp when this project is created.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The timestamp when this project is successfully provisioned.
+    /// Empty value means this project is still provisioning and is not ready for
+    /// use.
+    #[prost(message, optional, tag = "3")]
+    pub provision_completion_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. A map of terms of services. The key is the `id` of
+    /// \[ServiceTerms][google.cloud.discoveryengine.v1beta.Project.ServiceTerms\].
+    #[prost(map = "string, message", tag = "4")]
+    pub service_terms_map:
+        ::std::collections::HashMap<::prost::alloc::string::String, project::ServiceTerms>,
+}
+/// Nested message and enum types in `Project`.
+pub mod project {
+    /// Metadata about the terms of service.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ServiceTerms {
+        /// The unique identifier of this terms of service.
+        /// Available terms:
+        ///
+        /// * `GA_DATA_USE_TERMS`: [Terms for data
+        /// use](<https://cloud.google.com/retail/data-use-terms>). When using this as
+        /// `id`, the acceptable
+        /// \[version][google.cloud.discoveryengine.v1beta.Project.ServiceTerms.version\]
+        /// to provide is `2022-11-23`.
+        #[prost(string, tag = "1")]
+        pub id: ::prost::alloc::string::String,
+        /// The version string of the terms of service.
+        /// For acceptable values, see the comments for
+        /// \[id][google.cloud.discoveryengine.v1beta.Project.ServiceTerms.id\] above.
+        #[prost(string, tag = "2")]
+        pub version: ::prost::alloc::string::String,
+        /// Whether the project has accepted/rejected the service terms or it is
+        /// still pending.
+        #[prost(enumeration = "service_terms::State", tag = "4")]
+        pub state: i32,
+        /// The last time when the project agreed to the terms of service.
+        #[prost(message, optional, tag = "5")]
+        pub accept_time: ::core::option::Option<::prost_types::Timestamp>,
+        /// The last time when the project declined or revoked the agreement to terms
+        /// of service.
+        #[prost(message, optional, tag = "6")]
+        pub decline_time: ::core::option::Option<::prost_types::Timestamp>,
+    }
+    /// Nested message and enum types in `ServiceTerms`.
+    pub mod service_terms {
+        /// The agreement states this terms of service.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum State {
+            /// The default value of the enum. This value is not actually used.
+            Unspecified = 0,
+            /// The project has given consent to the terms of service.
+            TermsAccepted = 1,
+            /// The project is pending to review and accept the terms of service.
+            TermsPending = 2,
+            /// The project has declined or revoked the agreement to terms of service.
+            TermsDeclined = 3,
+        }
+    }
+}
+/// Request for
+/// \[ProjectService.ProvisionProject][google.cloud.discoveryengine.v1beta.ProjectService.ProvisionProject\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvisionProjectRequest {
+    /// Required. Full resource name of a
+    /// \[Project][google.cloud.discoveryengine.v1beta.Project\], such as
+    /// `projects/{project_id_or_number}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Set to `true` to specify that caller has read and would like to
+    /// give consent to the [Terms for data
+    /// use](<https://cloud.google.com/retail/data-use-terms>).
+    #[prost(bool, tag = "2")]
+    pub accept_data_use_terms: bool,
+    /// Required. The version of the [Terms for data
+    /// use](<https://cloud.google.com/retail/data-use-terms>) that caller has read
+    /// and would like to give consent to.
+    ///
+    /// Acceptable version is `2022-11-23`, and this may change over time.
+    #[prost(string, tag = "3")]
+    pub data_use_terms_version: ::prost::alloc::string::String,
+}
+/// Metadata associated with a project provision operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvisionProjectMetadata {}
+#[doc = r" Generated client implementations."]
+pub mod project_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for operations on the"]
+    #[doc = " [Project][google.cloud.discoveryengine.v1beta.Project]."]
+    #[derive(Debug, Clone)]
+    pub struct ProjectServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> ProjectServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ProjectServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ProjectServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Provisions the project resource. During the"]
+        #[doc = " process, related systems will get prepared and initialized."]
+        #[doc = ""]
+        #[doc = " Caller must read the [Terms for data"]
+        #[doc = " use](https://cloud.google.com/retail/data-use-terms), and optionally"]
+        #[doc = " specify in request to provide consent to that service terms."]
+        pub async fn provision_project(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvisionProjectRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ProjectService/ProvisionProject",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Record message for
+/// \[RankService.Rank][google.cloud.discoveryengine.v1beta.RankService.Rank\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RankingRecord {
+    /// The unique ID to represent the record.
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    /// The title of the record. Empty by default.
+    /// At least one of
+    /// \[title][google.cloud.discoveryengine.v1beta.RankingRecord.title\] or
+    /// \[content][google.cloud.discoveryengine.v1beta.RankingRecord.content\] should
+    /// be set otherwise an INVALID_ARGUMENT error is thrown.
+    #[prost(string, tag = "2")]
+    pub title: ::prost::alloc::string::String,
+    /// The content of the record. Empty by default.
+    /// At least one of
+    /// \[title][google.cloud.discoveryengine.v1beta.RankingRecord.title\] or
+    /// \[content][google.cloud.discoveryengine.v1beta.RankingRecord.content\] should
+    /// be set otherwise an INVALID_ARGUMENT error is thrown.
+    #[prost(string, tag = "3")]
+    pub content: ::prost::alloc::string::String,
+    /// The score of this record based on the given query and selected model.
+    #[prost(float, tag = "4")]
+    pub score: f32,
+}
+/// Request message for
+/// \[RankService.Rank][google.cloud.discoveryengine.v1beta.RankService.Rank\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RankRequest {
+    /// Required. The resource name of the rank service config, such as
+    /// `projects/{project_num}/locations/{location_id}/rankingConfigs/default_ranking_config`.
+    #[prost(string, tag = "1")]
+    pub ranking_config: ::prost::alloc::string::String,
+    /// The identifier of the model to use. It is one of:
+    ///
+    /// * `semantic-ranker-512@latest`: Semantic ranking model with maxiumn input
+    /// token size 512.
+    ///
+    /// It is set to `semantic-ranker-512@latest` by default if unspecified.
+    #[prost(string, tag = "2")]
+    pub model: ::prost::alloc::string::String,
+    /// The number of results to return. If this is unset or no bigger than zero,
+    /// returns all results.
+    #[prost(int32, tag = "3")]
+    pub top_n: i32,
+    /// The query to use.
+    #[prost(string, tag = "4")]
+    pub query: ::prost::alloc::string::String,
+    /// Required. A list of records to rank. At most 200 records to rank.
+    #[prost(message, repeated, tag = "5")]
+    pub records: ::prost::alloc::vec::Vec<RankingRecord>,
+    /// If true, the response will contain only record ID and score. By default, it
+    /// is false, the response will contain record details.
+    #[prost(bool, tag = "6")]
+    pub ignore_record_details_in_response: bool,
+    /// The user labels applied to a resource must meet the following requirements:
+    ///
+    /// * Each resource can have multiple labels, up to a maximum of 64.
+    /// * Each label must be a key-value pair.
+    /// * Keys have a minimum length of 1 character and a maximum length of 63
+    ///   characters and cannot be empty. Values can be empty and have a maximum
+    ///   length of 63 characters.
+    /// * Keys and values can contain only lowercase letters, numeric characters,
+    ///   underscores, and dashes. All characters must use UTF-8 encoding, and
+    ///   international characters are allowed.
+    /// * The key portion of a label must be unique. However, you can use the same
+    ///   key with multiple resources.
+    /// * Keys must start with a lowercase letter or international character.
+    ///
+    /// See [Google Cloud
+    /// Document](<https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements>)
+    /// for more details.
+    #[prost(map = "string, string", tag = "7")]
+    pub user_labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// Response message for
+/// \[RankService.Rank][google.cloud.discoveryengine.v1beta.RankService.Rank\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RankResponse {
+    /// A list of records sorted by descending score.
+    #[prost(message, repeated, tag = "5")]
+    pub records: ::prost::alloc::vec::Vec<RankingRecord>,
+}
+#[doc = r" Generated client implementations."]
+pub mod rank_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for ranking text records."]
+    #[derive(Debug, Clone)]
+    pub struct RankServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> RankServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> RankServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            RankServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Ranks a list of text records based on the given input query."]
+        pub async fn rank(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RankRequest>,
+        ) -> Result<tonic::Response<super::RankResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.RankService/Rank",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
 /// Request message for Recommend method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RecommendRequest {
-    /// Required. Full resource name of the format:
+    /// Required. Full resource name of a
+    /// \[ServingConfig][google.cloud.discoveryengine.v1beta.ServingConfig\]:
+    /// `projects/*/locations/global/collections/*/engines/*/servingConfigs/*`, or
     /// `projects/*/locations/global/collections/*/dataStores/*/servingConfigs/*`
     ///
-    /// Before you can request recommendations from your model, you must create at
-    /// least one serving config  for it.
+    /// One default serving config is created along with your recommendation engine
+    /// creation. The engine ID is used as the ID of the default serving
+    /// config. For example, for Engine
+    /// `projects/*/locations/global/collections/*/engines/my-engine`, you can use
+    /// `projects/*/locations/global/collections/*/engines/my-engine/servingConfigs/my-engine`
+    /// for your
+    /// \[RecommendationService.Recommend][google.cloud.discoveryengine.v1beta.RecommendationService.Recommend\]
+    /// requests.
     #[prost(string, tag = "1")]
     pub serving_config: ::prost::alloc::string::String,
     /// Required. Context about the user, what they are looking at and what action
@@ -1569,9 +6956,9 @@ pub struct RecommendRequest {
     #[prost(message, optional, tag = "2")]
     pub user_event: ::core::option::Option<UserEvent>,
     /// Maximum number of results to return. Set this property
-    /// to the number of recommendation results needed. If zero, the service will
-    /// choose a reasonable default. The maximum allowed value is 100. Values
-    /// above 100 will be coerced to 100.
+    /// to the number of recommendation results needed. If zero, the service
+    /// chooses a reasonable default. The maximum allowed value is 100. Values
+    /// above 100 are set to 100.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
     /// Filter for restricting recommendation results with a length limit of 5,000
@@ -1584,19 +6971,27 @@ pub struct RecommendRequest {
     ///  * `(filter_tags: ANY("Red", "Blue") OR filter_tags: ANY("Hot", "Cold"))`
     ///  * `(filter_tags: ANY("Red", "Blue")) AND NOT (filter_tags: ANY("Green"))`
     ///
-    /// If your filter blocks all results, the API will return generic
+    /// If `attributeFilteringSyntax` is set to true under the `params` field, then
+    /// attribute-based expressions are expected instead of the above described
+    /// tag-based syntax. Examples:
+    ///
+    ///  * (launguage: ANY("en", "es")) AND NOT (categories: ANY("Movie"))
+    ///  * (available: true) AND
+    ///    (launguage: ANY("en", "es")) OR (categories: ANY("Movie"))
+    ///
+    /// If your filter blocks all results, the API returns generic
     /// (unfiltered) popular Documents. If you only want results strictly matching
-    /// the filters, set `strictFiltering` to True in
+    /// the filters, set `strictFiltering` to `true` in
     /// \[RecommendRequest.params][google.cloud.discoveryengine.v1beta.RecommendRequest.params\]
     /// to receive empty results instead.
     ///
-    /// Note that the API will never return
+    /// Note that the API never returns
     /// \[Document][google.cloud.discoveryengine.v1beta.Document\]s with
-    /// `storageStatus` of `EXPIRED` or `DELETED` regardless of filter choices.
+    /// `storageStatus` as `EXPIRED` or `DELETED` regardless of filter choices.
     #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
-    /// Use validate only mode for this recommendation query. If set to true, a
-    /// fake model will be used that returns arbitrary Document IDs.
+    /// Use validate only mode for this recommendation query. If set to `true`, a
+    /// fake model is used that returns arbitrary Document IDs.
     /// Note that the validate only mode should only be used for testing the API,
     /// or if the model is not ready.
     #[prost(bool, tag = "5")]
@@ -1605,16 +7000,17 @@ pub struct RecommendRequest {
     ///
     /// Allowed values:
     ///
-    /// * `returnDocument`: Boolean. If set to true, the associated Document
-    ///    object will be returned in
+    /// * `returnDocument`: Boolean. If set to `true`, the associated Document
+    ///    object is returned in
     ///    \[RecommendResponse.RecommendationResult.document][google.cloud.discoveryengine.v1beta.RecommendResponse.RecommendationResult.document\].
-    /// * `returnScore`: Boolean. If set to true, the recommendation 'score'
-    ///    corresponding to each returned Document will be set in
+    /// * `returnScore`: Boolean. If set to true, the recommendation score
+    ///    corresponding to each returned Document is set in
     ///    \[RecommendResponse.RecommendationResult.metadata][google.cloud.discoveryengine.v1beta.RecommendResponse.RecommendationResult.metadata\].
-    ///    The given 'score' indicates the probability of a Document conversion
-    ///    given the user's context and history.
-    /// * `strictFiltering`: Boolean. True by default. If set to false, the service
-    ///    will return generic (unfiltered) popular Documents instead of empty if
+    ///    The given score indicates the probability of a Document conversion given
+    ///    the user's context and history.
+    /// * `strictFiltering`: Boolean. True by default. If set to `false`, the
+    /// service
+    ///    returns generic (unfiltered) popular Documents instead of empty if
     ///    your filter blocks all recommendation results.
     /// * `diversityLevel`: String. Default empty. If set to be non-empty, then
     ///    it needs to be one of:
@@ -1625,6 +7021,9 @@ pub struct RecommendRequest {
     ///     *  `auto-diversity`
     ///    This gives request-level control and adjusts recommendation results
     ///    based on Document category.
+    /// * `attributeFilteringSyntax`: Boolean. False by default. If set to true,
+    ///    the `filter` field is interpreted according to the new,
+    ///    attribute-based syntax.
     #[prost(map = "string, message", tag = "6")]
     pub params: ::std::collections::HashMap<::prost::alloc::string::String, ::prost_types::Value>,
     /// The user labels applied to a resource must meet the following requirements:
@@ -1684,7 +7083,7 @@ pub mod recommend_response {
         /// \[RecommendRequest.params][google.cloud.discoveryengine.v1beta.RecommendRequest.params\].
         #[prost(message, optional, tag = "2")]
         pub document: ::core::option::Option<super::Document>,
-        /// Additional Document metadata / annotations.
+        /// Additional Document metadata or annotations.
         ///
         /// Possible values:
         ///
@@ -1765,39 +7164,6 @@ pub mod recommendation_service_client {
         }
     }
 }
-/// Defines the structure and layout of a type of document data.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Schema {
-    /// Immutable. The full resource name of the schema, in the format of
-    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/schemas/{schema}`.
-    ///
-    /// This field must be a UTF-8 encoded string with a length limit of 1024
-    /// characters.
-    #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
-    /// Schema representation. One of
-    /// \[struct_schema][google.cloud.discoveryengine.v1beta.Schema.struct_schema\]
-    /// or \[json_schema][google.cloud.discoveryengine.v1beta.Schema.json_schema\]
-    /// should be provided otherwise an INVALID_ARGUMENT error is thrown.
-    #[prost(oneof = "schema::Schema", tags = "2, 3")]
-    pub schema: ::core::option::Option<schema::Schema>,
-}
-/// Nested message and enum types in `Schema`.
-pub mod schema {
-    /// Schema representation. One of
-    /// \[struct_schema][google.cloud.discoveryengine.v1beta.Schema.struct_schema\]
-    /// or \[json_schema][google.cloud.discoveryengine.v1beta.Schema.json_schema\]
-    /// should be provided otherwise an INVALID_ARGUMENT error is thrown.
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Schema {
-        /// The structured representation of the schema.
-        #[prost(message, tag = "2")]
-        StructSchema(::prost_types::Struct),
-        /// The JSON representation of the schema.
-        #[prost(string, tag = "3")]
-        JsonSchema(::prost::alloc::string::String),
-    }
-}
 /// Request message for
 /// \[SchemaService.GetSchema][google.cloud.discoveryengine.v1beta.SchemaService.GetSchema\]
 /// method.
@@ -1821,9 +7187,9 @@ pub struct ListSchemasRequest {
     /// to return. The service may return fewer than this value.
     ///
     /// If unspecified, at most 100
-    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\]s will be returned.
+    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\]s are returned.
     ///
-    /// The maximum value is 1000; values above 1000 will be coerced to 1000.
+    /// The maximum value is 1000; values above 1000 are set to 1000.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// A page token, received from a previous
@@ -1865,7 +7231,7 @@ pub struct CreateSchemaRequest {
     #[prost(message, optional, tag = "2")]
     pub schema: ::core::option::Option<Schema>,
     /// Required. The ID to use for the
-    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\], which will become the
+    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\], which becomes the
     /// final component of the
     /// \[Schema.name][google.cloud.discoveryengine.v1beta.Schema.name\].
     ///
@@ -1886,8 +7252,8 @@ pub struct UpdateSchemaRequest {
     pub schema: ::core::option::Option<Schema>,
     /// If set to true, and the
     /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\] is not found, a new
-    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\] will be created. In
-    /// this situation, `update_mask` is ignored.
+    /// \[Schema][google.cloud.discoveryengine.v1beta.Schema\] is created. In this
+    /// situation, `update_mask` is ignored.
     #[prost(bool, tag = "3")]
     pub allow_missing: bool,
 }
@@ -2081,629 +7447,150 @@ pub mod schema_service_client {
     }
 }
 /// Request message for
-/// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
+/// \[SearchTuningService.ListCustomModels][google.cloud.discoveryengine.v1beta.SearchTuningService.ListCustomModels\]
 /// method.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SearchRequest {
-    /// Required. The resource name of the Search serving config, such as
-    /// `projects/*/locations/global/collections/default_collection/dataStores/default_data_store/servingConfigs/default_serving_config`.
-    /// This field is used to identify the serving configuration name, set
-    /// of models used to make the search.
+pub struct ListCustomModelsRequest {
+    /// Required. The resource name of the parent Data Store, such as
+    /// `projects/*/locations/global/collections/default_collection/dataStores/default_data_store`.
+    /// This field is used to identify the data store where to fetch the models
+    /// from.
     #[prost(string, tag = "1")]
-    pub serving_config: ::prost::alloc::string::String,
-    /// The branch resource name, such as
-    /// `projects/*/locations/global/collections/default_collection/dataStores/default_data_store/branches/0`.
-    ///
-    /// Use `default_branch` as the branch ID or leave this field empty, to search
-    /// documents under the default branch.
-    #[prost(string, tag = "2")]
-    pub branch: ::prost::alloc::string::String,
-    /// Raw search query.
-    #[prost(string, tag = "3")]
-    pub query: ::prost::alloc::string::String,
-    /// Maximum number of \[Document][google.cloud.discoveryengine.v1beta.Document\]s
-    /// to return. If unspecified, defaults to a reasonable value. The maximum
-    /// allowed value is 100. Values above 100 will be coerced to 100.
-    ///
-    /// If this field is negative, an  `INVALID_ARGUMENT`  is returned.
-    #[prost(int32, tag = "4")]
-    pub page_size: i32,
-    /// A page token received from a previous
-    /// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
-    /// call. Provide this to retrieve the subsequent page.
-    ///
-    /// When paginating, all other parameters provided to
-    /// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
-    /// must match the call that provided the page token. Otherwise, an
-    ///  `INVALID_ARGUMENT`  error is returned.
-    #[prost(string, tag = "5")]
-    pub page_token: ::prost::alloc::string::String,
-    /// A 0-indexed integer that specifies the current offset (that is, starting
-    /// result location, amongst the
-    /// \[Document][google.cloud.discoveryengine.v1beta.Document\]s deemed by the API
-    /// as relevant) in search results. This field is only considered if
-    /// \[page_token][google.cloud.discoveryengine.v1beta.SearchRequest.page_token\]
-    /// is unset.
-    ///
-    /// If this field is negative, an  `INVALID_ARGUMENT`  is returned.
-    #[prost(int32, tag = "6")]
-    pub offset: i32,
-    /// The filter syntax consists of an expression language for constructing a
-    /// predicate from one or more fields of the documents being filtered. Filter
-    /// expression is case-sensitive.
-    ///
-    /// If this field is unrecognizable, an  `INVALID_ARGUMENT`  is returned.
-    #[prost(string, tag = "7")]
-    pub filter: ::prost::alloc::string::String,
-    /// The order in which documents are returned. Document can be ordered by
-    /// a field in an \[Document][google.cloud.discoveryengine.v1beta.Document\]
-    /// object. Leave it unset if ordered by relevance. OrderBy expression is
-    /// case-sensitive.
-    ///
-    /// If this field is unrecognizable, an  `INVALID_ARGUMENT`  is returned.
-    #[prost(string, tag = "8")]
-    pub order_by: ::prost::alloc::string::String,
-    /// Information about the end user.
-    /// Highly recommended for analytics. The user_agent string in UserInfo will
-    /// be used to deduce device_type for analytics.
-    #[prost(message, optional, tag = "21")]
-    pub user_info: ::core::option::Option<UserInfo>,
-    /// Facet specifications for faceted search. If empty, no facets are returned.
-    ///
-    /// A maximum of 100 values are allowed. Otherwise, an  `INVALID_ARGUMENT`
-    /// error is returned.
-    #[prost(message, repeated, tag = "9")]
-    pub facet_specs: ::prost::alloc::vec::Vec<search_request::FacetSpec>,
-    /// Boost specification to boost certain documents.
-    #[prost(message, optional, tag = "10")]
-    pub boost_spec: ::core::option::Option<search_request::BoostSpec>,
-    /// Additional search parameters.
-    ///
-    /// For public website search only, supported values are:
-    ///
-    /// * `user_country_code`: string. Default empty. If set to non-empty, results
-    ///    are restricted or boosted based on the location provided.
-    /// * `search_type`: double. Default empty. Enables non-webpage searching
-    ///   depending on the value. The only valid non-default value is 1,
-    ///   which enables image searching.
-    #[prost(map = "string, message", tag = "11")]
-    pub params: ::std::collections::HashMap<::prost::alloc::string::String, ::prost_types::Value>,
-    /// The query expansion specification that specifies the conditions under which
-    /// query expansion will occur.
-    #[prost(message, optional, tag = "13")]
-    pub query_expansion_spec: ::core::option::Option<search_request::QueryExpansionSpec>,
-    /// The spell correction specification that specifies the mode under
-    /// which spell correction will take effect.
-    #[prost(message, optional, tag = "14")]
-    pub spell_correction_spec: ::core::option::Option<search_request::SpellCorrectionSpec>,
-    /// A unique identifier for tracking visitors. For example, this could be
-    /// implemented with an HTTP cookie, which should be able to uniquely identify
-    /// a visitor on a single device. This unique identifier should not change if
-    /// the visitor logs in or out of the website.
-    ///
-    /// This field should NOT have a fixed value such as `unknown_visitor`.
-    ///
-    /// This should be the same identifier as
-    /// \[UserEvent.user_pseudo_id][google.cloud.discoveryengine.v1beta.UserEvent.user_pseudo_id\]
-    /// and
-    /// \[CompleteQueryRequest.user_pseudo_id][google.cloud.discoveryengine.v1beta.CompleteQueryRequest.user_pseudo_id\]
-    ///
-    /// The field must be a UTF-8 encoded string with a length limit of 128
-    /// characters. Otherwise, an  `INVALID_ARGUMENT`  error is returned.
-    #[prost(string, tag = "15")]
-    pub user_pseudo_id: ::prost::alloc::string::String,
-    /// The content search spec that configs the desired behavior of content
-    /// search.
-    #[prost(message, optional, tag = "24")]
-    pub content_search_spec: ::core::option::Option<search_request::ContentSearchSpec>,
-    /// Whether to turn on safe search. This is only supported for
-    /// \[ContentConfig.PUBLIC_WEBSITE][\].
-    #[prost(bool, tag = "20")]
-    pub safe_search: bool,
-    /// The user labels applied to a resource must meet the following requirements:
-    ///
-    /// * Each resource can have multiple labels, up to a maximum of 64.
-    /// * Each label must be a key-value pair.
-    /// * Keys have a minimum length of 1 character and a maximum length of 63
-    ///   characters and cannot be empty. Values can be empty and have a maximum
-    ///   length of 63 characters.
-    /// * Keys and values can contain only lowercase letters, numeric characters,
-    ///   underscores, and dashes. All characters must use UTF-8 encoding, and
-    ///   international characters are allowed.
-    /// * The key portion of a label must be unique. However, you can use the same
-    ///   key with multiple resources.
-    /// * Keys must start with a lowercase letter or international character.
-    ///
-    /// See [Google Cloud
-    /// Document](<https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements>)
-    /// for more details.
-    #[prost(map = "string, string", tag = "22")]
-    pub user_labels:
-        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-}
-/// Nested message and enum types in `SearchRequest`.
-pub mod search_request {
-    /// A facet specification to perform faceted search.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct FacetSpec {
-        /// Required. The facet key specification.
-        #[prost(message, optional, tag = "1")]
-        pub facet_key: ::core::option::Option<facet_spec::FacetKey>,
-        /// Maximum of facet values that should be returned for this facet. If
-        /// unspecified, defaults to 20. The maximum allowed value is 300. Values
-        /// above 300 will be coerced to 300.
-        ///
-        /// If this field is negative, an  `INVALID_ARGUMENT`  is returned.
-        #[prost(int32, tag = "2")]
-        pub limit: i32,
-        /// List of keys to exclude when faceting.
-        ///
-        ///
-        /// By default,
-        /// \[FacetKey.key][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.key\]
-        /// is not excluded from the filter unless it is listed in this field.
-        ///
-        /// Listing a facet key in this field allows its values to appear as facet
-        /// results, even when they are filtered out of search results. Using this
-        /// field does not affect what search results are returned.
-        ///
-        /// For example, suppose there are 100 documents with the color facet "Red"
-        /// and 200 documents with the color facet "Blue". A query containing the
-        /// filter "color:ANY("Red")" and having "color" as
-        /// \[FacetKey.key][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.key\]
-        /// would by default return only "Red" documents in the search results, and
-        /// also return "Red" with count 100 as the only color facet. Although there
-        /// are also blue documents available, "Blue" would not be shown as an
-        /// available facet value.
-        ///
-        /// If "color" is listed in "excludedFilterKeys", then the query returns the
-        /// facet values "Red" with count 100 and "Blue" with count 200, because the
-        /// "color" key is now excluded from the filter. Because this field doesn't
-        /// affect search results, the search results are still correctly filtered to
-        /// return only "Red" documents.
-        ///
-        /// A maximum of 100 values are allowed. Otherwise, an  `INVALID_ARGUMENT`
-        /// error is returned.
-        #[prost(string, repeated, tag = "3")]
-        pub excluded_filter_keys: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-        /// Enables dynamic position for this facet. If set to true, the position of
-        /// this facet among all facets in the response is determined automatically.
-        /// It will be ordered together with dynamic facets if dynamic
-        /// facets is enabled. If set to false, the position of this facet in the
-        /// response will be the same as in the request, and it will be ranked before
-        /// the facets with dynamic position enable and all dynamic facets.
-        ///
-        /// For example, you may always want to have rating facet returned in
-        /// the response, but it's not necessarily to always display the rating facet
-        /// at the top. In that case, you can set enable_dynamic_position to true so
-        /// that the position of rating facet in response will be determined
-        /// automatically.
-        ///
-        /// Another example, assuming you have the following facets in the request:
-        ///
-        /// * "rating", enable_dynamic_position = true
-        ///
-        /// * "price", enable_dynamic_position = false
-        ///
-        /// * "brands", enable_dynamic_position = false
-        ///
-        /// And also you have a dynamic facets enable, which will generate a facet
-        /// 'gender'. Then the final order of the facets in the response can be
-        /// ("price", "brands", "rating", "gender") or ("price", "brands", "gender",
-        /// "rating") depends on how API orders "gender" and "rating" facets.
-        /// However, notice that "price" and "brands" will always be
-        /// ranked at 1st and 2nd position since their enable_dynamic_position are
-        /// false.
-        #[prost(bool, tag = "4")]
-        pub enable_dynamic_position: bool,
-    }
-    /// Nested message and enum types in `FacetSpec`.
-    pub mod facet_spec {
-        /// Specifies how a facet is computed.
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct FacetKey {
-            /// Required. Supported textual and numerical facet keys in
-            /// \[Document][google.cloud.discoveryengine.v1beta.Document\] object, over
-            /// which the facet values are computed. Facet key is case-sensitive.
-            #[prost(string, tag = "1")]
-            pub key: ::prost::alloc::string::String,
-            /// Set only if values should be bucketized into intervals. Must be set
-            /// for facets with numerical values. Must not be set for facet with text
-            /// values. Maximum number of intervals is 30.
-            #[prost(message, repeated, tag = "2")]
-            pub intervals: ::prost::alloc::vec::Vec<super::super::Interval>,
-            /// Only get facet for the given restricted values. Only supported on
-            /// textual fields. For example, suppose "category" has three values
-            /// "Action > 2022", "Action > 2021" and "Sci-Fi > 2022". If set
-            /// "restricted_values" to "Action > 2022", the "category" facet will only
-            /// contain "Action > 2022". Only supported on textual fields. Maximum
-            /// is 10.
-            #[prost(string, repeated, tag = "3")]
-            pub restricted_values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-            /// Only get facet values that start with the given string prefix. For
-            /// example, suppose "category" has three values "Action > 2022",
-            /// "Action > 2021" and "Sci-Fi > 2022". If set "prefixes" to "Action", the
-            /// "category" facet will only contain "Action > 2022" and "Action > 2021".
-            /// Only supported on textual fields. Maximum is 10.
-            #[prost(string, repeated, tag = "4")]
-            pub prefixes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-            /// Only get facet values that contains the given strings. For example,
-            /// suppose "category" has three values "Action > 2022",
-            /// "Action > 2021" and "Sci-Fi > 2022". If set "contains" to "2022", the
-            /// "category" facet will only contain "Action > 2022" and "Sci-Fi > 2022".
-            /// Only supported on textual fields. Maximum is 10.
-            #[prost(string, repeated, tag = "5")]
-            pub contains: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-            /// True to make facet keys case insensitive when getting faceting
-            /// values with prefixes or contains; false otherwise.
-            #[prost(bool, tag = "6")]
-            pub case_insensitive: bool,
-            /// The order in which documents are returned.
-            ///
-            /// Allowed values are:
-            ///
-            /// * "count desc", which means order by
-            /// \[SearchResponse.Facet.values.count][google.cloud.discoveryengine.v1beta.SearchResponse.Facet.FacetValue.count\]
-            /// descending.
-            ///
-            /// * "value desc", which means order by
-            /// \[SearchResponse.Facet.values.value][google.cloud.discoveryengine.v1beta.SearchResponse.Facet.FacetValue.value\]
-            /// descending.
-            ///   Only applies to textual facets.
-            ///
-            /// If not set, textual values are sorted in [natural
-            /// order](<https://en.wikipedia.org/wiki/Natural_sort_order>); numerical
-            /// intervals are sorted in the order given by
-            /// \[FacetSpec.FacetKey.intervals][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.intervals\].
-            #[prost(string, tag = "7")]
-            pub order_by: ::prost::alloc::string::String,
-        }
-    }
-    /// Boost specification to boost certain documents.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct BoostSpec {
-        /// Condition boost specifications. If a document matches multiple conditions
-        /// in the specifictions, boost scores from these specifications are all
-        /// applied and combined in a non-linear way. Maximum number of
-        /// specifications is 20.
-        #[prost(message, repeated, tag = "1")]
-        pub condition_boost_specs: ::prost::alloc::vec::Vec<boost_spec::ConditionBoostSpec>,
-    }
-    /// Nested message and enum types in `BoostSpec`.
-    pub mod boost_spec {
-        /// Boost applies to documents which match a condition.
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct ConditionBoostSpec {
-            /// An expression which specifies a boost condition. The syntax and
-            /// supported fields are the same as a filter expression. See
-            /// \[SearchRequest.filter][google.cloud.discoveryengine.v1beta.SearchRequest.filter\]
-            /// for detail syntax and limitations.
-            ///
-            /// Examples:
-            ///
-            /// * To boost documents with document ID "doc_1" or "doc_2", and
-            /// color
-            ///   "Red" or "Blue":
-            ///     * (id: ANY("doc_1", "doc_2")) AND (color: ANY("Red","Blue"))
-            #[prost(string, tag = "1")]
-            pub condition: ::prost::alloc::string::String,
-            /// Strength of the condition boost, which should be in [-1, 1]. Negative
-            /// boost means demotion. Default is 0.0.
-            ///
-            /// Setting to 1.0 gives the document a big promotion. However, it does not
-            /// necessarily mean that the boosted document will be the top result at
-            /// all times, nor that other documents will be excluded. Results could
-            /// still be shown even when none of them matches the condition. And
-            /// results that are significantly more relevant to the search query can
-            /// still trump your heavily favored but irrelevant documents.
-            ///
-            /// Setting to -1.0 gives the document a big demotion. However, results
-            /// that are deeply relevant might still be shown. The document will have
-            /// an upstream battle to get a fairly high ranking, but it is not blocked
-            /// out completely.
-            ///
-            /// Setting to 0.0 means no boost applied. The boosting condition is
-            /// ignored.
-            #[prost(float, tag = "2")]
-            pub boost: f32,
-        }
-    }
-    /// Specification to determine under which conditions query expansion should
-    /// occur.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct QueryExpansionSpec {
-        /// The condition under which query expansion should occur. Default to
-        /// \[Condition.DISABLED][google.cloud.discoveryengine.v1beta.SearchRequest.QueryExpansionSpec.Condition.DISABLED\].
-        #[prost(enumeration = "query_expansion_spec::Condition", tag = "1")]
-        pub condition: i32,
-    }
-    /// Nested message and enum types in `QueryExpansionSpec`.
-    pub mod query_expansion_spec {
-        /// Enum describing under which condition query expansion should occur.
-        #[derive(
-            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
-        )]
-        #[repr(i32)]
-        pub enum Condition {
-            /// Unspecified query expansion condition. In this case, server behavior
-            /// defaults to
-            /// \[Condition.DISABLED][google.cloud.discoveryengine.v1beta.SearchRequest.QueryExpansionSpec.Condition.DISABLED\].
-            Unspecified = 0,
-            /// Disabled query expansion. Only the exact search query is used, even if
-            /// \[SearchResponse.total_size][google.cloud.discoveryengine.v1beta.SearchResponse.total_size\]
-            /// is zero.
-            Disabled = 1,
-            /// Automatic query expansion built by the Search API.
-            Auto = 2,
-        }
-    }
-    /// The specification for query spell correction.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct SpellCorrectionSpec {
-        /// The mode under which spell correction should take effect to
-        /// replace the original search query. Default to
-        /// \[Mode.AUTO][google.cloud.discoveryengine.v1beta.SearchRequest.SpellCorrectionSpec.Mode.AUTO\].
-        #[prost(enumeration = "spell_correction_spec::Mode", tag = "1")]
-        pub mode: i32,
-    }
-    /// Nested message and enum types in `SpellCorrectionSpec`.
-    pub mod spell_correction_spec {
-        /// Enum describing under which mode spell correction should occur.
-        #[derive(
-            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
-        )]
-        #[repr(i32)]
-        pub enum Mode {
-            /// Unspecified spell correction mode. In this case, server behavior
-            /// defaults to
-            /// \[Mode.AUTO][google.cloud.discoveryengine.v1beta.SearchRequest.SpellCorrectionSpec.Mode.AUTO\].
-            Unspecified = 0,
-            /// Search API will try to find a spell suggestion if there
-            /// is any and put in the
-            /// \[SearchResponse.corrected_query][google.cloud.discoveryengine.v1beta.SearchResponse.corrected_query\].
-            /// The spell suggestion will not be used as the search query.
-            SuggestionOnly = 1,
-            /// Automatic spell correction built by the Search API. Search will
-            /// be based on the corrected query if found.
-            Auto = 2,
-        }
-    }
-    /// The specification that configs the desired behavior of the UCS content
-    /// search.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct ContentSearchSpec {
-        /// If there is no snippet spec provided, there will be no snippet in the
-        /// search result.
-        #[prost(message, optional, tag = "1")]
-        pub snippet_spec: ::core::option::Option<content_search_spec::SnippetSpec>,
-        /// If there is no summary spec provided, there will be no summary in the
-        /// search response.
-        #[prost(message, optional, tag = "2")]
-        pub summary_spec: ::core::option::Option<content_search_spec::SummarySpec>,
-        /// If there is no extractive_content_spec provided, there will be no
-        /// extractive answer in the search response.
-        #[prost(message, optional, tag = "3")]
-        pub extractive_content_spec:
-            ::core::option::Option<content_search_spec::ExtractiveContentSpec>,
-    }
-    /// Nested message and enum types in `ContentSearchSpec`.
-    pub mod content_search_spec {
-        /// The specification that configs the snippet in the search results.
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct SnippetSpec {
-            /// Max number of snippets returned in each search result.
-            ///
-            /// A snippet is an infomartive summary of a content with highlighting for
-            /// UI rendering.
-            ///
-            /// If the matching snippets is less than the max_snippet_count, return all
-            /// of the snippets; otherwise, return the max_snippet_count.
-            ///
-            /// At most 5 snippets will be returned for each SearchResult.
-            #[prost(int32, tag = "1")]
-            pub max_snippet_count: i32,
-            /// if true, only snippet reference is returned.
-            #[prost(bool, tag = "2")]
-            pub reference_only: bool,
-        }
-        /// The specification that configs the summary in the search response.
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct SummarySpec {
-            /// The number of top results the summary should be generated from.
-            /// If the number of returned results is less than summary_result_count,
-            /// then the summary would be derived from all the results; otherwise, the
-            /// summary would be derived from the top results.
-            ///
-            /// At most 5 results can be used for generating summary.
-            #[prost(int32, tag = "1")]
-            pub summary_result_count: i32,
-        }
-        /// The specification that configs the extractive content in search results.
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct ExtractiveContentSpec {
-            /// The max number of extractive answers returned in each search result.
-            ///
-            /// An extractive answer is a verbatim answer extracted from the original
-            /// document, which provides precise and contextually relevant answer to
-            /// the search query.
-            ///
-            /// If the number of matching answers is less than the
-            /// extractive_answer_count, return all of the answers; otherwise, return
-            /// the extractive_answer_count.
-            ///
-            /// At most 5 answers will be returned for each SearchResult.
-            #[prost(int32, tag = "1")]
-            pub max_extractive_answer_count: i32,
-            /// The max number of extractive segments returned in each search result.
-            ///
-            /// An extractive segment is a text segment extracted from the original
-            /// document which is relevant to the search query and in general more
-            /// verbose than an extrative answer. The segment could then be used as
-            /// input for LLMs to generate summaries and answers.
-            ///
-            /// If the number of matching segments is less than the
-            /// max_extractive_segment_count, return all of the segments; otherwise,
-            /// return the max_extractive_segment_count.
-            ///
-            /// Currently one segment will be returned for each SearchResult.
-            #[prost(int32, tag = "2")]
-            pub max_extractive_segment_count: i32,
-        }
-    }
+    pub data_store: ::prost::alloc::string::String,
 }
 /// Response message for
-/// \[SearchService.Search][google.cloud.discoveryengine.v1beta.SearchService.Search\]
+/// \[SearchTuningService.ListCustomModels][google.cloud.discoveryengine.v1beta.SearchTuningService.ListCustomModels\]
 /// method.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct SearchResponse {
-    /// A list of matched documents. The order represents the ranking.
+pub struct ListCustomModelsResponse {
+    /// List of custom tuning models.
     #[prost(message, repeated, tag = "1")]
-    pub results: ::prost::alloc::vec::Vec<search_response::SearchResult>,
-    /// Results of facets requested by user.
-    #[prost(message, repeated, tag = "2")]
-    pub facets: ::prost::alloc::vec::Vec<search_response::Facet>,
-    /// Guided search result.
-    #[prost(message, optional, tag = "8")]
-    pub guided_search_result: ::core::option::Option<search_response::GuidedSearchResult>,
-    /// The estimated total count of matched items irrespective of pagination. The
-    /// count of
-    /// \[results][google.cloud.discoveryengine.v1beta.SearchResponse.results\]
-    /// returned by pagination may be less than the
-    /// \[total_size][google.cloud.discoveryengine.v1beta.SearchResponse.total_size\]
-    /// that matches.
-    #[prost(int32, tag = "3")]
-    pub total_size: i32,
-    /// A unique search token. This should be included in the
-    /// \[UserEvent][google.cloud.discoveryengine.v1beta.UserEvent\] logs resulting
-    /// from this search, which enables accurate attribution of search model
-    /// performance.
-    #[prost(string, tag = "4")]
-    pub attribution_token: ::prost::alloc::string::String,
-    /// The URI of a customer-defined redirect page. If redirect action is
-    /// triggered, no search is performed, and only
-    /// \[redirect_uri][google.cloud.discoveryengine.v1beta.SearchResponse.redirect_uri\]
-    /// and
-    /// \[attribution_token][google.cloud.discoveryengine.v1beta.SearchResponse.attribution_token\]
-    /// are set in the response.
-    #[prost(string, tag = "12")]
-    pub redirect_uri: ::prost::alloc::string::String,
-    /// A token that can be sent as
-    /// \[SearchRequest.page_token][google.cloud.discoveryengine.v1beta.SearchRequest.page_token\]
-    /// to retrieve the next page. If this field is omitted, there are no
-    /// subsequent pages.
-    #[prost(string, tag = "5")]
-    pub next_page_token: ::prost::alloc::string::String,
-    /// Contains the spell corrected query, if found. If the spell correction type
-    /// is AUTOMATIC, then the search results are based on corrected_query.
-    /// Otherwise the original query is used for search.
-    #[prost(string, tag = "7")]
-    pub corrected_query: ::prost::alloc::string::String,
-    /// A summary as part of the search results.
-    /// This field is only returned if
-    /// \[SearchRequest.ContentSearchSpec.summary_spec][google.cloud.discoveryengine.v1beta.SearchRequest.ContentSearchSpec.summary_spec\]
-    /// is set.
-    #[prost(message, optional, tag = "9")]
-    pub summary: ::core::option::Option<search_response::Summary>,
-    /// Controls applied as part of the Control service.
-    #[prost(string, repeated, tag = "10")]
-    pub applied_controls: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    pub models: ::prost::alloc::vec::Vec<CustomTuningModel>,
 }
-/// Nested message and enum types in `SearchResponse`.
-pub mod search_response {
-    /// Represents the search results.
+/// Request message for
+/// \[SearchTuningService.TrainCustomModel][google.cloud.discoveryengine.v1beta.SearchTuningService.TrainCustomModel\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TrainCustomModelRequest {
+    /// Required. The resource name of the Data Store, such as
+    /// `projects/*/locations/global/collections/default_collection/dataStores/default_data_store`.
+    /// This field is used to identify the data store where to train the models.
+    #[prost(string, tag = "1")]
+    pub data_store: ::prost::alloc::string::String,
+    /// Model to be trained. Supported values are:
+    ///
+    ///  * **search-tuning**: Fine tuning the search system based on data provided.
+    #[prost(string, tag = "3")]
+    pub model_type: ::prost::alloc::string::String,
+    /// The desired location of errors incurred during the data ingestion and
+    /// training.
+    #[prost(message, optional, tag = "4")]
+    pub error_config: ::core::option::Option<ImportErrorConfig>,
+    /// If not provided, a UUID will be generated.
+    #[prost(string, tag = "5")]
+    pub model_id: ::prost::alloc::string::String,
+    /// Model training input.
+    #[prost(oneof = "train_custom_model_request::TrainingInput", tags = "2")]
+    pub training_input: ::core::option::Option<train_custom_model_request::TrainingInput>,
+}
+/// Nested message and enum types in `TrainCustomModelRequest`.
+pub mod train_custom_model_request {
+    /// Cloud Storage training data input.
     #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct SearchResult {
-        /// \[Document.id][google.cloud.discoveryengine.v1beta.Document.id\] of the
-        /// searched \[Document][google.cloud.discoveryengine.v1beta.Document\].
+    pub struct GcsTrainingInput {
+        /// The Cloud Storage corpus data which could be associated in train data.
+        /// The data path format is `gs://<bucket_to_data>/<jsonl_file_name>`.
+        /// A newline delimited jsonl/ndjson file.
+        ///
+        /// For search-tuning model, each line should have the _id, title
+        /// and text. Example:
+        /// `{"_id": "doc1", title: "relevant doc", "text": "relevant text"}`
         #[prost(string, tag = "1")]
-        pub id: ::prost::alloc::string::String,
-        /// The document data snippet in the search response. Only fields that are
-        /// marked as retrievable are populated.
-        #[prost(message, optional, tag = "2")]
-        pub document: ::core::option::Option<super::Document>,
+        pub corpus_data_path: ::prost::alloc::string::String,
+        /// The gcs query data which could be associated in train data.
+        /// The data path format is `gs://<bucket_to_data>/<jsonl_file_name>`.
+        /// A newline delimited jsonl/ndjson file.
+        ///
+        /// For search-tuning model, each line should have the _id
+        /// and text. Example: {"_id": "query1",  "text": "example query"}
+        #[prost(string, tag = "2")]
+        pub query_data_path: ::prost::alloc::string::String,
+        /// Cloud Storage training data path whose format should be
+        /// `gs://<bucket_to_data>/<tsv_file_name>`. The file should be in tsv
+        /// format. Each line should have the doc_id and query_id and score (number).
+        ///
+        /// For search-tuning model, it should have the query-id corpus-id
+        /// score as tsv file header. The score should be a number in `[0, inf+)`.
+        /// The larger the number is, the more relevant the pair is. Example:
+        ///
+        /// * `query-id\tcorpus-id\tscore`
+        /// * `query1\tdoc1\t1`
+        #[prost(string, tag = "3")]
+        pub train_data_path: ::prost::alloc::string::String,
+        /// Cloud Storage test data. Same format as train_data_path. If not provided,
+        /// a random 80/20 train/test split will be performed on train_data_path.
+        #[prost(string, tag = "4")]
+        pub test_data_path: ::prost::alloc::string::String,
     }
-    /// A facet result.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct Facet {
-        /// The key for this facet. E.g., "colors" or "price". It matches
-        /// \[SearchRequest.FacetSpec.FacetKey.key][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.key\].
-        #[prost(string, tag = "1")]
-        pub key: ::prost::alloc::string::String,
-        /// The facet values for this field.
-        #[prost(message, repeated, tag = "2")]
-        pub values: ::prost::alloc::vec::Vec<facet::FacetValue>,
-        /// Whether the facet is dynamically generated.
-        #[prost(bool, tag = "3")]
-        pub dynamic_facet: bool,
+    /// Model training input.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum TrainingInput {
+        /// Cloud Storage training input.
+        #[prost(message, tag = "2")]
+        GcsTrainingInput(GcsTrainingInput),
     }
-    /// Nested message and enum types in `Facet`.
-    pub mod facet {
-        /// A facet value which contains value names and their count.
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct FacetValue {
-            /// Number of items that have this facet value.
-            #[prost(int64, tag = "3")]
-            pub count: i64,
-            /// A facet value which contains values.
-            #[prost(oneof = "facet_value::FacetValue", tags = "1, 2")]
-            pub facet_value: ::core::option::Option<facet_value::FacetValue>,
-        }
-        /// Nested message and enum types in `FacetValue`.
-        pub mod facet_value {
-            /// A facet value which contains values.
-            #[derive(Clone, PartialEq, ::prost::Oneof)]
-            pub enum FacetValue {
-                /// Text value of a facet, such as "Black" for facet "colors".
-                #[prost(string, tag = "1")]
-                Value(::prost::alloc::string::String),
-                /// Interval value for a facet, such as [10, 20) for facet "price". It
-                /// matches
-                /// \[SearchRequest.FacetSpec.FacetKey.intervals][google.cloud.discoveryengine.v1beta.SearchRequest.FacetSpec.FacetKey.intervals\].
-                #[prost(message, tag = "2")]
-                Interval(super::super::super::Interval),
-            }
-        }
-    }
-    /// Guided search result. The guided search helps user to refine the search
-    /// results and narrow down to the real needs from a broaded search results.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct GuidedSearchResult {
-        /// A list of ranked refinement attributes.
-        #[prost(message, repeated, tag = "1")]
-        pub refinement_attributes:
-            ::prost::alloc::vec::Vec<guided_search_result::RefinementAttribute>,
-    }
-    /// Nested message and enum types in `GuidedSearchResult`.
-    pub mod guided_search_result {
-        /// Useful attribute for search result refinements.
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct RefinementAttribute {
-            /// Attribute key used to refine the results e.g. 'movie_type'.
-            #[prost(string, tag = "1")]
-            pub attribute_key: ::prost::alloc::string::String,
-            /// Attribute value used to refine the results e.g. 'drama'.
-            #[prost(string, tag = "2")]
-            pub attribute_value: ::prost::alloc::string::String,
-        }
-    }
-    /// Summary of the top N search result specified by the summary spec.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct Summary {
-        /// The summary content.
-        #[prost(string, tag = "1")]
-        pub summary_text: ::prost::alloc::string::String,
-    }
+}
+/// Response of the
+/// \[TrainCustomModelRequest][google.cloud.discoveryengine.v1beta.TrainCustomModelRequest\].
+/// This message is returned by the google.longrunning.Operations.response field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TrainCustomModelResponse {
+    /// A sample of errors encountered while processing the data.
+    #[prost(message, repeated, tag = "1")]
+    pub error_samples: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
+    /// Echoes the destination for the complete errors in the request if set.
+    #[prost(message, optional, tag = "2")]
+    pub error_config: ::core::option::Option<ImportErrorConfig>,
+    /// The trained model status. Possible values are:
+    ///
+    ///  * **bad-data**: The training data quality is bad.
+    ///  * **no-improvement**: Tuning didn't improve performance. Won't deploy.
+    ///  * **in-progress**: Model training job creation is in progress.
+    ///  * **training**: Model is actively training.
+    ///  * **evaluating**: The model is evaluating trained metrics.
+    ///  * **indexing**: The model trained metrics are indexing.
+    ///  * **ready**: The model is ready for serving.
+    #[prost(string, tag = "3")]
+    pub model_status: ::prost::alloc::string::String,
+    /// The metrics of the trained model.
+    #[prost(map = "string, double", tag = "4")]
+    pub metrics: ::std::collections::HashMap<::prost::alloc::string::String, f64>,
+    /// Fully qualified name of the CustomTuningModel.
+    #[prost(string, tag = "5")]
+    pub model_name: ::prost::alloc::string::String,
+}
+/// Metadata related to the progress of the TrainCustomModel operation. This is
+/// returned by the google.longrunning.Operation.metadata field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TrainCustomModelMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 #[doc = r" Generated client implementations."]
-pub mod search_service_client {
+pub mod search_tuning_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    #[doc = " Service for search."]
+    #[doc = " Service for search tuning."]
     #[derive(Debug, Clone)]
-    pub struct SearchServiceClient<T> {
+    pub struct SearchTuningServiceClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl<T> SearchServiceClient<T>
+    impl<T> SearchTuningServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::ResponseBody: Body + Send + 'static,
@@ -2717,7 +7604,7 @@ pub mod search_service_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> SearchServiceClient<InterceptedService<T, F>>
+        ) -> SearchTuningServiceClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T: tonic::codegen::Service<
@@ -2729,7 +7616,7 @@ pub mod search_service_client {
             <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
                 Into<StdError> + Send + Sync,
         {
-            SearchServiceClient::new(InterceptedService::new(inner, interceptor))
+            SearchTuningServiceClient::new(InterceptedService::new(inner, interceptor))
         }
         #[doc = r" Compress requests with `gzip`."]
         #[doc = r""]
@@ -2744,11 +7631,14 @@ pub mod search_service_client {
             self.inner = self.inner.accept_gzip();
             self
         }
-        #[doc = " Performs a search."]
-        pub async fn search(
+        #[doc = " Trains a custom model."]
+        pub async fn train_custom_model(
             &mut self,
-            request: impl tonic::IntoRequest<super::SearchRequest>,
-        ) -> Result<tonic::Response<super::SearchResponse>, tonic::Status> {
+            request: impl tonic::IntoRequest<super::TrainCustomModelRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -2757,8 +7647,1293 @@ pub mod search_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/google.cloud.discoveryengine.v1beta.SearchService/Search",
+                "/google.cloud.discoveryengine.v1beta.SearchTuningService/TrainCustomModel",
             );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a list of all the custom models."]
+        pub async fn list_custom_models(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListCustomModelsRequest>,
+        ) -> Result<tonic::Response<super::ListCustomModelsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SearchTuningService/ListCustomModels",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// Configures metadata that is used to generate serving time results (e.g.
+/// search results or recommendation predictions).
+/// The ServingConfig is passed in the search and predict request and generates
+/// results.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ServingConfig {
+    /// Immutable. Fully qualified name
+    /// `projects/{project}/locations/{location}/collections/{collection_id}/engines/{engine_id}/servingConfigs/{serving_config_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The human readable serving config display name. Used in Discovery
+    /// UI.
+    ///
+    /// This field must be a UTF-8 encoded string with a length limit of 128
+    /// characters. Otherwise, an INVALID_ARGUMENT error is returned.
+    #[prost(string, tag = "2")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Required. Immutable. Specifies the solution type that a serving config can
+    /// be associated with.
+    #[prost(enumeration = "SolutionType", tag = "3")]
+    pub solution_type: i32,
+    /// The id of the model to use at serving time.
+    /// Currently only RecommendationModels are supported.
+    /// Can be changed but only to a compatible model (e.g.
+    /// others-you-may-like CTR to others-you-may-like CVR).
+    ///
+    /// Required when
+    /// \[SolutionType][google.cloud.discoveryengine.v1beta.SolutionType\] is
+    /// \[SOLUTION_TYPE_RECOMMENDATION][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_RECOMMENDATION\].
+    #[prost(string, tag = "4")]
+    pub model_id: ::prost::alloc::string::String,
+    /// How much diversity to use in recommendation model results e.g.
+    /// `medium-diversity` or `high-diversity`. Currently supported values:
+    ///
+    /// * `no-diversity`
+    /// * `low-diversity`
+    /// * `medium-diversity`
+    /// * `high-diversity`
+    /// * `auto-diversity`
+    ///
+    /// If not specified, we choose default based on recommendation model
+    /// type. Default value: `no-diversity`.
+    ///
+    /// Can only be set if
+    /// \[SolutionType][google.cloud.discoveryengine.v1beta.SolutionType\] is
+    /// \[SOLUTION_TYPE_RECOMMENDATION][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_RECOMMENDATION\].
+    #[prost(string, tag = "5")]
+    pub diversity_level: ::prost::alloc::string::String,
+    /// Bring your own embedding config. The config is used for search semantic
+    /// retrieval. The retrieval is based on the dot product of
+    /// \[SearchRequest.EmbeddingSpec.EmbeddingVector.vector][google.cloud.discoveryengine.v1beta.SearchRequest.EmbeddingSpec.EmbeddingVector.vector\]
+    /// and the document embeddings that are provided by this EmbeddingConfig. If
+    /// \[SearchRequest.EmbeddingSpec.EmbeddingVector.vector][google.cloud.discoveryengine.v1beta.SearchRequest.EmbeddingSpec.EmbeddingVector.vector\]
+    /// is provided, it overrides this
+    /// \[ServingConfig.embedding_config][google.cloud.discoveryengine.v1beta.ServingConfig.embedding_config\].
+    #[prost(message, optional, tag = "20")]
+    pub embedding_config: ::core::option::Option<EmbeddingConfig>,
+    /// The ranking expression controls the customized ranking on retrieval
+    /// documents. To leverage this, document embedding is required. The ranking
+    /// expression setting in ServingConfig applies to all search requests served
+    /// by the serving config. However, if
+    /// \[SearchRequest.ranking_expression][google.cloud.discoveryengine.v1beta.SearchRequest.ranking_expression\]
+    /// is specified, it overrides the ServingConfig ranking expression.
+    ///
+    /// The ranking expression is a single function or multiple functions that are
+    /// joined by "+".
+    ///   * ranking_expression = function, { " + ", function };
+    /// Supported functions:
+    ///   * double * relevance_score
+    ///   * double * dotProduct(embedding_field_path)
+    /// Function variables:
+    ///   relevance_score: pre-defined keywords, used for measure relevance between
+    ///   query and document.
+    ///   embedding_field_path: the document embedding field
+    ///   used with query embedding vector.
+    ///   dotProduct: embedding function between embedding_field_path and query
+    ///   embedding vector.
+    ///
+    ///  Example ranking expression:
+    ///    If document has an embedding field doc_embedding, the ranking expression
+    ///    could be 0.5 * relevance_score + 0.3 * dotProduct(doc_embedding).
+    #[prost(string, tag = "21")]
+    pub ranking_expression: ::prost::alloc::string::String,
+    /// Output only. ServingConfig created timestamp.
+    #[prost(message, optional, tag = "8")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. ServingConfig updated timestamp.
+    #[prost(message, optional, tag = "9")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Filter controls to use in serving path.
+    /// All triggered filter controls will be applied.
+    /// Filter controls must be in the same data store as the serving config.
+    /// Maximum of 20 filter controls.
+    #[prost(string, repeated, tag = "11")]
+    pub filter_control_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Boost controls to use in serving path.
+    /// All triggered boost controls will be applied.
+    /// Boost controls must be in the same data store as the serving config.
+    /// Maximum of 20 boost controls.
+    #[prost(string, repeated, tag = "12")]
+    pub boost_control_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// IDs of the redirect controls. Only the first triggered redirect
+    /// action is applied, even if multiple apply. Maximum number of
+    /// specifications is 100.
+    ///
+    /// Can only be set if
+    /// \[SolutionType][google.cloud.discoveryengine.v1beta.SolutionType\] is
+    /// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+    #[prost(string, repeated, tag = "14")]
+    pub redirect_control_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Condition synonyms specifications. If multiple synonyms conditions
+    /// match, all matching synonyms controls in the list will execute.
+    /// Maximum number of specifications is 100.
+    ///
+    /// Can only be set if
+    /// \[SolutionType][google.cloud.discoveryengine.v1beta.SolutionType\] is
+    /// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+    #[prost(string, repeated, tag = "15")]
+    pub synonyms_control_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Condition oneway synonyms specifications. If multiple oneway synonyms
+    /// conditions match, all matching oneway synonyms controls in the list
+    /// will execute. Maximum number of specifications is 100.
+    ///
+    /// Can only be set if
+    /// \[SolutionType][google.cloud.discoveryengine.v1beta.SolutionType\] is
+    /// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+    #[prost(string, repeated, tag = "16")]
+    pub oneway_synonyms_control_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Condition do not associate specifications. If multiple do not
+    /// associate conditions match, all matching do not associate controls in
+    /// the list will execute.
+    /// Order does not matter.
+    /// Maximum number of specifications is 100.
+    ///
+    /// Can only be set if
+    /// \[SolutionType][google.cloud.discoveryengine.v1beta.SolutionType\] is
+    /// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+    #[prost(string, repeated, tag = "17")]
+    pub dissociate_control_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Condition replacement specifications.
+    /// Applied according to the order in the list.
+    /// A previously replaced term can not be re-replaced.
+    /// Maximum number of specifications is 100.
+    ///
+    /// Can only be set if
+    /// \[SolutionType][google.cloud.discoveryengine.v1beta.SolutionType\] is
+    /// \[SOLUTION_TYPE_SEARCH][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_SEARCH\].
+    #[prost(string, repeated, tag = "18")]
+    pub replacement_control_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Condition ignore specifications. If multiple ignore
+    /// conditions match, all matching ignore controls in the list will
+    /// execute.
+    /// Order does not matter.
+    /// Maximum number of specifications is 100.
+    #[prost(string, repeated, tag = "19")]
+    pub ignore_control_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Industry vertical specific config.
+    #[prost(oneof = "serving_config::VerticalConfig", tags = "7, 10")]
+    pub vertical_config: ::core::option::Option<serving_config::VerticalConfig>,
+}
+/// Nested message and enum types in `ServingConfig`.
+pub mod serving_config {
+    /// Specifies the configurations needed for Media Discovery. Currently we
+    /// support:
+    ///
+    /// * `demote_content_watched`: Threshold for watched content demotion.
+    /// Customers can specify if using watched content demotion or use viewed
+    /// detail page. Using the content watched demotion, customers need to specify
+    /// the watched minutes or percentage exceeds the threshold, the content will
+    /// be demoted in the recommendation result.
+    /// * `promote_fresh_content`: cutoff days for fresh content promotion.
+    /// Customers can specify if using content freshness promotion. If the content
+    /// was published within the cutoff days, the content will be promoted in the
+    /// recommendation result.
+    /// Can only be set if
+    /// \[SolutionType][google.cloud.discoveryengine.v1beta.SolutionType\] is
+    /// \[SOLUTION_TYPE_RECOMMENDATION][google.cloud.discoveryengine.v1beta.SolutionType.SOLUTION_TYPE_RECOMMENDATION\].
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct MediaConfig {
+        /// Specifies the event type used for demoting recommendation result.
+        /// Currently supported values:
+        ///
+        /// * `view-item`: Item viewed.
+        /// * `media-play`: Start/resume watching a video, playing a song, etc.
+        /// * `media-complete`: Finished or stopped midway through a video, song,
+        /// etc.
+        ///
+        /// If unset, watch history demotion will not be applied. Content freshness
+        /// demotion will still be applied.
+        #[prost(string, tag = "1")]
+        pub demotion_event_type: ::prost::alloc::string::String,
+        /// Specifies the content freshness used for recommendation result.
+        /// Contents will be demoted if contents were published for more than content
+        /// freshness cutoff days.
+        #[prost(int32, tag = "4")]
+        pub content_freshness_cutoff_days: i32,
+        /// Specify the threshold for demoting watched content, the threshold can be
+        /// either percentage or minutes value.
+        /// This must be set for `media-complete` event type.
+        #[prost(oneof = "media_config::DemoteContentWatched", tags = "2, 5")]
+        pub demote_content_watched: ::core::option::Option<media_config::DemoteContentWatched>,
+    }
+    /// Nested message and enum types in `MediaConfig`.
+    pub mod media_config {
+        /// Specify the threshold for demoting watched content, the threshold can be
+        /// either percentage or minutes value.
+        /// This must be set for `media-complete` event type.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum DemoteContentWatched {
+            /// Specifies the content watched percentage threshold for demotion.
+            /// Threshold value must be between [0, 1.0] inclusive.
+            #[prost(float, tag = "2")]
+            ContentWatchedPercentageThreshold(f32),
+            /// Specifies the content watched minutes threshold for demotion.
+            #[prost(float, tag = "5")]
+            ContentWatchedSecondsThreshold(f32),
+        }
+    }
+    /// Specifies the configurations needed for Generic Discovery.Currently we
+    /// support:
+    ///
+    /// * `content_search_spec`: configuration for generic content search.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct GenericConfig {
+        /// Specifies the expected behavior of content search.
+        /// Only valid for content-search enabled data store.
+        #[prost(message, optional, tag = "1")]
+        pub content_search_spec: ::core::option::Option<super::search_request::ContentSearchSpec>,
+    }
+    /// Industry vertical specific config.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum VerticalConfig {
+        /// The MediaConfig of the serving configuration.
+        #[prost(message, tag = "7")]
+        MediaConfig(MediaConfig),
+        /// The GenericConfig of the serving configuration.
+        #[prost(message, tag = "10")]
+        GenericConfig(GenericConfig),
+    }
+}
+/// Request for UpdateServingConfig method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateServingConfigRequest {
+    /// Required. The ServingConfig to update.
+    #[prost(message, optional, tag = "1")]
+    pub serving_config: ::core::option::Option<ServingConfig>,
+    /// Indicates which fields in the provided
+    /// \[ServingConfig][google.cloud.discoveryengine.v1beta.ServingConfig\] to
+    /// update. The following are NOT supported:
+    ///
+    /// * \[ServingConfig.name][google.cloud.discoveryengine.v1beta.ServingConfig.name\]
+    ///
+    /// If not set, all supported fields are updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request for GetServingConfig method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetServingConfigRequest {
+    /// Required. The resource name of the ServingConfig to get. Format:
+    /// `projects/{project_number}/locations/{location}/collections/{collection}/engines/{engine}/servingConfigs/{serving_config_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request for ListServingConfigs method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListServingConfigsRequest {
+    /// Required. Full resource name of the parent resource. Format:
+    /// `projects/{project_number}/locations/{location}/collections/{collection}/engines/{engine}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Maximum number of results to return. If unspecified, defaults
+    /// to 100. If a value greater than 100 is provided, at most 100 results are
+    /// returned.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token, received from a previous `ListServingConfigs` call.
+    /// Provide this to retrieve the subsequent page.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response for ListServingConfigs method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListServingConfigsResponse {
+    /// All the ServingConfigs for a given dataStore.
+    #[prost(message, repeated, tag = "1")]
+    pub serving_configs: ::prost::alloc::vec::Vec<ServingConfig>,
+    /// Pagination token, if not returned indicates the last page.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+#[doc = r" Generated client implementations."]
+pub mod serving_config_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for operations related to"]
+    #[doc = " [ServingConfig][google.cloud.discoveryengine.v1beta.ServingConfig]."]
+    #[derive(Debug, Clone)]
+    pub struct ServingConfigServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> ServingConfigServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ServingConfigServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ServingConfigServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Updates a ServingConfig."]
+        #[doc = ""]
+        #[doc = " Returns a NOT_FOUND error if the ServingConfig does not exist."]
+        pub async fn update_serving_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateServingConfigRequest>,
+        ) -> Result<tonic::Response<super::ServingConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ServingConfigService/UpdateServingConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a ServingConfig."]
+        #[doc = ""]
+        #[doc = " Returns a NotFound error if the ServingConfig does not exist."]
+        pub async fn get_serving_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetServingConfigRequest>,
+        ) -> Result<tonic::Response<super::ServingConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ServingConfigService/GetServingConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all ServingConfigs linked to this dataStore."]
+        pub async fn list_serving_configs(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListServingConfigsRequest>,
+        ) -> Result<tonic::Response<super::ListServingConfigsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.ServingConfigService/ListServingConfigs",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// SiteSearchEngine captures DataStore level site search persisting
+/// configurations. It is a singleton value per data store.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SiteSearchEngine {
+    /// The fully qualified resource name of the site search engine.
+    /// Format: `projects/*/locations/*/dataStores/*/siteSearchEngine`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A target site for the SiteSearchEngine.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TargetSite {
+    /// Output only. The fully qualified resource name of the target site.
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine/targetSites/{target_site}`
+    /// The `target_site_id` is system-generated.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Input only. The user provided URI pattern from which the
+    /// `generated_uri_pattern` is generated.
+    #[prost(string, tag = "2")]
+    pub provided_uri_pattern: ::prost::alloc::string::String,
+    /// The type of the target site, e.g., whether the site is to be included or
+    /// excluded.
+    #[prost(enumeration = "target_site::Type", tag = "3")]
+    pub r#type: i32,
+    /// Input only. If set to false, a uri_pattern is generated to include all
+    /// pages whose address contains the provided_uri_pattern. If set to true, an
+    /// uri_pattern is generated to try to be an exact match of the
+    /// provided_uri_pattern or just the specific page if the provided_uri_pattern
+    /// is a specific one. provided_uri_pattern is always normalized to
+    /// generate the URI pattern to be used by the search engine.
+    #[prost(bool, tag = "6")]
+    pub exact_match: bool,
+    /// Output only. This is system-generated based on the provided_uri_pattern.
+    #[prost(string, tag = "4")]
+    pub generated_uri_pattern: ::prost::alloc::string::String,
+    /// Output only. Root domain of the provided_uri_pattern.
+    #[prost(string, tag = "10")]
+    pub root_domain_uri: ::prost::alloc::string::String,
+    /// Output only. Site ownership and validity verification status.
+    #[prost(message, optional, tag = "7")]
+    pub site_verification_info: ::core::option::Option<SiteVerificationInfo>,
+    /// Output only. Indexing status.
+    #[prost(enumeration = "target_site::IndexingStatus", tag = "8")]
+    pub indexing_status: i32,
+    /// Output only. The target site's last updated time.
+    #[prost(message, optional, tag = "5")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Failure reason.
+    #[prost(message, optional, tag = "9")]
+    pub failure_reason: ::core::option::Option<target_site::FailureReason>,
+}
+/// Nested message and enum types in `TargetSite`.
+pub mod target_site {
+    /// Site search indexing failure reasons.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FailureReason {
+        /// Failure reason.
+        #[prost(oneof = "failure_reason::Failure", tags = "1")]
+        pub failure: ::core::option::Option<failure_reason::Failure>,
+    }
+    /// Nested message and enum types in `FailureReason`.
+    pub mod failure_reason {
+        /// Failed due to insufficient quota.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct QuotaFailure {
+            /// This number is an estimation on how much total quota this project needs
+            /// to successfully complete indexing.
+            #[prost(int64, tag = "1")]
+            pub total_required_quota: i64,
+        }
+        /// Failure reason.
+        #[derive(Clone, PartialEq, ::prost::Oneof)]
+        pub enum Failure {
+            /// Failed due to insufficient quota.
+            #[prost(message, tag = "1")]
+            QuotaFailure(QuotaFailure),
+        }
+    }
+    /// Possible target site types.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Type {
+        /// This value is unused. In this case, server behavior defaults to
+        /// \[Type.INCLUDE][google.cloud.discoveryengine.v1beta.TargetSite.Type.INCLUDE\].
+        Unspecified = 0,
+        /// Include the target site.
+        Include = 1,
+        /// Exclude the target site.
+        Exclude = 2,
+    }
+    /// Target site indexing status enumeration.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum IndexingStatus {
+        /// Defaults to SUCCEEDED.
+        Unspecified = 0,
+        /// The target site is in the update queue and will be picked up by indexing
+        /// pipeline.
+        Pending = 1,
+        /// The target site fails to be indexed.
+        Failed = 2,
+        /// The target site has been indexed.
+        Succeeded = 3,
+        /// The previously indexed target site has been marked to be deleted. This is
+        /// a transitioning state which will resulted in either:
+        /// 1. target site deleted if unindexing is successful;
+        /// 2. state reverts to SUCCEEDED if the unindexing fails.
+        Deleting = 4,
+    }
+}
+/// Verification information for target sites in advanced site search.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SiteVerificationInfo {
+    /// Site verification state indicating the ownership and validity.
+    #[prost(
+        enumeration = "site_verification_info::SiteVerificationState",
+        tag = "1"
+    )]
+    pub site_verification_state: i32,
+    /// Latest site verification time.
+    #[prost(message, optional, tag = "2")]
+    pub verify_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `SiteVerificationInfo`.
+pub mod site_verification_info {
+    /// Site verification state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SiteVerificationState {
+        /// Defaults to VERIFIED.
+        Unspecified = 0,
+        /// Site ownership verified.
+        Verified = 1,
+        /// Site ownership pending verification or verification failed.
+        Unverified = 2,
+        /// Site exempt from verification, e.g., a public website that opens to all.
+        Exempted = 3,
+    }
+}
+/// Request message for
+/// \[SiteSearchEngineService.GetSiteSearchEngine][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.GetSiteSearchEngine\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSiteSearchEngineRequest {
+    /// Required. Resource name of
+    /// \[SiteSearchEngine][google.cloud.discoveryengine.v1beta.SiteSearchEngine\],
+    /// such as
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine`.
+    ///
+    /// If the caller does not have permission to access the \[SiteSearchEngine\],
+    /// regardless of whether or not it exists, a PERMISSION_DENIED error is
+    /// returned.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[SiteSearchEngineService.CreateTargetSite][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.CreateTargetSite\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateTargetSiteRequest {
+    /// Required. Parent resource name of
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\], such as
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\]
+    /// to create.
+    #[prost(message, optional, tag = "2")]
+    pub target_site: ::core::option::Option<TargetSite>,
+}
+/// Metadata related to the progress of the
+/// \[SiteSearchEngineService.CreateTargetSite][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.CreateTargetSite\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateTargetSiteMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[SiteSearchEngineService.BatchCreateTargetSites][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.BatchCreateTargetSites\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchCreateTargetSitesRequest {
+    /// Required. The parent resource shared by all TargetSites being created.
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine`.
+    /// The parent field in the CreateBookRequest messages must either be empty or
+    /// match this field.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The request message specifying the resources to create.
+    /// A maximum of 20 TargetSites can be created in a batch.
+    #[prost(message, repeated, tag = "2")]
+    pub requests: ::prost::alloc::vec::Vec<CreateTargetSiteRequest>,
+}
+/// Request message for
+/// \[SiteSearchEngineService.GetTargetSite][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.GetTargetSite\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetTargetSiteRequest {
+    /// Required. Full resource name of
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\], such as
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine/targetSites/{target_site}`.
+    ///
+    /// If the caller does not have permission to access the
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\], regardless of
+    /// whether or not it exists, a PERMISSION_DENIED error is returned.
+    ///
+    /// If the requested
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\] does not
+    /// exist, a NOT_FOUND error is returned.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for
+/// \[SiteSearchEngineService.UpdateTargetSite][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.UpdateTargetSite\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateTargetSiteRequest {
+    /// Required. The target site to update.
+    /// If the caller does not have permission to update the
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\], regardless of
+    /// whether or not it exists, a PERMISSION_DENIED error is returned.
+    ///
+    /// If the \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\] to
+    /// update does not exist, a NOT_FOUND error is returned.
+    #[prost(message, optional, tag = "1")]
+    pub target_site: ::core::option::Option<TargetSite>,
+}
+/// Metadata related to the progress of the
+/// \[SiteSearchEngineService.UpdateTargetSite][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.UpdateTargetSite\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateTargetSiteMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[SiteSearchEngineService.DeleteTargetSite][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.DeleteTargetSite\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteTargetSiteRequest {
+    /// Required. Full resource name of
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\], such as
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine/targetSites/{target_site}`.
+    ///
+    /// If the caller does not have permission to access the
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\], regardless of
+    /// whether or not it exists, a PERMISSION_DENIED error is returned.
+    ///
+    /// If the requested
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\] does not
+    /// exist, a NOT_FOUND error is returned.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Metadata related to the progress of the
+/// \[SiteSearchEngineService.DeleteTargetSite][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.DeleteTargetSite\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteTargetSiteMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[SiteSearchEngineService.ListTargetSites][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.ListTargetSites\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListTargetSitesRequest {
+    /// Required. The parent site search engine resource name, such as
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine`.
+    ///
+    /// If the caller does not have permission to list
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\]s under this
+    /// site search engine, regardless of whether or not this branch exists, a
+    /// PERMISSION_DENIED error is returned.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Requested page size. Server may return fewer items than requested. If
+    /// unspecified, server will pick an appropriate default. The maximum value is
+    /// 1000; values above 1000 will be coerced to 1000.
+    ///
+    /// If this field is negative, an INVALID_ARGUMENT error is returned.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `ListTargetSites` call.
+    /// Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to `ListTargetSites`
+    /// must match the call that provided the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[SiteSearchEngineService.ListTargetSites][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.ListTargetSites\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListTargetSitesResponse {
+    /// List of TargetSites.
+    #[prost(message, repeated, tag = "1")]
+    pub target_sites: ::prost::alloc::vec::Vec<TargetSite>,
+    /// A token that can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// The total number of items matching the request.
+    /// This will always be populated in the response.
+    #[prost(int32, tag = "3")]
+    pub total_size: i32,
+}
+/// Metadata related to the progress of the
+/// \[SiteSearchEngineService.BatchCreateTargetSites][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.BatchCreateTargetSites\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchCreateTargetSiteMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Response message for
+/// \[SiteSearchEngineService.BatchCreateTargetSites][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.BatchCreateTargetSites\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchCreateTargetSitesResponse {
+    /// TargetSites created.
+    #[prost(message, repeated, tag = "1")]
+    pub target_sites: ::prost::alloc::vec::Vec<TargetSite>,
+}
+/// Request message for
+/// \[SiteSearchEngineService.EnableAdvancedSiteSearch][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.EnableAdvancedSiteSearch\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EnableAdvancedSiteSearchRequest {
+    /// Required. Full resource name of the
+    /// \[SiteSearchEngine][google.cloud.discoveryengine.v1beta.SiteSearchEngine\],
+    /// such as
+    /// `projects/{project}/locations/{location}/dataStores/{data_store_id}/siteSearchEngine`.
+    #[prost(string, tag = "1")]
+    pub site_search_engine: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[SiteSearchEngineService.EnableAdvancedSiteSearch][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.EnableAdvancedSiteSearch\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EnableAdvancedSiteSearchResponse {}
+/// Metadata related to the progress of the
+/// \[SiteSearchEngineService.EnableAdvancedSiteSearch][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.EnableAdvancedSiteSearch\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EnableAdvancedSiteSearchMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[SiteSearchEngineService.DisableAdvancedSiteSearch][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.DisableAdvancedSiteSearch\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DisableAdvancedSiteSearchRequest {
+    /// Required. Full resource name of the
+    /// \[SiteSearchEngine][google.cloud.discoveryengine.v1beta.SiteSearchEngine\],
+    /// such as
+    /// `projects/{project}/locations/{location}/dataStores/{data_store_id}/siteSearchEngine`.
+    #[prost(string, tag = "1")]
+    pub site_search_engine: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[SiteSearchEngineService.DisableAdvancedSiteSearch][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.DisableAdvancedSiteSearch\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DisableAdvancedSiteSearchResponse {}
+/// Metadata related to the progress of the
+/// \[SiteSearchEngineService.DisableAdvancedSiteSearch][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.DisableAdvancedSiteSearch\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DisableAdvancedSiteSearchMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[SiteSearchEngineService.RecrawlUris][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.RecrawlUris\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RecrawlUrisRequest {
+    /// Required. Full resource name of the
+    /// \[SiteSearchEngine][google.cloud.discoveryengine.v1beta.SiteSearchEngine\],
+    /// such as
+    /// `projects/*/locations/*/collections/*/dataStores/*/siteSearchEngine`.
+    #[prost(string, tag = "1")]
+    pub site_search_engine: ::prost::alloc::string::String,
+    /// Required. List of URIs to crawl. At most 10K URIs are supported, otherwise
+    /// an INVALID_ARGUMENT error is thrown. Each URI should match at least one
+    /// \[TargetSite][google.cloud.discoveryengine.v1beta.TargetSite\] in
+    /// `site_search_engine`.
+    #[prost(string, repeated, tag = "2")]
+    pub uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Response message for
+/// \[SiteSearchEngineService.RecrawlUris][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.RecrawlUris\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RecrawlUrisResponse {
+    /// Details for a sample of up to 10 `failed_uris`.
+    #[prost(message, repeated, tag = "1")]
+    pub failure_samples: ::prost::alloc::vec::Vec<recrawl_uris_response::FailureInfo>,
+    /// URIs that were not crawled before the LRO terminated.
+    #[prost(string, repeated, tag = "2")]
+    pub failed_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Nested message and enum types in `RecrawlUrisResponse`.
+pub mod recrawl_uris_response {
+    /// Details about why a particular URI failed to be crawled. Each FailureInfo
+    /// contains one FailureReason per CorpusType.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FailureInfo {
+        /// URI that failed to be crawled.
+        #[prost(string, tag = "1")]
+        pub uri: ::prost::alloc::string::String,
+        /// List of failure reasons by corpus type (e.g. desktop, mobile).
+        #[prost(message, repeated, tag = "2")]
+        pub failure_reasons: ::prost::alloc::vec::Vec<failure_info::FailureReason>,
+    }
+    /// Nested message and enum types in `FailureInfo`.
+    pub mod failure_info {
+        /// Details about why crawling failed for a particular CorpusType, e.g.,
+        /// DESKTOP and MOBILE crawling may fail for different reasons.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct FailureReason {
+            /// DESKTOP, MOBILE, or CORPUS_TYPE_UNSPECIFIED.
+            #[prost(enumeration = "failure_reason::CorpusType", tag = "1")]
+            pub corpus_type: i32,
+            /// Reason why the URI was not crawled.
+            #[prost(string, tag = "2")]
+            pub error_message: ::prost::alloc::string::String,
+        }
+        /// Nested message and enum types in `FailureReason`.
+        pub mod failure_reason {
+            /// CorpusType for the failed crawling operation.
+            #[derive(
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+            )]
+            #[repr(i32)]
+            pub enum CorpusType {
+                /// Default value.
+                Unspecified = 0,
+                /// Denotes a crawling attempt for the desktop version of a page.
+                Desktop = 1,
+                /// Denotes a crawling attempt for the mobile version of a page.
+                Mobile = 2,
+            }
+        }
+    }
+}
+/// Metadata related to the progress of the
+/// \[SiteSearchEngineService.RecrawlUris][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.RecrawlUris\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RecrawlUrisMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Unique URIs in the request that don't match any TargetSite in the
+    /// DataStore, only match TargetSites that haven't been fully indexed, or match
+    /// a TargetSite with type EXCLUDE.
+    #[prost(string, repeated, tag = "3")]
+    pub invalid_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Total number of unique URIs in the request that are not in invalid_uris.
+    #[prost(int32, tag = "4")]
+    pub valid_uris_count: i32,
+    /// Total number of URIs that have been crawled so far.
+    #[prost(int32, tag = "5")]
+    pub success_count: i32,
+    /// Total number of URIs that have yet to be crawled.
+    #[prost(int32, tag = "6")]
+    pub pending_count: i32,
+    /// Total number of URIs that were rejected due to insufficient indexing
+    /// resources.
+    #[prost(int32, tag = "7")]
+    pub quota_exceeded_count: i32,
+}
+/// Request message for
+/// \[SiteSearchEngineService.BatchVerifyTargetSites][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.BatchVerifyTargetSites\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchVerifyTargetSitesRequest {
+    /// Required. The parent resource shared by all TargetSites being verified.
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[SiteSearchEngineService.BatchVerifyTargetSites][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.BatchVerifyTargetSites\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchVerifyTargetSitesResponse {}
+/// Metadata related to the progress of the
+/// \[SiteSearchEngineService.BatchVerifyTargetSites][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.BatchVerifyTargetSites\]
+/// operation. This will be returned by the google.longrunning.Operation.metadata
+/// field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchVerifyTargetSitesMetadata {
+    /// Operation create time.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Operation last update time. If the operation is done, this is also the
+    /// finish time.
+    #[prost(message, optional, tag = "2")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Request message for
+/// \[SiteSearchEngineService.FetchDomainVerificationStatus][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.FetchDomainVerificationStatus\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FetchDomainVerificationStatusRequest {
+    /// Required. The site search engine resource under which we fetch all the
+    /// domain verification status.
+    /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}/siteSearchEngine`.
+    #[prost(string, tag = "1")]
+    pub site_search_engine: ::prost::alloc::string::String,
+    /// Requested page size. Server may return fewer items than requested. If
+    /// unspecified, server will pick an appropriate default. The maximum value is
+    /// 1000; values above 1000 will be coerced to 1000.
+    ///
+    /// If this field is negative, an INVALID_ARGUMENT error is returned.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// A page token, received from a previous `FetchDomainVerificationStatus`
+    /// call. Provide this to retrieve the subsequent page.
+    ///
+    /// When paginating, all other parameters provided to
+    /// `FetchDomainVerificationStatus` must match the call that provided the page
+    /// token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for
+/// \[SiteSearchEngineService.FetchDomainVerificationStatus][google.cloud.discoveryengine.v1beta.SiteSearchEngineService.FetchDomainVerificationStatus\]
+/// method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FetchDomainVerificationStatusResponse {
+    /// List of TargetSites containing the site verification status.
+    #[prost(message, repeated, tag = "1")]
+    pub target_sites: ::prost::alloc::vec::Vec<TargetSite>,
+    /// A token that can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// The total number of items matching the request.
+    /// This will always be populated in the response.
+    #[prost(int32, tag = "3")]
+    pub total_size: i32,
+}
+#[doc = r" Generated client implementations."]
+pub mod site_search_engine_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service for managing site search related resources."]
+    #[derive(Debug, Clone)]
+    pub struct SiteSearchEngineServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> SiteSearchEngineServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> SiteSearchEngineServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            SiteSearchEngineServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Gets the"]
+        #[doc = " [SiteSearchEngine][google.cloud.discoveryengine.v1beta.SiteSearchEngine]."]
+        pub async fn get_site_search_engine(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSiteSearchEngineRequest>,
+        ) -> Result<tonic::Response<super::SiteSearchEngine>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/GetSiteSearchEngine",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a [TargetSite][google.cloud.discoveryengine.v1beta.TargetSite]."]
+        pub async fn create_target_site(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateTargetSiteRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/CreateTargetSite",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates [TargetSite][google.cloud.discoveryengine.v1beta.TargetSite] in a"]
+        #[doc = " batch."]
+        pub async fn batch_create_target_sites(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BatchCreateTargetSitesRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/BatchCreateTargetSites") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a [TargetSite][google.cloud.discoveryengine.v1beta.TargetSite]."]
+        pub async fn get_target_site(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetTargetSiteRequest>,
+        ) -> Result<tonic::Response<super::TargetSite>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/GetTargetSite",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a [TargetSite][google.cloud.discoveryengine.v1beta.TargetSite]."]
+        pub async fn update_target_site(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateTargetSiteRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/UpdateTargetSite",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a [TargetSite][google.cloud.discoveryengine.v1beta.TargetSite]."]
+        pub async fn delete_target_site(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteTargetSiteRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/DeleteTargetSite",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a list of"]
+        #[doc = " [TargetSite][google.cloud.discoveryengine.v1beta.TargetSite]s."]
+        pub async fn list_target_sites(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListTargetSitesRequest>,
+        ) -> Result<tonic::Response<super::ListTargetSitesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/ListTargetSites",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Upgrade from basic site search to advanced site search."]
+        pub async fn enable_advanced_site_search(
+            &mut self,
+            request: impl tonic::IntoRequest<super::EnableAdvancedSiteSearchRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/EnableAdvancedSiteSearch") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Downgrade from advanced site search to basic site search."]
+        pub async fn disable_advanced_site_search(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DisableAdvancedSiteSearchRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/DisableAdvancedSiteSearch") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Request on-demand recrawl for a list of URIs."]
+        pub async fn recrawl_uris(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RecrawlUrisRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/RecrawlUris",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Verify target sites' ownership and validity."]
+        #[doc = " This API sends all the target sites under site search engine for"]
+        #[doc = " verification."]
+        pub async fn batch_verify_target_sites(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BatchVerifyTargetSitesRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/BatchVerifyTargetSites") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Returns list of target sites with its domain verification status."]
+        #[doc = " This method can only be called under data store with BASIC_SITE_SEARCH"]
+        #[doc = " state at the moment."]
+        pub async fn fetch_domain_verification_status(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FetchDomainVerificationStatusRequest>,
+        ) -> Result<tonic::Response<super::FetchDomainVerificationStatusResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.discoveryengine.v1beta.SiteSearchEngineService/FetchDomainVerificationStatus") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
@@ -2766,13 +8941,25 @@ pub mod search_service_client {
 /// Request message for WriteUserEvent method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WriteUserEventRequest {
-    /// Required. The parent DataStore resource name, such as
+    /// Required. The parent resource name.
+    /// If the write user event action is applied in
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\] level, the
+    /// format is:
     /// `projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}`.
+    /// If the write user event action is applied in \[Location][\] level, for
+    /// example, the event with
+    /// \[Document][google.cloud.discoveryengine.v1beta.Document\] across multiple
+    /// \[DataStore][google.cloud.discoveryengine.v1beta.DataStore\], the format is:
+    /// `projects/{project}/locations/{location}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. User event to write.
     #[prost(message, optional, tag = "2")]
     pub user_event: ::core::option::Option<UserEvent>,
+    /// If set to true, the user event is written asynchronously after
+    /// validation, and the API responds without waiting for the write.
+    #[prost(bool, tag = "3")]
+    pub write_async: bool,
 }
 /// Request message for CollectUserEvent method.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2787,7 +8974,7 @@ pub struct CollectUserEventRequest {
     pub user_event: ::prost::alloc::string::String,
     /// The URL including cgi-parameters but excluding the hash fragment with a
     /// length limit of 5,000 characters. This is often more useful than the
-    /// referer URL, because many browsers only send the domain for 3rd party
+    /// referer URL, because many browsers only send the domain for third-party
     /// requests.
     #[prost(string, optional, tag = "3")]
     pub uri: ::core::option::Option<::prost::alloc::string::String>,
@@ -2865,7 +9052,7 @@ pub mod user_event_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Writes a single user event from the browser. This uses a GET request to"]
-        #[doc = " due to browser restriction of POST-ing to a 3rd party domain."]
+        #[doc = " due to browser restriction of POST-ing to a third-party domain."]
         #[doc = ""]
         #[doc = " This method is used only by the Discovery Engine API JavaScript pixel and"]
         #[doc = " Google Tag Manager. Users should not call this method directly."]
@@ -2886,7 +9073,7 @@ pub mod user_event_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Bulk import of User events. Request processing might be"]
+        #[doc = " Bulk import of user events. Request processing might be"]
         #[doc = " synchronous. Events that already exist are skipped."]
         #[doc = " Use this method for backfilling historical user events."]
         #[doc = ""]

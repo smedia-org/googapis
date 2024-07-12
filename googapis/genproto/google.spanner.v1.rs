@@ -696,6 +696,22 @@ pub struct QueryPlan {
 /// table.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransactionOptions {
+    /// When `exclude_txn_from_change_streams` is set to `true`:
+    ///  * Mutations from this transaction will not be recorded in change streams
+    ///  with DDL option `allow_txn_exclusion=true` that are tracking columns
+    ///  modified by these transactions.
+    ///  * Mutations from this transaction will be recorded in change streams with
+    ///  DDL option `allow_txn_exclusion=false or not set` that are tracking
+    ///  columns modified by these transactions.
+    ///
+    /// When `exclude_txn_from_change_streams` is set to `false` or not set,
+    /// mutations from this transaction will be recorded in all change streams that
+    /// are tracking columns modified by these transactions.
+    /// `exclude_txn_from_change_streams` may only be specified for read-write or
+    /// partitioned-dml transactions, otherwise the API will return an
+    /// `INVALID_ARGUMENT` error.
+    #[prost(bool, tag = "5")]
+    pub exclude_txn_from_change_streams: bool,
     /// Required. The type of transaction.
     #[prost(oneof = "transaction_options::Mode", tags = "1, 3, 2")]
     pub mode: ::core::option::Option<transaction_options::Mode>,
@@ -921,6 +937,13 @@ pub struct Type {
     /// affect serialization) and clients can ignore it on the read path.
     #[prost(enumeration = "TypeAnnotationCode", tag = "4")]
     pub type_annotation: i32,
+    /// If \[code][google.spanner.v1.Type.code\] ==
+    /// \[PROTO][google.spanner.v1.TypeCode.PROTO\] or
+    /// \[code][google.spanner.v1.Type.code\] ==
+    /// \[ENUM][google.spanner.v1.TypeCode.ENUM\], then `proto_type_fqn` is the fully
+    /// qualified name of the proto type representing the proto/enum definition.
+    #[prost(string, tag = "5")]
+    pub proto_type_fqn: ::prost::alloc::string::String,
 }
 /// `StructType` defines the fields of a \[STRUCT][google.spanner.v1.TypeCode.STRUCT\] type.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -972,6 +995,9 @@ pub enum TypeCode {
     /// Encoded as `number`, or the strings `"NaN"`, `"Infinity"`, or
     /// `"-Infinity"`.
     Float64 = 3,
+    /// Encoded as `number`, or the strings `"NaN"`, `"Infinity"`, or
+    /// `"-Infinity"`.
+    Float32 = 15,
     /// Encoded as `string` in RFC 3339 timestamp format. The time zone
     /// must be present, and must be `"Z"`.
     ///
@@ -1014,6 +1040,11 @@ pub enum TypeCode {
     ///   preserved.
     /// - JSON array elements will have their order preserved.
     Json = 11,
+    /// Encoded as a base64-encoded `string`, as described in RFC 4648,
+    /// section 4.
+    Proto = 13,
+    /// Encoded as `string`, in decimal format.
+    Enum = 14,
 }
 /// `TypeAnnotationCode` is used as a part of \[Type][google.spanner.v1.Type\] to
 /// disambiguate SQL types that should be used for a given Cloud Spanner value.
@@ -1039,6 +1070,10 @@ pub enum TypeAnnotationCode {
     /// \[JSON][google.spanner.v1.TypeCode.JSON\] when a client interacts with PostgreSQL-enabled
     /// Spanner databases.
     PgJsonb = 3,
+    /// PostgreSQL compatible OID type. This annotation can be used by a client
+    /// interacting with PostgreSQL-enabled Spanner database to specify that a
+    /// value should be treated using the semantics of the OID type.
+    PgOid = 4,
 }
 /// Results from \[Read][google.spanner.v1.Spanner.Read\] or
 /// \[ExecuteSql][google.spanner.v1.Spanner.ExecuteSql\].
@@ -1246,7 +1281,8 @@ pub struct CreateSessionRequest {
     #[prost(message, optional, tag = "2")]
     pub session: ::core::option::Option<Session>,
 }
-/// The request for \[BatchCreateSessions][google.spanner.v1.Spanner.BatchCreateSessions\].
+/// The request for
+/// \[BatchCreateSessions][google.spanner.v1.Spanner.BatchCreateSessions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchCreateSessionsRequest {
     /// Required. The database in which the new sessions are created.
@@ -1259,11 +1295,13 @@ pub struct BatchCreateSessionsRequest {
     /// The API may return fewer than the requested number of sessions. If a
     /// specific number of sessions are desired, the client can make additional
     /// calls to BatchCreateSessions (adjusting
-    /// \[session_count][google.spanner.v1.BatchCreateSessionsRequest.session_count\] as necessary).
+    /// \[session_count][google.spanner.v1.BatchCreateSessionsRequest.session_count\]
+    /// as necessary).
     #[prost(int32, tag = "3")]
     pub session_count: i32,
 }
-/// The response for \[BatchCreateSessions][google.spanner.v1.Spanner.BatchCreateSessions\].
+/// The response for
+/// \[BatchCreateSessions][google.spanner.v1.Spanner.BatchCreateSessions\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchCreateSessionsResponse {
     /// The freshly created sessions.
@@ -1298,6 +1336,15 @@ pub struct Session {
     /// The database role which created this session.
     #[prost(string, tag = "5")]
     pub creator_role: ::prost::alloc::string::String,
+    /// Optional. If true, specifies a multiplexed session. A multiplexed session
+    /// may be used for multiple, concurrent read-only operations but can not be
+    /// used for read-write transactions, partitioned reads, or partitioned
+    /// queries. Multiplexed sessions can be created via
+    /// \[CreateSession][google.spanner.v1.Spanner.CreateSession\] but not via
+    /// \[BatchCreateSessions][google.spanner.v1.Spanner.BatchCreateSessions\].
+    /// Multiplexed sessions may not be deleted nor listed.
+    #[prost(bool, tag = "6")]
+    pub multiplexed: bool,
 }
 /// The request for \[GetSession][google.spanner.v1.Spanner.GetSession\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1317,7 +1364,8 @@ pub struct ListSessionsRequest {
     #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// If non-empty, `page_token` should contain a
-    /// \[next_page_token][google.spanner.v1.ListSessionsResponse.next_page_token\] from a previous
+    /// \[next_page_token][google.spanner.v1.ListSessionsResponse.next_page_token\]
+    /// from a previous
     /// \[ListSessionsResponse][google.spanner.v1.ListSessionsResponse\].
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
@@ -1341,8 +1389,8 @@ pub struct ListSessionsResponse {
     #[prost(message, repeated, tag = "1")]
     pub sessions: ::prost::alloc::vec::Vec<Session>,
     /// `next_page_token` can be sent in a subsequent
-    /// \[ListSessions][google.spanner.v1.Spanner.ListSessions\] call to fetch more of the matching
-    /// sessions.
+    /// \[ListSessions][google.spanner.v1.Spanner.ListSessions\] call to fetch more
+    /// of the matching sessions.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
@@ -1416,6 +1464,102 @@ pub mod request_options {
         High = 3,
     }
 }
+/// The DirectedReadOptions can be used to indicate which replicas or regions
+/// should be used for non-transactional reads or queries.
+///
+/// DirectedReadOptions may only be specified for a read-only transaction,
+/// otherwise the API will return an `INVALID_ARGUMENT` error.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DirectedReadOptions {
+    /// Required. At most one of either include_replicas or exclude_replicas
+    /// should be present in the message.
+    #[prost(oneof = "directed_read_options::Replicas", tags = "1, 2")]
+    pub replicas: ::core::option::Option<directed_read_options::Replicas>,
+}
+/// Nested message and enum types in `DirectedReadOptions`.
+pub mod directed_read_options {
+    /// The directed read replica selector.
+    /// Callers must provide one or more of the following fields for replica
+    /// selection:
+    ///
+    ///   * `location` - The location must be one of the regions within the
+    ///      multi-region configuration of your database.
+    ///   * `type` - The type of the replica.
+    ///
+    /// Some examples of using replica_selectors are:
+    ///
+    ///   * `location:us-east1` --> The "us-east1" replica(s) of any available type
+    ///                             will be used to process the request.
+    ///   * `type:READ_ONLY`    --> The "READ_ONLY" type replica(s) in nearest
+    ///                             available location will be used to process the
+    ///                             request.
+    ///   * `location:us-east1 type:READ_ONLY` --> The "READ_ONLY" type replica(s)
+    ///                          in location "us-east1" will be used to process
+    ///                          the request.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ReplicaSelection {
+        /// The location or region of the serving requests, e.g. "us-east1".
+        #[prost(string, tag = "1")]
+        pub location: ::prost::alloc::string::String,
+        /// The type of replica.
+        #[prost(enumeration = "replica_selection::Type", tag = "2")]
+        pub r#type: i32,
+    }
+    /// Nested message and enum types in `ReplicaSelection`.
+    pub mod replica_selection {
+        /// Indicates the type of replica.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum Type {
+            /// Not specified.
+            Unspecified = 0,
+            /// Read-write replicas support both reads and writes.
+            ReadWrite = 1,
+            /// Read-only replicas only support reads (not writes).
+            ReadOnly = 2,
+        }
+    }
+    /// An IncludeReplicas contains a repeated set of ReplicaSelection which
+    /// indicates the order in which replicas should be considered.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct IncludeReplicas {
+        /// The directed read replica selector.
+        #[prost(message, repeated, tag = "1")]
+        pub replica_selections: ::prost::alloc::vec::Vec<ReplicaSelection>,
+        /// If true, Spanner will not route requests to a replica outside the
+        /// include_replicas list when all of the specified replicas are unavailable
+        /// or unhealthy. Default value is `false`.
+        #[prost(bool, tag = "2")]
+        pub auto_failover_disabled: bool,
+    }
+    /// An ExcludeReplicas contains a repeated set of ReplicaSelection that should
+    /// be excluded from serving requests.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ExcludeReplicas {
+        /// The directed read replica selector.
+        #[prost(message, repeated, tag = "1")]
+        pub replica_selections: ::prost::alloc::vec::Vec<ReplicaSelection>,
+    }
+    /// Required. At most one of either include_replicas or exclude_replicas
+    /// should be present in the message.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Replicas {
+        /// Include_replicas indicates the order of replicas (as they appear in
+        /// this list) to process the request. If auto_failover_disabled is set to
+        /// true and all replicas are exhausted without finding a healthy replica,
+        /// Spanner will wait for a replica in the list to become available, requests
+        /// may fail due to `DEADLINE_EXCEEDED` errors.
+        #[prost(message, tag = "1")]
+        IncludeReplicas(IncludeReplicas),
+        /// Exclude_replicas indicates that specified replicas should be excluded
+        /// from serving requests. Spanner will not route requests to the replicas
+        /// in this list.
+        #[prost(message, tag = "2")]
+        ExcludeReplicas(ExcludeReplicas),
+    }
+}
 /// The request for \[ExecuteSql][google.spanner.v1.Spanner.ExecuteSql\] and
 /// \[ExecuteStreamingSql][google.spanner.v1.Spanner.ExecuteStreamingSql\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1455,7 +1599,8 @@ pub struct ExecuteSqlRequest {
     pub params: ::core::option::Option<::prost_types::Struct>,
     /// It is not always possible for Cloud Spanner to infer the right SQL type
     /// from a JSON value.  For example, values of type `BYTES` and values
-    /// of type `STRING` both appear in \[params][google.spanner.v1.ExecuteSqlRequest.params\] as JSON strings.
+    /// of type `STRING` both appear in
+    /// \[params][google.spanner.v1.ExecuteSqlRequest.params\] as JSON strings.
     ///
     /// In these cases, `param_types` can be used to specify the exact
     /// SQL type for some or all of the SQL statement parameters. See the
@@ -1465,15 +1610,18 @@ pub struct ExecuteSqlRequest {
     pub param_types: ::std::collections::HashMap<::prost::alloc::string::String, Type>,
     /// If this request is resuming a previously interrupted SQL statement
     /// execution, `resume_token` should be copied from the last
-    /// \[PartialResultSet][google.spanner.v1.PartialResultSet\] yielded before the interruption. Doing this
-    /// enables the new SQL statement execution to resume where the last one left
-    /// off. The rest of the request parameters must exactly match the
-    /// request that yielded this token.
+    /// \[PartialResultSet][google.spanner.v1.PartialResultSet\] yielded before the
+    /// interruption. Doing this enables the new SQL statement execution to resume
+    /// where the last one left off. The rest of the request parameters must
+    /// exactly match the request that yielded this token.
     #[prost(bytes = "vec", tag = "6")]
     pub resume_token: ::prost::alloc::vec::Vec<u8>,
     /// Used to control the amount of debugging information returned in
-    /// \[ResultSetStats][google.spanner.v1.ResultSetStats\]. If \[partition_token][google.spanner.v1.ExecuteSqlRequest.partition_token\] is set, \[query_mode][google.spanner.v1.ExecuteSqlRequest.query_mode\] can only
-    /// be set to \[QueryMode.NORMAL][google.spanner.v1.ExecuteSqlRequest.QueryMode.NORMAL\].
+    /// \[ResultSetStats][google.spanner.v1.ResultSetStats\]. If
+    /// \[partition_token][google.spanner.v1.ExecuteSqlRequest.partition_token\] is
+    /// set, \[query_mode][google.spanner.v1.ExecuteSqlRequest.query_mode\] can only
+    /// be set to
+    /// \[QueryMode.NORMAL][google.spanner.v1.ExecuteSqlRequest.QueryMode.NORMAL\].
     #[prost(enumeration = "execute_sql_request::QueryMode", tag = "7")]
     pub query_mode: i32,
     /// If present, results will be restricted to the specified partition
@@ -1500,11 +1648,14 @@ pub struct ExecuteSqlRequest {
     /// Common options for this request.
     #[prost(message, optional, tag = "11")]
     pub request_options: ::core::option::Option<RequestOptions>,
+    /// Directed read options for this request.
+    #[prost(message, optional, tag = "15")]
+    pub directed_read_options: ::core::option::Option<DirectedReadOptions>,
     /// If this is for a partitioned query and this field is set to `true`, the
-    /// request will be executed via Spanner independent compute resources.
+    /// request is executed with Spanner Data Boost independent compute resources.
     ///
     /// If the field is set to `true` but the request does not set
-    /// `partition_token`, the API will return an `INVALID_ARGUMENT` error.
+    /// `partition_token`, the API returns an `INVALID_ARGUMENT` error.
     #[prost(bool, tag = "16")]
     pub data_boost_enabled: bool,
 }
@@ -1591,17 +1742,17 @@ pub struct ExecuteBatchDmlRequest {
     /// transaction.
     #[prost(message, optional, tag = "2")]
     pub transaction: ::core::option::Option<TransactionSelector>,
-    /// Required. The list of statements to execute in this batch. Statements are executed
-    /// serially, such that the effects of statement `i` are visible to statement
-    /// `i+1`. Each statement must be a DML statement. Execution stops at the
-    /// first failed statement; the remaining statements are not executed.
+    /// Required. The list of statements to execute in this batch. Statements are
+    /// executed serially, such that the effects of statement `i` are visible to
+    /// statement `i+1`. Each statement must be a DML statement. Execution stops at
+    /// the first failed statement; the remaining statements are not executed.
     ///
     /// Callers must provide at least one statement.
     #[prost(message, repeated, tag = "3")]
     pub statements: ::prost::alloc::vec::Vec<execute_batch_dml_request::Statement>,
-    /// Required. A per-transaction sequence number used to identify this request. This field
-    /// makes each request idempotent such that if the request is received multiple
-    /// times, at most one will succeed.
+    /// Required. A per-transaction sequence number used to identify this request.
+    /// This field makes each request idempotent such that if the request is
+    /// received multiple times, at most one will succeed.
     ///
     /// The sequence number must be monotonically increasing within the
     /// transaction. If a request arrives for the first time with an out-of-order
@@ -1637,7 +1788,9 @@ pub mod execute_batch_dml_request {
         pub params: ::core::option::Option<::prost_types::Struct>,
         /// It is not always possible for Cloud Spanner to infer the right SQL type
         /// from a JSON value.  For example, values of type `BYTES` and values
-        /// of type `STRING` both appear in \[params][google.spanner.v1.ExecuteBatchDmlRequest.Statement.params\] as JSON strings.
+        /// of type `STRING` both appear in
+        /// \[params][google.spanner.v1.ExecuteBatchDmlRequest.Statement.params\] as
+        /// JSON strings.
         ///
         /// In these cases, `param_types` can be used to specify the exact
         /// SQL type for some or all of the SQL statement parameters. See the
@@ -1647,39 +1800,48 @@ pub mod execute_batch_dml_request {
         pub param_types: ::std::collections::HashMap<::prost::alloc::string::String, super::Type>,
     }
 }
-/// The response for \[ExecuteBatchDml][google.spanner.v1.Spanner.ExecuteBatchDml\]. Contains a list
-/// of \[ResultSet][google.spanner.v1.ResultSet\] messages, one for each DML statement that has successfully
-/// executed, in the same order as the statements in the request. If a statement
-/// fails, the status in the response body identifies the cause of the failure.
+/// The response for
+/// \[ExecuteBatchDml][google.spanner.v1.Spanner.ExecuteBatchDml\]. Contains a list
+/// of \[ResultSet][google.spanner.v1.ResultSet\] messages, one for each DML
+/// statement that has successfully executed, in the same order as the statements
+/// in the request. If a statement fails, the status in the response body
+/// identifies the cause of the failure.
 ///
 /// To check for DML statements that failed, use the following approach:
 ///
-/// 1. Check the status in the response message. The \[google.rpc.Code][google.rpc.Code\] enum
+/// 1. Check the status in the response message. The
+/// \[google.rpc.Code][google.rpc.Code\] enum
 ///    value `OK` indicates that all statements were executed successfully.
 /// 2. If the status was not `OK`, check the number of result sets in the
-///    response. If the response contains `N` \[ResultSet][google.spanner.v1.ResultSet\] messages, then
-///    statement `N+1` in the request failed.
+///    response. If the response contains `N`
+///    \[ResultSet][google.spanner.v1.ResultSet\] messages, then statement `N+1` in
+///    the request failed.
 ///
 /// Example 1:
 ///
 /// * Request: 5 DML statements, all executed successfully.
-/// * Response: 5 \[ResultSet][google.spanner.v1.ResultSet\] messages, with the status `OK`.
+/// * Response: 5 \[ResultSet][google.spanner.v1.ResultSet\] messages, with the
+/// status `OK`.
 ///
 /// Example 2:
 ///
 /// * Request: 5 DML statements. The third statement has a syntax error.
-/// * Response: 2 \[ResultSet][google.spanner.v1.ResultSet\] messages, and a syntax error (`INVALID_ARGUMENT`)
-///   status. The number of \[ResultSet][google.spanner.v1.ResultSet\] messages indicates that the third
-///   statement failed, and the fourth and fifth statements were not executed.
+/// * Response: 2 \[ResultSet][google.spanner.v1.ResultSet\] messages, and a syntax
+/// error (`INVALID_ARGUMENT`)
+///   status. The number of \[ResultSet][google.spanner.v1.ResultSet\] messages
+///   indicates that the third statement failed, and the fourth and fifth
+///   statements were not executed.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExecuteBatchDmlResponse {
-    /// One \[ResultSet][google.spanner.v1.ResultSet\] for each statement in the request that ran successfully,
-    /// in the same order as the statements in the request. Each \[ResultSet][google.spanner.v1.ResultSet\] does
-    /// not contain any rows. The \[ResultSetStats][google.spanner.v1.ResultSetStats\] in each \[ResultSet][google.spanner.v1.ResultSet\] contain
-    /// the number of rows modified by the statement.
+    /// One \[ResultSet][google.spanner.v1.ResultSet\] for each statement in the
+    /// request that ran successfully, in the same order as the statements in the
+    /// request. Each \[ResultSet][google.spanner.v1.ResultSet\] does not contain any
+    /// rows. The \[ResultSetStats][google.spanner.v1.ResultSetStats\] in each
+    /// \[ResultSet][google.spanner.v1.ResultSet\] contain the number of rows
+    /// modified by the statement.
     ///
-    /// Only the first \[ResultSet][google.spanner.v1.ResultSet\] in the response contains valid
-    /// \[ResultSetMetadata][google.spanner.v1.ResultSetMetadata\].
+    /// Only the first \[ResultSet][google.spanner.v1.ResultSet\] in the response
+    /// contains valid \[ResultSetMetadata][google.spanner.v1.ResultSetMetadata\].
     #[prost(message, repeated, tag = "1")]
     pub result_sets: ::prost::alloc::vec::Vec<ResultSet>,
     /// If all DML statements are executed successfully, the status is `OK`.
@@ -1720,15 +1882,17 @@ pub struct PartitionQueryRequest {
     /// transactions are not.
     #[prost(message, optional, tag = "2")]
     pub transaction: ::core::option::Option<TransactionSelector>,
-    /// Required. The query request to generate partitions for. The request will fail if
-    /// the query is not root partitionable. The query plan of a root
-    /// partitionable query has a single distributed union operator. A distributed
-    /// union operator conceptually divides one or more tables into multiple
-    /// splits, remotely evaluates a subquery independently on each split, and
-    /// then unions all results.
+    /// Required. The query request to generate partitions for. The request will
+    /// fail if the query is not root partitionable. For a query to be root
+    /// partitionable, it needs to satisfy a few conditions. For example, if the
+    /// query execution plan contains a distributed union operator, then it must be
+    /// the first operator in the plan. For more information about other
+    /// conditions, see [Read data in
+    /// parallel](<https://cloud.google.com/spanner/docs/reads#read_data_in_parallel>).
     ///
-    /// This must not contain DML commands, such as INSERT, UPDATE, or
-    /// DELETE. Use \[ExecuteStreamingSql][google.spanner.v1.Spanner.ExecuteStreamingSql\] with a
+    /// The query request must not contain DML commands, such as INSERT, UPDATE, or
+    /// DELETE. Use
+    /// \[ExecuteStreamingSql][google.spanner.v1.Spanner.ExecuteStreamingSql\] with a
     /// PartitionedDml transaction for large, partition-friendly DML operations.
     #[prost(string, tag = "3")]
     pub sql: ::prost::alloc::string::String,
@@ -1748,7 +1912,8 @@ pub struct PartitionQueryRequest {
     pub params: ::core::option::Option<::prost_types::Struct>,
     /// It is not always possible for Cloud Spanner to infer the right SQL type
     /// from a JSON value.  For example, values of type `BYTES` and values
-    /// of type `STRING` both appear in \[params][google.spanner.v1.PartitionQueryRequest.params\] as JSON strings.
+    /// of type `STRING` both appear in
+    /// \[params][google.spanner.v1.PartitionQueryRequest.params\] as JSON strings.
     ///
     /// In these cases, `param_types` can be used to specify the exact
     /// SQL type for some or all of the SQL query parameters. See the
@@ -1773,18 +1938,24 @@ pub struct PartitionReadRequest {
     /// Required. The name of the table in the database to be read.
     #[prost(string, tag = "3")]
     pub table: ::prost::alloc::string::String,
-    /// If non-empty, the name of an index on \[table][google.spanner.v1.PartitionReadRequest.table\]. This index is
-    /// used instead of the table primary key when interpreting \[key_set][google.spanner.v1.PartitionReadRequest.key_set\]
-    /// and sorting result rows. See \[key_set][google.spanner.v1.PartitionReadRequest.key_set\] for further information.
+    /// If non-empty, the name of an index on
+    /// \[table][google.spanner.v1.PartitionReadRequest.table\]. This index is used
+    /// instead of the table primary key when interpreting
+    /// \[key_set][google.spanner.v1.PartitionReadRequest.key_set\] and sorting
+    /// result rows. See \[key_set][google.spanner.v1.PartitionReadRequest.key_set\]
+    /// for further information.
     #[prost(string, tag = "4")]
     pub index: ::prost::alloc::string::String,
-    /// The columns of \[table][google.spanner.v1.PartitionReadRequest.table\] to be returned for each row matching
-    /// this request.
+    /// The columns of \[table][google.spanner.v1.PartitionReadRequest.table\] to be
+    /// returned for each row matching this request.
     #[prost(string, repeated, tag = "5")]
     pub columns: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Required. `key_set` identifies the rows to be yielded. `key_set` names the
-    /// primary keys of the rows in \[table][google.spanner.v1.PartitionReadRequest.table\] to be yielded, unless \[index][google.spanner.v1.PartitionReadRequest.index\]
-    /// is present. If \[index][google.spanner.v1.PartitionReadRequest.index\] is present, then \[key_set][google.spanner.v1.PartitionReadRequest.key_set\] instead names
+    /// primary keys of the rows in
+    /// \[table][google.spanner.v1.PartitionReadRequest.table\] to be yielded, unless
+    /// \[index][google.spanner.v1.PartitionReadRequest.index\] is present. If
+    /// \[index][google.spanner.v1.PartitionReadRequest.index\] is present, then
+    /// \[key_set][google.spanner.v1.PartitionReadRequest.key_set\] instead names
     /// index keys in \[index][google.spanner.v1.PartitionReadRequest.index\].
     ///
     /// It is not an error for the `key_set` to name rows that do not
@@ -1830,24 +2001,31 @@ pub struct ReadRequest {
     /// Required. The name of the table in the database to be read.
     #[prost(string, tag = "3")]
     pub table: ::prost::alloc::string::String,
-    /// If non-empty, the name of an index on \[table][google.spanner.v1.ReadRequest.table\]. This index is
-    /// used instead of the table primary key when interpreting \[key_set][google.spanner.v1.ReadRequest.key_set\]
-    /// and sorting result rows. See \[key_set][google.spanner.v1.ReadRequest.key_set\] for further information.
+    /// If non-empty, the name of an index on
+    /// \[table][google.spanner.v1.ReadRequest.table\]. This index is used instead of
+    /// the table primary key when interpreting
+    /// \[key_set][google.spanner.v1.ReadRequest.key_set\] and sorting result rows.
+    /// See \[key_set][google.spanner.v1.ReadRequest.key_set\] for further
+    /// information.
     #[prost(string, tag = "4")]
     pub index: ::prost::alloc::string::String,
-    /// Required. The columns of \[table][google.spanner.v1.ReadRequest.table\] to be returned for each row matching
-    /// this request.
+    /// Required. The columns of \[table][google.spanner.v1.ReadRequest.table\] to be
+    /// returned for each row matching this request.
     #[prost(string, repeated, tag = "5")]
     pub columns: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Required. `key_set` identifies the rows to be yielded. `key_set` names the
-    /// primary keys of the rows in \[table][google.spanner.v1.ReadRequest.table\] to be yielded, unless \[index][google.spanner.v1.ReadRequest.index\]
-    /// is present. If \[index][google.spanner.v1.ReadRequest.index\] is present, then \[key_set][google.spanner.v1.ReadRequest.key_set\] instead names
-    /// index keys in \[index][google.spanner.v1.ReadRequest.index\].
+    /// primary keys of the rows in \[table][google.spanner.v1.ReadRequest.table\] to
+    /// be yielded, unless \[index][google.spanner.v1.ReadRequest.index\] is present.
+    /// If \[index][google.spanner.v1.ReadRequest.index\] is present, then
+    /// \[key_set][google.spanner.v1.ReadRequest.key_set\] instead names index keys
+    /// in \[index][google.spanner.v1.ReadRequest.index\].
     ///
-    /// If the \[partition_token][google.spanner.v1.ReadRequest.partition_token\] field is empty, rows are yielded
-    /// in table primary key order (if \[index][google.spanner.v1.ReadRequest.index\] is empty) or index key order
-    /// (if \[index][google.spanner.v1.ReadRequest.index\] is non-empty).  If the \[partition_token][google.spanner.v1.ReadRequest.partition_token\] field is not
-    /// empty, rows will be yielded in an unspecified order.
+    /// If the \[partition_token][google.spanner.v1.ReadRequest.partition_token\]
+    /// field is empty, rows are yielded in table primary key order (if
+    /// \[index][google.spanner.v1.ReadRequest.index\] is empty) or index key order
+    /// (if \[index][google.spanner.v1.ReadRequest.index\] is non-empty).  If the
+    /// \[partition_token][google.spanner.v1.ReadRequest.partition_token\] field is
+    /// not empty, rows will be yielded in an unspecified order.
     ///
     /// It is not an error for the `key_set` to name rows that do not
     /// exist in the database. Read yields nothing for nonexistent rows.
@@ -1860,9 +2038,9 @@ pub struct ReadRequest {
     pub limit: i64,
     /// If this request is resuming a previously interrupted read,
     /// `resume_token` should be copied from the last
-    /// \[PartialResultSet][google.spanner.v1.PartialResultSet\] yielded before the interruption. Doing this
-    /// enables the new read to resume where the last read left off. The
-    /// rest of the request parameters must exactly match the request
+    /// \[PartialResultSet][google.spanner.v1.PartialResultSet\] yielded before the
+    /// interruption. Doing this enables the new read to resume where the last read
+    /// left off. The rest of the request parameters must exactly match the request
     /// that yielded this token.
     #[prost(bytes = "vec", tag = "9")]
     pub resume_token: ::prost::alloc::vec::Vec<u8>,
@@ -1875,15 +2053,98 @@ pub struct ReadRequest {
     /// Common options for this request.
     #[prost(message, optional, tag = "11")]
     pub request_options: ::core::option::Option<RequestOptions>,
+    /// Directed read options for this request.
+    #[prost(message, optional, tag = "14")]
+    pub directed_read_options: ::core::option::Option<DirectedReadOptions>,
     /// If this is for a partitioned read and this field is set to `true`, the
-    /// request will be executed via Spanner independent compute resources.
+    /// request is executed with Spanner Data Boost independent compute resources.
     ///
     /// If the field is set to `true` but the request does not set
-    /// `partition_token`, the API will return an `INVALID_ARGUMENT` error.
+    /// `partition_token`, the API returns an `INVALID_ARGUMENT` error.
     #[prost(bool, tag = "15")]
     pub data_boost_enabled: bool,
+    /// Optional. Order for the returned rows.
+    ///
+    /// By default, Spanner will return result rows in primary key order except for
+    /// PartitionRead requests. For applications that do not require rows to be
+    /// returned in primary key (`ORDER_BY_PRIMARY_KEY`) order, setting
+    /// `ORDER_BY_NO_ORDER` option allows Spanner to optimize row retrieval,
+    /// resulting in lower latencies in certain cases (e.g. bulk point lookups).
+    #[prost(enumeration = "read_request::OrderBy", tag = "16")]
+    pub order_by: i32,
+    /// Optional. Lock Hint for the request, it can only be used with read-write
+    /// transactions.
+    #[prost(enumeration = "read_request::LockHint", tag = "17")]
+    pub lock_hint: i32,
 }
-/// The request for \[BeginTransaction][google.spanner.v1.Spanner.BeginTransaction\].
+/// Nested message and enum types in `ReadRequest`.
+pub mod read_request {
+    /// An option to control the order in which rows are returned from a read.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum OrderBy {
+        /// Default value.
+        ///
+        /// ORDER_BY_UNSPECIFIED is equivalent to ORDER_BY_PRIMARY_KEY.
+        Unspecified = 0,
+        /// Read rows are returned in primary key order.
+        ///
+        /// In the event that this option is used in conjunction with the
+        /// `partition_token` field, the API will return an `INVALID_ARGUMENT` error.
+        PrimaryKey = 1,
+        /// Read rows are returned in any order.
+        NoOrder = 2,
+    }
+    /// A lock hint mechanism for reads done within a transaction.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum LockHint {
+        /// Default value.
+        ///
+        /// LOCK_HINT_UNSPECIFIED is equivalent to LOCK_HINT_SHARED.
+        Unspecified = 0,
+        /// Acquire shared locks.
+        ///
+        /// By default when you perform a read as part of a read-write transaction,
+        /// Spanner acquires shared read locks, which allows other reads to still
+        /// access the data until your transaction is ready to commit. When your
+        /// transaction is committing and writes are being applied, the transaction
+        /// attempts to upgrade to an exclusive lock for any data you are writing.
+        /// For more information about locks, see [Lock
+        /// modes](<https://cloud.google.com/spanner/docs/introspection/lock-statistics#explain-lock-modes>).
+        Shared = 1,
+        /// Acquire exclusive locks.
+        ///
+        /// Requesting exclusive locks is beneficial if you observe high write
+        /// contention, which means you notice that multiple transactions are
+        /// concurrently trying to read and write to the same data, resulting in a
+        /// large number of aborts. This problem occurs when two transactions
+        /// initially acquire shared locks and then both try to upgrade to exclusive
+        /// locks at the same time. In this situation both transactions are waiting
+        /// for the other to give up their lock, resulting in a deadlocked situation.
+        /// Spanner is able to detect this occurring and force one of the
+        /// transactions to abort. However, this is a slow and expensive operation
+        /// and results in lower performance. In this case it makes sense to acquire
+        /// exclusive locks at the start of the transaction because then when
+        /// multiple transactions try to act on the same data, they automatically get
+        /// serialized. Each transaction waits its turn to acquire the lock and
+        /// avoids getting into deadlock situations.
+        ///
+        /// Because the exclusive lock hint is just a hint, it should not be
+        /// considered equivalent to a mutex. In other words, you should not use
+        /// Spanner exclusive locks as a mutual exclusion mechanism for the execution
+        /// of code outside of Spanner.
+        ///
+        /// **Note:** Request exclusive locks judiciously because they block others
+        /// from reading that data for the entire transaction, rather than just when
+        /// the writes are being performed. Unless you observe high write contention,
+        /// you should use the default of shared read locks so you don't prematurely
+        /// block other clients from reading the data that you're writing to.
+        Exclusive = 2,
+    }
+}
+/// The request for
+/// \[BeginTransaction][google.spanner.v1.Spanner.BeginTransaction\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BeginTransactionRequest {
     /// Required. The session in which the transaction runs.
@@ -1912,10 +2173,17 @@ pub struct CommitRequest {
     #[prost(message, repeated, tag = "4")]
     pub mutations: ::prost::alloc::vec::Vec<Mutation>,
     /// If `true`, then statistics related to the transaction will be included in
-    /// the \[CommitResponse][google.spanner.v1.CommitResponse.commit_stats\]. Default value is
-    /// `false`.
+    /// the \[CommitResponse][google.spanner.v1.CommitResponse.commit_stats\].
+    /// Default value is `false`.
     #[prost(bool, tag = "5")]
     pub return_commit_stats: bool,
+    /// Optional. The amount of latency this request is willing to incur in order
+    /// to improve throughput. If this field is not set, Spanner assumes requests
+    /// are relatively latency sensitive and automatically determines an
+    /// appropriate delay time. You can specify a batching delay value between 0
+    /// and 500 ms.
+    #[prost(message, optional, tag = "8")]
+    pub max_commit_delay: ::core::option::Option<::prost_types::Duration>,
     /// Common options for this request.
     #[prost(message, optional, tag = "6")]
     pub request_options: ::core::option::Option<RequestOptions>,
@@ -1953,6 +2221,60 @@ pub struct RollbackRequest {
     /// Required. The transaction to roll back.
     #[prost(bytes = "vec", tag = "2")]
     pub transaction_id: ::prost::alloc::vec::Vec<u8>,
+}
+/// The request for \[BatchWrite][google.spanner.v1.Spanner.BatchWrite\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchWriteRequest {
+    /// Required. The session in which the batch request is to be run.
+    #[prost(string, tag = "1")]
+    pub session: ::prost::alloc::string::String,
+    /// Common options for this request.
+    #[prost(message, optional, tag = "3")]
+    pub request_options: ::core::option::Option<RequestOptions>,
+    /// Required. The groups of mutations to be applied.
+    #[prost(message, repeated, tag = "4")]
+    pub mutation_groups: ::prost::alloc::vec::Vec<batch_write_request::MutationGroup>,
+    /// Optional. When `exclude_txn_from_change_streams` is set to `true`:
+    ///  * Mutations from all transactions in this batch write operation will not
+    ///  be recorded in change streams with DDL option `allow_txn_exclusion=true`
+    ///  that are tracking columns modified by these transactions.
+    ///  * Mutations from all transactions in this batch write operation will be
+    ///  recorded in change streams with DDL option `allow_txn_exclusion=false or
+    ///  not set` that are tracking columns modified by these transactions.
+    ///
+    /// When `exclude_txn_from_change_streams` is set to `false` or not set,
+    /// mutations from all transactions in this batch write operation will be
+    /// recorded in all change streams that are tracking columns modified by these
+    /// transactions.
+    #[prost(bool, tag = "5")]
+    pub exclude_txn_from_change_streams: bool,
+}
+/// Nested message and enum types in `BatchWriteRequest`.
+pub mod batch_write_request {
+    /// A group of mutations to be committed together. Related mutations should be
+    /// placed in a group. For example, two mutations inserting rows with the same
+    /// primary key prefix in both parent and child tables are related.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct MutationGroup {
+        /// Required. The mutations in this group.
+        #[prost(message, repeated, tag = "1")]
+        pub mutations: ::prost::alloc::vec::Vec<super::Mutation>,
+    }
+}
+/// The result of applying a batch of mutations.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchWriteResponse {
+    /// The mutation groups applied in this batch. The values index into the
+    /// `mutation_groups` field in the corresponding `BatchWriteRequest`.
+    #[prost(int32, repeated, tag = "1")]
+    pub indexes: ::prost::alloc::vec::Vec<i32>,
+    /// An `OK` status indicates success. Any other status indicates a failure.
+    #[prost(message, optional, tag = "2")]
+    pub status: ::core::option::Option<super::super::rpc::Status>,
+    /// The commit timestamp of the transaction that applied this batch.
+    /// Present if `status` is `OK`, absent otherwise.
+    #[prost(message, optional, tag = "3")]
+    pub commit_timestamp: ::core::option::Option<::prost_types::Timestamp>,
 }
 #[doc = r" Generated client implementations."]
 pub mod spanner_client {
@@ -2120,10 +2442,12 @@ pub mod spanner_client {
         #[doc = ""]
         #[doc = " Operations inside read-write transactions might return `ABORTED`. If"]
         #[doc = " this occurs, the application should restart the transaction from"]
-        #[doc = " the beginning. See [Transaction][google.spanner.v1.Transaction] for more details."]
+        #[doc = " the beginning. See [Transaction][google.spanner.v1.Transaction] for more"]
+        #[doc = " details."]
         #[doc = ""]
         #[doc = " Larger result sets can be fetched in streaming fashion by calling"]
-        #[doc = " [ExecuteStreamingSql][google.spanner.v1.Spanner.ExecuteStreamingSql] instead."]
+        #[doc = " [ExecuteStreamingSql][google.spanner.v1.Spanner.ExecuteStreamingSql]"]
+        #[doc = " instead."]
         pub async fn execute_sql(
             &mut self,
             request: impl tonic::IntoRequest<super::ExecuteSqlRequest>,
@@ -2139,11 +2463,11 @@ pub mod spanner_client {
                 http::uri::PathAndQuery::from_static("/google.spanner.v1.Spanner/ExecuteSql");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Like [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql], except returns the result"]
-        #[doc = " set as a stream. Unlike [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql], there"]
-        #[doc = " is no limit on the size of the returned result set. However, no"]
-        #[doc = " individual row in the result set can exceed 100 MiB, and no"]
-        #[doc = " column value can exceed 10 MiB."]
+        #[doc = " Like [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql], except returns the"]
+        #[doc = " result set as a stream. Unlike"]
+        #[doc = " [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql], there is no limit on"]
+        #[doc = " the size of the returned result set. However, no individual row in the"]
+        #[doc = " result set can exceed 100 MiB, and no column value can exceed 10 MiB."]
         pub async fn execute_streaming_sql(
             &mut self,
             request: impl tonic::IntoRequest<super::ExecuteSqlRequest>,
@@ -2168,9 +2492,10 @@ pub mod spanner_client {
         #[doc = " [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql]."]
         #[doc = ""]
         #[doc = " Statements are executed in sequential order. A request can succeed even if"]
-        #[doc = " a statement fails. The [ExecuteBatchDmlResponse.status][google.spanner.v1.ExecuteBatchDmlResponse.status] field in the"]
-        #[doc = " response provides information about the statement that failed. Clients must"]
-        #[doc = " inspect this field to determine whether an error occurred."]
+        #[doc = " a statement fails. The"]
+        #[doc = " [ExecuteBatchDmlResponse.status][google.spanner.v1.ExecuteBatchDmlResponse.status]"]
+        #[doc = " field in the response provides information about the statement that failed."]
+        #[doc = " Clients must inspect this field to determine whether an error occurred."]
         #[doc = ""]
         #[doc = " Execution stops after the first failed statement; the remaining statements"]
         #[doc = " are not executed."]
@@ -2191,14 +2516,15 @@ pub mod spanner_client {
         }
         #[doc = " Reads rows from the database using key lookups and scans, as a"]
         #[doc = " simple key/value style alternative to"]
-        #[doc = " [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql].  This method cannot be used to"]
-        #[doc = " return a result set larger than 10 MiB; if the read matches more"]
+        #[doc = " [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql].  This method cannot be"]
+        #[doc = " used to return a result set larger than 10 MiB; if the read matches more"]
         #[doc = " data than that, the read fails with a `FAILED_PRECONDITION`"]
         #[doc = " error."]
         #[doc = ""]
         #[doc = " Reads inside read-write transactions might return `ABORTED`. If"]
         #[doc = " this occurs, the application should restart the transaction from"]
-        #[doc = " the beginning. See [Transaction][google.spanner.v1.Transaction] for more details."]
+        #[doc = " the beginning. See [Transaction][google.spanner.v1.Transaction] for more"]
+        #[doc = " details."]
         #[doc = ""]
         #[doc = " Larger result sets can be yielded in streaming fashion by calling"]
         #[doc = " [StreamingRead][google.spanner.v1.Spanner.StreamingRead] instead."]
@@ -2216,9 +2542,9 @@ pub mod spanner_client {
             let path = http::uri::PathAndQuery::from_static("/google.spanner.v1.Spanner/Read");
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Like [Read][google.spanner.v1.Spanner.Read], except returns the result set as a"]
-        #[doc = " stream. Unlike [Read][google.spanner.v1.Spanner.Read], there is no limit on the"]
-        #[doc = " size of the returned result set. However, no individual row in"]
+        #[doc = " Like [Read][google.spanner.v1.Spanner.Read], except returns the result set"]
+        #[doc = " as a stream. Unlike [Read][google.spanner.v1.Spanner.Read], there is no"]
+        #[doc = " limit on the size of the returned result set. However, no individual row in"]
         #[doc = " the result set can exceed 100 MiB, and no column value can exceed"]
         #[doc = " 10 MiB."]
         pub async fn streaming_read(
@@ -2240,7 +2566,8 @@ pub mod spanner_client {
                 .await
         }
         #[doc = " Begins a new transaction. This step can often be skipped:"]
-        #[doc = " [Read][google.spanner.v1.Spanner.Read], [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql] and"]
+        #[doc = " [Read][google.spanner.v1.Spanner.Read],"]
+        #[doc = " [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql] and"]
         #[doc = " [Commit][google.spanner.v1.Spanner.Commit] can begin a new transaction as a"]
         #[doc = " side-effect."]
         pub async fn begin_transaction(
@@ -2288,8 +2615,9 @@ pub mod spanner_client {
         }
         #[doc = " Rolls back a transaction, releasing any locks it holds. It is a good"]
         #[doc = " idea to call this for any transaction that includes one or more"]
-        #[doc = " [Read][google.spanner.v1.Spanner.Read] or [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql] requests and"]
-        #[doc = " ultimately decides not to commit."]
+        #[doc = " [Read][google.spanner.v1.Spanner.Read] or"]
+        #[doc = " [ExecuteSql][google.spanner.v1.Spanner.ExecuteSql] requests and ultimately"]
+        #[doc = " decides not to commit."]
         #[doc = ""]
         #[doc = " `Rollback` returns `OK` if it successfully aborts the transaction, the"]
         #[doc = " transaction was already aborted, or the transaction is not"]
@@ -2310,10 +2638,11 @@ pub mod spanner_client {
         }
         #[doc = " Creates a set of partition tokens that can be used to execute a query"]
         #[doc = " operation in parallel.  Each of the returned partition tokens can be used"]
-        #[doc = " by [ExecuteStreamingSql][google.spanner.v1.Spanner.ExecuteStreamingSql] to specify a subset"]
-        #[doc = " of the query result to read.  The same session and read-only transaction"]
-        #[doc = " must be used by the PartitionQueryRequest used to create the"]
-        #[doc = " partition tokens and the ExecuteSqlRequests that use the partition tokens."]
+        #[doc = " by [ExecuteStreamingSql][google.spanner.v1.Spanner.ExecuteStreamingSql] to"]
+        #[doc = " specify a subset of the query result to read.  The same session and"]
+        #[doc = " read-only transaction must be used by the PartitionQueryRequest used to"]
+        #[doc = " create the partition tokens and the ExecuteSqlRequests that use the"]
+        #[doc = " partition tokens."]
         #[doc = ""]
         #[doc = " Partition tokens become invalid when the session used to create them"]
         #[doc = " is deleted, is idle for too long, begins a new transaction, or becomes too"]
@@ -2336,12 +2665,13 @@ pub mod spanner_client {
         }
         #[doc = " Creates a set of partition tokens that can be used to execute a read"]
         #[doc = " operation in parallel.  Each of the returned partition tokens can be used"]
-        #[doc = " by [StreamingRead][google.spanner.v1.Spanner.StreamingRead] to specify a subset of the read"]
-        #[doc = " result to read.  The same session and read-only transaction must be used by"]
-        #[doc = " the PartitionReadRequest used to create the partition tokens and the"]
-        #[doc = " ReadRequests that use the partition tokens.  There are no ordering"]
-        #[doc = " guarantees on rows returned among the returned partition tokens, or even"]
-        #[doc = " within each individual StreamingRead call issued with a partition_token."]
+        #[doc = " by [StreamingRead][google.spanner.v1.Spanner.StreamingRead] to specify a"]
+        #[doc = " subset of the read result to read.  The same session and read-only"]
+        #[doc = " transaction must be used by the PartitionReadRequest used to create the"]
+        #[doc = " partition tokens and the ReadRequests that use the partition tokens.  There"]
+        #[doc = " are no ordering guarantees on rows returned among the returned partition"]
+        #[doc = " tokens, or even within each individual StreamingRead call issued with a"]
+        #[doc = " partition_token."]
         #[doc = ""]
         #[doc = " Partition tokens become invalid when the session used to create them"]
         #[doc = " is deleted, is idle for too long, begins a new transaction, or becomes too"]
@@ -2361,6 +2691,41 @@ pub mod spanner_client {
             let path =
                 http::uri::PathAndQuery::from_static("/google.spanner.v1.Spanner/PartitionRead");
             self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Batches the supplied mutation groups in a collection of efficient"]
+        #[doc = " transactions. All mutations in a group are committed atomically. However,"]
+        #[doc = " mutations across groups can be committed non-atomically in an unspecified"]
+        #[doc = " order and thus, they must be independent of each other. Partial failure is"]
+        #[doc = " possible, i.e., some groups may have been committed successfully, while"]
+        #[doc = " some may have failed. The results of individual batches are streamed into"]
+        #[doc = " the response as the batches are applied."]
+        #[doc = ""]
+        #[doc = " BatchWrite requests are not replay protected, meaning that each mutation"]
+        #[doc = " group may be applied more than once. Replays of non-idempotent mutations"]
+        #[doc = " may have undesirable effects. For example, replays of an insert mutation"]
+        #[doc = " may produce an already exists error or if you use generated or commit"]
+        #[doc = " timestamp-based keys, it may result in additional rows being added to the"]
+        #[doc = " mutation's table. We recommend structuring your mutation groups to be"]
+        #[doc = " idempotent to avoid this issue."]
+        pub async fn batch_write(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BatchWriteRequest>,
+        ) -> Result<
+            tonic::Response<tonic::codec::Streaming<super::BatchWriteResponse>>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.spanner.v1.Spanner/BatchWrite");
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
         }
     }
 }

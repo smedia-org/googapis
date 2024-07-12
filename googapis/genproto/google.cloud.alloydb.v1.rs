@@ -258,9 +258,9 @@ pub struct ContinuousBackupConfig {
     /// Whether ContinuousBackup is enabled.
     #[prost(bool, optional, tag = "1")]
     pub enabled: ::core::option::Option<bool>,
-    /// The number of days backups and logs will be retained, which determines the
-    /// window of time that data is recoverable for. If not set, it defaults to 14
-    /// days.
+    /// The number of days that are eligible to restore from using PITR. To support
+    /// the entire recovery window, backups and logs are retained for one day more
+    /// than the recovery window. If not set, defaults to 14 days.
     #[prost(int32, tag = "4")]
     pub recovery_window_days: i32,
     /// The encryption config can be specified to encrypt the
@@ -363,16 +363,20 @@ pub struct Cluster {
     /// the cluster (i.e. `CreateCluster` vs. `CreateSecondaryCluster`
     #[prost(enumeration = "cluster::ClusterType", tag = "24")]
     pub cluster_type: i32,
-    /// Output only. The database engine major version. This is an output-only
-    /// field and it's populated at the Cluster creation time. This field cannot be
-    /// changed after cluster creation.
+    /// Optional. The database engine major version. This is an optional field and
+    /// it is populated at the Cluster creation time. If a database version is not
+    /// supplied at cluster creation time, then a default database version will
+    /// be used.
     #[prost(enumeration = "DatabaseVersion", tag = "9")]
     pub database_version: i32,
+    #[prost(message, optional, tag = "29")]
+    pub network_config: ::core::option::Option<cluster::NetworkConfig>,
     /// Required. The resource link for the VPC network in which cluster resources
     /// are created and from which they are accessible via Private IP. The network
     /// must belong to the same project as the cluster. It is specified in the
-    /// form: "projects/{project_number}/global/networks/{network_id}". This is
-    /// required to create a cluster. It can be updated, but it cannot be removed.
+    /// form: "projects/{project}/global/networks/{network_id}". This is required
+    /// to create a cluster. Deprecated, use network_config.network instead.
+    #[deprecated]
     #[prost(string, tag = "10")]
     pub network: ::prost::alloc::string::String,
     /// For Resource freshness validation (<https://google.aip.dev/154>)
@@ -437,6 +441,27 @@ pub struct Cluster {
 }
 /// Nested message and enum types in `Cluster`.
 pub mod cluster {
+    /// Metadata related to network configuration.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct NetworkConfig {
+        /// Required. The resource link for the VPC network in which cluster
+        /// resources are created and from which they are accessible via Private IP.
+        /// The network must belong to the same project as the cluster. It is
+        /// specified in the form:
+        /// "projects/{project_number}/global/networks/{network_id}". This is
+        /// required to create a cluster.
+        #[prost(string, tag = "1")]
+        pub network: ::prost::alloc::string::String,
+        /// Optional. Name of the allocated IP range for the private IP AlloyDB
+        /// cluster, for example: "google-managed-services-default". If set, the
+        /// instance IPs for this cluster will be created in the allocated range. The
+        /// range name must comply with RFC 1035. Specifically, the name must be 1-63
+        /// characters long and match the regular expression
+        /// `\[a-z]([-a-z0-9]*[a-z0-9\])?`.
+        /// Field name is intended to be consistent with Cloud SQL.
+        #[prost(string, tag = "2")]
+        pub allocated_ip_range: ::prost::alloc::string::String,
+    }
     /// Configuration information for the secondary cluster. This should be set
     /// if and only if the cluster is of type SECONDARY.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -602,7 +627,8 @@ pub struct Instance {
     /// Configuration for query insights.
     #[prost(message, optional, tag = "21")]
     pub query_insights_config: ::core::option::Option<instance::QueryInsightsInstanceConfig>,
-    /// Read pool specific config.
+    /// Read pool instance configuration.
+    /// This is required if the value of instanceType is READ_POOL.
     #[prost(message, optional, tag = "14")]
     pub read_pool_config: ::core::option::Option<instance::ReadPoolConfig>,
     /// Output only. The IP address for the Instance.
@@ -625,6 +651,9 @@ pub struct Instance {
     #[prost(map = "string, string", tag = "18")]
     pub annotations:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Optional. Client connection specific configurations
+    #[prost(message, optional, tag = "23")]
+    pub client_connection_config: ::core::option::Option<instance::ClientConnectionConfig>,
 }
 /// Nested message and enum types in `Instance`.
 pub mod instance {
@@ -683,6 +712,17 @@ pub mod instance {
         /// Read capacity, i.e. number of nodes in a read pool instance.
         #[prost(int32, tag = "1")]
         pub node_count: i32,
+    }
+    /// Client connection configuration
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ClientConnectionConfig {
+        /// Optional. Configuration to enforce connectors only (ex: AuthProxy)
+        /// connections to the database.
+        #[prost(bool, tag = "1")]
+        pub require_connectors: bool,
+        /// Optional. SSL config option for this instance.
+        #[prost(message, optional, tag = "2")]
+        pub ssl_config: ::core::option::Option<super::SslConfig>,
     }
     /// Instance State
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -747,6 +787,24 @@ pub mod instance {
         /// Regional (or Highly) available instance.
         Regional = 2,
     }
+}
+/// ConnectionInfo singleton resource.
+/// <https://google.aip.dev/156>
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConnectionInfo {
+    /// The name of the ConnectionInfo singleton resource, e.g.:
+    /// projects/{project}/locations/{location}/clusters/*/instances/*/connectionInfo
+    /// This field currently has no semantic meaning.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. The private network IP address for the Instance. This is the
+    /// default IP for the instance and is always created (even if enable_public_ip
+    /// is set). This is the connection endpoint for an end-user application.
+    #[prost(string, tag = "2")]
+    pub ip_address: ::prost::alloc::string::String,
+    /// Output only. The unique ID of the Instance.
+    #[prost(string, tag = "4")]
+    pub instance_uid: ::prost::alloc::string::String,
 }
 /// Message describing Backup object
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -831,9 +889,43 @@ pub struct Backup {
     /// added to the backup's create_time.
     #[prost(message, optional, tag = "19")]
     pub expiry_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The QuantityBasedExpiry of the backup, specified by the
+    /// backup's retention policy. Once the expiry quantity is over retention, the
+    /// backup is eligible to be garbage collected.
+    #[prost(message, optional, tag = "20")]
+    pub expiry_quantity: ::core::option::Option<backup::QuantityBasedExpiry>,
+    /// Output only. The database engine major version of the cluster this backup
+    /// was created from. Any restored cluster created from this backup will have
+    /// the same database version.
+    #[prost(enumeration = "DatabaseVersion", tag = "22")]
+    pub database_version: i32,
 }
 /// Nested message and enum types in `Backup`.
 pub mod backup {
+    /// A backup's position in a quantity-based retention queue, of backups with
+    /// the same source cluster and type, with length, retention, specified by the
+    /// backup's retention policy.
+    /// Once the position is greater than the retention, the backup is eligible to
+    /// be garbage collected.
+    ///
+    /// Example: 5 backups from the same source cluster and type with a
+    /// quantity-based retention of 3 and denoted by backup_id (position,
+    /// retention).
+    ///
+    /// Safe: backup_5 (1, 3), backup_4, (2, 3), backup_3 (3, 3).
+    /// Awaiting garbage collection: backup_2 (4, 3), backup_1 (5, 3)
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QuantityBasedExpiry {
+        /// Output only. The backup's position among its backups with the same source
+        /// cluster and type, by descending chronological order create time(i.e.
+        /// newest first).
+        #[prost(int32, tag = "1")]
+        pub retention_count: i32,
+        /// Output only. The length of the quantity-based queue, specified by the
+        /// backup's retention policy.
+        #[prost(int32, tag = "2")]
+        pub total_retention_count: i32,
+    }
     /// Backup State
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -1878,6 +1970,79 @@ pub struct ListSupportedDatabaseFlagsResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
+/// Message for requests to generate a client certificate signed by the Cluster
+/// CA.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenerateClientCertificateRequest {
+    /// Required. The name of the parent resource. The required format is:
+    ///  * projects/{project}/locations/{location}/clusters/{cluster}
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes after the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and
+    /// the request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+    /// Optional. An optional hint to the endpoint to generate the client
+    /// certificate with the requested duration. The duration can be from 1 hour to
+    /// 24 hours. The endpoint may or may not honor the hint. If the hint is left
+    /// unspecified or is not honored, then the endpoint will pick an appropriate
+    /// default duration.
+    #[prost(message, optional, tag = "4")]
+    pub cert_duration: ::core::option::Option<::prost_types::Duration>,
+    /// Optional. The public key from the client.
+    #[prost(string, tag = "5")]
+    pub public_key: ::prost::alloc::string::String,
+    /// Optional. An optional hint to the endpoint to generate a client
+    /// ceritificate that can be used by AlloyDB connectors to exchange additional
+    /// metadata with the server after TLS handshake.
+    #[prost(bool, tag = "6")]
+    pub use_metadata_exchange: bool,
+}
+/// Message returned by a GenerateClientCertificate operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenerateClientCertificateResponse {
+    /// Output only. The pem-encoded chain that may be used to verify the X.509
+    /// certificate. Expected to be in issuer-to-root order according to RFC 5246.
+    #[prost(string, repeated, tag = "2")]
+    pub pem_certificate_chain: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. The pem-encoded cluster ca X.509 certificate.
+    #[prost(string, tag = "3")]
+    pub ca_cert: ::prost::alloc::string::String,
+}
+/// Request message for GetConnectionInfo.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetConnectionInfoRequest {
+    /// Required. The name of the parent resource. The required format is:
+    /// projects/{project}/locations/{location}/clusters/{cluster}/instances/{instance}
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes after the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and
+    /// the request times out. If you make the request again with the same request
+    /// ID, the server can check if original operation with the same request ID
+    /// was received, and if so, will ignore the second request. This prevents
+    /// clients from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
 /// Represents the metadata of the long-running operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct OperationMetadata {
@@ -2582,6 +2747,45 @@ pub mod alloy_db_admin_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.alloydb.v1.AlloyDBAdmin/ListSupportedDatabaseFlags",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Generate a client certificate signed by a Cluster CA."]
+        #[doc = " The sole purpose of this endpoint is to support AlloyDB connectors and the"]
+        #[doc = " Auth Proxy client. The endpoint's behavior is subject to change without"]
+        #[doc = " notice, so do not rely on its behavior remaining constant. Future changes"]
+        #[doc = " will not break AlloyDB connectors or the Auth Proxy client."]
+        pub async fn generate_client_certificate(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GenerateClientCertificateRequest>,
+        ) -> Result<tonic::Response<super::GenerateClientCertificateResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.alloydb.v1.AlloyDBAdmin/GenerateClientCertificate",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Get instance metadata used for a connection."]
+        pub async fn get_connection_info(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetConnectionInfoRequest>,
+        ) -> Result<tonic::Response<super::ConnectionInfo>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.alloydb.v1.AlloyDBAdmin/GetConnectionInfo",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

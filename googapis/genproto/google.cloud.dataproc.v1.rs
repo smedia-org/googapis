@@ -417,6 +417,16 @@ pub struct RuntimeConfig {
     #[prost(map = "string, string", tag = "3")]
     pub properties:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Optional. Dependency repository configuration.
+    #[prost(message, optional, tag = "5")]
+    pub repository_config: ::core::option::Option<RepositoryConfig>,
+    /// Optional. Autotuning configuration of the workload.
+    #[prost(message, optional, tag = "6")]
+    pub autotuning_config: ::core::option::Option<AutotuningConfig>,
+    /// Optional. Cohort identifier. Identifies families of the workloads having
+    /// the same shape, e.g. daily ETL jobs.
+    #[prost(string, tag = "7")]
+    pub cohort: ::prost::alloc::string::String,
 }
 /// Environment configuration for a workload.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -440,16 +450,32 @@ pub struct ExecutionConfig {
     /// Optional. The Cloud KMS key to use for encryption.
     #[prost(string, tag = "7")]
     pub kms_key: ::prost::alloc::string::String,
-    /// Optional. The duration after which the workload will be terminated.
-    /// When the workload passes this ttl, it will be unconditionally killed
-    /// without waiting for ongoing work to finish.
-    /// Minimum value is 10 minutes; maximum value is 14 days (see JSON
-    /// representation of
+    /// Optional. Applies to sessions only. The duration to keep the session alive
+    /// while it's idling. Exceeding this threshold causes the session to
+    /// terminate. This field cannot be set on a batch workload. Minimum value is
+    /// 10 minutes; maximum value is 14 days (see JSON representation of
     /// \[Duration\](<https://developers.google.com/protocol-buffers/docs/proto3#json>)).
-    /// If both ttl and idle_ttl are specified, the conditions are treated as
-    /// and OR: the workload will be terminated when it has been idle for idle_ttl
-    /// or when the ttl has passed, whichever comes first.
-    /// If ttl is not specified for a session, it defaults to 24h.
+    /// Defaults to 1 hour if not set.
+    /// If both `ttl` and `idle_ttl` are specified for an interactive session,
+    /// the conditions are treated as `OR` conditions: the workload will be
+    /// terminated when it has been idle for `idle_ttl` or when `ttl` has been
+    /// exceeded, whichever occurs first.
+    #[prost(message, optional, tag = "8")]
+    pub idle_ttl: ::core::option::Option<::prost_types::Duration>,
+    /// Optional. The duration after which the workload will be terminated,
+    /// specified as the JSON representation for
+    /// \[Duration\](<https://protobuf.dev/programming-guides/proto3/#json>).
+    /// When the workload exceeds this duration, it will be unconditionally
+    /// terminated without waiting for ongoing work to finish. If `ttl` is not
+    /// specified for a batch workload, the workload will be allowed to run until
+    /// it exits naturally (or run forever without exiting). If `ttl` is not
+    /// specified for an interactive session, it defaults to 24 hours. If `ttl` is
+    /// not specified for a batch that uses 2.1+ runtime version, it defaults to 4
+    /// hours. Minimum value is 10 minutes; maximum value is 14 days. If both `ttl`
+    /// and `idle_ttl` are specified (for an interactive session), the conditions
+    /// are treated as `OR` conditions: the workload will be terminated when it has
+    /// been idle for `idle_ttl` or when `ttl` has been exceeded, whichever occurs
+    /// first.
     #[prost(message, optional, tag = "9")]
     pub ttl: ::core::option::Option<::prost_types::Duration>,
     /// Optional. A Cloud Storage bucket used to stage workload dependencies,
@@ -520,9 +546,17 @@ pub struct RuntimeInfo {
     /// Output only. A URI pointing to the location of the diagnostics tarball.
     #[prost(string, tag = "3")]
     pub diagnostic_output_uri: ::prost::alloc::string::String,
-    /// Output only. Approximate workload resource usage calculated after workload
-    /// finishes (see [Dataproc Serverless pricing]
+    /// Output only. Approximate workload resource usage, calculated when
+    /// the workload completes (see [Dataproc Serverless pricing]
     /// (<https://cloud.google.com/dataproc-serverless/pricing>)).
+    ///
+    /// **Note:** This metric calculation may change in the future, for
+    /// example, to capture cumulative workload resource
+    /// consumption during workload execution (see the
+    /// [Dataproc Serverless release notes]
+    /// (<https://cloud.google.com/dataproc-serverless/docs/release-notes>)
+    /// for announcements, changes, fixes
+    /// and other Dataproc developments).
     #[prost(message, optional, tag = "6")]
     pub approximate_usage: ::core::option::Option<UsageMetrics>,
     /// Output only. Snapshot of current workload resource usage.
@@ -542,8 +576,16 @@ pub struct UsageMetrics {
     /// (<https://cloud.google.com/dataproc-serverless/pricing>)).
     #[prost(int64, tag = "2")]
     pub shuffle_storage_gb_seconds: i64,
+    /// Optional. Accelerator usage in (`milliAccelerator` x `seconds`) (see
+    /// [Dataproc Serverless pricing]
+    /// (<https://cloud.google.com/dataproc-serverless/pricing>)).
+    #[prost(int64, tag = "3")]
+    pub milli_accelerator_seconds: i64,
+    /// Optional. Accelerator type being used, if any
+    #[prost(string, tag = "4")]
+    pub accelerator_type: ::prost::alloc::string::String,
 }
-/// The usage snaphot represents the resources consumed by a workload at a
+/// The usage snapshot represents the resources consumed by a workload at a
 /// specified time.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UsageSnapshot {
@@ -556,6 +598,23 @@ pub struct UsageSnapshot {
     /// pricing] (<https://cloud.google.com/dataproc-serverless/pricing>))
     #[prost(int64, tag = "2")]
     pub shuffle_storage_gb: i64,
+    /// Optional. Milli (one-thousandth) Dataproc Compute Units (DCUs) charged at
+    /// premium tier (see [Dataproc Serverless pricing]
+    /// (<https://cloud.google.com/dataproc-serverless/pricing>)).
+    #[prost(int64, tag = "4")]
+    pub milli_dcu_premium: i64,
+    /// Optional. Shuffle Storage in gigabytes (GB) charged at premium tier. (see
+    /// [Dataproc Serverless pricing]
+    /// (<https://cloud.google.com/dataproc-serverless/pricing>))
+    #[prost(int64, tag = "5")]
+    pub shuffle_storage_gb_premium: i64,
+    /// Optional. Milli (one-thousandth) accelerator. (see [Dataproc
+    /// Serverless pricing] (<https://cloud.google.com/dataproc-serverless/pricing>))
+    #[prost(int64, tag = "6")]
+    pub milli_accelerator: i64,
+    /// Optional. Accelerator type being used, if any
+    #[prost(string, tag = "7")]
+    pub accelerator_type: ::prost::alloc::string::String,
     /// Optional. The timestamp of the usage snapshot.
     #[prost(message, optional, tag = "3")]
     pub snapshot_time: ::core::option::Option<::prost_types::Timestamp>,
@@ -799,6 +858,49 @@ pub mod gke_node_pool_config {
         pub max_node_count: i32,
     }
 }
+/// Autotuning configuration of the workload.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AutotuningConfig {
+    /// Optional. Scenarios for which tunings are applied.
+    #[prost(
+        enumeration = "autotuning_config::Scenario",
+        repeated,
+        packed = "false",
+        tag = "2"
+    )]
+    pub scenarios: ::prost::alloc::vec::Vec<i32>,
+}
+/// Nested message and enum types in `AutotuningConfig`.
+pub mod autotuning_config {
+    /// Scenario represents a specific goal that autotuning will attempt to achieve
+    /// by modifying workloads.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Scenario {
+        /// Default value.
+        Unspecified = 0,
+        /// Scaling recommendations such as initialExecutors.
+        Scaling = 2,
+        /// Adding hints for potential relation broadcasts.
+        BroadcastHashJoin = 3,
+        /// Memory management for workloads.
+        Memory = 4,
+    }
+}
+/// Configuration for dependency repositories
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RepositoryConfig {
+    /// Optional. Configuration for PyPi repository.
+    #[prost(message, optional, tag = "1")]
+    pub pypi_repository_config: ::core::option::Option<PyPiRepositoryConfig>,
+}
+/// Configuration for PyPi repository
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PyPiRepositoryConfig {
+    /// Optional. PyPi repository address
+    #[prost(string, tag = "1")]
+    pub pypi_repository: ::prost::alloc::string::String,
+}
 /// Cluster components that can be activated.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -806,10 +908,9 @@ pub enum Component {
     /// Unspecified component. Specifying this will cause Cluster creation to fail.
     Unspecified = 0,
     /// The Anaconda python distribution. The Anaconda component is not supported
-    /// in the Dataproc
-    /// <a
-    /// href="/dataproc/docs/concepts/versioning/dataproc-release-2.0">2.0
-    /// image</a>. The 2.0 image is pre-installed with Miniconda.
+    /// in the Dataproc [2.0 image]
+    /// (/<https://cloud.google.com/dataproc/docs/concepts/versioning/dataproc-release-2.0>).
+    /// The 2.0 image is pre-installed with Miniconda.
     Anaconda = 5,
     /// Docker
     Docker = 13,
@@ -1300,6 +1401,212 @@ pub mod batch_controller_client {
         }
     }
 }
+/// Metadata describing the Batch operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchOperationMetadata {
+    /// Name of the batch for the operation.
+    #[prost(string, tag = "1")]
+    pub batch: ::prost::alloc::string::String,
+    /// Batch UUID for the operation.
+    #[prost(string, tag = "2")]
+    pub batch_uuid: ::prost::alloc::string::String,
+    /// The time when the operation was created.
+    #[prost(message, optional, tag = "3")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time when the operation finished.
+    #[prost(message, optional, tag = "4")]
+    pub done_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The operation type.
+    #[prost(
+        enumeration = "batch_operation_metadata::BatchOperationType",
+        tag = "6"
+    )]
+    pub operation_type: i32,
+    /// Short description of the operation.
+    #[prost(string, tag = "7")]
+    pub description: ::prost::alloc::string::String,
+    /// Labels associated with the operation.
+    #[prost(map = "string, string", tag = "8")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Warnings encountered during operation execution.
+    #[prost(string, repeated, tag = "9")]
+    pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Nested message and enum types in `BatchOperationMetadata`.
+pub mod batch_operation_metadata {
+    /// Operation type for Batch resources
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum BatchOperationType {
+        /// Batch operation type is unknown.
+        Unspecified = 0,
+        /// Batch operation type.
+        Batch = 1,
+    }
+}
+/// Metadata describing the Session operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SessionOperationMetadata {
+    /// Name of the session for the operation.
+    #[prost(string, tag = "1")]
+    pub session: ::prost::alloc::string::String,
+    /// Session UUID for the operation.
+    #[prost(string, tag = "2")]
+    pub session_uuid: ::prost::alloc::string::String,
+    /// The time when the operation was created.
+    #[prost(message, optional, tag = "3")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time when the operation was finished.
+    #[prost(message, optional, tag = "4")]
+    pub done_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The operation type.
+    #[prost(
+        enumeration = "session_operation_metadata::SessionOperationType",
+        tag = "6"
+    )]
+    pub operation_type: i32,
+    /// Short description of the operation.
+    #[prost(string, tag = "7")]
+    pub description: ::prost::alloc::string::String,
+    /// Labels associated with the operation.
+    #[prost(map = "string, string", tag = "8")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Warnings encountered during operation execution.
+    #[prost(string, repeated, tag = "9")]
+    pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Nested message and enum types in `SessionOperationMetadata`.
+pub mod session_operation_metadata {
+    /// Operation type for Session resources
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SessionOperationType {
+        /// Session operation type is unknown.
+        Unspecified = 0,
+        /// Create Session operation type.
+        Create = 1,
+        /// Terminate Session operation type.
+        Terminate = 2,
+        /// Delete Session operation type.
+        Delete = 3,
+    }
+}
+/// The status of the operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ClusterOperationStatus {
+    /// Output only. A message containing the operation state.
+    #[prost(enumeration = "cluster_operation_status::State", tag = "1")]
+    pub state: i32,
+    /// Output only. A message containing the detailed operation state.
+    #[prost(string, tag = "2")]
+    pub inner_state: ::prost::alloc::string::String,
+    /// Output only. A message containing any operation metadata details.
+    #[prost(string, tag = "3")]
+    pub details: ::prost::alloc::string::String,
+    /// Output only. The time this state was entered.
+    #[prost(message, optional, tag = "4")]
+    pub state_start_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `ClusterOperationStatus`.
+pub mod cluster_operation_status {
+    /// The operation state.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unused.
+        Unknown = 0,
+        /// The operation has been created.
+        Pending = 1,
+        /// The operation is running.
+        Running = 2,
+        /// The operation is done; either cancelled or completed.
+        Done = 3,
+    }
+}
+/// Metadata describing the operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ClusterOperationMetadata {
+    /// Output only. Name of the cluster for the operation.
+    #[prost(string, tag = "7")]
+    pub cluster_name: ::prost::alloc::string::String,
+    /// Output only. Cluster UUID for the operation.
+    #[prost(string, tag = "8")]
+    pub cluster_uuid: ::prost::alloc::string::String,
+    /// Output only. Current operation status.
+    #[prost(message, optional, tag = "9")]
+    pub status: ::core::option::Option<ClusterOperationStatus>,
+    /// Output only. The previous operation status.
+    #[prost(message, repeated, tag = "10")]
+    pub status_history: ::prost::alloc::vec::Vec<ClusterOperationStatus>,
+    /// Output only. The operation type.
+    #[prost(string, tag = "11")]
+    pub operation_type: ::prost::alloc::string::String,
+    /// Output only. Short description of operation.
+    #[prost(string, tag = "12")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. Labels associated with the operation
+    #[prost(map = "string, string", tag = "13")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Errors encountered during operation execution.
+    #[prost(string, repeated, tag = "14")]
+    pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Output only. Child operation ids
+    #[prost(string, repeated, tag = "15")]
+    pub child_operation_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Metadata describing the node group operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NodeGroupOperationMetadata {
+    /// Output only. Node group ID for the operation.
+    #[prost(string, tag = "1")]
+    pub node_group_id: ::prost::alloc::string::String,
+    /// Output only. Cluster UUID associated with the node group operation.
+    #[prost(string, tag = "2")]
+    pub cluster_uuid: ::prost::alloc::string::String,
+    /// Output only. Current operation status.
+    #[prost(message, optional, tag = "3")]
+    pub status: ::core::option::Option<ClusterOperationStatus>,
+    /// Output only. The previous operation status.
+    #[prost(message, repeated, tag = "4")]
+    pub status_history: ::prost::alloc::vec::Vec<ClusterOperationStatus>,
+    /// The operation type.
+    #[prost(
+        enumeration = "node_group_operation_metadata::NodeGroupOperationType",
+        tag = "5"
+    )]
+    pub operation_type: i32,
+    /// Output only. Short description of operation.
+    #[prost(string, tag = "6")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. Labels associated with the operation.
+    #[prost(map = "string, string", tag = "7")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Errors encountered during operation execution.
+    #[prost(string, repeated, tag = "8")]
+    pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Nested message and enum types in `NodeGroupOperationMetadata`.
+pub mod node_group_operation_metadata {
+    /// Operation type for node group resources.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum NodeGroupOperationType {
+        /// Node group operation type is unknown.
+        Unspecified = 0,
+        /// Create node group operation type.
+        Create = 1,
+        /// Update node group operation type.
+        Update = 2,
+        /// Delete node group operation type.
+        Delete = 3,
+        /// Resize node group operation type.
+        Resize = 4,
+    }
+}
 /// Describes the identifying information, config, and status of
 /// a Dataproc cluster
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1613,7 +1920,7 @@ pub struct GceClusterConfig {
     /// instances](<https://cloud.google.com/compute/docs/label-or-tag-resources#tags>)).
     #[prost(string, repeated, tag = "4")]
     pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// The Compute Engine metadata entries to add to all instances (see
+    /// Optional. The Compute Engine metadata entries to add to all instances (see
     /// [Project and instance
     /// metadata](<https://cloud.google.com/compute/docs/storing-retrieving-metadata#project_and_instance_metadata>)).
     #[prost(map = "string, string", tag = "5")]
@@ -1718,6 +2025,9 @@ pub struct InstanceGroupConfig {
     /// from `cluster_name`, `num_instances`, and the instance group.
     #[prost(string, repeated, tag = "2")]
     pub instance_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Output only. List of references to Compute Engine instances.
+    #[prost(message, repeated, tag = "11")]
+    pub instance_references: ::prost::alloc::vec::Vec<InstanceReference>,
     /// Optional. The Compute Engine image resource used for cluster instances.
     ///
     /// The URI can represent an image or image family.
@@ -1783,6 +2093,30 @@ pub struct InstanceGroupConfig {
     /// Platform](<https://cloud.google.com/dataproc/docs/concepts/compute/dataproc-min-cpu>).
     #[prost(string, tag = "9")]
     pub min_cpu_platform: ::prost::alloc::string::String,
+    /// Optional. The minimum number of primary worker instances to create.
+    /// If `min_num_instances` is set, cluster creation will succeed if
+    /// the number of primary workers created is at least equal to the
+    /// `min_num_instances` number.
+    ///
+    /// Example: Cluster creation request with `num_instances` = `5` and
+    /// `min_num_instances` = `3`:
+    ///
+    /// *  If 4 VMs are created and 1 instance fails,
+    ///    the failed VM is deleted. The cluster is
+    ///    resized to 4 instances and placed in a `RUNNING` state.
+    /// *  If 2 instances are created and 3 instances fail,
+    ///    the cluster in placed in an `ERROR` state. The failed VMs
+    ///    are not deleted.
+    #[prost(int32, tag = "12")]
+    pub min_num_instances: i32,
+    /// Optional. Instance flexibility Policy allowing a mixture of VM shapes and
+    /// provisioning models.
+    #[prost(message, optional, tag = "13")]
+    pub instance_flexibility_policy: ::core::option::Option<InstanceFlexibilityPolicy>,
+    /// Optional. Configuration to handle the startup of instances during cluster
+    /// create and update process.
+    #[prost(message, optional, tag = "14")]
+    pub startup_config: ::core::option::Option<StartupConfig>,
 }
 /// Nested message and enum types in `InstanceGroupConfig`.
 pub mod instance_group_config {
@@ -1816,6 +2150,35 @@ pub mod instance_group_config {
         Spot = 3,
     }
 }
+/// Configuration to handle the startup of instances during cluster create and
+/// update process.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StartupConfig {
+    /// Optional. The config setting to enable cluster creation/ updation to be
+    /// successful only after required_registration_fraction of instances are up
+    /// and running. This configuration is applicable to only secondary workers for
+    /// now. The cluster will fail if required_registration_fraction of instances
+    /// are not available. This will include instance creation, agent registration,
+    /// and service registration (if enabled).
+    #[prost(double, optional, tag = "1")]
+    pub required_registration_fraction: ::core::option::Option<f64>,
+}
+/// A reference to a Compute Engine instance.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InstanceReference {
+    /// The user-friendly name of the Compute Engine instance.
+    #[prost(string, tag = "1")]
+    pub instance_name: ::prost::alloc::string::String,
+    /// The unique identifier of the Compute Engine instance.
+    #[prost(string, tag = "2")]
+    pub instance_id: ::prost::alloc::string::String,
+    /// The public RSA key used for sharing data with this instance.
+    #[prost(string, tag = "3")]
+    pub public_key: ::prost::alloc::string::String,
+    /// The public ECIES key used for sharing data with this instance.
+    #[prost(string, tag = "4")]
+    pub public_ecies_key: ::prost::alloc::string::String,
+}
 /// Specifies the resources used to actively manage an instance group.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ManagedGroupConfig {
@@ -1826,6 +2189,52 @@ pub struct ManagedGroupConfig {
     /// Output only. The name of the Instance Group Manager for this group.
     #[prost(string, tag = "2")]
     pub instance_group_manager_name: ::prost::alloc::string::String,
+    /// Output only. The partial URI to the instance group manager for this group.
+    /// E.g. projects/my-project/regions/us-central1/instanceGroupManagers/my-igm.
+    #[prost(string, tag = "3")]
+    pub instance_group_manager_uri: ::prost::alloc::string::String,
+}
+/// Instance flexibility Policy allowing a mixture of VM shapes and provisioning
+/// models.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InstanceFlexibilityPolicy {
+    /// Optional. List of instance selection options that the group will use when
+    /// creating new VMs.
+    #[prost(message, repeated, tag = "2")]
+    pub instance_selection_list:
+        ::prost::alloc::vec::Vec<instance_flexibility_policy::InstanceSelection>,
+    /// Output only. A list of instance selection results in the group.
+    #[prost(message, repeated, tag = "3")]
+    pub instance_selection_results:
+        ::prost::alloc::vec::Vec<instance_flexibility_policy::InstanceSelectionResult>,
+}
+/// Nested message and enum types in `InstanceFlexibilityPolicy`.
+pub mod instance_flexibility_policy {
+    /// Defines machines types and a rank to which the machines types belong.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InstanceSelection {
+        /// Optional. Full machine-type names, e.g. "n1-standard-16".
+        #[prost(string, repeated, tag = "1")]
+        pub machine_types: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Optional. Preference of this instance selection. Lower number means
+        /// higher preference. Dataproc will first try to create a VM based on the
+        /// machine-type with priority rank and fallback to next rank based on
+        /// availability. Machine types and instance selections with the same
+        /// priority have the same preference.
+        #[prost(int32, tag = "2")]
+        pub rank: i32,
+    }
+    /// Defines a mapping from machine types to the number of VMs that are created
+    /// with each machine type.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InstanceSelectionResult {
+        /// Output only. Full machine-type names, e.g. "n1-standard-16".
+        #[prost(string, optional, tag = "1")]
+        pub machine_type: ::core::option::Option<::prost::alloc::string::String>,
+        /// Output only. Number of VM provisioned with the machine_type.
+        #[prost(int32, optional, tag = "2")]
+        pub vm_count: ::core::option::Option<i32>,
+    }
 }
 /// Specifies the type and number of accelerator cards attached to the instances
 /// of an instance. See [GPUs on Compute
@@ -1934,13 +2343,13 @@ pub struct NodeGroup {
 }
 /// Nested message and enum types in `NodeGroup`.
 pub mod node_group {
-    /// Node group roles.
+    /// Node pool roles.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum Role {
         /// Required unspecified role.
         Unspecified = 0,
-        /// Job drivers run on the node group.
+        /// Job drivers run on the node pool.
         Driver = 1,
     }
 }
@@ -2010,6 +2419,8 @@ pub mod cluster_status {
         Stopped = 7,
         /// The cluster is being started. It is not ready for use.
         Starting = 8,
+        /// The cluster is being repaired. It is not ready for use.
+        Repairing = 10,
     }
     /// The cluster substate.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -2231,18 +2642,18 @@ pub struct DataprocMetricConfig {
 }
 /// Nested message and enum types in `DataprocMetricConfig`.
 pub mod dataproc_metric_config {
-    /// A Dataproc OSS metric.
+    /// A Dataproc custom metric.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Metric {
-        /// Required. Default metrics are collected unless `metricOverrides` are
-        /// specified for the metric source (see [Available OSS metrics]
-        /// (<https://cloud.google.com/dataproc/docs/guides/monitoring#available_oss_metrics>)
+        /// Required. A standard set of metrics is collected unless `metricOverrides`
+        /// are specified for the metric source (see [Custom metrics]
+        /// (<https://cloud.google.com/dataproc/docs/guides/dataproc-metrics#custom_metrics>)
         /// for more information).
         #[prost(enumeration = "MetricSource", tag = "1")]
         pub metric_source: i32,
-        /// Optional. Specify one or more [available OSS metrics]
-        /// (<https://cloud.google.com/dataproc/docs/guides/monitoring#available_oss_metrics>)
-        /// to collect for the metric course (for the `SPARK` metric source, any
+        /// Optional. Specify one or more [Custom metrics]
+        /// (<https://cloud.google.com/dataproc/docs/guides/dataproc-metrics#custom_metrics>)
+        /// to collect for the metric course (for the `SPARK` metric source (any
         /// [Spark metric]
         /// (<https://spark.apache.org/docs/latest/monitoring.html#metrics>) can be
         /// specified).
@@ -2262,27 +2673,27 @@ pub mod dataproc_metric_config {
         ///
         /// Notes:
         ///
-        /// * Only the specified overridden metrics will be collected for the
+        /// * Only the specified overridden metrics are collected for the
         ///   metric source. For example, if one or more `spark:executive` metrics
-        ///   are listed as metric overrides, other `SPARK` metrics will not be
-        ///   collected. The collection of the default metrics for other OSS metric
-        ///   sources is unaffected. For example, if both `SPARK` andd `YARN` metric
-        ///   sources are enabled, and overrides are provided for Spark metrics only,
-        ///   all default YARN metrics will be collected.
+        ///   are listed as metric overrides, other `SPARK` metrics are not
+        ///   collected. The collection of the metrics for other enabled custom
+        ///   metric sources is unaffected. For example, if both `SPARK` andd `YARN`
+        ///   metric sources are enabled, and overrides are provided for Spark
+        ///   metrics only, all YARN metrics are collected.
         #[prost(string, repeated, tag = "2")]
         pub metric_overrides: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     }
-    /// A source for the collection of Dataproc OSS metrics (see [available OSS
+    /// A source for the collection of Dataproc custom metrics (see [Custom
     /// metrics]
-    /// (<https://cloud.google.com//dataproc/docs/guides/monitoring#available_oss_metrics>)).
+    /// (<https://cloud.google.com//dataproc/docs/guides/dataproc-metrics#custom_metrics>)).
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum MetricSource {
         /// Required unspecified metric source.
         Unspecified = 0,
-        /// Default monitoring agent metrics. If this source is enabled,
+        /// Monitoring agent metrics. If this source is enabled,
         /// Dataproc enables the monitoring agent in Compute Engine,
-        /// and collects default monitoring agent metrics, which are published
+        /// and collects monitoring agent metrics, which are published
         /// with an `agent.googleapis.com` prefix.
         MonitoringAgentDefaults = 1,
         /// HDFS metric source.
@@ -2598,6 +3009,23 @@ pub struct DiagnoseClusterRequest {
     /// Required. The cluster name.
     #[prost(string, tag = "2")]
     pub cluster_name: ::prost::alloc::string::String,
+    /// Optional. The output Cloud Storage directory for the diagnostic
+    /// tarball. If not specified, a task-specific directory in the cluster's
+    /// staging bucket will be used.
+    #[prost(string, tag = "4")]
+    pub tarball_gcs_dir: ::prost::alloc::string::String,
+    /// Optional. Time interval in which diagnosis should be carried out on the
+    /// cluster.
+    #[prost(message, optional, tag = "6")]
+    pub diagnosis_interval: ::core::option::Option<super::super::super::r#type::Interval>,
+    /// Optional. Specifies a list of jobs on which diagnosis is to be performed.
+    /// Format: projects/{project}/regions/{region}/jobs/{job}
+    #[prost(string, repeated, tag = "10")]
+    pub jobs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Specifies a list of yarn applications on which diagnosis is to be
+    /// performed.
+    #[prost(string, repeated, tag = "11")]
+    pub yarn_application_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// The location of diagnostic output.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2865,7 +3293,9 @@ pub struct LoggingConfig {
     /// The per-package log levels for the driver. This may include
     /// "root" package name to configure rootLogger.
     /// Examples:
-    ///   'com.google = FATAL', 'root = INFO', 'org.apache = DEBUG'
+    /// - 'com.google = FATAL'
+    /// - 'root = INFO'
+    /// - 'org.apache = DEBUG'
     #[prost(map = "string, enumeration(logging_config::Level)", tag = "2")]
     pub driver_log_levels: ::std::collections::HashMap<::prost::alloc::string::String, i32>,
 }
@@ -2926,7 +3356,7 @@ pub struct HadoopJob {
     pub archive_uris: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Optional. A mapping of property names to values, used to configure Hadoop.
     /// Properties that conflict with values set by the Dataproc API may be
-    /// overwritten. Can include properties set in /etc/hadoop/conf/*-site and
+    /// overwritten. Can include properties set in `/etc/hadoop/conf/*-site` and
     /// classes in user code.
     #[prost(map = "string, string", tag = "7")]
     pub properties:
@@ -3099,7 +3529,7 @@ pub struct HiveJob {
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     /// Optional. A mapping of property names and values, used to configure Hive.
     /// Properties that conflict with values set by the Dataproc API may be
-    /// overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml,
+    /// overwritten. Can include properties set in `/etc/hadoop/conf/*-site.xml`,
     /// /etc/hive/conf/hive-site.xml, and classes in user code.
     #[prost(map = "string, string", tag = "5")]
     pub properties:
@@ -3184,7 +3614,7 @@ pub struct PigJob {
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     /// Optional. A mapping of property names to values, used to configure Pig.
     /// Properties that conflict with values set by the Dataproc API may be
-    /// overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml,
+    /// overwritten. Can include properties set in `/etc/hadoop/conf/*-site.xml`,
     /// /etc/pig/conf/pig.properties, and classes in user code.
     #[prost(map = "string, string", tag = "5")]
     pub properties:
@@ -4060,7 +4490,7 @@ pub struct ResizeNodeGroupRequest {
     /// underscores (_), and hyphens (-). The maximum length is 40 characters.
     #[prost(string, tag = "3")]
     pub request_id: ::prost::alloc::string::String,
-    /// Optional. Timeout for graceful YARN decomissioning. [Graceful
+    /// Optional. Timeout for graceful YARN decommissioning. [Graceful
     /// decommissioning]
     /// (<https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/scaling-clusters#graceful_decommissioning>)
     /// allows the removal of nodes from the Compute Engine node group
@@ -4199,162 +4629,654 @@ pub mod node_group_controller_client {
         }
     }
 }
-/// Metadata describing the Batch operation.
+/// A request to create a session.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchOperationMetadata {
-    /// Name of the batch for the operation.
+pub struct CreateSessionRequest {
+    /// Required. The parent resource where this session will be created.
     #[prost(string, tag = "1")]
-    pub batch: ::prost::alloc::string::String,
-    /// Batch UUID for the operation.
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The interactive session to create.
+    #[prost(message, optional, tag = "2")]
+    pub session: ::core::option::Option<Session>,
+    /// Required. The ID to use for the session, which becomes the final component
+    /// of the session's resource name.
+    ///
+    /// This value must be 4-63 characters. Valid characters
+    /// are /\[a-z][0-9\]-/.
+    #[prost(string, tag = "3")]
+    pub session_id: ::prost::alloc::string::String,
+    /// Optional. A unique ID used to identify the request. If the service
+    /// receives two
+    /// \[CreateSessionRequests\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.CreateSessionRequest>)s
+    /// with the same ID, the second request is ignored, and the
+    /// first \[Session][google.cloud.dataproc.v1.Session\] is created and stored in
+    /// the backend.
+    ///
+    /// Recommendation: Set this value to a
+    /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
+    ///
+    /// The value must contain only letters (a-z, A-Z), numbers (0-9),
+    /// underscores (_), and hyphens (-). The maximum length is 40 characters.
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// A request to get the resource representation for a session.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSessionRequest {
+    /// Required. The name of the session to retrieve.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A request to list sessions in a project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSessionsRequest {
+    /// Required. The parent, which owns this collection of sessions.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of sessions to return in each response.
+    /// The service may return fewer than this value.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token received from a previous `ListSessions` call.
+    /// Provide this token to retrieve the subsequent page.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. A filter for the sessions to return in the response.
+    ///
+    /// A filter is a logical expression constraining the values of various fields
+    /// in each session resource. Filters are case sensitive, and may contain
+    /// multiple clauses combined with logical operators (AND, OR).
+    /// Supported fields are `session_id`, `session_uuid`, `state`, and
+    /// `create_time`.
+    ///
+    /// Example: `state = ACTIVE and create_time < "2023-01-01T00:00:00Z"`
+    /// is a filter for sessions in an ACTIVE state that were created before
+    /// 2023-01-01.
+    ///
+    /// See <https://google.aip.dev/assets/misc/ebnf-filtering.txt> for a detailed
+    /// description of the filter syntax and a list of supported comparators.
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// A list of interactive sessions.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSessionsResponse {
+    /// Output only. The sessions from the specified collection.
+    #[prost(message, repeated, tag = "1")]
+    pub sessions: ::prost::alloc::vec::Vec<Session>,
+    /// A token, which can be sent as `page_token`, to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
     #[prost(string, tag = "2")]
-    pub batch_uuid: ::prost::alloc::string::String,
-    /// The time when the operation was created.
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// A request to terminate an interactive session.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TerminateSessionRequest {
+    /// Required. The name of the session resource to terminate.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A unique ID used to identify the request. If the service
+    /// receives two
+    /// \[TerminateSessionRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.TerminateSessionRequest>)s
+    /// with the same ID, the second request is ignored.
+    ///
+    /// Recommendation: Set this value to a
+    /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
+    ///
+    /// The value must contain only letters (a-z, A-Z), numbers (0-9),
+    /// underscores (_), and hyphens (-). The maximum length is 40 characters.
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// A request to delete a session.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteSessionRequest {
+    /// Required. The name of the session resource to delete.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A unique ID used to identify the request. If the service
+    /// receives two
+    /// \[DeleteSessionRequest\](<https://cloud.google.com/dataproc/docs/reference/rpc/google.cloud.dataproc.v1#google.cloud.dataproc.v1.DeleteSessionRequest>)s
+    /// with the same ID, the second request is ignored.
+    ///
+    /// Recommendation: Set this value to a
+    /// \[UUID\](<https://en.wikipedia.org/wiki/Universally_unique_identifier>).
+    ///
+    /// The value must contain only letters (a-z, A-Z), numbers (0-9),
+    /// underscores (_), and hyphens (-). The maximum length is 40 characters.
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// A representation of a session.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Session {
+    /// Required. The resource name of the session.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. A session UUID (Unique Universal Identifier). The service
+    /// generates this value when it creates the session.
+    #[prost(string, tag = "2")]
+    pub uuid: ::prost::alloc::string::String,
+    /// Output only. The time when the session was created.
     #[prost(message, optional, tag = "3")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The time when the operation finished.
-    #[prost(message, optional, tag = "4")]
-    pub done_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The operation type.
-    #[prost(
-        enumeration = "batch_operation_metadata::BatchOperationType",
-        tag = "6"
-    )]
-    pub operation_type: i32,
-    /// Short description of the operation.
-    #[prost(string, tag = "7")]
-    pub description: ::prost::alloc::string::String,
-    /// Labels associated with the operation.
-    #[prost(map = "string, string", tag = "8")]
+    /// Output only. Runtime information about session execution.
+    #[prost(message, optional, tag = "6")]
+    pub runtime_info: ::core::option::Option<RuntimeInfo>,
+    /// Output only. A state of the session.
+    #[prost(enumeration = "session::State", tag = "7")]
+    pub state: i32,
+    /// Output only. Session state details, such as the failure
+    /// description if the state is `FAILED`.
+    #[prost(string, tag = "8")]
+    pub state_message: ::prost::alloc::string::String,
+    /// Output only. The time when the session entered the current state.
+    #[prost(message, optional, tag = "9")]
+    pub state_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The email address of the user who created the session.
+    #[prost(string, tag = "10")]
+    pub creator: ::prost::alloc::string::String,
+    /// Optional. The labels to associate with the session.
+    /// Label **keys** must contain 1 to 63 characters, and must conform to
+    /// [RFC 1035](<https://www.ietf.org/rfc/rfc1035.txt>).
+    /// Label **values** may be empty, but, if present, must contain 1 to 63
+    /// characters, and must conform to [RFC
+    /// 1035](<https://www.ietf.org/rfc/rfc1035.txt>). No more than 32 labels can be
+    /// associated with a session.
+    #[prost(map = "string, string", tag = "11")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Warnings encountered during operation execution.
-    #[prost(string, repeated, tag = "9")]
-    pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Runtime configuration for the session execution.
+    #[prost(message, optional, tag = "12")]
+    pub runtime_config: ::core::option::Option<RuntimeConfig>,
+    /// Optional. Environment configuration for the session execution.
+    #[prost(message, optional, tag = "13")]
+    pub environment_config: ::core::option::Option<EnvironmentConfig>,
+    /// Optional. The email address of the user who owns the session.
+    #[prost(string, tag = "14")]
+    pub user: ::prost::alloc::string::String,
+    /// Output only. Historical state information for the session.
+    #[prost(message, repeated, tag = "15")]
+    pub state_history: ::prost::alloc::vec::Vec<session::SessionStateHistory>,
+    /// Optional. The session template used by the session.
+    ///
+    /// Only resource names, including project ID and location, are valid.
+    ///
+    /// Example:
+    /// * `<https://www.googleapis.com/compute/v1/projects/\[project_id]/locations/[dataproc_region]/sessionTemplates/[template_id\]`>
+    /// * `projects/\[project_id]/locations/[dataproc_region]/sessionTemplates/[template_id\]`
+    ///
+    /// The template must be in the same project and Dataproc region as the
+    /// session.
+    #[prost(string, tag = "16")]
+    pub session_template: ::prost::alloc::string::String,
+    /// The session configuration.
+    #[prost(oneof = "session::SessionConfig", tags = "4")]
+    pub session_config: ::core::option::Option<session::SessionConfig>,
 }
-/// Nested message and enum types in `BatchOperationMetadata`.
-pub mod batch_operation_metadata {
-    /// Operation type for Batch resources
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-    #[repr(i32)]
-    pub enum BatchOperationType {
-        /// Batch operation type is unknown.
-        Unspecified = 0,
-        /// Batch operation type.
-        Batch = 1,
+/// Nested message and enum types in `Session`.
+pub mod session {
+    /// Historical state information.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SessionStateHistory {
+        /// Output only. The state of the session at this point in the session
+        /// history.
+        #[prost(enumeration = "State", tag = "1")]
+        pub state: i32,
+        /// Output only. Details about the state at this point in the session
+        /// history.
+        #[prost(string, tag = "2")]
+        pub state_message: ::prost::alloc::string::String,
+        /// Output only. The time when the session entered the historical state.
+        #[prost(message, optional, tag = "3")]
+        pub state_start_time: ::core::option::Option<::prost_types::Timestamp>,
     }
-}
-/// The status of the operation.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ClusterOperationStatus {
-    /// Output only. A message containing the operation state.
-    #[prost(enumeration = "cluster_operation_status::State", tag = "1")]
-    pub state: i32,
-    /// Output only. A message containing the detailed operation state.
-    #[prost(string, tag = "2")]
-    pub inner_state: ::prost::alloc::string::String,
-    /// Output only. A message containing any operation metadata details.
-    #[prost(string, tag = "3")]
-    pub details: ::prost::alloc::string::String,
-    /// Output only. The time this state was entered.
-    #[prost(message, optional, tag = "4")]
-    pub state_start_time: ::core::option::Option<::prost_types::Timestamp>,
-}
-/// Nested message and enum types in `ClusterOperationStatus`.
-pub mod cluster_operation_status {
-    /// The operation state.
+    /// The session state.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum State {
-        /// Unused.
-        Unknown = 0,
-        /// The operation has been created.
-        Pending = 1,
-        /// The operation is running.
-        Running = 2,
-        /// The operation is done; either cancelled or completed.
-        Done = 3,
+        /// The session state is unknown.
+        Unspecified = 0,
+        /// The session is created prior to running.
+        Creating = 1,
+        /// The session is running.
+        Active = 2,
+        /// The session is terminating.
+        Terminating = 3,
+        /// The session is terminated successfully.
+        Terminated = 4,
+        /// The session is no longer running due to an error.
+        Failed = 5,
+    }
+    /// The session configuration.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SessionConfig {
+        /// Optional. Jupyter session config.
+        #[prost(message, tag = "4")]
+        JupyterSession(super::JupyterConfig),
     }
 }
-/// Metadata describing the operation.
+/// Jupyter configuration for an interactive session.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ClusterOperationMetadata {
-    /// Output only. Name of the cluster for the operation.
-    #[prost(string, tag = "7")]
-    pub cluster_name: ::prost::alloc::string::String,
-    /// Output only. Cluster UUID for the operation.
-    #[prost(string, tag = "8")]
-    pub cluster_uuid: ::prost::alloc::string::String,
-    /// Output only. Current operation status.
-    #[prost(message, optional, tag = "9")]
-    pub status: ::core::option::Option<ClusterOperationStatus>,
-    /// Output only. The previous operation status.
-    #[prost(message, repeated, tag = "10")]
-    pub status_history: ::prost::alloc::vec::Vec<ClusterOperationStatus>,
-    /// Output only. The operation type.
-    #[prost(string, tag = "11")]
-    pub operation_type: ::prost::alloc::string::String,
-    /// Output only. Short description of operation.
-    #[prost(string, tag = "12")]
-    pub description: ::prost::alloc::string::String,
-    /// Output only. Labels associated with the operation
-    #[prost(map = "string, string", tag = "13")]
-    pub labels:
-        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Output only. Errors encountered during operation execution.
-    #[prost(string, repeated, tag = "14")]
-    pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Output only. Child operation ids
-    #[prost(string, repeated, tag = "15")]
-    pub child_operation_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-/// Metadata describing the node group operation.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct NodeGroupOperationMetadata {
-    /// Output only. Node group ID for the operation.
-    #[prost(string, tag = "1")]
-    pub node_group_id: ::prost::alloc::string::String,
-    /// Output only. Cluster UUID associated with the node group operation.
+pub struct JupyterConfig {
+    /// Optional. Kernel
+    #[prost(enumeration = "jupyter_config::Kernel", tag = "1")]
+    pub kernel: i32,
+    /// Optional. Display name, shown in the Jupyter kernelspec card.
     #[prost(string, tag = "2")]
-    pub cluster_uuid: ::prost::alloc::string::String,
-    /// Output only. Current operation status.
-    #[prost(message, optional, tag = "3")]
-    pub status: ::core::option::Option<ClusterOperationStatus>,
-    /// Output only. The previous operation status.
-    #[prost(message, repeated, tag = "4")]
-    pub status_history: ::prost::alloc::vec::Vec<ClusterOperationStatus>,
-    /// The operation type.
-    #[prost(
-        enumeration = "node_group_operation_metadata::NodeGroupOperationType",
-        tag = "5"
-    )]
-    pub operation_type: i32,
-    /// Output only. Short description of operation.
-    #[prost(string, tag = "6")]
-    pub description: ::prost::alloc::string::String,
-    /// Output only. Labels associated with the operation.
-    #[prost(map = "string, string", tag = "7")]
-    pub labels:
-        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Output only. Errors encountered during operation execution.
-    #[prost(string, repeated, tag = "8")]
-    pub warnings: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    pub display_name: ::prost::alloc::string::String,
 }
-/// Nested message and enum types in `NodeGroupOperationMetadata`.
-pub mod node_group_operation_metadata {
-    /// Operation type for node group resources.
+/// Nested message and enum types in `JupyterConfig`.
+pub mod jupyter_config {
+    /// Jupyter kernel types.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
-    pub enum NodeGroupOperationType {
-        /// Node group operation type is unknown.
+    pub enum Kernel {
+        /// The kernel is unknown.
         Unspecified = 0,
-        /// Create node group operation type.
-        Create = 1,
-        /// Update node group operation type.
-        Update = 2,
-        /// Delete node group operation type.
-        Delete = 3,
-        /// Resize node group operation type.
-        Resize = 4,
+        /// Python kernel.
+        Python = 1,
+        /// Scala kernel.
+        Scala = 2,
+    }
+}
+#[doc = r" Generated client implementations."]
+pub mod session_controller_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " The `SessionController` provides methods to manage interactive sessions."]
+    #[derive(Debug, Clone)]
+    pub struct SessionControllerClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> SessionControllerClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> SessionControllerClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            SessionControllerClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Create an interactive session asynchronously."]
+        pub async fn create_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSessionRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionController/CreateSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets the resource representation for an interactive session."]
+        pub async fn get_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSessionRequest>,
+        ) -> Result<tonic::Response<super::Session>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionController/GetSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists interactive sessions."]
+        pub async fn list_sessions(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListSessionsRequest>,
+        ) -> Result<tonic::Response<super::ListSessionsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionController/ListSessions",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Terminates the interactive session."]
+        pub async fn terminate_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::TerminateSessionRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionController/TerminateSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes the interactive session resource. If the session is not in terminal"]
+        #[doc = " state, it is terminated, and then deleted."]
+        pub async fn delete_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteSessionRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionController/DeleteSession",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+/// A request to create a session template.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateSessionTemplateRequest {
+    /// Required. The parent resource where this session template will be created.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The session template to create.
+    #[prost(message, optional, tag = "3")]
+    pub session_template: ::core::option::Option<SessionTemplate>,
+}
+/// A request to update a session template.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateSessionTemplateRequest {
+    /// Required. The updated session template.
+    #[prost(message, optional, tag = "1")]
+    pub session_template: ::core::option::Option<SessionTemplate>,
+}
+/// A request to get the resource representation for a session template.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSessionTemplateRequest {
+    /// Required. The name of the session template to retrieve.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A request to list session templates in a project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSessionTemplatesRequest {
+    /// Required. The parent that owns this collection of session templates.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of sessions to return in each response.
+    /// The service may return fewer than this value.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. A page token received from a previous `ListSessions` call.
+    /// Provide this token to retrieve the subsequent page.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. A filter for the session templates to return in the response.
+    /// Filters are case sensitive and have the following syntax:
+    ///
+    /// [field = value] AND [field [= value]] ...
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// A list of session templates.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListSessionTemplatesResponse {
+    /// Output only. Session template list
+    #[prost(message, repeated, tag = "1")]
+    pub session_templates: ::prost::alloc::vec::Vec<SessionTemplate>,
+    /// A token, which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// A request to delete a session template.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteSessionTemplateRequest {
+    /// Required. The name of the session template resource to delete.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A representation of a session template.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SessionTemplate {
+    /// Required. The resource name of the session template.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. Brief description of the template.
+    #[prost(string, tag = "9")]
+    pub description: ::prost::alloc::string::String,
+    /// Output only. The time when the template was created.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The email address of the user who created the template.
+    #[prost(string, tag = "5")]
+    pub creator: ::prost::alloc::string::String,
+    /// Optional. Labels to associate with sessions created using this template.
+    /// Label **keys** must contain 1 to 63 characters, and must conform to
+    /// [RFC 1035](<https://www.ietf.org/rfc/rfc1035.txt>).
+    /// Label **values** can be empty, but, if present, must contain 1 to 63
+    /// characters and conform to [RFC
+    /// 1035](<https://www.ietf.org/rfc/rfc1035.txt>). No more than 32 labels can be
+    /// associated with a session.
+    #[prost(map = "string, string", tag = "6")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Optional. Runtime configuration for session execution.
+    #[prost(message, optional, tag = "7")]
+    pub runtime_config: ::core::option::Option<RuntimeConfig>,
+    /// Optional. Environment configuration for session execution.
+    #[prost(message, optional, tag = "8")]
+    pub environment_config: ::core::option::Option<EnvironmentConfig>,
+    /// Output only. The time the template was last updated.
+    #[prost(message, optional, tag = "10")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. A session template UUID (Unique Universal Identifier). The
+    /// service generates this value when it creates the session template.
+    #[prost(string, tag = "12")]
+    pub uuid: ::prost::alloc::string::String,
+    /// The session configuration.
+    #[prost(oneof = "session_template::SessionConfig", tags = "3")]
+    pub session_config: ::core::option::Option<session_template::SessionConfig>,
+}
+/// Nested message and enum types in `SessionTemplate`.
+pub mod session_template {
+    /// The session configuration.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SessionConfig {
+        /// Optional. Jupyter session config.
+        #[prost(message, tag = "3")]
+        JupyterSession(super::JupyterConfig),
+    }
+}
+#[doc = r" Generated client implementations."]
+pub mod session_template_controller_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " The SessionTemplateController provides methods to manage session templates."]
+    #[derive(Debug, Clone)]
+    pub struct SessionTemplateControllerClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> SessionTemplateControllerClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> SessionTemplateControllerClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            SessionTemplateControllerClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Create a session template synchronously."]
+        pub async fn create_session_template(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateSessionTemplateRequest>,
+        ) -> Result<tonic::Response<super::SessionTemplate>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionTemplateController/CreateSessionTemplate",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates the session template synchronously."]
+        pub async fn update_session_template(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateSessionTemplateRequest>,
+        ) -> Result<tonic::Response<super::SessionTemplate>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionTemplateController/UpdateSessionTemplate",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets the resource representation for a session template."]
+        pub async fn get_session_template(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSessionTemplateRequest>,
+        ) -> Result<tonic::Response<super::SessionTemplate>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionTemplateController/GetSessionTemplate",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists session templates."]
+        pub async fn list_session_templates(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListSessionTemplatesRequest>,
+        ) -> Result<tonic::Response<super::ListSessionTemplatesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionTemplateController/ListSessionTemplates",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a session template."]
+        pub async fn delete_session_template(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteSessionTemplateRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.dataproc.v1.SessionTemplateController/DeleteSessionTemplate",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 /// A Dataproc workflow template resource.

@@ -374,7 +374,7 @@ pub mod aggregation_query {
         #[prost(string, tag = "7")]
         pub alias: ::prost::alloc::string::String,
         /// The type of aggregation to perform, required.
-        #[prost(oneof = "aggregation::Operator", tags = "1")]
+        #[prost(oneof = "aggregation::Operator", tags = "1, 2, 3")]
         pub operator: ::core::option::Option<aggregation::Operator>,
     }
     /// Nested message and enum types in `Aggregation`.
@@ -408,12 +408,62 @@ pub mod aggregation_query {
             #[prost(message, optional, tag = "1")]
             pub up_to: ::core::option::Option<i64>,
         }
+        /// Sum of the values of the requested property.
+        ///
+        /// * Only numeric values will be aggregated. All non-numeric values
+        /// including `NULL` are skipped.
+        ///
+        /// * If the aggregated values contain `NaN`, returns `NaN`. Infinity math
+        /// follows IEEE-754 standards.
+        ///
+        /// * If the aggregated value set is empty, returns 0.
+        ///
+        /// * Returns a 64-bit integer if all aggregated numbers are integers and the
+        /// sum result does not overflow. Otherwise, the result is returned as a
+        /// double. Note that even if all the aggregated values are integers, the
+        /// result is returned as a double if it cannot fit within a 64-bit signed
+        /// integer. When this occurs, the returned value will lose precision.
+        ///
+        /// * When underflow occurs, floating-point aggregation is non-deterministic.
+        /// This means that running the same query repeatedly without any changes to
+        /// the underlying values could produce slightly different results each
+        /// time. In those cases, values should be stored as integers over
+        /// floating-point numbers.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Sum {
+            /// The property to aggregate on.
+            #[prost(message, optional, tag = "1")]
+            pub property: ::core::option::Option<super::super::PropertyReference>,
+        }
+        /// Average of the values of the requested property.
+        ///
+        /// * Only numeric values will be aggregated. All non-numeric values
+        /// including `NULL` are skipped.
+        ///
+        /// * If the aggregated values contain `NaN`, returns `NaN`. Infinity math
+        /// follows IEEE-754 standards.
+        ///
+        /// * If the aggregated value set is empty, returns `NULL`.
+        ///
+        /// * Always returns the result as a double.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Avg {
+            /// The property to aggregate on.
+            #[prost(message, optional, tag = "1")]
+            pub property: ::core::option::Option<super::super::PropertyReference>,
+        }
         /// The type of aggregation to perform, required.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Operator {
             /// Count aggregator.
             #[prost(message, tag = "1")]
             Count(Count),
+            /// Sum aggregator.
+            #[prost(message, tag = "2")]
+            Sum(Sum),
+            /// Average aggregator.
+            #[prost(message, tag = "3")]
+            Avg(Avg),
         }
     }
     /// The base query to aggregate over.
@@ -434,8 +484,13 @@ pub struct KindExpression {
 /// A reference to a property relative to the kind expressions.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PropertyReference {
-    /// The name of the property.
-    /// If name includes "."s, it may be interpreted as a property name path.
+    /// A reference to a property.
+    ///
+    /// Requires:
+    ///
+    /// * MUST be a dot-delimited (`.`) string of segments, where each segment
+    /// conforms to [entity property name]\[google.datastore.v1.Entity.properties\]
+    /// limitations.
     #[prost(string, tag = "2")]
     pub name: ::prost::alloc::string::String,
 }
@@ -569,8 +624,9 @@ pub mod property_filter {
         ///
         /// Requires:
         ///
-        /// * That `value` is a non-empty `ArrayValue` with at most 10 values.
-        /// * No other `IN` or `NOT_IN` is in the same query.
+        /// * That `value` is a non-empty `ArrayValue`, subject to disjunction
+        ///   limits.
+        /// * No `NOT_IN` is in the same query.
         In = 6,
         /// The given `property` is not equal to the given `value`.
         ///
@@ -584,14 +640,14 @@ pub mod property_filter {
         /// Requires:
         ///
         /// * That `value` is an entity key.
-        /// * No other `HAS_ANCESTOR` is in the same query.
+        /// * All evaluated disjunctions must have the same `HAS_ANCESTOR` filter.
         HasAncestor = 11,
         /// The value of the `property` is not in the given array.
         ///
         /// Requires:
         ///
         /// * That `value` is a non-empty `ArrayValue` with at most 10 values.
-        /// * No other `IN`, `NOT_IN`, `NOT_EQUAL` is in the same query.
+        /// * No other `OR`, `IN`, `NOT_IN`, `NOT_EQUAL` is in the same query.
         /// * That `field` comes first in the `order_by`.
         NotIn = 13,
     }
@@ -747,6 +803,72 @@ pub struct AggregationResultBatch {
     #[prost(message, optional, tag = "3")]
     pub read_time: ::core::option::Option<::prost_types::Timestamp>,
 }
+// Specification of the Datastore Query Profile fields.
+
+/// Explain options for the query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExplainOptions {
+    /// Optional. Whether to execute this query.
+    ///
+    /// When false (the default), the query will be planned, returning only
+    /// metrics from the planning stages.
+    ///
+    /// When true, the query will be planned and executed, returning the full
+    /// query results along with both planning and execution stage metrics.
+    #[prost(bool, tag = "1")]
+    pub analyze: bool,
+}
+/// Explain metrics for the query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExplainMetrics {
+    /// Planning phase information for the query.
+    #[prost(message, optional, tag = "1")]
+    pub plan_summary: ::core::option::Option<PlanSummary>,
+    /// Aggregated stats from the execution of the query. Only present when
+    /// \[ExplainOptions.analyze][google.datastore.v1.ExplainOptions.analyze\] is set
+    /// to true.
+    #[prost(message, optional, tag = "2")]
+    pub execution_stats: ::core::option::Option<ExecutionStats>,
+}
+/// Planning phase information for the query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PlanSummary {
+    /// The indexes selected for the query. For example:
+    ///  [
+    ///    {"query_scope": "Collection", "properties": "(foo ASC, __name__ ASC)"},
+    ///    {"query_scope": "Collection", "properties": "(bar ASC, __name__ ASC)"}
+    ///  ]
+    #[prost(message, repeated, tag = "1")]
+    pub indexes_used: ::prost::alloc::vec::Vec<::prost_types::Struct>,
+}
+/// Execution statistics for the query.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExecutionStats {
+    /// Total number of results returned, including documents, projections,
+    /// aggregation results, keys.
+    #[prost(int64, tag = "1")]
+    pub results_returned: i64,
+    /// Total time to execute the query in the backend.
+    #[prost(message, optional, tag = "3")]
+    pub execution_duration: ::core::option::Option<::prost_types::Duration>,
+    /// Total billable read operations.
+    #[prost(int64, tag = "4")]
+    pub read_operations: i64,
+    /// Debugging statistics from the execution of the query. Note that the
+    /// debugging stats are subject to change as Firestore evolves. It could
+    /// include:
+    ///  {
+    ///    "indexes_entries_scanned": "1000",
+    ///    "documents_scanned": "20",
+    ///    "billing_details" : {
+    ///       "documents_billable": "20",
+    ///       "index_entries_billable": "1000",
+    ///       "min_query_cost": "0"
+    ///    }
+    ///  }
+    #[prost(message, optional, tag = "5")]
+    pub debug_stats: ::core::option::Option<::prost_types::Struct>,
+}
 /// The request for \[Datastore.Lookup][google.datastore.v1.Datastore.Lookup\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LookupRequest {
@@ -765,6 +887,14 @@ pub struct LookupRequest {
     /// Required. Keys of entities to look up.
     #[prost(message, repeated, tag = "3")]
     pub keys: ::prost::alloc::vec::Vec<Key>,
+    /// The properties to return. Defaults to returning all properties.
+    ///
+    /// If this field is set and an entity has a property not referenced in the
+    /// mask, it will be absent from \[LookupResponse.found.entity.properties][\].
+    ///
+    /// The entity's key is always returned.
+    #[prost(message, optional, tag = "5")]
+    pub property_mask: ::core::option::Option<PropertyMask>,
 }
 /// The response for \[Datastore.Lookup][google.datastore.v1.Datastore.Lookup\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -818,6 +948,17 @@ pub struct RunQueryRequest {
     /// The options for this query.
     #[prost(message, optional, tag = "1")]
     pub read_options: ::core::option::Option<ReadOptions>,
+    /// The properties to return.
+    /// This field must not be set for a projection query.
+    ///
+    /// See
+    /// \[LookupRequest.property_mask][google.datastore.v1.LookupRequest.property_mask\].
+    #[prost(message, optional, tag = "10")]
+    pub property_mask: ::core::option::Option<PropertyMask>,
+    /// Optional. Explain options for the query. If set, additional query
+    /// statistics will be returned. If not, only query results will be returned.
+    #[prost(message, optional, tag = "12")]
+    pub explain_options: ::core::option::Option<ExplainOptions>,
     /// The type of query.
     #[prost(oneof = "run_query_request::QueryType", tags = "3, 7")]
     pub query_type: ::core::option::Option<run_query_request::QueryType>,
@@ -854,6 +995,11 @@ pub struct RunQueryResponse {
     /// \[RunQueryRequest.read_options][google.datastore.v1.RunQueryRequest.read_options\].
     #[prost(bytes = "vec", tag = "5")]
     pub transaction: ::prost::alloc::vec::Vec<u8>,
+    /// Query explain metrics. This is only present when the
+    /// \[RunQueryRequest.explain_options][google.datastore.v1.RunQueryRequest.explain_options\]
+    /// is provided, and it is sent only once with the last response in the stream.
+    #[prost(message, optional, tag = "9")]
+    pub explain_metrics: ::core::option::Option<ExplainMetrics>,
 }
 /// The request for
 /// \[Datastore.RunAggregationQuery][google.datastore.v1.Datastore.RunAggregationQuery\].
@@ -877,6 +1023,10 @@ pub struct RunAggregationQueryRequest {
     /// The options for this query.
     #[prost(message, optional, tag = "1")]
     pub read_options: ::core::option::Option<ReadOptions>,
+    /// Optional. Explain options for the query. If set, additional query
+    /// statistics will be returned. If not, only query results will be returned.
+    #[prost(message, optional, tag = "11")]
+    pub explain_options: ::core::option::Option<ExplainOptions>,
     /// The type of query.
     #[prost(oneof = "run_aggregation_query_request::QueryType", tags = "3, 7")]
     pub query_type: ::core::option::Option<run_aggregation_query_request::QueryType>,
@@ -913,6 +1063,11 @@ pub struct RunAggregationQueryResponse {
     /// \[RunAggregationQueryRequest.read_options][google.datastore.v1.RunAggregationQueryRequest.read_options\].
     #[prost(bytes = "vec", tag = "5")]
     pub transaction: ::prost::alloc::vec::Vec<u8>,
+    /// Query explain metrics. This is only present when the
+    /// \[RunAggregationQueryRequest.explain_options][google.datastore.v1.RunAggregationQueryRequest.explain_options\]
+    /// is provided, and it is sent only once with the last response in the stream.
+    #[prost(message, optional, tag = "9")]
+    pub explain_metrics: ::core::option::Option<ExplainMetrics>,
 }
 /// The request for
 /// \[Datastore.BeginTransaction][google.datastore.v1.Datastore.BeginTransaction\].
@@ -1093,6 +1248,16 @@ pub struct ReserveIdsResponse {}
 /// A mutation to apply to an entity.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Mutation {
+    /// The properties to write in this mutation.
+    /// None of the properties in the mask may have a reserved name, except for
+    /// `__key__`.
+    /// This field is ignored for `delete`.
+    ///
+    /// If the entity already exists, only properties referenced in the mask are
+    /// updated, others are left untouched.
+    /// Properties referenced in the mask but not in the entity are deleted.
+    #[prost(message, optional, tag = "9")]
+    pub property_mask: ::core::option::Option<PropertyMask>,
     /// The mutation operation.
     ///
     /// For `insert`, `update`, and `upsert`:
@@ -1183,6 +1348,24 @@ pub struct MutationResult {
     #[prost(bool, tag = "5")]
     pub conflict_detected: bool,
 }
+/// The set of arbitrarily nested property paths used to restrict an operation to
+/// only a subset of properties in an entity.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PropertyMask {
+    /// The paths to the properties covered by this mask.
+    ///
+    /// A path is a list of property names separated by dots (`.`), for example
+    /// `foo.bar` means the property `bar` inside the entity property `foo` inside
+    /// the entity associated with this path.
+    ///
+    /// If a property name contains a dot `.` or a backslash `\`, then that
+    /// name must be escaped.
+    ///
+    /// A path must not be empty, and may not reference a value inside an
+    /// [array value]\[google.datastore.v1.Value.array_value\].
+    #[prost(string, repeated, tag = "1")]
+    pub paths: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
 /// The options shared by read requests.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReadOptions {
@@ -1241,9 +1424,12 @@ pub mod read_options {
         /// \[RunQueryResponse.transaction][google.datastore.v1.RunQueryResponse.transaction\].
         #[prost(message, tag = "3")]
         NewTransaction(super::TransactionOptions),
-        /// Reads entities as they were at the given time. This may not be older
-        /// than 270 seconds.  This value is only supported for Cloud Firestore in
-        /// Datastore mode.
+        /// Reads entities as they were at the given time. This value is only
+        /// supported for Cloud Firestore in Datastore mode.
+        ///
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, tag = "4")]
         ReadTime(::prost_types::Timestamp),
     }
@@ -1275,7 +1461,10 @@ pub mod transaction_options {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ReadOnly {
         /// Reads entities at the given time.
-        /// This may not be older than 60 seconds.
+        ///
+        /// This must be a microsecond precision timestamp within the past one hour,
+        /// or if Point-in-Time Recovery is enabled, can additionally be a whole
+        /// minute timestamp within the past 7 days.
         #[prost(message, optional, tag = "1")]
         pub read_time: ::core::option::Option<::prost_types::Timestamp>,
     }

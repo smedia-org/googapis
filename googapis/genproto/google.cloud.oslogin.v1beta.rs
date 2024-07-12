@@ -84,6 +84,11 @@ pub struct ImportSshPublicKeyRequest {
     /// The view configures whether to retrieve security keys information.
     #[prost(enumeration = "LoginProfileView", tag = "4")]
     pub view: i32,
+    /// Optional. The regions to which to assert that the key was written.
+    /// If unspecified, defaults to all regions.
+    /// Regions are listed at <https://cloud.google.com/about/locations#region.>
+    #[prost(string, repeated, tag = "5")]
+    pub regions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// A response message for importing an SSH public key.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -120,6 +125,9 @@ pub struct SecurityKey {
     /// Hardware-backed private key text in SSH format.
     #[prost(string, tag = "2")]
     pub private_key: ::prost::alloc::string::String,
+    /// The security key nickname explicitly set by the user.
+    #[prost(string, optional, tag = "5")]
+    pub device_nickname: ::core::option::Option<::prost::alloc::string::String>,
     /// The FIDO protocol type used to register this credential.
     #[prost(oneof = "security_key::ProtocolType", tags = "3, 4")]
     pub protocol_type: ::core::option::Option<security_key::ProtocolType>,
@@ -150,6 +158,21 @@ pub struct WebAuthn {
     /// Relying party ID for Web Authentication.
     #[prost(string, tag = "1")]
     pub rp_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SignSshPublicKeyRequest {
+    /// The SSH public key to sign.
+    #[prost(string, tag = "1")]
+    pub ssh_public_key: ::prost::alloc::string::String,
+    /// The parent project and region for the signing request.
+    #[prost(string, tag = "2")]
+    pub parent: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SignSshPublicKeyResponse {
+    /// The signed SSH public key to use in the SSH handshake.
+    #[prost(string, tag = "1")]
+    pub signed_ssh_public_key: ::prost::alloc::string::String,
 }
 /// The login profile view limits the user content retrieved.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -335,6 +358,23 @@ pub mod os_login_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.oslogin.v1beta.OsLoginService/UpdateSshPublicKey",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Signs an SSH public key for a user to authenticate to an instance."]
+        pub async fn sign_ssh_public_key(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SignSshPublicKeyRequest>,
+        ) -> Result<tonic::Response<super::SignSshPublicKeyResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.oslogin.v1beta.OsLoginService/SignSshPublicKey",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

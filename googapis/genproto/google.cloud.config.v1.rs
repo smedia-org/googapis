@@ -1,0 +1,1947 @@
+/// A Deployment is a group of resources and configs managed and provisioned by
+/// Infra Manager.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Deployment {
+    /// Resource name of the deployment.
+    /// Format: `projects/{project}/locations/{location}/deployments/{deployment}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Time when the deployment was created.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Time when the deployment was last modified.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// User-defined metadata for the deployment.
+    #[prost(map = "string, string", tag = "4")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Current state of the deployment.
+    #[prost(enumeration = "deployment::State", tag = "5")]
+    pub state: i32,
+    /// Output only. Revision name that was most recently applied.
+    /// Format: `projects/{project}/locations/{location}/deployments/{deployment}/
+    /// revisions/{revision}`
+    #[prost(string, tag = "7")]
+    pub latest_revision: ::prost::alloc::string::String,
+    /// Output only. Additional information regarding the current state.
+    #[prost(string, tag = "9")]
+    pub state_detail: ::prost::alloc::string::String,
+    /// Output only. Error code describing errors that may have occurred.
+    #[prost(enumeration = "deployment::ErrorCode", tag = "10")]
+    pub error_code: i32,
+    /// Output only. Location of artifacts from a DeleteDeployment operation.
+    #[prost(message, optional, tag = "8")]
+    pub delete_results: ::core::option::Option<ApplyResults>,
+    /// Output only. Cloud Build instance UUID associated with deleting this
+    /// deployment.
+    #[prost(string, tag = "11")]
+    pub delete_build: ::prost::alloc::string::String,
+    /// Output only. Location of Cloud Build logs in Google Cloud Storage,
+    /// populated when deleting this deployment. Format: `gs://{bucket}/{object}`.
+    #[prost(string, tag = "12")]
+    pub delete_logs: ::prost::alloc::string::String,
+    /// Output only. Errors encountered when deleting this deployment.
+    /// Errors are truncated to 10 entries, see `delete_results` and `error_logs`
+    /// for full details.
+    #[prost(message, repeated, tag = "13")]
+    pub tf_errors: ::prost::alloc::vec::Vec<TerraformError>,
+    /// Output only. Location of Terraform error logs in Google Cloud Storage.
+    /// Format: `gs://{bucket}/{object}`.
+    #[prost(string, tag = "14")]
+    pub error_logs: ::prost::alloc::string::String,
+    /// Optional. User-defined location of Cloud Build logs and artifacts in Google
+    /// Cloud Storage. Format: `gs://{bucket}/{folder}`
+    ///
+    /// A default bucket will be bootstrapped if the field is not set or empty.
+    /// Default bucket format: `gs://<project number>-<region>-blueprint-config`
+    /// Constraints:
+    /// - The bucket needs to be in the same project as the deployment
+    /// - The path cannot be within the path of `gcs_source`
+    /// - The field cannot be updated, including changing its presence
+    #[prost(string, optional, tag = "15")]
+    pub artifacts_gcs_bucket: ::core::option::Option<::prost::alloc::string::String>,
+    /// Optional. User-specified Service Account (SA) credentials to be used when
+    /// actuating resources.
+    /// Format: `projects/{projectID}/serviceAccounts/{serviceAccount}`
+    #[prost(string, optional, tag = "16")]
+    pub service_account: ::core::option::Option<::prost::alloc::string::String>,
+    /// By default, Infra Manager will return a failure when
+    /// Terraform encounters a 409 code (resource conflict error) during actuation.
+    /// If this flag is set to true, Infra Manager will instead
+    /// attempt to automatically import the resource into the Terraform state (for
+    /// supported resource types) and continue actuation.
+    ///
+    /// Not all resource types are supported, refer to documentation.
+    #[prost(bool, optional, tag = "17")]
+    pub import_existing_resources: ::core::option::Option<bool>,
+    /// Optional. The user-specified Cloud Build worker pool resource in which the
+    /// Cloud Build job will execute. Format:
+    /// `projects/{project}/locations/{location}/workerPools/{workerPoolId}`.
+    /// If this field is unspecified, the default Cloud Build worker pool will be
+    /// used.
+    #[prost(string, optional, tag = "19")]
+    pub worker_pool: ::core::option::Option<::prost::alloc::string::String>,
+    /// Output only. Current lock state of the deployment.
+    #[prost(enumeration = "deployment::LockState", tag = "20")]
+    pub lock_state: i32,
+    /// Optional. The user-specified Terraform version constraint.
+    /// Example: "=1.3.10".
+    #[prost(string, optional, tag = "21")]
+    pub tf_version_constraint: ::core::option::Option<::prost::alloc::string::String>,
+    /// Output only. The current Terraform version set on the deployment.
+    /// It is in the format of "Major.Minor.Patch", for example, "1.3.10".
+    #[prost(string, tag = "22")]
+    pub tf_version: ::prost::alloc::string::String,
+    /// Optional. Input to control quota checks for resources in terraform
+    /// configuration files. There are limited resources on which quota validation
+    /// applies.
+    #[prost(enumeration = "QuotaValidation", tag = "23")]
+    pub quota_validation: i32,
+    /// Optional. Arbitrary key-value metadata storage e.g. to help client tools
+    /// identify deployments during automation. See
+    /// <https://google.aip.dev/148#annotations> for details on format and size
+    /// limitations.
+    #[prost(map = "string, string", tag = "24")]
+    pub annotations:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Blueprint to deploy.
+    #[prost(oneof = "deployment::Blueprint", tags = "6")]
+    pub blueprint: ::core::option::Option<deployment::Blueprint>,
+}
+/// Nested message and enum types in `Deployment`.
+pub mod deployment {
+    /// Possible states of a deployment.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value is used if the state is omitted.
+        Unspecified = 0,
+        /// The deployment is being created.
+        Creating = 1,
+        /// The deployment is healthy.
+        Active = 2,
+        /// The deployment is being updated.
+        Updating = 3,
+        /// The deployment is being deleted.
+        Deleting = 4,
+        /// The deployment has encountered an unexpected error.
+        Failed = 5,
+        /// The deployment is no longer being actively reconciled.
+        /// This may be the result of recovering the project after deletion.
+        Suspended = 6,
+        /// The deployment has been deleted.
+        Deleted = 7,
+    }
+    /// Possible errors that can occur with deployments.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ErrorCode {
+        /// No error code was specified.
+        Unspecified = 0,
+        /// The revision failed. See Revision for more details.
+        RevisionFailed = 1,
+        /// Cloud Build failed due to a permission issue.
+        CloudBuildPermissionDenied = 3,
+        /// Cloud Build job associated with a deployment deletion could not be
+        /// started.
+        DeleteBuildApiFailed = 5,
+        /// Cloud Build job associated with a deployment deletion was started but
+        /// failed.
+        DeleteBuildRunFailed = 6,
+        /// Cloud Storage bucket creation failed due to a permission issue.
+        BucketCreationPermissionDenied = 7,
+        /// Cloud Storage bucket creation failed due to an issue unrelated to
+        /// permissions.
+        BucketCreationFailed = 8,
+    }
+    /// Possible lock states of a deployment.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum LockState {
+        /// The default value. This value is used if the lock state is omitted.
+        Unspecified = 0,
+        /// The deployment is locked.
+        Locked = 1,
+        /// The deployment is unlocked.
+        Unlocked = 2,
+        /// The deployment is being locked.
+        Locking = 3,
+        /// The deployment is being unlocked.
+        Unlocking = 4,
+        /// The deployment has failed to lock.
+        LockFailed = 5,
+        /// The deployment has failed to unlock.
+        UnlockFailed = 6,
+    }
+    /// Blueprint to deploy.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Blueprint {
+        /// A blueprint described using Terraform's HashiCorp Configuration Language
+        /// as a root module.
+        #[prost(message, tag = "6")]
+        TerraformBlueprint(super::TerraformBlueprint),
+    }
+}
+/// TerraformBlueprint describes the source of a Terraform root module which
+/// describes the resources and configs to be deployed.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TerraformBlueprint {
+    /// Input variable values for the Terraform blueprint.
+    #[prost(map = "string, message", tag = "4")]
+    pub input_values:
+        ::std::collections::HashMap<::prost::alloc::string::String, TerraformVariable>,
+    /// Location of the source configs.
+    #[prost(oneof = "terraform_blueprint::Source", tags = "1, 2")]
+    pub source: ::core::option::Option<terraform_blueprint::Source>,
+}
+/// Nested message and enum types in `TerraformBlueprint`.
+pub mod terraform_blueprint {
+    /// Location of the source configs.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Source {
+        /// Required. URI of an object in Google Cloud Storage.
+        /// Format: `gs://{bucket}/{object}`
+        ///
+        /// URI may also specify an object version for zipped objects.
+        /// Format: `gs://{bucket}/{object}#{version}`
+        #[prost(string, tag = "1")]
+        GcsSource(::prost::alloc::string::String),
+        /// Required. URI of a public Git repo.
+        #[prost(message, tag = "2")]
+        GitSource(super::GitSource),
+    }
+}
+/// A Terraform input variable.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TerraformVariable {
+    /// Input variable value.
+    #[prost(message, optional, tag = "5")]
+    pub input_value: ::core::option::Option<::prost_types::Value>,
+}
+/// Outputs and artifacts from applying a deployment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ApplyResults {
+    /// Location of a blueprint copy and other manifests in Google Cloud Storage.
+    /// Format: `gs://{bucket}/{object}`
+    #[prost(string, tag = "1")]
+    pub content: ::prost::alloc::string::String,
+    /// Location of artifacts (e.g. logs) in Google Cloud Storage.
+    /// Format: `gs://{bucket}/{object}`
+    #[prost(string, tag = "2")]
+    pub artifacts: ::prost::alloc::string::String,
+    /// Map of output name to output info.
+    #[prost(map = "string, message", tag = "3")]
+    pub outputs: ::std::collections::HashMap<::prost::alloc::string::String, TerraformOutput>,
+}
+/// Describes a Terraform output.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TerraformOutput {
+    /// Identifies whether Terraform has set this output as a potential
+    /// sensitive value.
+    #[prost(bool, tag = "1")]
+    pub sensitive: bool,
+    /// Value of output.
+    #[prost(message, optional, tag = "2")]
+    pub value: ::core::option::Option<::prost_types::Value>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDeploymentsRequest {
+    /// Required. The parent in whose context the Deployments are listed. The
+    /// parent value is in the format:
+    /// 'projects/{project_id}/locations/{location}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// When requesting a page of resources, 'page_size' specifies number of
+    /// resources to return. If unspecified, at most 500 will be returned. The
+    /// maximum value is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Token returned by previous call to 'ListDeployments' which specifies the
+    /// position in the list from where to continue listing the resources.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Lists the Deployments that match the filter expression. A filter
+    /// expression filters the resources listed in the response. The expression
+    /// must be of the form '{field} {operator} {value}' where operators: '<', '>',
+    /// '<=', '>=', '!=', '=', ':' are supported (colon ':' represents a HAS
+    /// operator which is roughly synonymous with equality). {field} can refer to a
+    /// proto or JSON field, or a synthetic field. Field names can be camelCase or
+    /// snake_case.
+    ///
+    /// Examples:
+    /// - Filter by name:
+    ///   name = "projects/foo/locations/us-central1/deployments/bar
+    ///
+    /// - Filter by labels:
+    ///   - Resources that have a key called 'foo'
+    ///     labels.foo:*
+    ///   - Resources that have a key called 'foo' whose value is 'bar'
+    ///     labels.foo = bar
+    ///
+    /// - Filter by state:
+    ///   - Deployments in CREATING state.
+    ///     state=CREATING
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Field to use to sort the list.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDeploymentsResponse {
+    /// List of \[Deployment][google.cloud.config.v1.Deployment\]s.
+    #[prost(message, repeated, tag = "1")]
+    pub deployments: ::prost::alloc::vec::Vec<Deployment>,
+    /// Token to be supplied to the next ListDeployments request via `page_token`
+    /// to obtain the next set of results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDeploymentRequest {
+    /// Required. The name of the deployment. Format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A request to list Revisions passed to a 'ListRevisions' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListRevisionsRequest {
+    /// Required. The parent in whose context the Revisions are listed. The parent
+    /// value is in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// When requesting a page of resources, `page_size` specifies number of
+    /// resources to return. If unspecified, at most 500 will be returned. The
+    /// maximum value is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Token returned by previous call to 'ListRevisions' which specifies the
+    /// position in the list from where to continue listing the resources.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Lists the Revisions that match the filter expression. A filter
+    /// expression filters the resources listed in the response. The expression
+    /// must be of the form '{field} {operator} {value}' where operators: '<', '>',
+    /// '<=', '>=', '!=', '=', ':' are supported (colon ':' represents a HAS
+    /// operator which is roughly synonymous with equality). {field} can refer to a
+    /// proto or JSON field, or a synthetic field. Field names can be camelCase or
+    /// snake_case.
+    ///
+    /// Examples:
+    /// - Filter by name:
+    ///   name = "projects/foo/locations/us-central1/deployments/dep/revisions/bar
+    ///
+    /// - Filter by labels:
+    ///   - Resources that have a key called 'foo'
+    ///     labels.foo:*
+    ///   - Resources that have a key called 'foo' whose value is 'bar'
+    ///     labels.foo = bar
+    ///
+    /// - Filter by state:
+    ///   - Revisions in CREATING state.
+    ///     state=CREATING
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Field to use to sort the list.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// A response to a 'ListRevisions' call. Contains a list of Revisions.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListRevisionsResponse {
+    /// List of \[Revision][google.cloud.config.v1.Revision\]s.
+    #[prost(message, repeated, tag = "1")]
+    pub revisions: ::prost::alloc::vec::Vec<Revision>,
+    /// A token to request the next page of resources from the 'ListRevisions'
+    /// method. The value of an empty string means that there are no more resources
+    /// to return.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// A request to get a Revision from a 'GetRevision' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetRevisionRequest {
+    /// Required. The name of the Revision in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}/revisions/{revision}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateDeploymentRequest {
+    /// Required. The parent in whose context the Deployment is created. The parent
+    /// value is in the format: 'projects/{project_id}/locations/{location}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The Deployment ID.
+    #[prost(string, tag = "2")]
+    pub deployment_id: ::prost::alloc::string::String,
+    /// Required. \[Deployment][google.cloud.config.v1.Deployment\] resource to be
+    /// created.
+    #[prost(message, optional, tag = "3")]
+    pub deployment: ::core::option::Option<Deployment>,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateDeploymentRequest {
+    /// Optional. Field mask used to specify the fields to be overwritten in the
+    /// Deployment resource by the update.
+    ///
+    /// The fields specified in the update_mask are relative to the resource, not
+    /// the full request. A field will be overwritten if it is in the mask. If the
+    /// user does not provide a mask then all fields will be overwritten.
+    #[prost(message, optional, tag = "1")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Required. \[Deployment][google.cloud.config.v1.Deployment\] to update.
+    ///
+    /// The deployment's `name` field is used to identify the resource to be
+    /// updated. Format:
+    /// `projects/{project}/locations/{location}/deployments/{deployment}`
+    #[prost(message, optional, tag = "2")]
+    pub deployment: ::core::option::Option<Deployment>,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "3")]
+    pub request_id: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteDeploymentRequest {
+    /// Required. The name of the Deployment in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes after the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+    /// Optional. If set to true, any revisions for this deployment will also be
+    /// deleted. (Otherwise, the request will only work if the deployment has no
+    /// revisions.)
+    #[prost(bool, tag = "3")]
+    pub force: bool,
+    /// Optional. Policy on how resources actuated by the deployment should be
+    /// deleted. If unspecified, the default behavior is to delete the underlying
+    /// resources.
+    #[prost(enumeration = "delete_deployment_request::DeletePolicy", tag = "4")]
+    pub delete_policy: i32,
+}
+/// Nested message and enum types in `DeleteDeploymentRequest`.
+pub mod delete_deployment_request {
+    /// Policy on how resources actuated by the deployment should be deleted.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DeletePolicy {
+        /// Unspecified policy, resources will be deleted.
+        Unspecified = 0,
+        /// Deletes resources actuated by the deployment.
+        Delete = 1,
+        /// Abandons resources and only deletes the deployment and its metadata.
+        Abandon = 2,
+    }
+}
+/// Represents the metadata of the long-running operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OperationMetadata {
+    /// Output only. Time when the operation was created.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Time when the operation finished running.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Server-defined resource path for the target of the operation.
+    #[prost(string, tag = "3")]
+    pub target: ::prost::alloc::string::String,
+    /// Output only. Name of the verb executed by the operation.
+    #[prost(string, tag = "4")]
+    pub verb: ::prost::alloc::string::String,
+    /// Output only. Human-readable status of the operation, if any.
+    #[prost(string, tag = "5")]
+    pub status_message: ::prost::alloc::string::String,
+    /// Output only. Identifies whether the user has requested cancellation of the
+    /// operation. Operations that have successfully been cancelled have
+    /// \[Operation.error][\] value with a
+    /// \[google.rpc.Status.code][google.rpc.Status.code\] of 1, corresponding to
+    /// `Code.CANCELLED`.
+    #[prost(bool, tag = "6")]
+    pub requested_cancellation: bool,
+    /// Output only. API version used to start the operation.
+    #[prost(string, tag = "7")]
+    pub api_version: ::prost::alloc::string::String,
+    /// Ephemeral metadata about the state of an operation for a particular
+    /// resource.
+    #[prost(oneof = "operation_metadata::ResourceMetadata", tags = "8, 9")]
+    pub resource_metadata: ::core::option::Option<operation_metadata::ResourceMetadata>,
+}
+/// Nested message and enum types in `OperationMetadata`.
+pub mod operation_metadata {
+    /// Ephemeral metadata about the state of an operation for a particular
+    /// resource.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ResourceMetadata {
+        /// Output only. Metadata about the deployment operation state.
+        #[prost(message, tag = "8")]
+        DeploymentMetadata(super::DeploymentOperationMetadata),
+        /// Output only. Metadata about the preview operation state.
+        #[prost(message, tag = "9")]
+        PreviewMetadata(super::PreviewOperationMetadata),
+    }
+}
+/// A child resource of a Deployment generated by a 'CreateDeployment' or
+/// 'UpdateDeployment' call. Each Revision contains metadata pertaining to a
+/// snapshot of a particular Deployment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Revision {
+    /// Revision name. Format:
+    /// `projects/{project}/locations/{location}/deployments/{deployment}/
+    /// revisions/{revision}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Time when the revision was created.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Time when the revision was last modified.
+    #[prost(message, optional, tag = "3")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The action which created this revision
+    #[prost(enumeration = "revision::Action", tag = "4")]
+    pub action: i32,
+    /// Output only. Current state of the revision.
+    #[prost(enumeration = "revision::State", tag = "5")]
+    pub state: i32,
+    /// Output only. Outputs and artifacts from applying a deployment.
+    #[prost(message, optional, tag = "7")]
+    pub apply_results: ::core::option::Option<ApplyResults>,
+    /// Output only. Additional info regarding the current state.
+    #[prost(string, tag = "8")]
+    pub state_detail: ::prost::alloc::string::String,
+    /// Output only. Code describing any errors that may have occurred.
+    #[prost(enumeration = "revision::ErrorCode", tag = "9")]
+    pub error_code: i32,
+    /// Output only. Cloud Build instance UUID associated with this revision.
+    #[prost(string, tag = "10")]
+    pub build: ::prost::alloc::string::String,
+    /// Output only. Location of Revision operation logs in
+    /// `gs://{bucket}/{object}` format.
+    #[prost(string, tag = "11")]
+    pub logs: ::prost::alloc::string::String,
+    /// Output only. Errors encountered when creating or updating this deployment.
+    /// Errors are truncated to 10 entries, see `delete_results` and `error_logs`
+    /// for full details.
+    #[prost(message, repeated, tag = "12")]
+    pub tf_errors: ::prost::alloc::vec::Vec<TerraformError>,
+    /// Output only. Location of Terraform error logs in Google Cloud Storage.
+    /// Format: `gs://{bucket}/{object}`.
+    #[prost(string, tag = "13")]
+    pub error_logs: ::prost::alloc::string::String,
+    /// Output only. User-specified Service Account (SA) to be used as credential
+    /// to manage resources. Format:
+    /// `projects/{projectID}/serviceAccounts/{serviceAccount}`
+    #[prost(string, tag = "14")]
+    pub service_account: ::prost::alloc::string::String,
+    /// Output only. By default, Infra Manager will return a failure when
+    /// Terraform encounters a 409 code (resource conflict error) during actuation.
+    /// If this flag is set to true, Infra Manager will instead
+    /// attempt to automatically import the resource into the Terraform state (for
+    /// supported resource types) and continue actuation.
+    ///
+    /// Not all resource types are supported, refer to documentation.
+    #[prost(bool, tag = "15")]
+    pub import_existing_resources: bool,
+    /// Output only. The user-specified Cloud Build worker pool resource in which
+    /// the Cloud Build job will execute. Format:
+    /// `projects/{project}/locations/{location}/workerPools/{workerPoolId}`.
+    /// If this field is unspecified, the default Cloud Build worker pool will be
+    /// used.
+    #[prost(string, tag = "17")]
+    pub worker_pool: ::prost::alloc::string::String,
+    /// Output only. The user-specified Terraform version constraint.
+    /// Example: "=1.3.10".
+    #[prost(string, tag = "18")]
+    pub tf_version_constraint: ::prost::alloc::string::String,
+    /// Output only. The version of Terraform used to create the Revision.
+    /// It is in the format of "Major.Minor.Patch", for example, "1.3.10".
+    #[prost(string, tag = "19")]
+    pub tf_version: ::prost::alloc::string::String,
+    /// Output only. Cloud Storage path containing quota validation results. This
+    /// field is set when a user sets Deployment.quota_validation field to ENABLED
+    /// or ENFORCED. Format: `gs://{bucket}/{object}`.
+    #[prost(string, tag = "29")]
+    pub quota_validation_results: ::prost::alloc::string::String,
+    /// Optional. Input to control quota checks for resources in terraform
+    /// configuration files. There are limited resources on which quota validation
+    /// applies.
+    #[prost(enumeration = "QuotaValidation", tag = "20")]
+    pub quota_validation: i32,
+    /// Blueprint that was deployed.
+    #[prost(oneof = "revision::Blueprint", tags = "6")]
+    pub blueprint: ::core::option::Option<revision::Blueprint>,
+}
+/// Nested message and enum types in `Revision`.
+pub mod revision {
+    /// Actions that generate a revision.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Action {
+        /// The default value. This value is used if the action is omitted.
+        Unspecified = 0,
+        /// The revision was generated by creating a deployment.
+        Create = 1,
+        /// The revision was generated by updating a deployment.
+        Update = 2,
+        /// The revision was deleted.
+        Delete = 3,
+    }
+    /// Possible states of a revision.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value is used if the state is omitted.
+        Unspecified = 0,
+        /// The revision is being applied.
+        Applying = 1,
+        /// The revision was applied successfully.
+        Applied = 2,
+        /// The revision could not be applied successfully.
+        Failed = 3,
+    }
+    /// Possible errors if Revision could not be created or updated successfully.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ErrorCode {
+        /// No error code was specified.
+        Unspecified = 0,
+        /// Cloud Build failed due to a permission issue.
+        CloudBuildPermissionDenied = 1,
+        /// Cloud Build job associated with creating or updating a deployment could
+        /// not be started.
+        ApplyBuildApiFailed = 4,
+        /// Cloud Build job associated with creating or updating a deployment was
+        /// started but failed.
+        ApplyBuildRunFailed = 5,
+        /// quota validation failed for one or more resources in terraform
+        /// configuration files.
+        QuotaValidationFailed = 7,
+    }
+    /// Blueprint that was deployed.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Blueprint {
+        /// Output only. A blueprint described using Terraform's HashiCorp
+        /// Configuration Language as a root module.
+        #[prost(message, tag = "6")]
+        TerraformBlueprint(super::TerraformBlueprint),
+    }
+}
+/// Errors encountered during actuation using Terraform
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TerraformError {
+    /// Address of the resource associated with the error,
+    /// e.g. `google_compute_network.vpc_network`.
+    #[prost(string, tag = "1")]
+    pub resource_address: ::prost::alloc::string::String,
+    /// HTTP response code returned from Google Cloud Platform APIs when Terraform
+    /// fails to provision the resource. If unset or 0, no HTTP response code was
+    /// returned by Terraform.
+    #[prost(int32, tag = "2")]
+    pub http_response_code: i32,
+    /// A human-readable error description.
+    #[prost(string, tag = "3")]
+    pub error_description: ::prost::alloc::string::String,
+    /// Original error response from underlying Google API, if available.
+    #[prost(message, optional, tag = "4")]
+    pub error: ::core::option::Option<super::super::super::rpc::Status>,
+}
+/// A set of files in a Git repository.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GitSource {
+    /// Optional. Repository URL.
+    /// Example: '<https://github.com/kubernetes/examples.git'>
+    #[prost(string, optional, tag = "1")]
+    pub repo: ::core::option::Option<::prost::alloc::string::String>,
+    /// Optional. Subdirectory inside the repository.
+    /// Example: 'staging/my-package'
+    #[prost(string, optional, tag = "2")]
+    pub directory: ::core::option::Option<::prost::alloc::string::String>,
+    /// Optional. Git reference (e.g. branch or tag).
+    #[prost(string, optional, tag = "3")]
+    pub r#ref: ::core::option::Option<::prost::alloc::string::String>,
+}
+/// Ephemeral metadata content describing the state of a deployment operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeploymentOperationMetadata {
+    /// The current step the deployment operation is running.
+    #[prost(
+        enumeration = "deployment_operation_metadata::DeploymentStep",
+        tag = "1"
+    )]
+    pub step: i32,
+    /// Outputs and artifacts from applying a deployment.
+    #[prost(message, optional, tag = "2")]
+    pub apply_results: ::core::option::Option<ApplyResults>,
+    /// Output only. Cloud Build instance UUID associated with this operation.
+    #[prost(string, tag = "3")]
+    pub build: ::prost::alloc::string::String,
+    /// Output only. Location of Deployment operations logs in
+    /// `gs://{bucket}/{object}` format.
+    #[prost(string, tag = "4")]
+    pub logs: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `DeploymentOperationMetadata`.
+pub mod deployment_operation_metadata {
+    /// The possible steps a deployment may be running.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DeploymentStep {
+        /// Unspecified deployment step
+        Unspecified = 0,
+        /// Infra Manager is creating a Google Cloud Storage bucket to store
+        /// artifacts and metadata about the deployment and revision
+        PreparingStorageBucket = 1,
+        /// Downloading the blueprint onto the Google Cloud Storage bucket
+        DownloadingBlueprint = 2,
+        /// Initializing Terraform using `terraform init`
+        RunningTfInit = 3,
+        /// Running `terraform plan`
+        RunningTfPlan = 4,
+        /// Actuating resources using Terraform using `terraform apply`
+        RunningTfApply = 5,
+        /// Destroying resources using Terraform using `terraform destroy`
+        RunningTfDestroy = 6,
+        /// Validating the uploaded TF state file when unlocking a deployment
+        RunningTfValidate = 7,
+        /// Unlocking a deployment
+        UnlockingDeployment = 8,
+        /// Operation was successful
+        Succeeded = 9,
+        /// Operation failed
+        Failed = 10,
+        /// Validating the provided repository.
+        ValidatingRepository = 11,
+        /// Running quota validation
+        RunningQuotaValidation = 12,
+    }
+}
+/// Resource represents a Google Cloud Platform resource actuated by IM.
+/// Resources are child resources of Revisions.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Resource {
+    /// Output only. Resource name.
+    /// Format:
+    /// `projects/{project}/locations/{location}/deployments/{deployment}/revisions/{revision}/resources/{resource}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Terraform-specific info if this resource was created using
+    /// Terraform.
+    #[prost(message, optional, tag = "2")]
+    pub terraform_info: ::core::option::Option<ResourceTerraformInfo>,
+    /// Output only. Map of Cloud Asset Inventory (CAI) type to CAI info (e.g. CAI
+    /// ID). CAI type format follows
+    /// <https://cloud.google.com/asset-inventory/docs/supported-asset-types>
+    #[prost(map = "string, message", tag = "3")]
+    pub cai_assets: ::std::collections::HashMap<::prost::alloc::string::String, ResourceCaiInfo>,
+    /// Output only. Intent of the resource.
+    #[prost(enumeration = "resource::Intent", tag = "4")]
+    pub intent: i32,
+    /// Output only. Current state of the resource.
+    #[prost(enumeration = "resource::State", tag = "5")]
+    pub state: i32,
+}
+/// Nested message and enum types in `Resource`.
+pub mod resource {
+    /// Possible intent of the resource.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Intent {
+        /// The default value. This value is used if the intent is omitted.
+        Unspecified = 0,
+        /// Infra Manager will create this Resource.
+        Create = 1,
+        /// Infra Manager will update this Resource.
+        Update = 2,
+        /// Infra Manager will delete this Resource.
+        Delete = 3,
+        /// Infra Manager will destroy and recreate this Resource.
+        Recreate = 4,
+        /// Infra Manager will leave this Resource untouched.
+        Unchanged = 5,
+    }
+    /// Possible states of a resource.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value is used if the state is omitted.
+        Unspecified = 0,
+        /// Resource has been planned for reconcile.
+        Planned = 1,
+        /// Resource is actively reconciling into the intended state.
+        InProgress = 2,
+        /// Resource has reconciled to intended state.
+        Reconciled = 3,
+        /// Resource failed to reconcile.
+        Failed = 4,
+    }
+}
+/// Terraform info of a Resource.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourceTerraformInfo {
+    /// TF resource address that uniquely identifies this resource within this
+    /// deployment.
+    #[prost(string, tag = "1")]
+    pub address: ::prost::alloc::string::String,
+    /// TF resource type
+    #[prost(string, tag = "2")]
+    pub r#type: ::prost::alloc::string::String,
+    /// ID attribute of the TF resource
+    #[prost(string, tag = "3")]
+    pub id: ::prost::alloc::string::String,
+}
+/// CAI info of a Resource.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResourceCaiInfo {
+    /// CAI resource name in the format following
+    /// <https://cloud.google.com/apis/design/resource_names#full_resource_name>
+    #[prost(string, tag = "1")]
+    pub full_resource_name: ::prost::alloc::string::String,
+}
+/// A request to get a Resource from a 'GetResource' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetResourceRequest {
+    /// Required. The name of the Resource in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}/revisions/{revision}/resource/{resource}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A request to list Resources passed to a 'ListResources' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListResourcesRequest {
+    /// Required. The parent in whose context the Resources are listed. The parent
+    /// value is in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}/revisions/{revision}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// When requesting a page of resources, 'page_size' specifies number of
+    /// resources to return. If unspecified, at most 500 will be returned. The
+    /// maximum value is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Token returned by previous call to 'ListResources' which specifies the
+    /// position in the list from where to continue listing the resources.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Lists the Resources that match the filter expression. A filter
+    /// expression filters the resources listed in the response. The expression
+    /// must be of the form '{field} {operator} {value}' where operators: '<', '>',
+    /// '<=',
+    /// '>=',
+    /// '!=', '=', ':' are supported (colon ':' represents a HAS operator which is
+    /// roughly synonymous with equality). {field} can refer to a proto or JSON
+    /// field, or a synthetic field. Field names can be camelCase or snake_case.
+    ///
+    /// Examples:
+    /// - Filter by name:
+    ///   name =
+    ///   "projects/foo/locations/us-central1/deployments/dep/revisions/bar/resources/baz
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Field to use to sort the list.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// A response to a 'ListResources' call. Contains a list of Resources.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListResourcesResponse {
+    /// List of \[Resources][\]s.
+    #[prost(message, repeated, tag = "1")]
+    pub resources: ::prost::alloc::vec::Vec<Resource>,
+    /// A token to request the next page of resources from the 'ListResources'
+    /// method. The value of an empty string means that there are no more resources
+    /// to return.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Contains info about a Terraform state file
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Statefile {
+    /// Output only. Cloud Storage signed URI used for downloading or uploading the
+    /// state file.
+    #[prost(string, tag = "1")]
+    pub signed_uri: ::prost::alloc::string::String,
+}
+/// A request to export a state file passed to a 'ExportDeploymentStatefile'
+/// call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportDeploymentStatefileRequest {
+    /// Required. The parent in whose context the statefile is listed. The parent
+    /// value is in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. If this flag is set to true, the exported deployment state file
+    /// will be the draft state. This will enable the draft file to be validated
+    /// before copying it over to the working state on unlock.
+    #[prost(bool, tag = "3")]
+    pub draft: bool,
+}
+/// A request to export a state file passed to a 'ExportRevisionStatefile'
+/// call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportRevisionStatefileRequest {
+    /// Required. The parent in whose context the statefile is listed. The parent
+    /// value is in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}/revisions/{revision}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+}
+/// A request to import a state file passed to a 'ImportStatefile' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportStatefileRequest {
+    /// Required. The parent in whose context the statefile is listed. The parent
+    /// value is in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. Lock ID of the lock file to verify that the user who is importing
+    /// the state file previously locked the Deployment.
+    #[prost(int64, tag = "2")]
+    pub lock_id: i64,
+    /// Optional.
+    #[prost(bool, tag = "3")]
+    pub skip_draft: bool,
+}
+/// A request to delete a state file passed to a 'DeleteStatefile' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteStatefileRequest {
+    /// Required. The name of the deployment in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Lock ID of the lock file to verify that the user who is deleting
+    /// the state file previously locked the Deployment.
+    #[prost(int64, tag = "2")]
+    pub lock_id: i64,
+}
+/// A request to lock a deployment passed to a 'LockDeployment' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LockDeploymentRequest {
+    /// Required. The name of the deployment in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A request to unlock a state file passed to a 'UnlockDeployment' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UnlockDeploymentRequest {
+    /// Required. The name of the deployment in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Lock ID of the lock file to be unlocked.
+    #[prost(int64, tag = "2")]
+    pub lock_id: i64,
+}
+/// A request to get a state file lock info passed to a 'ExportLockInfo' call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportLockInfoRequest {
+    /// Required. The name of the deployment in the format:
+    /// 'projects/{project_id}/locations/{location}/deployments/{deployment}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Details about the lock which locked the deployment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LockInfo {
+    /// Unique ID for the lock to be overridden with generation ID in the backend.
+    #[prost(int64, tag = "1")]
+    pub lock_id: i64,
+    /// Terraform operation, provided by the caller.
+    #[prost(string, tag = "2")]
+    pub operation: ::prost::alloc::string::String,
+    /// Extra information to store with the lock, provided by the caller.
+    #[prost(string, tag = "3")]
+    pub info: ::prost::alloc::string::String,
+    /// user@hostname when available
+    #[prost(string, tag = "4")]
+    pub who: ::prost::alloc::string::String,
+    /// Terraform version
+    #[prost(string, tag = "5")]
+    pub version: ::prost::alloc::string::String,
+    /// Time that the lock was taken.
+    #[prost(message, optional, tag = "6")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// A preview represents a set of actions Infra Manager would perform
+/// to move the resources towards the desired state as specified in the
+/// configuration.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Preview {
+    /// Identifier. Resource name of the preview. Resource name can be user
+    /// provided or server generated ID if unspecified. Format:
+    /// `projects/{project}/locations/{location}/previews/{preview}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Time the preview was created.
+    #[prost(message, optional, tag = "2")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Optional. User-defined labels for the preview.
+    #[prost(map = "string, string", tag = "3")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Current state of the preview.
+    #[prost(enumeration = "preview::State", tag = "4")]
+    pub state: i32,
+    /// Optional. Optional deployment reference. If specified, the preview will be
+    /// performed using the provided deployment's current state and use any
+    /// relevant fields from the deployment unless explicitly specified in the
+    /// preview create request.
+    #[prost(string, tag = "5")]
+    pub deployment: ::prost::alloc::string::String,
+    /// Optional. Current mode of preview.
+    #[prost(enumeration = "preview::PreviewMode", tag = "15")]
+    pub preview_mode: i32,
+    /// Optional. User-specified Service Account (SA) credentials to be used when
+    /// previewing resources.
+    /// Format: `projects/{projectID}/serviceAccounts/{serviceAccount}`
+    #[prost(string, tag = "7")]
+    pub service_account: ::prost::alloc::string::String,
+    /// Optional. User-defined location of Cloud Build logs, artifacts, and
+    /// in Google Cloud Storage.
+    /// Format: `gs://{bucket}/{folder}`
+    /// A default bucket will be bootstrapped if the field is not set or empty
+    /// Default Bucket Format: `gs://<project number>-<region>-blueprint-config`
+    /// Constraints:
+    /// - The bucket needs to be in the same project as the deployment
+    /// - The path cannot be within the path of `gcs_source`
+    /// If omitted and deployment resource ref provided has artifacts_gcs_bucket
+    /// defined, that artifact bucket is used.
+    #[prost(string, optional, tag = "8")]
+    pub artifacts_gcs_bucket: ::core::option::Option<::prost::alloc::string::String>,
+    /// Optional. The user-specified Worker Pool resource in which the Cloud Build
+    /// job will execute. Format
+    /// projects/{project}/locations/{location}/workerPools/{workerPoolId} If this
+    /// field is unspecified, the default Cloud Build worker pool will be used. If
+    /// omitted and deployment resource ref provided has worker_pool defined, that
+    /// worker pool is used.
+    #[prost(string, optional, tag = "9")]
+    pub worker_pool: ::core::option::Option<::prost::alloc::string::String>,
+    /// Output only. Code describing any errors that may have occurred.
+    #[prost(enumeration = "preview::ErrorCode", tag = "10")]
+    pub error_code: i32,
+    /// Output only. Additional information regarding the current state.
+    #[prost(message, optional, tag = "11")]
+    pub error_status: ::core::option::Option<super::super::super::rpc::Status>,
+    /// Output only. Cloud Build instance UUID associated with this preview.
+    #[prost(string, tag = "12")]
+    pub build: ::prost::alloc::string::String,
+    /// Output only. Summary of errors encountered during Terraform preview.
+    /// It has a size limit of 10, i.e. only top 10 errors will be summarized here.
+    #[prost(message, repeated, tag = "13")]
+    pub tf_errors: ::prost::alloc::vec::Vec<TerraformError>,
+    /// Output only. Link to tf-error.ndjson file, which contains the full list of
+    /// the errors encountered during a Terraform preview.
+    /// Format: `gs://{bucket}/{object}`.
+    #[prost(string, tag = "14")]
+    pub error_logs: ::prost::alloc::string::String,
+    /// Output only. Artifacts from preview.
+    #[prost(message, optional, tag = "16")]
+    pub preview_artifacts: ::core::option::Option<PreviewArtifacts>,
+    /// Output only. Location of preview logs in `gs://{bucket}/{object}` format.
+    #[prost(string, tag = "17")]
+    pub logs: ::prost::alloc::string::String,
+    /// Output only. The current Terraform version set on the preview.
+    /// It is in the format of "Major.Minor.Patch", for example, "1.3.10".
+    #[prost(string, tag = "18")]
+    pub tf_version: ::prost::alloc::string::String,
+    /// Optional. The user-specified Terraform version constraint.
+    /// Example: "=1.3.10".
+    #[prost(string, optional, tag = "19")]
+    pub tf_version_constraint: ::core::option::Option<::prost::alloc::string::String>,
+    /// Blueprint to preview.
+    #[prost(oneof = "preview::Blueprint", tags = "6")]
+    pub blueprint: ::core::option::Option<preview::Blueprint>,
+}
+/// Nested message and enum types in `Preview`.
+pub mod preview {
+    /// Possible states of a preview.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value is used if the state is unknown.
+        Unspecified = 0,
+        /// The preview is being created.
+        Creating = 1,
+        /// The preview has succeeded.
+        Succeeded = 2,
+        /// The preview is being applied.
+        Applying = 3,
+        /// The preview is stale. A preview can become stale if a revision has been
+        /// applied after this preview was created.
+        Stale = 4,
+        /// The preview is being deleted.
+        Deleting = 5,
+        /// The preview has encountered an unexpected error.
+        Failed = 6,
+        /// The preview has been deleted.
+        Deleted = 7,
+    }
+    /// Preview mode provides options for customizing preview operations.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum PreviewMode {
+        /// Unspecified policy, default mode will be used.
+        Unspecified = 0,
+        /// DEFAULT mode generates an execution plan for reconciling current resource
+        /// state into expected resource state.
+        Default = 1,
+        /// DELETE mode generates as execution plan for destroying current resources.
+        Delete = 2,
+    }
+    /// Possible errors that can occur with previews.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ErrorCode {
+        /// No error code was specified.
+        Unspecified = 0,
+        /// Cloud Build failed due to a permissions issue.
+        CloudBuildPermissionDenied = 1,
+        /// Cloud Storage bucket failed to create due to a permissions issue.
+        BucketCreationPermissionDenied = 2,
+        /// Cloud Storage bucket failed for a non-permissions-related issue.
+        BucketCreationFailed = 3,
+        /// Acquiring lock on provided deployment reference failed.
+        DeploymentLockAcquireFailed = 4,
+        /// Preview encountered an error when trying to access Cloud Build API.
+        PreviewBuildApiFailed = 5,
+        /// Preview created a build but build failed and logs were generated.
+        PreviewBuildRunFailed = 6,
+    }
+    /// Blueprint to preview.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Blueprint {
+        /// The terraform blueprint to preview.
+        #[prost(message, tag = "6")]
+        TerraformBlueprint(super::TerraformBlueprint),
+    }
+}
+/// Ephemeral metadata content describing the state of a preview operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PreviewOperationMetadata {
+    /// The current step the preview operation is running.
+    #[prost(enumeration = "preview_operation_metadata::PreviewStep", tag = "1")]
+    pub step: i32,
+    /// Artifacts from preview.
+    #[prost(message, optional, tag = "2")]
+    pub preview_artifacts: ::core::option::Option<PreviewArtifacts>,
+    /// Output only. Location of preview logs in `gs://{bucket}/{object}` format.
+    #[prost(string, tag = "3")]
+    pub logs: ::prost::alloc::string::String,
+    /// Output only. Cloud Build instance UUID associated with this preview.
+    #[prost(string, tag = "4")]
+    pub build: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `PreviewOperationMetadata`.
+pub mod preview_operation_metadata {
+    /// The possible steps a preview may be running.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum PreviewStep {
+        /// Unspecified preview step.
+        Unspecified = 0,
+        /// Infra Manager is creating a Google Cloud Storage bucket to store
+        /// artifacts and metadata about the preview.
+        PreparingStorageBucket = 1,
+        /// Downloading the blueprint onto the Google Cloud Storage bucket.
+        DownloadingBlueprint = 2,
+        /// Initializing Terraform using `terraform init`.
+        RunningTfInit = 3,
+        /// Running `terraform plan`.
+        RunningTfPlan = 4,
+        /// Fetching a deployment.
+        FetchingDeployment = 5,
+        /// Locking a deployment.
+        LockingDeployment = 6,
+        /// Unlocking a deployment.
+        UnlockingDeployment = 7,
+        /// Operation was successful.
+        Succeeded = 8,
+        /// Operation failed.
+        Failed = 9,
+        /// Validating the provided repository.
+        ValidatingRepository = 10,
+    }
+}
+/// Artifacts created by preview.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PreviewArtifacts {
+    /// Output only. Location of a blueprint copy and other content in Google Cloud
+    /// Storage. Format: `gs://{bucket}/{object}`
+    #[prost(string, tag = "1")]
+    pub content: ::prost::alloc::string::String,
+    /// Output only. Location of artifacts in Google Cloud Storage.
+    /// Format: `gs://{bucket}/{object}`
+    #[prost(string, tag = "2")]
+    pub artifacts: ::prost::alloc::string::String,
+}
+/// A request to create a preview.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreatePreviewRequest {
+    /// Required. The parent in whose context the Preview is created. The parent
+    /// value is in the format: 'projects/{project_id}/locations/{location}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The preview ID.
+    #[prost(string, tag = "2")]
+    pub preview_id: ::prost::alloc::string::String,
+    /// Required. \[Preview][google.cloud.config.v1.Preview\] resource to be created.
+    #[prost(message, optional, tag = "3")]
+    pub preview: ::core::option::Option<Preview>,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes since the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// A request to get details about a preview.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetPreviewRequest {
+    /// Required. The name of the preview. Format:
+    /// 'projects/{project_id}/locations/{location}/previews/{preview}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A request to list all previews for a given project and location.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListPreviewsRequest {
+    /// Required. The parent in whose context the Previews are listed. The parent
+    /// value is in the format: 'projects/{project_id}/locations/{location}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. When requesting a page of resources, 'page_size' specifies number
+    /// of resources to return. If unspecified, at most 500 will be returned. The
+    /// maximum value is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. Token returned by previous call to 'ListDeployments' which
+    /// specifies the position in the list from where to continue listing the
+    /// resources.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. Lists the Deployments that match the filter expression. A filter
+    /// expression filters the resources listed in the response. The expression
+    /// must be of the form '{field} {operator} {value}' where operators: '<', '>',
+    /// '<=', '>=', '!=', '=', ':' are supported (colon ':' represents a HAS
+    /// operator which is roughly synonymous with equality). {field} can refer to a
+    /// proto or JSON field, or a synthetic field. Field names can be camelCase or
+    /// snake_case.
+    ///
+    /// Examples:
+    /// - Filter by name:
+    ///   name = "projects/foo/locations/us-central1/deployments/bar
+    ///
+    /// - Filter by labels:
+    ///   - Resources that have a key called 'foo'
+    ///     labels.foo:*
+    ///   - Resources that have a key called 'foo' whose value is 'bar'
+    ///     labels.foo = bar
+    ///
+    /// - Filter by state:
+    ///   - Deployments in CREATING state.
+    ///     state=CREATING
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Optional. Field to use to sort the list.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// A response to a `ListPreviews` call. Contains a list of Previews.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListPreviewsResponse {
+    /// List of \[Previews][\]s.
+    #[prost(message, repeated, tag = "1")]
+    pub previews: ::prost::alloc::vec::Vec<Preview>,
+    /// Token to be supplied to the next ListPreviews request via `page_token`
+    /// to obtain the next set of results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Locations that could not be reached.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// A request to delete a preview.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeletePreviewRequest {
+    /// Required. The name of the Preview in the format:
+    /// 'projects/{project_id}/locations/{location}/previews/{preview}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. An optional request ID to identify requests. Specify a unique
+    /// request ID so that if you must retry your request, the server will know to
+    /// ignore the request if it has already been completed. The server will
+    /// guarantee that for at least 60 minutes after the first request.
+    ///
+    /// For example, consider a situation where you make an initial request and the
+    /// request times out. If you make the request again with the same request ID,
+    /// the server can check if original operation with the same request ID was
+    /// received, and if so, will ignore the second request. This prevents clients
+    /// from accidentally creating duplicate commitments.
+    ///
+    /// The request ID must be a valid UUID with the exception that zero UUID is
+    /// not supported (00000000-0000-0000-0000-000000000000).
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// A request to export preview results.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportPreviewResultRequest {
+    /// Required. The preview whose results should be exported. The preview value
+    /// is in the format:
+    /// 'projects/{project_id}/locations/{location}/previews/{preview}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+}
+/// A response to `ExportPreviewResult` call. Contains preview results.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportPreviewResultResponse {
+    /// Output only. Signed URLs for accessing the plan files.
+    #[prost(message, optional, tag = "1")]
+    pub result: ::core::option::Option<PreviewResult>,
+}
+/// Contains a signed Cloud Storage URLs.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PreviewResult {
+    /// Output only. Plan binary signed URL
+    #[prost(string, tag = "1")]
+    pub binary_signed_uri: ::prost::alloc::string::String,
+    /// Output only. Plan JSON signed URL
+    #[prost(string, tag = "2")]
+    pub json_signed_uri: ::prost::alloc::string::String,
+}
+/// The request message for the GetTerraformVersion method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetTerraformVersionRequest {
+    /// Required. The name of the TerraformVersion. Format:
+    /// 'projects/{project_id}/locations/{location}/terraformVersions/{terraform_version}'
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// The request message for the ListTerraformVersions method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListTerraformVersionsRequest {
+    /// Required. The parent in whose context the TerraformVersions are listed. The
+    /// parent value is in the format:
+    /// 'projects/{project_id}/locations/{location}'.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. When requesting a page of resources, 'page_size' specifies number
+    /// of resources to return. If unspecified, at most 500 will be returned. The
+    /// maximum value is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. Token returned by previous call to 'ListTerraformVersions' which
+    /// specifies the position in the list from where to continue listing the
+    /// resources.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. Lists the TerraformVersions that match the filter expression. A
+    /// filter expression filters the resources listed in the response. The
+    /// expression must be of the form '{field} {operator} {value}' where
+    /// operators: '<', '>',
+    /// '<=', '>=', '!=', '=', ':' are supported (colon ':' represents a HAS
+    /// operator which is roughly synonymous with equality). {field} can refer to a
+    /// proto or JSON field, or a synthetic field. Field names can be camelCase or
+    /// snake_case.
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+    /// Optional. Field to use to sort the list.
+    #[prost(string, tag = "5")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// The response message for the `ListTerraformVersions` method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListTerraformVersionsResponse {
+    /// List of \[TerraformVersion][google.cloud.config.v1.TerraformVersion\]s.
+    #[prost(message, repeated, tag = "1")]
+    pub terraform_versions: ::prost::alloc::vec::Vec<TerraformVersion>,
+    /// Token to be supplied to the next ListTerraformVersions request via
+    /// `page_token` to obtain the next set of results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Unreachable resources, if any.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// A TerraformVersion represents the support state the corresponding
+/// Terraform version.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TerraformVersion {
+    /// Identifier. The version name is in the format:
+    /// 'projects/{project_id}/locations/{location}/terraformVersions/{terraform_version}'.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. The state of the version, ACTIVE, DEPRECATED or OBSOLETE.
+    #[prost(enumeration = "terraform_version::State", tag = "2")]
+    pub state: i32,
+    /// Output only. When the version is supported.
+    #[prost(message, optional, tag = "3")]
+    pub support_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. When the version is deprecated.
+    #[prost(message, optional, tag = "4")]
+    pub deprecate_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. When the version is obsolete.
+    #[prost(message, optional, tag = "5")]
+    pub obsolete_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `TerraformVersion`.
+pub mod terraform_version {
+    /// Possible states of a TerraformVersion.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The default value. This value is used if the state is omitted.
+        Unspecified = 0,
+        /// The version is actively supported.
+        Active = 1,
+        /// The version is deprecated.
+        Deprecated = 2,
+        /// The version is obsolete.
+        Obsolete = 3,
+    }
+}
+/// Enum values to control quota checks for resources in terraform
+/// configuration files.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum QuotaValidation {
+    /// The default value.
+    /// QuotaValidation on terraform configuration files will be disabled in
+    /// this case.
+    Unspecified = 0,
+    /// Enable computing quotas for resources in terraform configuration files to
+    /// get visibility on resources with insufficient quotas.
+    Enabled = 1,
+    /// Enforce quota checks so deployment fails if there isn't sufficient quotas
+    /// available to deploy resources in terraform configuration files.
+    Enforced = 2,
+}
+#[doc = r" Generated client implementations."]
+pub mod config_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Infrastructure Manager is a managed service that automates the deployment and"]
+    #[doc = " management of Google Cloud infrastructure resources."]
+    #[derive(Debug, Clone)]
+    pub struct ConfigClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> ConfigClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ConfigClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ConfigClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Lists [Deployment][google.cloud.config.v1.Deployment]s in a given project"]
+        #[doc = " and location."]
+        pub async fn list_deployments(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListDeploymentsRequest>,
+        ) -> Result<tonic::Response<super::ListDeploymentsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ListDeployments",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details about a [Deployment][google.cloud.config.v1.Deployment]."]
+        pub async fn get_deployment(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDeploymentRequest>,
+        ) -> Result<tonic::Response<super::Deployment>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/GetDeployment",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a [Deployment][google.cloud.config.v1.Deployment]."]
+        pub async fn create_deployment(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateDeploymentRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/CreateDeployment",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a [Deployment][google.cloud.config.v1.Deployment]."]
+        pub async fn update_deployment(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateDeploymentRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/UpdateDeployment",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a [Deployment][google.cloud.config.v1.Deployment]."]
+        pub async fn delete_deployment(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteDeploymentRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/DeleteDeployment",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists [Revision][google.cloud.config.v1.Revision]s of a deployment."]
+        pub async fn list_revisions(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListRevisionsRequest>,
+        ) -> Result<tonic::Response<super::ListRevisionsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ListRevisions",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details about a [Revision][google.cloud.config.v1.Revision]."]
+        pub async fn get_revision(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetRevisionRequest>,
+        ) -> Result<tonic::Response<super::Revision>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.cloud.config.v1.Config/GetRevision");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details about a [Resource][google.cloud.config.v1.Resource] deployed"]
+        #[doc = " by Infra Manager."]
+        pub async fn get_resource(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetResourceRequest>,
+        ) -> Result<tonic::Response<super::Resource>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.cloud.config.v1.Config/GetResource");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists [Resource][google.cloud.config.v1.Resource]s in a given revision."]
+        pub async fn list_resources(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListResourcesRequest>,
+        ) -> Result<tonic::Response<super::ListResourcesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ListResources",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Exports Terraform state file from a given deployment."]
+        pub async fn export_deployment_statefile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ExportDeploymentStatefileRequest>,
+        ) -> Result<tonic::Response<super::Statefile>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ExportDeploymentStatefile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Exports Terraform state file from a given revision."]
+        pub async fn export_revision_statefile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ExportRevisionStatefileRequest>,
+        ) -> Result<tonic::Response<super::Statefile>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ExportRevisionStatefile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Imports Terraform state file in a given deployment. The state file does not"]
+        #[doc = " take effect until the Deployment has been unlocked."]
+        pub async fn import_statefile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ImportStatefileRequest>,
+        ) -> Result<tonic::Response<super::Statefile>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ImportStatefile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes Terraform state file in a given deployment."]
+        pub async fn delete_statefile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteStatefileRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/DeleteStatefile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Locks a deployment."]
+        pub async fn lock_deployment(
+            &mut self,
+            request: impl tonic::IntoRequest<super::LockDeploymentRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/LockDeployment",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Unlocks a locked deployment."]
+        pub async fn unlock_deployment(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UnlockDeploymentRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/UnlockDeployment",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Exports the lock info on a locked deployment."]
+        pub async fn export_lock_info(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ExportLockInfoRequest>,
+        ) -> Result<tonic::Response<super::LockInfo>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ExportLockInfo",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a [Preview][google.cloud.config.v1.Preview]."]
+        pub async fn create_preview(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreatePreviewRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/CreatePreview",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details about a [Preview][google.cloud.config.v1.Preview]."]
+        pub async fn get_preview(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetPreviewRequest>,
+        ) -> Result<tonic::Response<super::Preview>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.cloud.config.v1.Config/GetPreview");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists [Preview][google.cloud.config.v1.Preview]s in a given project and"]
+        #[doc = " location."]
+        pub async fn list_previews(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListPreviewsRequest>,
+        ) -> Result<tonic::Response<super::ListPreviewsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/google.cloud.config.v1.Config/ListPreviews");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a [Preview][google.cloud.config.v1.Preview]."]
+        pub async fn delete_preview(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeletePreviewRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/DeletePreview",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Export [Preview][google.cloud.config.v1.Preview] results."]
+        pub async fn export_preview_result(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ExportPreviewResultRequest>,
+        ) -> Result<tonic::Response<super::ExportPreviewResultResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ExportPreviewResult",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists [TerraformVersion][google.cloud.config.v1.TerraformVersion]s in a"]
+        #[doc = " given project and location."]
+        pub async fn list_terraform_versions(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListTerraformVersionsRequest>,
+        ) -> Result<tonic::Response<super::ListTerraformVersionsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/ListTerraformVersions",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets details about a"]
+        #[doc = " [TerraformVersion][google.cloud.config.v1.TerraformVersion]."]
+        pub async fn get_terraform_version(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetTerraformVersionRequest>,
+        ) -> Result<tonic::Response<super::TerraformVersion>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.config.v1.Config/GetTerraformVersion",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}

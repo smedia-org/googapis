@@ -1,4 +1,4 @@
-/// The short version of cluster configuration for Cloud logging.
+/// The short version of cluster configuration for Cloud Logging.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ClusterSize {
     /// The number of primary workers in the cluster.
@@ -49,7 +49,7 @@ pub struct AutoscalerRecommendation {
 }
 /// Nested message and enum types in `AutoscalerRecommendation`.
 pub mod autoscaler_recommendation {
-    /// The input values for the Autoscaling recommendation alogirthm.
+    /// The input values for the Autoscaling recommendation algorithm.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Inputs {
         /// The metrics collected by the Dataproc agent running on the cluster.
@@ -94,6 +94,9 @@ pub mod autoscaler_recommendation {
         /// a support ticket.
         #[prost(string, tag = "6")]
         pub recommendation_id: ::prost::alloc::string::String,
+        /// The metric source deciding the autoscaling recommendation.
+        #[prost(enumeration = "super::MetricType", tag = "7")]
+        pub decision_metric: i32,
     }
 }
 /// The Autoscaler state.
@@ -128,6 +131,10 @@ pub enum ScalingDecisionType {
     NoScale = 3,
     /// Scale the primary and secondary worker groups in different directions.
     Mixed = 4,
+    /// Cancel the ongoing scale down operation.
+    Cancel = 5,
+    /// Do not cancel the ongoing scale down operation.
+    DoNotCancel = 6,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -144,4 +151,89 @@ pub enum ConstrainingFactor {
     /// issued if workers were able to be removed from another group that had not
     /// reached minimum size.
     ReachedMinimumClusterSize = 3,
+    /// The secondary worker group cannot be scaled down by more than 1k nodes in a
+    /// single update request.
+    SecondaryScaledownSingleRequestLimitReached = 4,
+}
+/// The kind of metric input to the Autoscaling algorithm.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum MetricType {
+    /// Default.
+    Unspecified = 0,
+    /// The yarn memory metric.
+    YarnMemory = 1,
+    /// The yarn cores or vCPUs metric.
+    YarnCores = 2,
+    /// The number of executors in Spark serverless.
+    SparkExecutors = 3,
+}
+/// Reconciliation log for session ttl event.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReconciliationLog {
+    /// The reconciliation algorithm inputs.
+    #[prost(message, optional, tag = "1")]
+    pub inputs: ::core::option::Option<reconciliation_log::Inputs>,
+    /// The algorithm outputs for the recommended reconciliation operation.
+    #[prost(message, optional, tag = "2")]
+    pub outputs: ::core::option::Option<reconciliation_log::Outputs>,
+}
+/// Nested message and enum types in `ReconciliationLog`.
+pub mod reconciliation_log {
+    /// The input values for the Reconciler recommendation algorithm.
+    /// We could add more details in future if required.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Inputs {
+        /// Idle duration
+        #[prost(message, optional, tag = "1")]
+        pub idle_duration: ::core::option::Option<::prost_types::Duration>,
+        /// Configured idle TTL
+        #[prost(message, optional, tag = "2")]
+        pub idle_ttl: ::core::option::Option<::prost_types::Duration>,
+        /// Total session lifetime
+        #[prost(message, optional, tag = "3")]
+        pub session_lifetime: ::core::option::Option<::prost_types::Duration>,
+        /// Configured ttl
+        #[prost(message, optional, tag = "4")]
+        pub ttl: ::core::option::Option<::prost_types::Duration>,
+    }
+    /// Reconciler recommendations.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Outputs {
+        /// The high-level reconciliation decision.
+        #[prost(enumeration = "super::ReconciliationDecisionType", tag = "1")]
+        pub decision: i32,
+        /// Human readable context messages which explain the reconciler decision.
+        #[prost(string, tag = "2")]
+        pub decision_details: ::prost::alloc::string::String,
+    }
+}
+/// Reconciliation log for cluster heal event.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ReconciliationClusterHealLog {
+    /// The algorithm outputs for the recommended reconciliation operation.
+    #[prost(message, optional, tag = "1")]
+    pub outputs: ::core::option::Option<reconciliation_cluster_heal_log::Outputs>,
+}
+/// Nested message and enum types in `ReconciliationClusterHealLog`.
+pub mod reconciliation_cluster_heal_log {
+    /// Autohealer decision.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Outputs {
+        /// The repair operation id triggered by Autohealer if any.
+        #[prost(string, tag = "1")]
+        pub repair_operation_id: ::prost::alloc::string::String,
+        /// Human readable context messages which explain the autohealer decision.
+        #[prost(string, tag = "2")]
+        pub decision_details: ::prost::alloc::string::String,
+    }
+}
+/// Decision type
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ReconciliationDecisionType {
+    /// Unspecified type
+    Unspecified = 0,
+    /// Terminate session
+    ReconciliationTerminateSession = 1,
 }

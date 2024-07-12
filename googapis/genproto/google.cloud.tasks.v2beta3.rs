@@ -24,6 +24,209 @@ pub struct PullMessage {
     #[prost(string, tag = "2")]
     pub tag: ::prost::alloc::string::String,
 }
+/// PathOverride.
+///
+/// Path message defines path override for HTTP targets.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PathOverride {
+    /// The URI path (e.g., /users/1234). Default is an empty string.
+    #[prost(string, tag = "1")]
+    pub path: ::prost::alloc::string::String,
+}
+/// QueryOverride.
+///
+/// Query message defines query override for HTTP targets.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct QueryOverride {
+    /// The query parameters (e.g., qparam1=123&qparam2=456). Default is an empty
+    /// string.
+    #[prost(string, tag = "1")]
+    pub query_params: ::prost::alloc::string::String,
+}
+/// URI Override.
+///
+/// When specified, all the HTTP tasks inside the queue will be partially or
+/// fully overridden depending on the configured values.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UriOverride {
+    /// Scheme override.
+    ///
+    /// When specified, the task URI scheme is replaced by the provided value (HTTP
+    /// or HTTPS).
+    #[prost(enumeration = "uri_override::Scheme", optional, tag = "1")]
+    pub scheme: ::core::option::Option<i32>,
+    /// Host override.
+    ///
+    /// When specified, replaces the host part of the task URL. For example,
+    /// if the task URL is "<https://www.google.com,"> and host value is set to
+    /// "example.net", the overridden URI will be changed to "<https://example.net.">
+    /// Host value cannot be an empty string (INVALID_ARGUMENT).
+    #[prost(string, optional, tag = "2")]
+    pub host: ::core::option::Option<::prost::alloc::string::String>,
+    /// Port override.
+    ///
+    /// When specified, replaces the port part of the task URI. For instance,
+    /// for a URI <http://www.google.com/foo> and port=123, the overridden URI
+    /// becomes <http://www.google.com:123/foo.> Note that the port value must be a
+    /// positive integer. Setting the port to 0 (Zero) clears the URI port.
+    #[prost(int64, optional, tag = "3")]
+    pub port: ::core::option::Option<i64>,
+    /// URI path.
+    ///
+    /// When specified, replaces the existing path of the task URL. Setting the
+    /// path value to an empty string clears the URI path segment.
+    #[prost(message, optional, tag = "4")]
+    pub path_override: ::core::option::Option<PathOverride>,
+    /// URI Query.
+    ///
+    /// When specified, replaces the query part of the task URI. Setting the
+    /// query value to an empty string clears the URI query segment.
+    #[prost(message, optional, tag = "5")]
+    pub query_override: ::core::option::Option<QueryOverride>,
+    /// URI Override Enforce Mode
+    ///
+    /// When specified, determines the Target UriOverride mode. If not specified,
+    /// it defaults to ALWAYS.
+    #[prost(enumeration = "uri_override::UriOverrideEnforceMode", tag = "6")]
+    pub uri_override_enforce_mode: i32,
+}
+/// Nested message and enum types in `UriOverride`.
+pub mod uri_override {
+    /// The Scheme for an HTTP request. By default, it is HTTPS.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Scheme {
+        /// Scheme unspecified. Defaults to HTTPS.
+        Unspecified = 0,
+        /// Convert the scheme to HTTP, e.g., <https://www.google.ca> will change to
+        /// <http://www.google.ca.>
+        Http = 1,
+        /// Convert the scheme to HTTPS, e.g., <http://www.google.ca> will change to
+        /// <https://www.google.ca.>
+        Https = 2,
+    }
+    /// UriOverrideEnforceMode mode is to define enforcing mode for the override
+    /// modes.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum UriOverrideEnforceMode {
+        /// OverrideMode Unspecified. Defaults to ALWAYS.
+        Unspecified = 0,
+        /// In the IF_NOT_EXISTS mode, queue-level configuration is only
+        /// applied where task-level configuration does not exist.
+        IfNotExists = 1,
+        /// In the ALWAYS mode, queue-level configuration overrides all
+        /// task-level configuration
+        Always = 2,
+    }
+}
+/// HTTP target.
+///
+/// When specified as a \[Queue][target_type\], all the tasks with \[HttpRequest\]
+/// will be overridden according to the target.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct HttpTarget {
+    /// URI override.
+    ///
+    /// When specified, overrides the execution URI for all the tasks in the queue.
+    #[prost(message, optional, tag = "1")]
+    pub uri_override: ::core::option::Option<UriOverride>,
+    /// The HTTP method to use for the request.
+    ///
+    /// When specified, it overrides
+    /// \[HttpRequest][google.cloud.tasks.v2beta3.HttpTarget.http_method\] for the
+    /// task. Note that if the value is set to \[HttpMethod][GET\] the
+    /// \[HttpRequest][body\] of the task will be ignored at execution time.
+    #[prost(enumeration = "HttpMethod", tag = "2")]
+    pub http_method: i32,
+    /// HTTP target headers.
+    ///
+    /// This map contains the header field names and values.
+    /// Headers will be set when running the
+    /// \[CreateTask][google.cloud.tasks.v2beta3.CloudTasks.CreateTask\] and/or
+    /// \[BufferTask][google.cloud.tasks.v2beta3.CloudTasks.BufferTask\].
+    ///
+    /// These headers represent a subset of the headers that will be configured for
+    /// the task's HTTP request. Some HTTP request headers will be ignored or
+    /// replaced.
+    ///
+    /// A partial list of headers that will be ignored or replaced is:
+    /// * Several predefined headers, prefixed with "X-CloudTasks-", can
+    /// be used to define properties of the task.
+    /// * Host: This will be computed by Cloud Tasks and derived from
+    /// \[HttpRequest.url][google.cloud.tasks.v2beta3.Target.HttpRequest.url\].
+    /// * Content-Length: This will be computed by Cloud Tasks.
+    ///
+    /// `Content-Type` won't be set by Cloud Tasks. You can explicitly set
+    /// `Content-Type` to a media type when the
+    ///  [task is created]\[google.cloud.tasks.v2beta3.CloudTasks.CreateTask\].
+    ///  For example,`Content-Type` can be set to `"application/octet-stream"` or
+    ///  `"application/json"`. The default value is set to `"application/json"`.
+    ///
+    /// * User-Agent: This will be set to `"Google-Cloud-Tasks"`.
+    ///
+    /// Headers which can have multiple values (according to RFC2616) can be
+    /// specified using comma-separated values.
+    ///
+    /// The size of the headers must be less than 80KB.
+    /// Queue-level headers to override headers of all the tasks in the queue.
+    #[prost(message, repeated, tag = "3")]
+    pub header_overrides: ::prost::alloc::vec::Vec<http_target::HeaderOverride>,
+    /// The mode for generating an `Authorization` header for HTTP requests.
+    ///
+    /// If specified, all `Authorization` headers in the
+    /// \[HttpRequest.headers][google.cloud.tasks.v2beta3.HttpRequest.headers\] field
+    /// will be overridden.
+    #[prost(oneof = "http_target::AuthorizationHeader", tags = "5, 6")]
+    pub authorization_header: ::core::option::Option<http_target::AuthorizationHeader>,
+}
+/// Nested message and enum types in `HttpTarget`.
+pub mod http_target {
+    /// Defines a header message. A header can have a key and a value.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Header {
+        /// The Key of the header.
+        #[prost(string, tag = "1")]
+        pub key: ::prost::alloc::string::String,
+        /// The Value of the header.
+        #[prost(string, tag = "2")]
+        pub value: ::prost::alloc::string::String,
+    }
+    /// Wraps the Header object.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct HeaderOverride {
+        /// header embodying a key and a value.
+        #[prost(message, optional, tag = "1")]
+        pub header: ::core::option::Option<Header>,
+    }
+    /// The mode for generating an `Authorization` header for HTTP requests.
+    ///
+    /// If specified, all `Authorization` headers in the
+    /// \[HttpRequest.headers][google.cloud.tasks.v2beta3.HttpRequest.headers\] field
+    /// will be overridden.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum AuthorizationHeader {
+        /// If specified, an
+        /// [OAuth token](<https://developers.google.com/identity/protocols/OAuth2>)
+        /// will be generated and attached as the `Authorization` header in the HTTP
+        /// request.
+        ///
+        /// This type of authorization should generally only be used when calling
+        /// Google APIs hosted on *.googleapis.com.
+        #[prost(message, tag = "5")]
+        OauthToken(super::OAuthToken),
+        /// If specified, an
+        /// \[OIDC\](<https://developers.google.com/identity/protocols/OpenIDConnect>)
+        /// token will be generated and attached as an `Authorization` header in the
+        /// HTTP request.
+        ///
+        /// This type of authorization can be used for many scenarios, including
+        /// calling Cloud Run, or endpoints where you intend to validate the token
+        /// yourself.
+        #[prost(message, tag = "6")]
+        OidcToken(super::OidcToken),
+    }
+}
 /// HTTP request.
 ///
 /// The task will be pushed to the worker as an HTTP request. If the worker
@@ -82,6 +285,9 @@ pub struct HttpRequest {
     ///
     /// A partial list of headers that will be ignored or replaced is:
     ///
+    /// * Any header that is prefixed with "X-CloudTasks-" will be treated
+    /// as service header. Service headers define properties of the task and are
+    /// predefined in CloudTask.
     /// * Host: This will be computed by Cloud Tasks and derived from
     ///   \[HttpRequest.url][google.cloud.tasks.v2beta3.HttpRequest.url\].
     /// * Content-Length: This will be computed by Cloud Tasks.
@@ -502,6 +708,9 @@ pub struct Queue {
     ///   hyphens (-). The maximum length is 100 characters.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// Modifies HTTP target for HTTP tasks.
+    #[prost(message, optional, tag = "13")]
+    pub http_target: ::core::option::Option<HttpTarget>,
     /// Rate limits for task dispatches.
     ///
     /// \[rate_limits][google.cloud.tasks.v2beta3.Queue.rate_limits\] and
@@ -546,7 +755,7 @@ pub struct Queue {
     pub retry_config: ::core::option::Option<RetryConfig>,
     /// Output only. The state of the queue.
     ///
-    /// `state` can only be changed by calling
+    /// `state` can only be changed by called
     /// \[PauseQueue][google.cloud.tasks.v2beta3.CloudTasks.PauseQueue\],
     /// \[ResumeQueue][google.cloud.tasks.v2beta3.CloudTasks.ResumeQueue\], or
     /// uploading
@@ -1090,18 +1299,18 @@ pub struct Attempt {
     #[prost(message, optional, tag = "4")]
     pub response_status: ::core::option::Option<super::super::super::rpc::Status>,
 }
-/// Request message for \[ListQueues][google.cloud.tasks.v2beta3.CloudTasks.ListQueues\].
+/// Request message for
+/// \[ListQueues][google.cloud.tasks.v2beta3.CloudTasks.ListQueues\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListQueuesRequest {
     /// Required. The location name.
     /// For example: `projects/PROJECT_ID/locations/LOCATION_ID`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// `filter` can be used to specify a subset of queues. Any \[Queue][google.cloud.tasks.v2beta3.Queue\]
-    /// field can be used as a filter and several operators as supported.
-    /// For example: `<=, <, >=, >, !=, =, :`. The filter syntax is the same as
-    /// described in
-    /// [Stackdriver's Advanced Logs
+    /// `filter` can be used to specify a subset of queues. Any
+    /// \[Queue][google.cloud.tasks.v2beta3.Queue\] field can be used as a filter and
+    /// several operators as supported. For example: `<=, <, >=, >, !=, =, :`. The
+    /// filter syntax is the same as described in [Stackdriver's Advanced Logs
     /// Filters](<https://cloud.google.com/logging/docs/view/advanced_filters>).
     ///
     /// Sample filter "state: PAUSED".
@@ -1115,28 +1324,31 @@ pub struct ListQueuesRequest {
     /// The maximum page size is 9800. If unspecified, the page size will
     /// be the maximum. Fewer queues than requested might be returned,
     /// even if more queues exist; use the
-    /// \[next_page_token][google.cloud.tasks.v2beta3.ListQueuesResponse.next_page_token\] in the
-    /// response to determine if more queues exist.
+    /// \[next_page_token][google.cloud.tasks.v2beta3.ListQueuesResponse.next_page_token\]
+    /// in the response to determine if more queues exist.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
     /// A token identifying the page of results to return.
     ///
     /// To request the first page results, page_token must be empty. To
     /// request the next page of results, page_token must be the value of
-    /// \[next_page_token][google.cloud.tasks.v2beta3.ListQueuesResponse.next_page_token\] returned
-    /// from the previous call to \[ListQueues][google.cloud.tasks.v2beta3.CloudTasks.ListQueues\]
-    /// method. It is an error to switch the value of the
-    /// \[filter][google.cloud.tasks.v2beta3.ListQueuesRequest.filter\] while iterating through pages.
+    /// \[next_page_token][google.cloud.tasks.v2beta3.ListQueuesResponse.next_page_token\]
+    /// returned from the previous call to
+    /// \[ListQueues][google.cloud.tasks.v2beta3.CloudTasks.ListQueues\] method. It
+    /// is an error to switch the value of the
+    /// \[filter][google.cloud.tasks.v2beta3.ListQueuesRequest.filter\] while
+    /// iterating through pages.
     #[prost(string, tag = "4")]
     pub page_token: ::prost::alloc::string::String,
-    /// Optional. Read mask is used for a more granular control over what the API returns.
-    /// If the mask is not present all fields will be returned except
+    /// Optional. Read mask is used for a more granular control over what the API
+    /// returns. If the mask is not present all fields will be returned except
     /// \[Queue.stats\]. \[Queue.stats\] will be returned only if it was  explicitly
     /// specified in the mask.
     #[prost(message, optional, tag = "5")]
     pub read_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
-/// Response message for \[ListQueues][google.cloud.tasks.v2beta3.CloudTasks.ListQueues\].
+/// Response message for
+/// \[ListQueues][google.cloud.tasks.v2beta3.CloudTasks.ListQueues\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListQueuesResponse {
     /// The list of queues.
@@ -1145,7 +1357,8 @@ pub struct ListQueuesResponse {
     /// A token to retrieve next page of results.
     ///
     /// To return the next page of results, call
-    /// \[ListQueues][google.cloud.tasks.v2beta3.CloudTasks.ListQueues\] with this value as the
+    /// \[ListQueues][google.cloud.tasks.v2beta3.CloudTasks.ListQueues\] with this
+    /// value as the
     /// \[page_token][google.cloud.tasks.v2beta3.ListQueuesRequest.page_token\].
     ///
     /// If the next_page_token is empty, there are no more results.
@@ -1154,21 +1367,23 @@ pub struct ListQueuesResponse {
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
-/// Request message for \[GetQueue][google.cloud.tasks.v2beta3.CloudTasks.GetQueue\].
+/// Request message for
+/// \[GetQueue][google.cloud.tasks.v2beta3.CloudTasks.GetQueue\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetQueueRequest {
     /// Required. The resource name of the queue. For example:
     /// `projects/PROJECT_ID/locations/LOCATION_ID/queues/QUEUE_ID`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Optional. Read mask is used for a more granular control over what the API returns.
-    /// If the mask is not present all fields will be returned except
+    /// Optional. Read mask is used for a more granular control over what the API
+    /// returns. If the mask is not present all fields will be returned except
     /// \[Queue.stats\]. \[Queue.stats\] will be returned only if it was  explicitly
     /// specified in the mask.
     #[prost(message, optional, tag = "2")]
     pub read_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
-/// Request message for \[CreateQueue][google.cloud.tasks.v2beta3.CloudTasks.CreateQueue\].
+/// Request message for
+/// \[CreateQueue][google.cloud.tasks.v2beta3.CloudTasks.CreateQueue\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateQueueRequest {
     /// Required. The location name in which the queue will be created.
@@ -1181,20 +1396,24 @@ pub struct CreateQueueRequest {
     pub parent: ::prost::alloc::string::String,
     /// Required. The queue to create.
     ///
-    /// [Queue's name]\[google.cloud.tasks.v2beta3.Queue.name\] cannot be the same as an existing queue.
+    /// [Queue's name]\[google.cloud.tasks.v2beta3.Queue.name\] cannot be the same as
+    /// an existing queue.
     #[prost(message, optional, tag = "2")]
     pub queue: ::core::option::Option<Queue>,
 }
-/// Request message for \[UpdateQueue][google.cloud.tasks.v2beta3.CloudTasks.UpdateQueue\].
+/// Request message for
+/// \[UpdateQueue][google.cloud.tasks.v2beta3.CloudTasks.UpdateQueue\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateQueueRequest {
     /// Required. The queue to create or update.
     ///
-    /// The queue's \[name][google.cloud.tasks.v2beta3.Queue.name\] must be specified.
+    /// The queue's \[name][google.cloud.tasks.v2beta3.Queue.name\] must be
+    /// specified.
     ///
     /// Output only fields cannot be modified using UpdateQueue.
     /// Any value specified for an output only field will be ignored.
-    /// The queue's \[name][google.cloud.tasks.v2beta3.Queue.name\] cannot be changed.
+    /// The queue's \[name][google.cloud.tasks.v2beta3.Queue.name\] cannot be
+    /// changed.
     #[prost(message, optional, tag = "1")]
     pub queue: ::core::option::Option<Queue>,
     /// A mask used to specify which fields of the queue are being updated.
@@ -1203,7 +1422,8 @@ pub struct UpdateQueueRequest {
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
-/// Request message for \[DeleteQueue][google.cloud.tasks.v2beta3.CloudTasks.DeleteQueue\].
+/// Request message for
+/// \[DeleteQueue][google.cloud.tasks.v2beta3.CloudTasks.DeleteQueue\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteQueueRequest {
     /// Required. The queue name. For example:
@@ -1211,7 +1431,8 @@ pub struct DeleteQueueRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// Request message for \[PurgeQueue][google.cloud.tasks.v2beta3.CloudTasks.PurgeQueue\].
+/// Request message for
+/// \[PurgeQueue][google.cloud.tasks.v2beta3.CloudTasks.PurgeQueue\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PurgeQueueRequest {
     /// Required. The queue name. For example:
@@ -1219,7 +1440,8 @@ pub struct PurgeQueueRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// Request message for \[PauseQueue][google.cloud.tasks.v2beta3.CloudTasks.PauseQueue\].
+/// Request message for
+/// \[PauseQueue][google.cloud.tasks.v2beta3.CloudTasks.PauseQueue\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PauseQueueRequest {
     /// Required. The queue name. For example:
@@ -1227,7 +1449,8 @@ pub struct PauseQueueRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// Request message for \[ResumeQueue][google.cloud.tasks.v2beta3.CloudTasks.ResumeQueue\].
+/// Request message for
+/// \[ResumeQueue][google.cloud.tasks.v2beta3.CloudTasks.ResumeQueue\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ResumeQueueRequest {
     /// Required. The queue name. For example:
@@ -1235,32 +1458,34 @@ pub struct ResumeQueueRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// Request message for listing tasks using \[ListTasks][google.cloud.tasks.v2beta3.CloudTasks.ListTasks\].
+/// Request message for listing tasks using
+/// \[ListTasks][google.cloud.tasks.v2beta3.CloudTasks.ListTasks\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTasksRequest {
     /// Required. The queue name. For example:
     /// `projects/PROJECT_ID/locations/LOCATION_ID/queues/QUEUE_ID`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// The response_view specifies which subset of the \[Task][google.cloud.tasks.v2beta3.Task\] will be
-    /// returned.
+    /// The response_view specifies which subset of the
+    /// \[Task][google.cloud.tasks.v2beta3.Task\] will be returned.
     ///
-    /// By default response_view is \[BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC\]; not all
-    /// information is retrieved by default because some data, such as
-    /// payloads, might be desirable to return only when needed because
-    /// of its large size or because of the sensitivity of data that it
-    /// contains.
+    /// By default response_view is
+    /// \[BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC\]; not all information is
+    /// retrieved by default because some data, such as payloads, might be
+    /// desirable to return only when needed because of its large size or because
+    /// of the sensitivity of data that it contains.
     ///
-    /// Authorization for \[FULL][google.cloud.tasks.v2beta3.Task.View.FULL\] requires
-    /// `cloudtasks.tasks.fullView` [Google IAM](<https://cloud.google.com/iam/>)
-    /// permission on the \[Task][google.cloud.tasks.v2beta3.Task\] resource.
+    /// Authorization for \[FULL][google.cloud.tasks.v2beta3.Task.View.FULL\]
+    /// requires `cloudtasks.tasks.fullView` [Google
+    /// IAM](<https://cloud.google.com/iam/>) permission on the
+    /// \[Task][google.cloud.tasks.v2beta3.Task\] resource.
     #[prost(enumeration = "task::View", tag = "2")]
     pub response_view: i32,
     /// Maximum page size.
     ///
     /// Fewer tasks than requested might be returned, even if more tasks exist; use
-    /// \[next_page_token][google.cloud.tasks.v2beta3.ListTasksResponse.next_page_token\] in the response to
-    /// determine if more tasks exist.
+    /// \[next_page_token][google.cloud.tasks.v2beta3.ListTasksResponse.next_page_token\]
+    /// in the response to determine if more tasks exist.
     ///
     /// The maximum page size is 1000. If unspecified, the page size will be the
     /// maximum.
@@ -1270,15 +1495,16 @@ pub struct ListTasksRequest {
     ///
     /// To request the first page results, page_token must be empty. To
     /// request the next page of results, page_token must be the value of
-    /// \[next_page_token][google.cloud.tasks.v2beta3.ListTasksResponse.next_page_token\] returned
-    /// from the previous call to \[ListTasks][google.cloud.tasks.v2beta3.CloudTasks.ListTasks\]
-    /// method.
+    /// \[next_page_token][google.cloud.tasks.v2beta3.ListTasksResponse.next_page_token\]
+    /// returned from the previous call to
+    /// \[ListTasks][google.cloud.tasks.v2beta3.CloudTasks.ListTasks\] method.
     ///
     /// The page token is valid for only 2 hours.
     #[prost(string, tag = "4")]
     pub page_token: ::prost::alloc::string::String,
 }
-/// Response message for listing tasks using \[ListTasks][google.cloud.tasks.v2beta3.CloudTasks.ListTasks\].
+/// Response message for listing tasks using
+/// \[ListTasks][google.cloud.tasks.v2beta3.CloudTasks.ListTasks\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTasksResponse {
     /// The list of tasks.
@@ -1287,36 +1513,40 @@ pub struct ListTasksResponse {
     /// A token to retrieve next page of results.
     ///
     /// To return the next page of results, call
-    /// \[ListTasks][google.cloud.tasks.v2beta3.CloudTasks.ListTasks\] with this value as the
+    /// \[ListTasks][google.cloud.tasks.v2beta3.CloudTasks.ListTasks\] with this
+    /// value as the
     /// \[page_token][google.cloud.tasks.v2beta3.ListTasksRequest.page_token\].
     ///
     /// If the next_page_token is empty, there are no more results.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
-/// Request message for getting a task using \[GetTask][google.cloud.tasks.v2beta3.CloudTasks.GetTask\].
+/// Request message for getting a task using
+/// \[GetTask][google.cloud.tasks.v2beta3.CloudTasks.GetTask\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetTaskRequest {
     /// Required. The task name. For example:
     /// `projects/PROJECT_ID/locations/LOCATION_ID/queues/QUEUE_ID/tasks/TASK_ID`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The response_view specifies which subset of the \[Task][google.cloud.tasks.v2beta3.Task\] will be
-    /// returned.
+    /// The response_view specifies which subset of the
+    /// \[Task][google.cloud.tasks.v2beta3.Task\] will be returned.
     ///
-    /// By default response_view is \[BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC\]; not all
-    /// information is retrieved by default because some data, such as
-    /// payloads, might be desirable to return only when needed because
-    /// of its large size or because of the sensitivity of data that it
-    /// contains.
+    /// By default response_view is
+    /// \[BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC\]; not all information is
+    /// retrieved by default because some data, such as payloads, might be
+    /// desirable to return only when needed because of its large size or because
+    /// of the sensitivity of data that it contains.
     ///
-    /// Authorization for \[FULL][google.cloud.tasks.v2beta3.Task.View.FULL\] requires
-    /// `cloudtasks.tasks.fullView` [Google IAM](<https://cloud.google.com/iam/>)
-    /// permission on the \[Task][google.cloud.tasks.v2beta3.Task\] resource.
+    /// Authorization for \[FULL][google.cloud.tasks.v2beta3.Task.View.FULL\]
+    /// requires `cloudtasks.tasks.fullView` [Google
+    /// IAM](<https://cloud.google.com/iam/>) permission on the
+    /// \[Task][google.cloud.tasks.v2beta3.Task\] resource.
     #[prost(enumeration = "task::View", tag = "2")]
     pub response_view: i32,
 }
-/// Request message for \[CreateTask][google.cloud.tasks.v2beta3.CloudTasks.CreateTask\].
+/// Request message for
+/// \[CreateTask][google.cloud.tasks.v2beta3.CloudTasks.CreateTask\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateTaskRequest {
     /// Required. The queue name. For example:
@@ -1329,13 +1559,13 @@ pub struct CreateTaskRequest {
     ///
     /// Task names have the following format:
     /// `projects/PROJECT_ID/locations/LOCATION_ID/queues/QUEUE_ID/tasks/TASK_ID`.
-    /// The user can optionally specify a task \[name][google.cloud.tasks.v2beta3.Task.name\]. If a
-    /// name is not specified then the system will generate a random
-    /// unique task id, which will be set in the task returned in the
-    /// \[response][google.cloud.tasks.v2beta3.Task.name\].
+    /// The user can optionally specify a task
+    /// \[name][google.cloud.tasks.v2beta3.Task.name\]. If a name is not specified
+    /// then the system will generate a random unique task id, which will be set in
+    /// the task returned in the \[response][google.cloud.tasks.v2beta3.Task.name\].
     ///
-    /// If \[schedule_time][google.cloud.tasks.v2beta3.Task.schedule_time\] is not set or is in the
-    /// past then Cloud Tasks will set it to the current time.
+    /// If \[schedule_time][google.cloud.tasks.v2beta3.Task.schedule_time\] is not
+    /// set or is in the past then Cloud Tasks will set it to the current time.
     ///
     /// Task De-duplication:
     ///
@@ -1344,34 +1574,35 @@ pub struct CreateTaskRequest {
     /// that was deleted or executed recently then the call will fail
     /// with \[ALREADY_EXISTS][google.rpc.Code.ALREADY_EXISTS\].
     /// If the task's queue was created using Cloud Tasks, then another task with
-    /// the same name can't be created for ~1hour after the original task was
+    /// the same name can't be created for ~1 hour after the original task was
     /// deleted or executed. If the task's queue was created using queue.yaml or
     /// queue.xml, then another task with the same name can't be created
-    /// for ~9days after the original task was deleted or executed.
+    /// for ~9 days after the original task was deleted or executed.
     ///
     /// Because there is an extra lookup cost to identify duplicate task
-    /// names, these \[CreateTask][google.cloud.tasks.v2beta3.CloudTasks.CreateTask\] calls have significantly
-    /// increased latency. Using hashed strings for the task id or for
-    /// the prefix of the task id is recommended. Choosing task ids that
-    /// are sequential or have sequential prefixes, for example using a
+    /// names, these \[CreateTask][google.cloud.tasks.v2beta3.CloudTasks.CreateTask\]
+    /// calls have significantly increased latency. Using hashed strings for the
+    /// task id or for the prefix of the task id is recommended. Choosing task ids
+    /// that are sequential or have sequential prefixes, for example using a
     /// timestamp, causes an increase in latency and error rates in all
     /// task commands. The infrastructure relies on an approximately
     /// uniform distribution of task ids to store and serve tasks
     /// efficiently.
     #[prost(message, optional, tag = "2")]
     pub task: ::core::option::Option<Task>,
-    /// The response_view specifies which subset of the \[Task][google.cloud.tasks.v2beta3.Task\] will be
-    /// returned.
+    /// The response_view specifies which subset of the
+    /// \[Task][google.cloud.tasks.v2beta3.Task\] will be returned.
     ///
-    /// By default response_view is \[BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC\]; not all
-    /// information is retrieved by default because some data, such as
-    /// payloads, might be desirable to return only when needed because
-    /// of its large size or because of the sensitivity of data that it
-    /// contains.
+    /// By default response_view is
+    /// \[BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC\]; not all information is
+    /// retrieved by default because some data, such as payloads, might be
+    /// desirable to return only when needed because of its large size or because
+    /// of the sensitivity of data that it contains.
     ///
-    /// Authorization for \[FULL][google.cloud.tasks.v2beta3.Task.View.FULL\] requires
-    /// `cloudtasks.tasks.fullView` [Google IAM](<https://cloud.google.com/iam/>)
-    /// permission on the \[Task][google.cloud.tasks.v2beta3.Task\] resource.
+    /// Authorization for \[FULL][google.cloud.tasks.v2beta3.Task.View.FULL\]
+    /// requires `cloudtasks.tasks.fullView` [Google
+    /// IAM](<https://cloud.google.com/iam/>) permission on the
+    /// \[Task][google.cloud.tasks.v2beta3.Task\] resource.
     #[prost(enumeration = "task::View", tag = "3")]
     pub response_view: i32,
 }
@@ -1392,18 +1623,19 @@ pub struct RunTaskRequest {
     /// `projects/PROJECT_ID/locations/LOCATION_ID/queues/QUEUE_ID/tasks/TASK_ID`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The response_view specifies which subset of the \[Task][google.cloud.tasks.v2beta3.Task\] will be
-    /// returned.
+    /// The response_view specifies which subset of the
+    /// \[Task][google.cloud.tasks.v2beta3.Task\] will be returned.
     ///
-    /// By default response_view is \[BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC\]; not all
-    /// information is retrieved by default because some data, such as
-    /// payloads, might be desirable to return only when needed because
-    /// of its large size or because of the sensitivity of data that it
-    /// contains.
+    /// By default response_view is
+    /// \[BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC\]; not all information is
+    /// retrieved by default because some data, such as payloads, might be
+    /// desirable to return only when needed because of its large size or because
+    /// of the sensitivity of data that it contains.
     ///
-    /// Authorization for \[FULL][google.cloud.tasks.v2beta3.Task.View.FULL\] requires
-    /// `cloudtasks.tasks.fullView` [Google IAM](<https://cloud.google.com/iam/>)
-    /// permission on the \[Task][google.cloud.tasks.v2beta3.Task\] resource.
+    /// Authorization for \[FULL][google.cloud.tasks.v2beta3.Task.View.FULL\]
+    /// requires `cloudtasks.tasks.fullView` [Google
+    /// IAM](<https://cloud.google.com/iam/>) permission on the
+    /// \[Task][google.cloud.tasks.v2beta3.Task\] resource.
     #[prost(enumeration = "task::View", tag = "2")]
     pub response_view: i32,
 }
@@ -1497,8 +1729,8 @@ pub mod cloud_tasks_client {
         #[doc = " Creates a queue."]
         #[doc = ""]
         #[doc = " Queues created with this method allow tasks to live for a maximum of 31"]
-        #[doc = " days. After a task is 31 days old, the task will be deleted regardless of whether"]
-        #[doc = " it was dispatched or not."]
+        #[doc = " days. After a task is 31 days old, the task will be deleted regardless of"]
+        #[doc = " whether it was dispatched or not."]
         #[doc = ""]
         #[doc = " WARNING: Using this method may have unintended side effects if you are"]
         #[doc = " using an App Engine `queue.yaml` or `queue.xml` file to manage your queues."]
@@ -1528,8 +1760,8 @@ pub mod cloud_tasks_client {
         #[doc = " the queue if it does exist."]
         #[doc = ""]
         #[doc = " Queues created with this method allow tasks to live for a maximum of 31"]
-        #[doc = " days. After a task is 31 days old, the task will be deleted regardless of whether"]
-        #[doc = " it was dispatched or not."]
+        #[doc = " days. After a task is 31 days old, the task will be deleted regardless of"]
+        #[doc = " whether it was dispatched or not."]
         #[doc = ""]
         #[doc = " WARNING: Using this method may have unintended side effects if you are"]
         #[doc = " using an App Engine `queue.yaml` or `queue.xml` file to manage your queues."]
@@ -1608,9 +1840,10 @@ pub mod cloud_tasks_client {
         #[doc = ""]
         #[doc = " If a queue is paused then the system will stop dispatching tasks"]
         #[doc = " until the queue is resumed via"]
-        #[doc = " [ResumeQueue][google.cloud.tasks.v2beta3.CloudTasks.ResumeQueue]. Tasks can still be added"]
-        #[doc = " when the queue is paused. A queue is paused if its"]
-        #[doc = " [state][google.cloud.tasks.v2beta3.Queue.state] is [PAUSED][google.cloud.tasks.v2beta3.Queue.State.PAUSED]."]
+        #[doc = " [ResumeQueue][google.cloud.tasks.v2beta3.CloudTasks.ResumeQueue]. Tasks can"]
+        #[doc = " still be added when the queue is paused. A queue is paused if its"]
+        #[doc = " [state][google.cloud.tasks.v2beta3.Queue.state] is"]
+        #[doc = " [PAUSED][google.cloud.tasks.v2beta3.Queue.State.PAUSED]."]
         pub async fn pause_queue(
             &mut self,
             request: impl tonic::IntoRequest<super::PauseQueueRequest>,
@@ -1631,9 +1864,11 @@ pub mod cloud_tasks_client {
         #[doc = ""]
         #[doc = " This method resumes a queue after it has been"]
         #[doc = " [PAUSED][google.cloud.tasks.v2beta3.Queue.State.PAUSED] or"]
-        #[doc = " [DISABLED][google.cloud.tasks.v2beta3.Queue.State.DISABLED]. The state of a queue is stored"]
-        #[doc = " in the queue's [state][google.cloud.tasks.v2beta3.Queue.state]; after calling this method it"]
-        #[doc = " will be set to [RUNNING][google.cloud.tasks.v2beta3.Queue.State.RUNNING]."]
+        #[doc = " [DISABLED][google.cloud.tasks.v2beta3.Queue.State.DISABLED]. The state of a"]
+        #[doc = " queue is stored in the queue's"]
+        #[doc = " [state][google.cloud.tasks.v2beta3.Queue.state]; after calling this method"]
+        #[doc = " it will be set to"]
+        #[doc = " [RUNNING][google.cloud.tasks.v2beta3.Queue.State.RUNNING]."]
         #[doc = ""]
         #[doc = " WARNING: Resuming many high-QPS queues at the same time can"]
         #[doc = " lead to target overloading. If you are resuming high-QPS"]
@@ -1656,9 +1891,9 @@ pub mod cloud_tasks_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Gets the access control policy for a [Queue][google.cloud.tasks.v2beta3.Queue]."]
-        #[doc = " Returns an empty policy if the resource exists and does not have a policy"]
-        #[doc = " set."]
+        #[doc = " Gets the access control policy for a"]
+        #[doc = " [Queue][google.cloud.tasks.v2beta3.Queue]. Returns an empty policy if the"]
+        #[doc = " resource exists and does not have a policy set."]
         #[doc = ""]
         #[doc = " Authorization requires the following"]
         #[doc = " [Google IAM](https://cloud.google.com/iam) permission on the specified"]
@@ -1682,8 +1917,8 @@ pub mod cloud_tasks_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Sets the access control policy for a [Queue][google.cloud.tasks.v2beta3.Queue]. Replaces any existing"]
-        #[doc = " policy."]
+        #[doc = " Sets the access control policy for a"]
+        #[doc = " [Queue][google.cloud.tasks.v2beta3.Queue]. Replaces any existing policy."]
         #[doc = ""]
         #[doc = " Note: The Cloud Console does not check queue-level IAM permissions yet."]
         #[doc = " Project-level permissions are required to use the Cloud Console."]
@@ -1710,9 +1945,10 @@ pub mod cloud_tasks_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Returns permissions that a caller has on a [Queue][google.cloud.tasks.v2beta3.Queue]."]
-        #[doc = " If the resource does not exist, this will return an empty set of"]
-        #[doc = " permissions, not a [NOT_FOUND][google.rpc.Code.NOT_FOUND] error."]
+        #[doc = " Returns permissions that a caller has on a"]
+        #[doc = " [Queue][google.cloud.tasks.v2beta3.Queue]. If the resource does not exist,"]
+        #[doc = " this will return an empty set of permissions, not a"]
+        #[doc = " [NOT_FOUND][google.rpc.Code.NOT_FOUND] error."]
         #[doc = ""]
         #[doc = " Note: This operation is designed to be used for building permission-aware"]
         #[doc = " UIs and command-line tools, not for authorization checking. This operation"]
@@ -1740,10 +1976,10 @@ pub mod cloud_tasks_client {
         }
         #[doc = " Lists the tasks in a queue."]
         #[doc = ""]
-        #[doc = " By default, only the [BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC] view is retrieved"]
-        #[doc = " due to performance considerations;"]
-        #[doc = " [response_view][google.cloud.tasks.v2beta3.ListTasksRequest.response_view] controls the"]
-        #[doc = " subset of information which is returned."]
+        #[doc = " By default, only the [BASIC][google.cloud.tasks.v2beta3.Task.View.BASIC]"]
+        #[doc = " view is retrieved due to performance considerations;"]
+        #[doc = " [response_view][google.cloud.tasks.v2beta3.ListTasksRequest.response_view]"]
+        #[doc = " controls the subset of information which is returned."]
         #[doc = ""]
         #[doc = " The tasks may be returned in any order. The ordering may change at any"]
         #[doc = " time."]
@@ -1825,13 +2061,14 @@ pub mod cloud_tasks_client {
         #[doc = " Forces a task to run now."]
         #[doc = ""]
         #[doc = " When this method is called, Cloud Tasks will dispatch the task, even if"]
-        #[doc = " the task is already running, the queue has reached its [RateLimits][google.cloud.tasks.v2beta3.RateLimits] or"]
-        #[doc = " is [PAUSED][google.cloud.tasks.v2beta3.Queue.State.PAUSED]."]
+        #[doc = " the task is already running, the queue has reached its"]
+        #[doc = " [RateLimits][google.cloud.tasks.v2beta3.RateLimits] or is"]
+        #[doc = " [PAUSED][google.cloud.tasks.v2beta3.Queue.State.PAUSED]."]
         #[doc = ""]
         #[doc = " This command is meant to be used for manual debugging. For"]
-        #[doc = " example, [RunTask][google.cloud.tasks.v2beta3.CloudTasks.RunTask] can be used to retry a failed"]
-        #[doc = " task after a fix has been made or to manually force a task to be"]
-        #[doc = " dispatched now."]
+        #[doc = " example, [RunTask][google.cloud.tasks.v2beta3.CloudTasks.RunTask] can be"]
+        #[doc = " used to retry a failed task after a fix has been made or to manually force"]
+        #[doc = " a task to be dispatched now."]
         #[doc = ""]
         #[doc = " The dispatched task is returned. That is, the task that is returned"]
         #[doc = " contains the [status][Task.status] after the task is dispatched but"]
@@ -1839,9 +2076,11 @@ pub mod cloud_tasks_client {
         #[doc = ""]
         #[doc = " If Cloud Tasks receives a successful response from the task's"]
         #[doc = " target, then the task will be deleted; otherwise the task's"]
-        #[doc = " [schedule_time][google.cloud.tasks.v2beta3.Task.schedule_time] will be reset to the time that"]
-        #[doc = " [RunTask][google.cloud.tasks.v2beta3.CloudTasks.RunTask] was called plus the retry delay specified"]
-        #[doc = " in the queue's [RetryConfig][google.cloud.tasks.v2beta3.RetryConfig]."]
+        #[doc = " [schedule_time][google.cloud.tasks.v2beta3.Task.schedule_time] will be"]
+        #[doc = " reset to the time that"]
+        #[doc = " [RunTask][google.cloud.tasks.v2beta3.CloudTasks.RunTask] was called plus"]
+        #[doc = " the retry delay specified in the queue's"]
+        #[doc = " [RetryConfig][google.cloud.tasks.v2beta3.RetryConfig]."]
         #[doc = ""]
         #[doc = " [RunTask][google.cloud.tasks.v2beta3.CloudTasks.RunTask] returns"]
         #[doc = " [NOT_FOUND][google.rpc.Code.NOT_FOUND] when it is called on a"]

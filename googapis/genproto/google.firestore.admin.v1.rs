@@ -1,13 +1,91 @@
+/// A Backup of a Cloud Firestore Database.
+///
+/// The backup contains all documents and index configurations for the given
+/// database at a specific point in time.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Backup {
+    /// Output only. The unique resource name of the Backup.
+    ///
+    /// Format is `projects/{project}/locations/{location}/backups/{backup}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. Name of the Firestore database that the backup is from.
+    ///
+    /// Format is `projects/{project}/databases/{database}`.
+    #[prost(string, tag = "2")]
+    pub database: ::prost::alloc::string::String,
+    /// Output only. The system-generated UUID4 for the Firestore database that the
+    /// backup is from.
+    #[prost(string, tag = "7")]
+    pub database_uid: ::prost::alloc::string::String,
+    /// Output only. The backup contains an externally consistent copy of the
+    /// database at this time.
+    #[prost(message, optional, tag = "3")]
+    pub snapshot_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The timestamp at which this backup expires.
+    #[prost(message, optional, tag = "4")]
+    pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Statistics about the backup.
+    ///
+    /// This data only becomes available after the backup is fully materialized to
+    /// secondary storage. This field will be empty till then.
+    #[prost(message, optional, tag = "6")]
+    pub stats: ::core::option::Option<backup::Stats>,
+    /// Output only. The current state of the backup.
+    #[prost(enumeration = "backup::State", tag = "8")]
+    pub state: i32,
+}
+/// Nested message and enum types in `Backup`.
+pub mod backup {
+    /// Backup specific statistics.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Stats {
+        /// Output only. Summation of the size of all documents and index entries in
+        /// the backup, measured in bytes.
+        #[prost(int64, tag = "1")]
+        pub size_bytes: i64,
+        /// Output only. The total number of documents contained in the backup.
+        #[prost(int64, tag = "2")]
+        pub document_count: i64,
+        /// Output only. The total number of index entries contained in the backup.
+        #[prost(int64, tag = "3")]
+        pub index_count: i64,
+    }
+    /// Indicate the current state of the backup.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The state is unspecified.
+        Unspecified = 0,
+        /// The pending backup is still being created. Operations on the
+        /// backup will be rejected in this state.
+        Creating = 1,
+        /// The backup is complete and ready to use.
+        Ready = 2,
+        /// The backup is not available at this moment.
+        NotAvailable = 3,
+    }
+}
 /// A Cloud Firestore Database.
-/// Currently only one database is allowed per cloud project; this database
-/// must have a `database_id` of '(default)'.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Database {
     /// The resource name of the Database.
     /// Format: `projects/{project}/databases/{database}`
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The location of the database. Available databases are listed at
+    /// Output only. The system-generated UUID4 for this Database.
+    #[prost(string, tag = "3")]
+    pub uid: ::prost::alloc::string::String,
+    /// Output only. The timestamp at which this database was created. Databases
+    /// created before 2016 do not populate create_time.
+    #[prost(message, optional, tag = "5")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The timestamp at which this database was most recently
+    /// updated. Note this only includes updates to the database resource and not
+    /// data contained by the database.
+    #[prost(message, optional, tag = "6")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The location of the database. Available locations are listed at
     /// <https://cloud.google.com/firestore/docs/locations.>
     #[prost(string, tag = "9")]
     pub location_id: ::prost::alloc::string::String,
@@ -19,18 +97,46 @@ pub struct Database {
     /// The concurrency control mode to use for this database.
     #[prost(enumeration = "database::ConcurrencyMode", tag = "15")]
     pub concurrency_mode: i32,
+    /// Output only. The period during which past versions of data are retained in
+    /// the database.
+    ///
+    /// Any \[read][google.firestore.v1.GetDocumentRequest.read_time\]
+    /// or \[query][google.firestore.v1.ListDocumentsRequest.read_time\] can specify
+    /// a `read_time` within this window, and will read the state of the database
+    /// at that time.
+    ///
+    /// If the PITR feature is enabled, the retention period is 7 days. Otherwise,
+    /// the retention period is 1 hour.
+    #[prost(message, optional, tag = "17")]
+    pub version_retention_period: ::core::option::Option<::prost_types::Duration>,
+    /// Output only. The earliest timestamp at which older versions of the data can
+    /// be read from the database. See \[version_retention_period\] above; this field
+    /// is populated with `now - version_retention_period`.
+    ///
+    /// This value is continuously updated, and becomes stale the moment it is
+    /// queried. If you are using this value to recover data, make sure to account
+    /// for the time from the moment when the value is queried to the moment when
+    /// you initiate the recovery.
+    #[prost(message, optional, tag = "18")]
+    pub earliest_version_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Whether to enable the PITR feature on this database.
+    #[prost(enumeration = "database::PointInTimeRecoveryEnablement", tag = "21")]
+    pub point_in_time_recovery_enablement: i32,
     /// The App Engine integration mode to use for this database.
     #[prost(enumeration = "database::AppEngineIntegrationMode", tag = "19")]
     pub app_engine_integration_mode: i32,
-    /// Output only. The key_prefix for this database. This key_prefix is used, in combination
-    /// with the project id ("<key prefix>~<project id>") to construct the
-    /// application id that is returned from the Cloud Datastore APIs in Google App
-    /// Engine first generation runtimes.
+    /// Output only. The key_prefix for this database. This key_prefix is used, in
+    /// combination with the project id ("<key prefix>~<project id>") to construct
+    /// the application id that is returned from the Cloud Datastore APIs in Google
+    /// App Engine first generation runtimes.
     ///
     /// This value may be empty in which case the appid to use for URL-encoded keys
     /// is the project_id (eg: foo instead of v~foo).
     #[prost(string, tag = "20")]
     pub key_prefix: ::prost::alloc::string::String,
+    /// State of delete protection for the database.
+    #[prost(enumeration = "database::DeleteProtectionState", tag = "22")]
+    pub delete_protection_state: i32,
     /// This checksum is computed by the server based on the value of other
     /// fields, and may be sent on update and delete requests to ensure the
     /// client has an up-to-date value before proceeding.
@@ -76,6 +182,25 @@ pub mod database {
         /// is not recommended.
         OptimisticWithEntityGroups = 3,
     }
+    /// Point In Time Recovery feature enablement.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum PointInTimeRecoveryEnablement {
+        /// Not used.
+        Unspecified = 0,
+        /// Reads are supported on selected versions of the data from within the past
+        /// 7 days:
+        ///
+        /// * Reads against any timestamp within the past hour
+        /// * Reads against 1-minute snapshots beyond 1 hour and within 7 days
+        ///
+        /// `version_retention_period` and `earliest_version_time` can be
+        /// used to determine the supported versions.
+        PointInTimeRecoveryEnabled = 1,
+        /// Reads are supported on any version of the data from within the past 1
+        /// hour.
+        PointInTimeRecoveryDisabled = 2,
+    }
     /// The type of App Engine integration mode.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
@@ -87,9 +212,22 @@ pub mod database {
         /// disabling of the application & database, as well as disabling writes to
         /// the database.
         Enabled = 1,
-        /// Appengine has no affect on the ability of this database to serve
+        /// App Engine has no effect on the ability of this database to serve
         /// requests.
+        ///
+        /// This is the default setting for databases created with the Firestore API.
         Disabled = 2,
+    }
+    /// The delete protection state of the database.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DeleteProtectionState {
+        /// The default value. Delete protection type is not specified
+        Unspecified = 0,
+        /// Delete protection is disabled
+        DeleteProtectionDisabled = 1,
+        /// Delete protection is enabled
+        DeleteProtectionEnabled = 2,
     }
 }
 /// Cloud Firestore indexes enable simple and complex queries against
@@ -144,11 +282,38 @@ pub mod index {
         #[prost(string, tag = "1")]
         pub field_path: ::prost::alloc::string::String,
         /// How the field value is indexed.
-        #[prost(oneof = "index_field::ValueMode", tags = "2, 3")]
+        #[prost(oneof = "index_field::ValueMode", tags = "2, 3, 4")]
         pub value_mode: ::core::option::Option<index_field::ValueMode>,
     }
     /// Nested message and enum types in `IndexField`.
     pub mod index_field {
+        /// The index configuration to support vector search operations
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct VectorConfig {
+            /// Required. The vector dimension this configuration applies to.
+            ///
+            /// The resulting index will only include vectors of this dimension, and
+            /// can be used for vector search with the same dimension.
+            #[prost(int32, tag = "1")]
+            pub dimension: i32,
+            /// The type of index used.
+            #[prost(oneof = "vector_config::Type", tags = "2")]
+            pub r#type: ::core::option::Option<vector_config::Type>,
+        }
+        /// Nested message and enum types in `VectorConfig`.
+        pub mod vector_config {
+            /// An index that stores vectors in a flat data structure, and supports
+            /// exhaustive search.
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct FlatIndex {}
+            /// The type of index used.
+            #[derive(Clone, PartialEq, ::prost::Oneof)]
+            pub enum Type {
+                /// Indicates the vector index is a flat index.
+                #[prost(message, tag = "2")]
+                Flat(FlatIndex),
+            }
+        }
         /// The supported orderings.
         #[derive(
             Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
@@ -183,6 +348,10 @@ pub mod index {
             /// Indicates that this field supports operations on `array_value`s.
             #[prost(enumeration = "ArrayConfig", tag = "3")]
             ArrayConfig(i32),
+            /// Indicates that this field supports nearest neighbor and distance
+            /// operations on vector.
+            #[prost(message, tag = "4")]
+            VectorConfig(VectorConfig),
         }
     }
     /// Query Scope defines the scope at which a query is run. This is specified on
@@ -250,26 +419,24 @@ pub mod index {
 /// collections in the database with the same id.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Field {
-    /// Required. A field name of the form
+    /// Required. A field name of the form:
     /// `projects/{project_id}/databases/{database_id}/collectionGroups/{collection_id}/fields/{field_path}`
     ///
-    /// A field path may be a simple field name, e.g. `address` or a path to fields
-    /// within map_value , e.g. `address.city`,
+    /// A field path can be a simple field name, e.g. `address` or a path to fields
+    /// within `map_value` , e.g. `address.city`,
     /// or a special field path. The only valid special field is `*`, which
     /// represents any field.
     ///
-    /// Field paths may be quoted using ` (backtick). The only character that needs
-    /// to be escaped within a quoted field path is the backtick character itself,
-    /// escaped using a backslash. Special characters in field paths that
+    /// Field paths can be quoted using `` ` `` (backtick). The only character that
+    /// must be escaped within a quoted field path is the backtick character
+    /// itself, escaped using a backslash. Special characters in field paths that
     /// must be quoted include: `*`, `.`,
-    /// ``` (backtick), `[`, `]`, as well as any ascii symbolic characters.
+    /// `` ` `` (backtick), `[`, `]`, as well as any ascii symbolic characters.
     ///
     /// Examples:
-    /// (Note: Comments here are written in markdown syntax, so there is an
-    ///  additional layer of backticks to represent a code block)
-    /// `\`address.city\`` represents a field named `address.city`, not the map key
-    /// `city` in the field `address`.
-    /// `\`*\`` represents a field named `*`, not any field.
+    /// `` `address.city` `` represents a field named `address.city`, not the map
+    /// key `city` in the field `address`. `` `*` `` represents a field named `*`,
+    /// not any field.
     ///
     /// A special `Field` contains the default indexing settings for all fields.
     /// This field's resource name is:
@@ -303,8 +470,8 @@ pub mod field {
         /// When false, the `Field`'s index configuration is defined explicitly.
         #[prost(bool, tag = "2")]
         pub uses_ancestor_config: bool,
-        /// Output only. Specifies the resource name of the `Field` from which this field's
-        /// index configuration is set (when `uses_ancestor_config` is true),
+        /// Output only. Specifies the resource name of the `Field` from which this
+        /// field's index configuration is set (when `uses_ancestor_config` is true),
         /// or from which it *would* be set if this field had no index configuration
         /// (when `uses_ancestor_config` is false).
         #[prost(string, tag = "3")]
@@ -319,9 +486,12 @@ pub mod field {
     }
     /// The TTL (time-to-live) configuration for documents that have this `Field`
     /// set.
+    ///
     /// Storing a timestamp value into a TTL-enabled field will be treated as
-    /// the document's absolute expiration time. Using any other data type or
-    /// leaving the field absent will disable the TTL for the individual document.
+    /// the document's absolute expiration time. Timestamp values in the past
+    /// indicate that the document is eligible for immediate expiration. Using any
+    /// other data type or leaving the field absent will disable expiration for the
+    /// individual document.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct TtlConfig {
         /// Output only. The state of the TTL configuration.
@@ -354,6 +524,350 @@ pub mod field {
         }
     }
 }
+/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\]
+/// results from
+/// \[FirestoreAdmin.CreateIndex][google.firestore.admin.v1.FirestoreAdmin.CreateIndex\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IndexOperationMetadata {
+    /// The time this operation started.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time this operation completed. Will be unset if operation still in
+    /// progress.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The index resource that this operation is acting on. For example:
+    /// `projects/{project_id}/databases/{database_id}/collectionGroups/{collection_id}/indexes/{index_id}`
+    #[prost(string, tag = "3")]
+    pub index: ::prost::alloc::string::String,
+    /// The state of the operation.
+    #[prost(enumeration = "OperationState", tag = "4")]
+    pub state: i32,
+    /// The progress, in documents, of this operation.
+    #[prost(message, optional, tag = "5")]
+    pub progress_documents: ::core::option::Option<Progress>,
+    /// The progress, in bytes, of this operation.
+    #[prost(message, optional, tag = "6")]
+    pub progress_bytes: ::core::option::Option<Progress>,
+}
+/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\]
+/// results from
+/// \[FirestoreAdmin.UpdateField][google.firestore.admin.v1.FirestoreAdmin.UpdateField\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FieldOperationMetadata {
+    /// The time this operation started.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time this operation completed. Will be unset if operation still in
+    /// progress.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The field resource that this operation is acting on. For example:
+    /// `projects/{project_id}/databases/{database_id}/collectionGroups/{collection_id}/fields/{field_path}`
+    #[prost(string, tag = "3")]
+    pub field: ::prost::alloc::string::String,
+    /// A list of
+    /// \[IndexConfigDelta][google.firestore.admin.v1.FieldOperationMetadata.IndexConfigDelta\],
+    /// which describe the intent of this operation.
+    #[prost(message, repeated, tag = "4")]
+    pub index_config_deltas: ::prost::alloc::vec::Vec<field_operation_metadata::IndexConfigDelta>,
+    /// The state of the operation.
+    #[prost(enumeration = "OperationState", tag = "5")]
+    pub state: i32,
+    /// The progress, in documents, of this operation.
+    #[prost(message, optional, tag = "6")]
+    pub progress_documents: ::core::option::Option<Progress>,
+    /// The progress, in bytes, of this operation.
+    #[prost(message, optional, tag = "7")]
+    pub progress_bytes: ::core::option::Option<Progress>,
+    /// Describes the deltas of TTL configuration.
+    #[prost(message, optional, tag = "8")]
+    pub ttl_config_delta: ::core::option::Option<field_operation_metadata::TtlConfigDelta>,
+}
+/// Nested message and enum types in `FieldOperationMetadata`.
+pub mod field_operation_metadata {
+    /// Information about an index configuration change.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct IndexConfigDelta {
+        /// Specifies how the index is changing.
+        #[prost(enumeration = "index_config_delta::ChangeType", tag = "1")]
+        pub change_type: i32,
+        /// The index being changed.
+        #[prost(message, optional, tag = "2")]
+        pub index: ::core::option::Option<super::Index>,
+    }
+    /// Nested message and enum types in `IndexConfigDelta`.
+    pub mod index_config_delta {
+        /// Specifies how the index is changing.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum ChangeType {
+            /// The type of change is not specified or known.
+            Unspecified = 0,
+            /// The single field index is being added.
+            Add = 1,
+            /// The single field index is being removed.
+            Remove = 2,
+        }
+    }
+    /// Information about a TTL configuration change.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct TtlConfigDelta {
+        /// Specifies how the TTL configuration is changing.
+        #[prost(enumeration = "ttl_config_delta::ChangeType", tag = "1")]
+        pub change_type: i32,
+    }
+    /// Nested message and enum types in `TtlConfigDelta`.
+    pub mod ttl_config_delta {
+        /// Specifies how the TTL config is changing.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum ChangeType {
+            /// The type of change is not specified or known.
+            Unspecified = 0,
+            /// The TTL config is being added.
+            Add = 1,
+            /// The TTL config is being removed.
+            Remove = 2,
+        }
+    }
+}
+/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\]
+/// results from
+/// \[FirestoreAdmin.ExportDocuments][google.firestore.admin.v1.FirestoreAdmin.ExportDocuments\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportDocumentsMetadata {
+    /// The time this operation started.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time this operation completed. Will be unset if operation still in
+    /// progress.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The state of the export operation.
+    #[prost(enumeration = "OperationState", tag = "3")]
+    pub operation_state: i32,
+    /// The progress, in documents, of this operation.
+    #[prost(message, optional, tag = "4")]
+    pub progress_documents: ::core::option::Option<Progress>,
+    /// The progress, in bytes, of this operation.
+    #[prost(message, optional, tag = "5")]
+    pub progress_bytes: ::core::option::Option<Progress>,
+    /// Which collection ids are being exported.
+    #[prost(string, repeated, tag = "6")]
+    pub collection_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Where the documents are being exported to.
+    #[prost(string, tag = "7")]
+    pub output_uri_prefix: ::prost::alloc::string::String,
+    /// Which namespace ids are being exported.
+    #[prost(string, repeated, tag = "8")]
+    pub namespace_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The timestamp that corresponds to the version of the database that is being
+    /// exported. If unspecified, there are no guarantees about the consistency of
+    /// the documents being exported.
+    #[prost(message, optional, tag = "9")]
+    pub snapshot_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\]
+/// results from
+/// \[FirestoreAdmin.ImportDocuments][google.firestore.admin.v1.FirestoreAdmin.ImportDocuments\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImportDocumentsMetadata {
+    /// The time this operation started.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time this operation completed. Will be unset if operation still in
+    /// progress.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The state of the import operation.
+    #[prost(enumeration = "OperationState", tag = "3")]
+    pub operation_state: i32,
+    /// The progress, in documents, of this operation.
+    #[prost(message, optional, tag = "4")]
+    pub progress_documents: ::core::option::Option<Progress>,
+    /// The progress, in bytes, of this operation.
+    #[prost(message, optional, tag = "5")]
+    pub progress_bytes: ::core::option::Option<Progress>,
+    /// Which collection ids are being imported.
+    #[prost(string, repeated, tag = "6")]
+    pub collection_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The location of the documents being imported.
+    #[prost(string, tag = "7")]
+    pub input_uri_prefix: ::prost::alloc::string::String,
+    /// Which namespace ids are being imported.
+    #[prost(string, repeated, tag = "8")]
+    pub namespace_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\]
+/// results from
+/// \[FirestoreAdmin.BulkDeleteDocuments][google.firestore.admin.v1.FirestoreAdmin.BulkDeleteDocuments\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BulkDeleteDocumentsMetadata {
+    /// The time this operation started.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time this operation completed. Will be unset if operation still in
+    /// progress.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The state of the operation.
+    #[prost(enumeration = "OperationState", tag = "3")]
+    pub operation_state: i32,
+    /// The progress, in documents, of this operation.
+    #[prost(message, optional, tag = "4")]
+    pub progress_documents: ::core::option::Option<Progress>,
+    /// The progress, in bytes, of this operation.
+    #[prost(message, optional, tag = "5")]
+    pub progress_bytes: ::core::option::Option<Progress>,
+    /// The ids of the collection groups that are being deleted.
+    #[prost(string, repeated, tag = "6")]
+    pub collection_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Which namespace ids are being deleted.
+    #[prost(string, repeated, tag = "7")]
+    pub namespace_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The timestamp that corresponds to the version of the database that is being
+    /// read to get the list of documents to delete. This time can also be used as
+    /// the timestamp of PITR in case of disaster recovery (subject to PITR window
+    /// limit).
+    #[prost(message, optional, tag = "8")]
+    pub snapshot_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Returned in the \[google.longrunning.Operation][google.longrunning.Operation\]
+/// response field.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportDocumentsResponse {
+    /// Location of the output files. This can be used to begin an import
+    /// into Cloud Firestore (this project or another project) after the operation
+    /// completes successfully.
+    #[prost(string, tag = "1")]
+    pub output_uri_prefix: ::prost::alloc::string::String,
+}
+/// Metadata for the [long-running operation]\[google.longrunning.Operation\] from
+/// the \[RestoreDatabase][google.firestore.admin.v1.RestoreDatabase\] request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RestoreDatabaseMetadata {
+    /// The time the restore was started.
+    #[prost(message, optional, tag = "1")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time the restore finished, unset for ongoing restores.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The operation state of the restore.
+    #[prost(enumeration = "OperationState", tag = "3")]
+    pub operation_state: i32,
+    /// The name of the database being restored to.
+    #[prost(string, tag = "4")]
+    pub database: ::prost::alloc::string::String,
+    /// The name of the backup restoring from.
+    #[prost(string, tag = "5")]
+    pub backup: ::prost::alloc::string::String,
+    /// How far along the restore is as an estimated percentage of remaining time.
+    #[prost(message, optional, tag = "8")]
+    pub progress_percentage: ::core::option::Option<Progress>,
+}
+/// Describes the progress of the operation.
+/// Unit of work is generic and must be interpreted based on where
+/// \[Progress][google.firestore.admin.v1.Progress\] is used.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Progress {
+    /// The amount of work estimated.
+    #[prost(int64, tag = "1")]
+    pub estimated_work: i64,
+    /// The amount of work completed.
+    #[prost(int64, tag = "2")]
+    pub completed_work: i64,
+}
+/// Describes the state of the operation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum OperationState {
+    /// Unspecified.
+    Unspecified = 0,
+    /// Request is being prepared for processing.
+    Initializing = 1,
+    /// Request is actively being processed.
+    Processing = 2,
+    /// Request is in the process of being cancelled after user called
+    /// google.longrunning.Operations.CancelOperation on the operation.
+    Cancelling = 3,
+    /// Request has been processed and is in its finalization stage.
+    Finalizing = 4,
+    /// Request has completed successfully.
+    Successful = 5,
+    /// Request has finished being processed, but encountered an error.
+    Failed = 6,
+    /// Request has finished being cancelled after user called
+    /// google.longrunning.Operations.CancelOperation.
+    Cancelled = 7,
+}
+/// A backup schedule for a Cloud Firestore Database.
+///
+/// This resource is owned by the database it is backing up, and is deleted along
+/// with the database. The actual backups are not though.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BackupSchedule {
+    /// Output only. The unique backup schedule identifier across all locations and
+    /// databases for the given project.
+    ///
+    /// This will be auto-assigned.
+    ///
+    /// Format is
+    /// `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Output only. The timestamp at which this backup schedule was created and
+    /// effective since.
+    ///
+    /// No backups will be created for this schedule before this time.
+    #[prost(message, optional, tag = "3")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The timestamp at which this backup schedule was most recently
+    /// updated. When a backup schedule is first created, this is the same as
+    /// create_time.
+    #[prost(message, optional, tag = "10")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// At what relative time in the future, compared to its creation time,
+    /// the backup should be deleted, e.g. keep backups for 7 days.
+    #[prost(message, optional, tag = "6")]
+    pub retention: ::core::option::Option<::prost_types::Duration>,
+    /// A oneof field to represent when backups will be taken.
+    #[prost(oneof = "backup_schedule::Recurrence", tags = "7, 8")]
+    pub recurrence: ::core::option::Option<backup_schedule::Recurrence>,
+}
+/// Nested message and enum types in `BackupSchedule`.
+pub mod backup_schedule {
+    /// A oneof field to represent when backups will be taken.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Recurrence {
+        /// For a schedule that runs daily.
+        #[prost(message, tag = "7")]
+        DailyRecurrence(super::DailyRecurrence),
+        /// For a schedule that runs weekly on a specific day.
+        #[prost(message, tag = "8")]
+        WeeklyRecurrence(super::WeeklyRecurrence),
+    }
+}
+/// Represents a recurring schedule that runs at a specific time every day.
+///
+/// The time zone is UTC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DailyRecurrence {}
+/// Represents a recurring schedule that runs on a specified day of the week.
+///
+/// The time zone is UTC.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WeeklyRecurrence {
+    /// The day of week to run.
+    ///
+    /// DAY_OF_WEEK_UNSPECIFIED is not allowed.
+    #[prost(enumeration = "super::super::super::r#type::DayOfWeek", tag = "2")]
+    pub day: i32,
+}
 /// A request to list the Firestore Databases in all locations for a project.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListDatabasesRequest {
@@ -361,6 +875,9 @@ pub struct ListDatabasesRequest {
     /// `projects/{project_id}`
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
+    /// If true, also returns deleted resources.
+    #[prost(bool, tag = "4")]
+    pub show_deleted: bool,
 }
 /// The request for
 /// \[FirestoreAdmin.CreateDatabase][google.firestore.admin.v1.FirestoreAdmin.CreateDatabase\].
@@ -376,7 +893,11 @@ pub struct CreateDatabaseRequest {
     /// Required. The ID to use for the database, which will become the final
     /// component of the database's resource name.
     ///
-    /// The value must be set to "(default)".
+    /// This value should be 4-63 characters. Valid characters are /\[a-z][0-9\]-/
+    /// with first character a letter and the last a letter or a number. Must not
+    /// be UUID-like /\[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f\]{12}/.
+    ///
+    /// "(default)" database id is also valid.
     #[prost(string, tag = "3")]
     pub database_id: ::prost::alloc::string::String,
 }
@@ -389,6 +910,17 @@ pub struct ListDatabasesResponse {
     /// The databases in the project.
     #[prost(message, repeated, tag = "1")]
     pub databases: ::prost::alloc::vec::Vec<Database>,
+    /// In the event that data about individual databases cannot be listed they
+    /// will be recorded here.
+    ///
+    /// An example entry might be: projects/some_project/locations/some_location
+    /// This can happen if the Cloud Region that the Database resides in is
+    /// currently unavailable.  In this case we can't fetch all the details about
+    /// the database. You may be able to get a more detailed error message
+    /// (or possibly fetch the resource) by sending a 'Get' request for the
+    /// resource or a 'List' request for the specific location.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// The request for
 /// \[FirestoreAdmin.GetDatabase][google.firestore.admin.v1.FirestoreAdmin.GetDatabase\].
@@ -413,6 +945,86 @@ pub struct UpdateDatabaseRequest {
 /// Metadata related to the update database operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateDatabaseMetadata {}
+/// The request for
+/// \[FirestoreAdmin.DeleteDatabase][google.firestore.admin.v1.FirestoreAdmin.DeleteDatabase\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteDatabaseRequest {
+    /// Required. A name of the form
+    /// `projects/{project_id}/databases/{database_id}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The current etag of the Database.
+    /// If an etag is provided and does not match the current etag of the database,
+    /// deletion will be blocked and a FAILED_PRECONDITION error will be returned.
+    #[prost(string, tag = "3")]
+    pub etag: ::prost::alloc::string::String,
+}
+/// Metadata related to the delete database operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteDatabaseMetadata {}
+/// The request for
+/// \[FirestoreAdmin.CreateBackupSchedule][google.firestore.admin.v1.FirestoreAdmin.CreateBackupSchedule\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateBackupScheduleRequest {
+    /// Required. The parent database.
+    ///
+    ///  Format `projects/{project}/databases/{database}`
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The backup schedule to create.
+    #[prost(message, optional, tag = "2")]
+    pub backup_schedule: ::core::option::Option<BackupSchedule>,
+}
+/// The request for
+/// \[FirestoreAdmin.GetBackupSchedule][google.firestore.admin.v1.FirestoreAdmin.GetBackupSchedule\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetBackupScheduleRequest {
+    /// Required. The name of the backup schedule.
+    ///
+    /// Format
+    /// `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// The request for
+/// \[FirestoreAdmin.UpdateBackupSchedule][google.firestore.admin.v1.FirestoreAdmin.UpdateBackupSchedule\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateBackupScheduleRequest {
+    /// Required. The backup schedule to update.
+    #[prost(message, optional, tag = "1")]
+    pub backup_schedule: ::core::option::Option<BackupSchedule>,
+    /// The list of fields to be updated.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// The request for
+/// \[FirestoreAdmin.ListBackupSchedules][google.firestore.admin.v1.FirestoreAdmin.ListBackupSchedules\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListBackupSchedulesRequest {
+    /// Required. The parent database.
+    ///
+    /// Format is `projects/{project}/databases/{database}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+}
+/// The response for
+/// \[FirestoreAdmin.ListBackupSchedules][google.firestore.admin.v1.FirestoreAdmin.ListBackupSchedules\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListBackupSchedulesResponse {
+    /// List of all backup schedules.
+    #[prost(message, repeated, tag = "1")]
+    pub backup_schedules: ::prost::alloc::vec::Vec<BackupSchedule>,
+}
+/// The request for \[FirestoreAdmin.DeleteBackupSchedules][\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteBackupScheduleRequest {
+    /// Required. The name of the backup schedule.
+    ///
+    /// Format
+    /// `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
 /// The request for
 /// \[FirestoreAdmin.CreateIndex][google.firestore.admin.v1.FirestoreAdmin.CreateIndex\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -509,7 +1121,8 @@ pub struct ListFieldsRequest {
     /// only supports listing fields that have been explicitly overridden. To issue
     /// this query, call
     /// \[FirestoreAdmin.ListFields][google.firestore.admin.v1.FirestoreAdmin.ListFields\]
-    /// with a filter that includes `indexConfig.usesAncestorConfig:false` .
+    /// with a filter that includes `indexConfig.usesAncestorConfig:false` or
+    /// `ttlConfig:*`.
     #[prost(string, tag = "2")]
     pub filter: ::prost::alloc::string::String,
     /// The number of results to return.
@@ -541,7 +1154,8 @@ pub struct ExportDocumentsRequest {
     /// `projects/{project_id}/databases/{database_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Which collection ids to export. Unspecified means all collections.
+    /// Which collection ids to export. Unspecified means all collections. Each
+    /// collection id in this list must be unique.
     #[prost(string, repeated, tag = "2")]
     pub collection_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// The output URI. Currently only supports Google Cloud Storage URIs of the
@@ -554,6 +1168,23 @@ pub struct ExportDocumentsRequest {
     /// generated based on the start time.
     #[prost(string, tag = "3")]
     pub output_uri_prefix: ::prost::alloc::string::String,
+    /// An empty list represents all namespaces. This is the preferred
+    /// usage for databases that don't use namespaces.
+    ///
+    /// An empty string element represents the default namespace. This should be
+    /// used if the database has data in non-default namespaces, but doesn't want
+    /// to include them. Each namespace in this list must be unique.
+    #[prost(string, repeated, tag = "4")]
+    pub namespace_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The timestamp that corresponds to the version of the database to be
+    /// exported. The timestamp must be in the past, rounded to the minute and not
+    /// older than
+    /// \[earliestVersionTime][google.firestore.admin.v1.Database.earliest_version_time\].
+    /// If specified, then the exported documents will represent a consistent view
+    /// of the database at the provided time. Otherwise, there are no guarantees
+    /// about the consistency of the exported documents.
+    #[prost(message, optional, tag = "5")]
+    pub snapshot_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// The request for
 /// \[FirestoreAdmin.ImportDocuments][google.firestore.admin.v1.FirestoreAdmin.ImportDocuments\].
@@ -564,7 +1195,7 @@ pub struct ImportDocumentsRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Which collection ids to import. Unspecified means all collections included
-    /// in the import.
+    /// in the import. Each collection id in this list must be unique.
     #[prost(string, repeated, tag = "2")]
     pub collection_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Location of the exported files.
@@ -574,6 +1205,128 @@ pub struct ImportDocumentsRequest {
     /// \[google.firestore.admin.v1.ExportDocumentsResponse.output_uri_prefix][google.firestore.admin.v1.ExportDocumentsResponse.output_uri_prefix\].
     #[prost(string, tag = "3")]
     pub input_uri_prefix: ::prost::alloc::string::String,
+    /// An empty list represents all namespaces. This is the preferred
+    /// usage for databases that don't use namespaces.
+    ///
+    /// An empty string element represents the default namespace. This should be
+    /// used if the database has data in non-default namespaces, but doesn't want
+    /// to include them. Each namespace in this list must be unique.
+    #[prost(string, repeated, tag = "4")]
+    pub namespace_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// The request for
+/// \[FirestoreAdmin.BulkDeleteDocuments][google.firestore.admin.v1.FirestoreAdmin.BulkDeleteDocuments\].
+///
+/// When both collection_ids and namespace_ids are set, only documents satisfying
+/// both conditions will be deleted.
+///
+/// Requests with namespace_ids and collection_ids both empty will be rejected.
+/// Please use
+/// \[FirestoreAdmin.DeleteDatabase][google.firestore.admin.v1.FirestoreAdmin.DeleteDatabase\]
+/// instead.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BulkDeleteDocumentsRequest {
+    /// Required. Database to operate. Should be of the form:
+    /// `projects/{project_id}/databases/{database_id}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. IDs of the collection groups to delete. Unspecified means all
+    /// collection groups.
+    ///
+    /// Each collection group in this list must be unique.
+    #[prost(string, repeated, tag = "2")]
+    pub collection_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Namespaces to delete.
+    ///
+    /// An empty list means all namespaces. This is the recommended
+    /// usage for databases that don't use namespaces.
+    ///
+    /// An empty string element represents the default namespace. This should be
+    /// used if the database has data in non-default namespaces, but doesn't want
+    /// to delete from them.
+    ///
+    /// Each namespace in this list must be unique.
+    #[prost(string, repeated, tag = "3")]
+    pub namespace_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// The response for
+/// \[FirestoreAdmin.BulkDeleteDocuments][google.firestore.admin.v1.FirestoreAdmin.BulkDeleteDocuments\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BulkDeleteDocumentsResponse {}
+/// The request for
+/// \[FirestoreAdmin.GetBackup][google.firestore.admin.v1.FirestoreAdmin.GetBackup\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetBackupRequest {
+    /// Required. Name of the backup to fetch.
+    ///
+    /// Format is `projects/{project}/locations/{location}/backups/{backup}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// The request for
+/// \[FirestoreAdmin.ListBackups][google.firestore.admin.v1.FirestoreAdmin.ListBackups\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListBackupsRequest {
+    /// Required. The location to list backups from.
+    ///
+    /// Format is `projects/{project}/locations/{location}`.
+    /// Use `{location} = '-'` to list backups from all locations for the given
+    /// project. This allows listing backups from a single location or from all
+    /// locations.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+}
+/// The response for
+/// \[FirestoreAdmin.ListBackups][google.firestore.admin.v1.FirestoreAdmin.ListBackups\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListBackupsResponse {
+    /// List of all backups for the project.
+    #[prost(message, repeated, tag = "1")]
+    pub backups: ::prost::alloc::vec::Vec<Backup>,
+    /// List of locations that existing backups were not able to be fetched from.
+    ///
+    /// Instead of failing the entire requests when a single location is
+    /// unreachable, this response returns a partial result set and list of
+    /// locations unable to be reached here. The request can be retried against a
+    /// single location to get a concrete error.
+    #[prost(string, repeated, tag = "3")]
+    pub unreachable: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// The request for
+/// \[FirestoreAdmin.DeleteBackup][google.firestore.admin.v1.FirestoreAdmin.DeleteBackup\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteBackupRequest {
+    /// Required. Name of the backup to delete.
+    ///
+    /// format is `projects/{project}/locations/{location}/backups/{backup}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// The request message for
+/// \[FirestoreAdmin.RestoreDatabase][google.firestore.admin.v1.RestoreDatabase\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RestoreDatabaseRequest {
+    /// Required. The project to restore the database in. Format is
+    /// `projects/{project_id}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The ID to use for the database, which will become the final
+    /// component of the database's resource name. This database id must not be
+    /// associated with an existing database.
+    ///
+    /// This value should be 4-63 characters. Valid characters are /\[a-z][0-9\]-/
+    /// with first character a letter and the last a letter or a number. Must not
+    /// be UUID-like /\[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f\]{12}/.
+    ///
+    /// "(default)" database id is also valid.
+    #[prost(string, tag = "2")]
+    pub database_id: ::prost::alloc::string::String,
+    /// Required. Backup to restore from. Must be from the same project as the
+    /// parent.
+    ///
+    /// Format is: `projects/{project_id}/locations/{location}/backups/{backup}`
+    #[prost(string, tag = "3")]
+    pub backup: ::prost::alloc::string::String,
 }
 #[doc = r" Generated client implementations."]
 pub mod firestore_admin_client {
@@ -786,7 +1539,8 @@ pub mod firestore_admin_client {
         #[doc = " only supports listing fields that have been explicitly overridden. To issue"]
         #[doc = " this query, call"]
         #[doc = " [FirestoreAdmin.ListFields][google.firestore.admin.v1.FirestoreAdmin.ListFields]"]
-        #[doc = " with the filter set to `indexConfig.usesAncestorConfig:false` ."]
+        #[doc = " with the filter set to `indexConfig.usesAncestorConfig:false` or"]
+        #[doc = " `ttlConfig:*`."]
         pub async fn list_fields(
             &mut self,
             request: impl tonic::IntoRequest<super::ListFieldsRequest>,
@@ -854,6 +1608,33 @@ pub mod firestore_admin_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.firestore.admin.v1.FirestoreAdmin/ImportDocuments",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Bulk deletes a subset of documents from Google Cloud Firestore."]
+        #[doc = " Documents created or updated after the underlying system starts to process"]
+        #[doc = " the request will not be deleted. The bulk delete occurs in the background"]
+        #[doc = " and its progress can be monitored and managed via the Operation resource"]
+        #[doc = " that is created."]
+        #[doc = ""]
+        #[doc = " For more details on bulk delete behavior, refer to:"]
+        #[doc = " https://cloud.google.com/firestore/docs/manage-data/bulk-delete"]
+        pub async fn bulk_delete_documents(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BulkDeleteDocumentsRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/BulkDeleteDocuments",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -931,215 +1712,203 @@ pub mod firestore_admin_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Deletes a database."]
+        pub async fn delete_database(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteDatabaseRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/DeleteDatabase",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets information about a backup."]
+        pub async fn get_backup(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetBackupRequest>,
+        ) -> Result<tonic::Response<super::Backup>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/GetBackup",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists all the backups."]
+        pub async fn list_backups(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListBackupsRequest>,
+        ) -> Result<tonic::Response<super::ListBackupsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/ListBackups",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a backup."]
+        pub async fn delete_backup(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteBackupRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/DeleteBackup",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a new database by restoring from an existing backup."]
+        #[doc = ""]
+        #[doc = " The new database must be in the same cloud region or multi-region location"]
+        #[doc = " as the existing backup. This behaves similar to"]
+        #[doc = " [FirestoreAdmin.CreateDatabase][google.firestore.admin.v1.FirestoreAdmin.CreateDatabase]"]
+        #[doc = " except instead of creating a new empty database, a new database is created"]
+        #[doc = " with the database type, index configuration, and documents from an existing"]
+        #[doc = " backup."]
+        #[doc = ""]
+        #[doc = " The [long-running operation][google.longrunning.Operation] can be used to"]
+        #[doc = " track the progress of the restore, with the Operation's"]
+        #[doc = " [metadata][google.longrunning.Operation.metadata] field type being the"]
+        #[doc = " [RestoreDatabaseMetadata][google.firestore.admin.v1.RestoreDatabaseMetadata]."]
+        #[doc = " The [response][google.longrunning.Operation.response] type is the"]
+        #[doc = " [Database][google.firestore.admin.v1.Database] if the restore was"]
+        #[doc = " successful. The new database is not readable or writeable until the LRO has"]
+        #[doc = " completed."]
+        pub async fn restore_database(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RestoreDatabaseRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/RestoreDatabase",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a backup schedule on a database."]
+        #[doc = " At most two backup schedules can be configured on a database, one daily"]
+        #[doc = " backup schedule and one weekly backup schedule."]
+        pub async fn create_backup_schedule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateBackupScheduleRequest>,
+        ) -> Result<tonic::Response<super::BackupSchedule>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/CreateBackupSchedule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets information about a backup schedule."]
+        pub async fn get_backup_schedule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetBackupScheduleRequest>,
+        ) -> Result<tonic::Response<super::BackupSchedule>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/GetBackupSchedule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " List backup schedules."]
+        pub async fn list_backup_schedules(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListBackupSchedulesRequest>,
+        ) -> Result<tonic::Response<super::ListBackupSchedulesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/ListBackupSchedules",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a backup schedule."]
+        pub async fn update_backup_schedule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateBackupScheduleRequest>,
+        ) -> Result<tonic::Response<super::BackupSchedule>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/UpdateBackupSchedule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a backup schedule."]
+        pub async fn delete_backup_schedule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteBackupScheduleRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.firestore.admin.v1.FirestoreAdmin/DeleteBackupSchedule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
-/// The metadata message for \[google.cloud.location.Location.metadata][google.cloud.location.Location.metadata\].
+/// The metadata message for
+/// \[google.cloud.location.Location.metadata][google.cloud.location.Location.metadata\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LocationMetadata {}
-/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\] results from
-/// \[FirestoreAdmin.CreateIndex][google.firestore.admin.v1.FirestoreAdmin.CreateIndex\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct IndexOperationMetadata {
-    /// The time this operation started.
-    #[prost(message, optional, tag = "1")]
-    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The time this operation completed. Will be unset if operation still in
-    /// progress.
-    #[prost(message, optional, tag = "2")]
-    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The index resource that this operation is acting on. For example:
-    /// `projects/{project_id}/databases/{database_id}/collectionGroups/{collection_id}/indexes/{index_id}`
-    #[prost(string, tag = "3")]
-    pub index: ::prost::alloc::string::String,
-    /// The state of the operation.
-    #[prost(enumeration = "OperationState", tag = "4")]
-    pub state: i32,
-    /// The progress, in documents, of this operation.
-    #[prost(message, optional, tag = "5")]
-    pub progress_documents: ::core::option::Option<Progress>,
-    /// The progress, in bytes, of this operation.
-    #[prost(message, optional, tag = "6")]
-    pub progress_bytes: ::core::option::Option<Progress>,
-}
-/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\] results from
-/// \[FirestoreAdmin.UpdateField][google.firestore.admin.v1.FirestoreAdmin.UpdateField\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct FieldOperationMetadata {
-    /// The time this operation started.
-    #[prost(message, optional, tag = "1")]
-    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The time this operation completed. Will be unset if operation still in
-    /// progress.
-    #[prost(message, optional, tag = "2")]
-    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The field resource that this operation is acting on. For example:
-    /// `projects/{project_id}/databases/{database_id}/collectionGroups/{collection_id}/fields/{field_path}`
-    #[prost(string, tag = "3")]
-    pub field: ::prost::alloc::string::String,
-    /// A list of \[IndexConfigDelta][google.firestore.admin.v1.FieldOperationMetadata.IndexConfigDelta\], which describe the intent of this
-    /// operation.
-    #[prost(message, repeated, tag = "4")]
-    pub index_config_deltas: ::prost::alloc::vec::Vec<field_operation_metadata::IndexConfigDelta>,
-    /// The state of the operation.
-    #[prost(enumeration = "OperationState", tag = "5")]
-    pub state: i32,
-    /// The progress, in documents, of this operation.
-    #[prost(message, optional, tag = "6")]
-    pub progress_documents: ::core::option::Option<Progress>,
-    /// The progress, in bytes, of this operation.
-    #[prost(message, optional, tag = "7")]
-    pub progress_bytes: ::core::option::Option<Progress>,
-    /// Describes the deltas of TTL configuration.
-    #[prost(message, optional, tag = "8")]
-    pub ttl_config_delta: ::core::option::Option<field_operation_metadata::TtlConfigDelta>,
-}
-/// Nested message and enum types in `FieldOperationMetadata`.
-pub mod field_operation_metadata {
-    /// Information about an index configuration change.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct IndexConfigDelta {
-        /// Specifies how the index is changing.
-        #[prost(enumeration = "index_config_delta::ChangeType", tag = "1")]
-        pub change_type: i32,
-        /// The index being changed.
-        #[prost(message, optional, tag = "2")]
-        pub index: ::core::option::Option<super::Index>,
-    }
-    /// Nested message and enum types in `IndexConfigDelta`.
-    pub mod index_config_delta {
-        /// Specifies how the index is changing.
-        #[derive(
-            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
-        )]
-        #[repr(i32)]
-        pub enum ChangeType {
-            /// The type of change is not specified or known.
-            Unspecified = 0,
-            /// The single field index is being added.
-            Add = 1,
-            /// The single field index is being removed.
-            Remove = 2,
-        }
-    }
-    /// Information about an TTL configuration change.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct TtlConfigDelta {
-        /// Specifies how the TTL configuration is changing.
-        #[prost(enumeration = "ttl_config_delta::ChangeType", tag = "1")]
-        pub change_type: i32,
-    }
-    /// Nested message and enum types in `TtlConfigDelta`.
-    pub mod ttl_config_delta {
-        /// Specifies how the TTL config is changing.
-        #[derive(
-            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
-        )]
-        #[repr(i32)]
-        pub enum ChangeType {
-            /// The type of change is not specified or known.
-            Unspecified = 0,
-            /// The TTL config is being added.
-            Add = 1,
-            /// The TTL config is being removed.
-            Remove = 2,
-        }
-    }
-}
-/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\] results from
-/// \[FirestoreAdmin.ExportDocuments][google.firestore.admin.v1.FirestoreAdmin.ExportDocuments\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ExportDocumentsMetadata {
-    /// The time this operation started.
-    #[prost(message, optional, tag = "1")]
-    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The time this operation completed. Will be unset if operation still in
-    /// progress.
-    #[prost(message, optional, tag = "2")]
-    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The state of the export operation.
-    #[prost(enumeration = "OperationState", tag = "3")]
-    pub operation_state: i32,
-    /// The progress, in documents, of this operation.
-    #[prost(message, optional, tag = "4")]
-    pub progress_documents: ::core::option::Option<Progress>,
-    /// The progress, in bytes, of this operation.
-    #[prost(message, optional, tag = "5")]
-    pub progress_bytes: ::core::option::Option<Progress>,
-    /// Which collection ids are being exported.
-    #[prost(string, repeated, tag = "6")]
-    pub collection_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Where the entities are being exported to.
-    #[prost(string, tag = "7")]
-    pub output_uri_prefix: ::prost::alloc::string::String,
-}
-/// Metadata for \[google.longrunning.Operation][google.longrunning.Operation\] results from
-/// \[FirestoreAdmin.ImportDocuments][google.firestore.admin.v1.FirestoreAdmin.ImportDocuments\].
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ImportDocumentsMetadata {
-    /// The time this operation started.
-    #[prost(message, optional, tag = "1")]
-    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The time this operation completed. Will be unset if operation still in
-    /// progress.
-    #[prost(message, optional, tag = "2")]
-    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The state of the import operation.
-    #[prost(enumeration = "OperationState", tag = "3")]
-    pub operation_state: i32,
-    /// The progress, in documents, of this operation.
-    #[prost(message, optional, tag = "4")]
-    pub progress_documents: ::core::option::Option<Progress>,
-    /// The progress, in bytes, of this operation.
-    #[prost(message, optional, tag = "5")]
-    pub progress_bytes: ::core::option::Option<Progress>,
-    /// Which collection ids are being imported.
-    #[prost(string, repeated, tag = "6")]
-    pub collection_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// The location of the documents being imported.
-    #[prost(string, tag = "7")]
-    pub input_uri_prefix: ::prost::alloc::string::String,
-}
-/// Returned in the \[google.longrunning.Operation][google.longrunning.Operation\] response field.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ExportDocumentsResponse {
-    /// Location of the output files. This can be used to begin an import
-    /// into Cloud Firestore (this project or another project) after the operation
-    /// completes successfully.
-    #[prost(string, tag = "1")]
-    pub output_uri_prefix: ::prost::alloc::string::String,
-}
-/// Describes the progress of the operation.
-/// Unit of work is generic and must be interpreted based on where \[Progress][google.firestore.admin.v1.Progress\]
-/// is used.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Progress {
-    /// The amount of work estimated.
-    #[prost(int64, tag = "1")]
-    pub estimated_work: i64,
-    /// The amount of work completed.
-    #[prost(int64, tag = "2")]
-    pub completed_work: i64,
-}
-/// Describes the state of the operation.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum OperationState {
-    /// Unspecified.
-    Unspecified = 0,
-    /// Request is being prepared for processing.
-    Initializing = 1,
-    /// Request is actively being processed.
-    Processing = 2,
-    /// Request is in the process of being cancelled after user called
-    /// google.longrunning.Operations.CancelOperation on the operation.
-    Cancelling = 3,
-    /// Request has been processed and is in its finalization stage.
-    Finalizing = 4,
-    /// Request has completed successfully.
-    Successful = 5,
-    /// Request has finished being processed, but encountered an error.
-    Failed = 6,
-    /// Request has finished being cancelled after user called
-    /// google.longrunning.Operations.CancelOperation.
-    Cancelled = 7,
-}

@@ -25,6 +25,11 @@ pub struct Trace {
     /// and avoid reordering or sorting them.
     #[prost(message, repeated, tag = "2")]
     pub steps: ::prost::alloc::vec::Vec<Step>,
+    /// ID of trace. For forward traces, this ID is unique for each trace. For
+    /// return traces, it matches ID of associated forward trace. A single forward
+    /// trace can be associated with none, one or more than one return trace.
+    #[prost(int32, tag = "4")]
+    pub forward_trace_id: i32,
 }
 /// A simulated forwarding path is composed of multiple steps.
 /// Each step has a well-defined state and an associated configuration.
@@ -49,7 +54,7 @@ pub struct Step {
     /// final state the configuration is cleared.
     #[prost(
         oneof = "step::StepInfo",
-        tags = "5, 6, 7, 8, 9, 10, 11, 21, 12, 13, 14, 15, 16, 17, 18, 19, 20"
+        tags = "5, 6, 7, 8, 24, 9, 10, 11, 21, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 25, 26, 27, 28"
     )]
     pub step_info: ::core::option::Option<step::StepInfo>,
 }
@@ -68,6 +73,9 @@ pub mod step {
         /// Initial state: packet originating from the internet.
         /// The endpoint information is populated.
         StartFromInternet = 2,
+        /// Initial state: packet originating from a Google service.
+        /// The google_service information is populated.
+        StartFromGoogleService = 27,
         /// Initial state: packet originating from a VPC or on-premises network
         /// with internal source IP.
         /// If the source is a VPC network visible to the user, a NetworkInfo
@@ -79,9 +87,22 @@ pub mod step {
         /// Initial state: packet originating from a Cloud SQL instance.
         /// A CloudSQLInstanceInfo is populated with starting instance information.
         StartFromCloudSqlInstance = 22,
-        /// Initial state: packet originating from a Cloud function.
+        /// Initial state: packet originating from a Cloud Function.
         /// A CloudFunctionInfo is populated with starting function information.
         StartFromCloudFunction = 23,
+        /// Initial state: packet originating from an App Engine service version.
+        /// An AppEngineVersionInfo is populated with starting version information.
+        StartFromAppEngineVersion = 25,
+        /// Initial state: packet originating from a Cloud Run revision.
+        /// A CloudRunRevisionInfo is populated with starting revision information.
+        StartFromCloudRunRevision = 26,
+        /// Initial state: packet originating from a Storage Bucket. Used only for
+        /// return traces.
+        /// The storage_bucket information is populated.
+        StartFromStorageBucket = 29,
+        /// Initial state: packet originating from a published service that uses
+        /// Private Service Connect. Used only for return traces.
+        StartFromPscPublishedService = 30,
         /// Config checking state: verify ingress firewall rule.
         ApplyIngressFirewallRule = 4,
         /// Config checking state: verify egress firewall rule.
@@ -90,14 +111,20 @@ pub mod step {
         ApplyRoute = 6,
         /// Config checking state: match forwarding rule.
         ApplyForwardingRule = 7,
+        /// Config checking state: verify load balancer backend configuration.
+        AnalyzeLoadBalancerBackend = 28,
         /// Config checking state: packet sent or received under foreign IP
         /// address and allowed.
         SpoofingApproved = 8,
         /// Forwarding state: arriving at a Compute Engine instance.
         ArriveAtInstance = 9,
         /// Forwarding state: arriving at a Compute Engine internal load balancer.
+        /// Deprecated in favor of the `ANALYZE_LOAD_BALANCER_BACKEND` state, not
+        /// used in new tests.
         ArriveAtInternalLoadBalancer = 10,
         /// Forwarding state: arriving at a Compute Engine external load balancer.
+        /// Deprecated in favor of the `ANALYZE_LOAD_BALANCER_BACKEND` state, not
+        /// used in new tests.
         ArriveAtExternalLoadBalancer = 11,
         /// Forwarding state: arriving at a Cloud VPN gateway.
         ArriveAtVpnGateway = 12,
@@ -145,6 +172,9 @@ pub mod step {
         /// or Connection Proxy.
         #[prost(message, tag = "8")]
         Endpoint(super::EndpointInfo),
+        /// Display information of a Google service
+        #[prost(message, tag = "24")]
+        GoogleService(super::GoogleServiceInfo),
         /// Display information of a Compute Engine forwarding rule.
         #[prost(message, tag = "9")]
         ForwardingRule(super::ForwardingRuleInfo),
@@ -169,7 +199,8 @@ pub mod step {
         /// Display information of the final state "drop" and reason.
         #[prost(message, tag = "15")]
         Drop(super::DropInfo),
-        /// Display information of the load balancers.
+        /// Display information of the load balancers. Deprecated in favor of the
+        /// `load_balancer_backend_info` field, not used in new tests.
         #[prost(message, tag = "16")]
         LoadBalancer(super::LoadBalancerInfo),
         /// Display information of a Google Cloud network.
@@ -181,9 +212,27 @@ pub mod step {
         /// Display information of a Cloud SQL instance.
         #[prost(message, tag = "19")]
         CloudSqlInstance(super::CloudSqlInstanceInfo),
-        /// Display information of a Cloud function.
+        /// Display information of a Cloud Function.
         #[prost(message, tag = "20")]
         CloudFunction(super::CloudFunctionInfo),
+        /// Display information of an App Engine service version.
+        #[prost(message, tag = "22")]
+        AppEngineVersion(super::AppEngineVersionInfo),
+        /// Display information of a Cloud Run revision.
+        #[prost(message, tag = "23")]
+        CloudRunRevision(super::CloudRunRevisionInfo),
+        /// Display information of a NAT.
+        #[prost(message, tag = "25")]
+        Nat(super::NatInfo),
+        /// Display information of a ProxyConnection.
+        #[prost(message, tag = "26")]
+        ProxyConnection(super::ProxyConnectionInfo),
+        /// Display information of a specific load balancer backend.
+        #[prost(message, tag = "27")]
+        LoadBalancerBackendInfo(super::LoadBalancerBackendInfo),
+        /// Display information of a Storage Bucket. Used only for return traces.
+        #[prost(message, tag = "28")]
+        StorageBucket(super::StorageBucketInfo),
     }
 }
 /// For display only. Metadata associated with a Compute Engine instance.
@@ -243,7 +292,7 @@ pub struct FirewallInfo {
     /// Possible values: INGRESS, EGRESS
     #[prost(string, tag = "3")]
     pub direction: ::prost::alloc::string::String,
-    /// Possible values: ALLOW, DENY
+    /// Possible values: ALLOW, DENY, APPLY_SECURITY_PROFILE_GROUP
     #[prost(string, tag = "4")]
     pub action: ::prost::alloc::string::String,
     /// The priority of the firewall rule.
@@ -293,6 +342,24 @@ pub mod firewall_info {
         /// For details, see [VPC connector's implicit
         /// rules](<https://cloud.google.com/functions/docs/networking/connecting-vpc#restrict-access>).
         ServerlessVpcAccessManagedFirewallRule = 4,
+        /// Global network firewall policy rule.
+        /// For details, see [Network firewall
+        /// policies](<https://cloud.google.com/vpc/docs/network-firewall-policies>).
+        NetworkFirewallPolicyRule = 5,
+        /// Regional network firewall policy rule.
+        /// For details, see [Regional network firewall
+        /// policies](<https://cloud.google.com/firewall/docs/regional-firewall-policies>).
+        NetworkRegionalFirewallPolicyRule = 6,
+        /// Firewall policy rule containing attributes not yet supported in
+        /// Connectivity tests. Firewall analysis is skipped if such a rule can
+        /// potentially be matched. Please see the [list of unsupported
+        /// configurations](<https://cloud.google.com/network-intelligence-center/docs/connectivity-tests/concepts/overview#unsupported-configs>).
+        UnsupportedFirewallPolicyRule = 100,
+        /// Tracking state for response traffic created when request traffic goes
+        /// through allow firewall rule.
+        /// For details, see [firewall rules
+        /// specifications](<https://cloud.google.com/firewall/docs/firewalls#specifications>)
+        TrackingState = 101,
     }
 }
 /// For display only. Metadata associated with a Compute Engine route.
@@ -304,13 +371,16 @@ pub struct RouteInfo {
     /// Type of next hop.
     #[prost(enumeration = "route_info::NextHopType", tag = "9")]
     pub next_hop_type: i32,
-    /// Name of a Compute Engine route.
+    /// Indicates where route is applicable.
+    #[prost(enumeration = "route_info::RouteScope", tag = "14")]
+    pub route_scope: i32,
+    /// Name of a route.
     #[prost(string, tag = "1")]
     pub display_name: ::prost::alloc::string::String,
-    /// URI of a Compute Engine route.
-    /// Dynamic route from cloud router does not have a URI.
+    /// URI of a route.
+    /// Dynamic, peering static and peering dynamic routes do not have an URI.
     /// Advertised route from Google Cloud VPC to on-premises network also does
-    /// not have a URI.
+    /// not have an URI.
     #[prost(string, tag = "2")]
     pub uri: ::prost::alloc::string::String,
     /// Destination IP range of the route.
@@ -319,7 +389,7 @@ pub struct RouteInfo {
     /// Next hop of the route.
     #[prost(string, tag = "4")]
     pub next_hop: ::prost::alloc::string::String,
-    /// URI of a Compute Engine network.
+    /// URI of a Compute Engine network. NETWORK routes only.
     #[prost(string, tag = "5")]
     pub network_uri: ::prost::alloc::string::String,
     /// Priority of the route.
@@ -328,6 +398,24 @@ pub struct RouteInfo {
     /// Instance tags of the route.
     #[prost(string, repeated, tag = "7")]
     pub instance_tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Source IP address range of the route. Policy based routes only.
+    #[prost(string, tag = "10")]
+    pub src_ip_range: ::prost::alloc::string::String,
+    /// Destination port ranges of the route. Policy based routes only.
+    #[prost(string, repeated, tag = "11")]
+    pub dest_port_ranges: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Source port ranges of the route. Policy based routes only.
+    #[prost(string, repeated, tag = "12")]
+    pub src_port_ranges: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Protocols of the route. Policy based routes only.
+    #[prost(string, repeated, tag = "13")]
+    pub protocols: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// URI of a NCC Hub. NCC_HUB routes only.
+    #[prost(string, optional, tag = "15")]
+    pub ncc_hub_uri: ::core::option::Option<::prost::alloc::string::String>,
+    /// URI of a NCC Spoke. NCC_HUB routes only.
+    #[prost(string, optional, tag = "16")]
+    pub ncc_spoke_uri: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// Nested message and enum types in `RouteInfo`.
 pub mod route_info {
@@ -350,6 +438,8 @@ pub mod route_info {
         PeeringStatic = 5,
         /// A dynamic route received from peering network.
         PeeringDynamic = 6,
+        /// Policy based route.
+        PolicyBased = 7,
     }
     /// Type of next hop:
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -385,6 +475,64 @@ pub mod route_info {
         /// [router appliance
         /// instance](<https://cloud.google.com/network-connectivity/docs/network-connectivity-center/concepts/ra-overview>).
         NextHopRouterAppliance = 11,
+        /// Next hop is an NCC hub.
+        NextHopNccHub = 12,
+    }
+    /// Indicates where routes are applicable.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RouteScope {
+        /// Unspecified scope. Default value.
+        Unspecified = 0,
+        /// Route is applicable to packets in Network.
+        Network = 1,
+        /// Route is applicable to packets using NCC Hub's routing table.
+        NccHub = 2,
+    }
+}
+/// For display only. Details of a Google Service sending packets to a
+/// VPC network. Although the source IP might be a publicly routable address,
+/// some Google Services use special routes within Google production
+/// infrastructure to reach Compute Engine Instances.
+/// <https://cloud.google.com/vpc/docs/routes#special_return_paths>
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GoogleServiceInfo {
+    /// Source IP address.
+    #[prost(string, tag = "1")]
+    pub source_ip: ::prost::alloc::string::String,
+    /// Recognized type of a Google Service.
+    #[prost(enumeration = "google_service_info::GoogleServiceType", tag = "2")]
+    pub google_service_type: i32,
+}
+/// Nested message and enum types in `GoogleServiceInfo`.
+pub mod google_service_info {
+    /// Recognized type of a Google Service.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum GoogleServiceType {
+        /// Unspecified Google Service.
+        Unspecified = 0,
+        /// Identity aware proxy.
+        /// <https://cloud.google.com/iap/docs/using-tcp-forwarding>
+        Iap = 1,
+        /// One of two services sharing IP ranges:
+        /// * Load Balancer proxy
+        /// * Centralized Health Check prober
+        /// <https://cloud.google.com/load-balancing/docs/firewall-rules>
+        GfeProxyOrHealthCheckProber = 2,
+        /// Connectivity from Cloud DNS to forwarding targets or alternate name
+        /// servers that use private routing.
+        /// <https://cloud.google.com/dns/docs/zones/forwarding-zones#firewall-rules>
+        /// <https://cloud.google.com/dns/docs/policies#firewall-rules>
+        CloudDns = 3,
+        /// private.googleapis.com and restricted.googleapis.com
+        GoogleApi = 4,
+        /// Google API via Private Service Connect.
+        /// <https://cloud.google.com/vpc/docs/configure-private-service-connect-apis>
+        GoogleApiPsc = 5,
+        /// Google API via VPC Service Controls.
+        /// <https://cloud.google.com/vpc/docs/configure-private-service-connect-apis>
+        GoogleApiVpcSc = 6,
     }
 }
 /// For display only. Metadata associated with a Compute Engine forwarding rule.
@@ -418,7 +566,10 @@ pub struct LoadBalancerInfo {
     /// Type of the load balancer.
     #[prost(enumeration = "load_balancer_info::LoadBalancerType", tag = "1")]
     pub load_balancer_type: i32,
-    /// URI of the health check for the load balancer.
+    /// URI of the health check for the load balancer. Deprecated and no longer
+    /// populated as different load balancer backends might have different health
+    /// checks.
+    #[deprecated]
     #[prost(string, tag = "2")]
     pub health_check_uri: ::prost::alloc::string::String,
     /// Information for the loadbalancer backends.
@@ -460,6 +611,8 @@ pub mod load_balancer_info {
         BackendService = 1,
         /// Target Pool as the load balancer's backend.
         TargetPool = 2,
+        /// Target Instance as the load balancer's backend.
+        TargetInstance = 3,
     }
 }
 /// For display only. Metadata associated with a specific load balancer backend.
@@ -616,6 +769,9 @@ pub struct DeliverInfo {
     /// URI of the resource that the packet is delivered to.
     #[prost(string, tag = "2")]
     pub resource_uri: ::prost::alloc::string::String,
+    /// IP address of the target (if applicable).
+    #[prost(string, tag = "3")]
+    pub ip_address: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `DeliverInfo`.
 pub mod deliver_info {
@@ -635,15 +791,27 @@ pub mod deliver_info {
         GkeMaster = 4,
         /// Target is a Cloud SQL instance.
         CloudSqlInstance = 5,
-        /// Target is a published service using [Private Service
+        /// Target is a published service that uses [Private Service
         /// Connect](<https://cloud.google.com/vpc/docs/configure-private-service-connect-services>).
         PscPublishedService = 6,
-        /// Target is all Google APIs using [Private Service
+        /// Target is all Google APIs that use [Private Service
         /// Connect](<https://cloud.google.com/vpc/docs/configure-private-service-connect-apis>).
         PscGoogleApi = 7,
-        /// Target is VPC-SC using [Private Service
+        /// Target is a VPC-SC that uses [Private Service
         /// Connect](<https://cloud.google.com/vpc/docs/configure-private-service-connect-apis>).
         PscVpcSc = 8,
+        /// Target is a serverless network endpoint group.
+        ServerlessNeg = 9,
+        /// Target is a Cloud Storage bucket.
+        StorageBucket = 10,
+        /// Target is a private network. Used only for return traces.
+        PrivateNetwork = 11,
+        /// Target is a Cloud Function. Used only for return traces.
+        CloudFunction = 12,
+        /// Target is a App Engine service version. Used only for return traces.
+        AppEngineVersion = 13,
+        /// Target is a Cloud Run revision. Used only for return traces.
+        CloudRunRevision = 14,
     }
 }
 /// Details of the final state "forward" and associated resource.
@@ -655,6 +823,9 @@ pub struct ForwardInfo {
     /// URI of the resource that the packet is forwarded to.
     #[prost(string, tag = "2")]
     pub resource_uri: ::prost::alloc::string::String,
+    /// IP address of the target (if applicable).
+    #[prost(string, tag = "3")]
+    pub ip_address: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `ForwardInfo`.
 pub mod forward_info {
@@ -676,6 +847,12 @@ pub mod forward_info {
         ImportedCustomRouteNextHop = 5,
         /// Forwarded to a Cloud SQL instance.
         CloudSqlInstance = 6,
+        /// Forwarded to a VPC network in another project.
+        AnotherProject = 7,
+        /// Forwarded to an NCC Hub.
+        NccHub = 8,
+        /// Forwarded to a router appliance.
+        RouterAppliance = 9,
     }
 }
 /// Details of the final state "abort" and associated resource.
@@ -687,9 +864,11 @@ pub struct AbortInfo {
     /// URI of the resource that caused the abort.
     #[prost(string, tag = "2")]
     pub resource_uri: ::prost::alloc::string::String,
-    /// List of project IDs that the user has specified in the request but does
-    /// not have permission to access network configs. Analysis is aborted in this
-    /// case with the PERMISSION_DENIED cause.
+    /// IP address that caused the abort.
+    #[prost(string, tag = "4")]
+    pub ip_address: ::prost::alloc::string::String,
+    /// List of project IDs the user specified in the request but lacks access to.
+    /// In this case, analysis is aborted with the PERMISSION_DENIED cause.
     #[prost(string, repeated, tag = "3")]
     pub projects_missing_permission: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
@@ -701,51 +880,97 @@ pub mod abort_info {
     pub enum Cause {
         /// Cause is unspecified.
         Unspecified = 0,
-        /// Aborted due to unknown network.
-        /// The reachability analysis cannot proceed because the user does not have
-        /// access to the host project's network configurations, including firewall
-        /// rules and routes. This happens when the project is a service project and
-        /// the endpoints being traced are in the host project's network.
+        /// Aborted due to unknown network. Deprecated, not used in the new tests.
         UnknownNetwork = 1,
-        /// Aborted because the IP address(es) are unknown.
-        UnknownIp = 2,
         /// Aborted because no project information can be derived from the test
-        /// input.
+        /// input. Deprecated, not used in the new tests.
         UnknownProject = 3,
-        /// Aborted because the user lacks the permission to access all or part of
-        /// the network configurations required to run the test.
-        PermissionDenied = 4,
-        /// Aborted because no valid source endpoint is derived from the input test
-        /// request.
-        NoSourceLocation = 5,
-        /// Aborted because the source and/or destination endpoint specified in
-        /// the test are invalid. The possible reasons that an endpoint is
-        /// invalid include: malformed IP address; nonexistent instance or
-        /// network URI; IP address not in the range of specified network URI; and
-        /// instance not owning the network interface in the specified network.
-        InvalidArgument = 6,
         /// Aborted because traffic is sent from a public IP to an instance without
-        /// an external IP.
+        /// an external IP. Deprecated, not used in the new tests.
         NoExternalIp = 7,
         /// Aborted because none of the traces matches destination information
-        /// specified in the input test request.
+        /// specified in the input test request. Deprecated, not used in the new
+        /// tests.
         UnintendedDestination = 8,
-        /// Aborted because the number of steps in the trace exceeding a certain
-        /// limit which may be caused by routing loop.
+        /// Aborted because the source endpoint could not be found. Deprecated, not
+        /// used in the new tests.
+        SourceEndpointNotFound = 11,
+        /// Aborted because the source network does not match the source endpoint.
+        /// Deprecated, not used in the new tests.
+        MismatchedSourceNetwork = 12,
+        /// Aborted because the destination endpoint could not be found. Deprecated,
+        /// not used in the new tests.
+        DestinationEndpointNotFound = 13,
+        /// Aborted because the destination network does not match the destination
+        /// endpoint. Deprecated, not used in the new tests.
+        MismatchedDestinationNetwork = 14,
+        /// Aborted because no endpoint with the packet's destination IP address is
+        /// found.
+        UnknownIp = 2,
+        /// Aborted because the source IP address doesn't belong to any of the
+        /// subnets of the source VPC network.
+        SourceIpAddressNotInSourceNetwork = 23,
+        /// Aborted because user lacks permission to access all or part of the
+        /// network configurations required to run the test.
+        PermissionDenied = 4,
+        /// Aborted because user lacks permission to access Cloud NAT configs
+        /// required to run the test.
+        PermissionDeniedNoCloudNatConfigs = 28,
+        /// Aborted because user lacks permission to access Network endpoint group
+        /// endpoint configs required to run the test.
+        PermissionDeniedNoNegEndpointConfigs = 29,
+        /// Aborted because no valid source or destination endpoint is derived from
+        /// the input test request.
+        NoSourceLocation = 5,
+        /// Aborted because the source or destination endpoint specified in
+        /// the request is invalid. Some examples:
+        /// - The request might contain malformed resource URI, project ID, or IP
+        /// address.
+        /// - The request might contain inconsistent information (for example, the
+        /// request might include both the instance and the network, but the instance
+        /// might not have a NIC in that network).
+        InvalidArgument = 6,
+        /// Aborted because the number of steps in the trace exceeds a certain
+        /// limit. It might be caused by a routing loop.
         TraceTooLong = 9,
         /// Aborted due to internal server error.
         InternalError = 10,
-        /// Aborted because the source endpoint could not be found.
-        SourceEndpointNotFound = 11,
-        /// Aborted because the source network does not match the source endpoint.
-        MismatchedSourceNetwork = 12,
-        /// Aborted because the destination endpoint could not be found.
-        DestinationEndpointNotFound = 13,
-        /// Aborted because the destination network does not match the destination
-        /// endpoint.
-        MismatchedDestinationNetwork = 14,
         /// Aborted because the test scenario is not supported.
         Unsupported = 15,
+        /// Aborted because the source and destination resources have no common IP
+        /// version.
+        MismatchedIpVersion = 16,
+        /// Aborted because the connection between the control plane and the node of
+        /// the source cluster is initiated by the node and managed by the
+        /// Konnectivity proxy.
+        GkeKonnectivityProxyUnsupported = 17,
+        /// Aborted because expected resource configuration was missing.
+        ResourceConfigNotFound = 18,
+        /// Aborted because expected VM instance configuration was missing.
+        VmInstanceConfigNotFound = 24,
+        /// Aborted because expected network configuration was missing.
+        NetworkConfigNotFound = 25,
+        /// Aborted because expected firewall configuration was missing.
+        FirewallConfigNotFound = 26,
+        /// Aborted because expected route configuration was missing.
+        RouteConfigNotFound = 27,
+        /// Aborted because a PSC endpoint selection for the Google-managed service
+        /// is ambiguous (several PSC endpoints satisfy test input).
+        GoogleManagedServiceAmbiguousPscEndpoint = 19,
+        /// Aborted because tests with a PSC-based Cloud SQL instance as a source are
+        /// not supported.
+        SourcePscCloudSqlUnsupported = 20,
+        /// Aborted because tests with a forwarding rule as a source are not
+        /// supported.
+        SourceForwardingRuleUnsupported = 21,
+        /// Aborted because one of the endpoints is a non-routable IP address
+        /// (loopback, link-local, etc).
+        NonRoutableIpAddress = 22,
+        /// Aborted due to an unknown issue in the Google-managed project.
+        UnknownIssueInGoogleManagedProject = 30,
+        /// Aborted due to an unsupported configuration of the Google-managed
+        /// project.
+        UnsupportedGoogleManagedProjectConfig = 31,
     }
 }
 /// Details of the final state "drop" and associated resource.
@@ -757,6 +982,15 @@ pub struct DropInfo {
     /// URI of the resource that caused the drop.
     #[prost(string, tag = "2")]
     pub resource_uri: ::prost::alloc::string::String,
+    /// Source IP address of the dropped packet (if relevant).
+    #[prost(string, tag = "3")]
+    pub source_ip: ::prost::alloc::string::String,
+    /// Destination IP address of the dropped packet (if relevant).
+    #[prost(string, tag = "4")]
+    pub destination_ip: ::prost::alloc::string::String,
+    /// Region of the dropped packet (if relevant).
+    #[prost(string, tag = "5")]
+    pub region: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `DropInfo`.
 pub mod drop_info {
@@ -776,19 +1010,45 @@ pub mod drop_info {
         /// Dropped due to a firewall rule, unless allowed due to connection
         /// tracking.
         FirewallRule = 3,
-        /// Dropped due to no routes.
+        /// Dropped due to no matching routes.
         NoRoute = 4,
         /// Dropped due to invalid route. Route's next hop is a blackhole.
         RouteBlackhole = 5,
         /// Packet is sent to a wrong (unintended) network. Example: you trace a
         /// packet from VM1:Network1 to VM2:Network2, however, the route configured
-        /// in Network1 sends the packet destined for VM2's IP addresss to Network3.
+        /// in Network1 sends the packet destined for VM2's IP address to Network3.
         RouteWrongNetwork = 6,
+        /// Route's next hop IP address cannot be resolved to a GCP resource.
+        RouteNextHopIpAddressNotResolved = 42,
+        /// Route's next hop resource is not found.
+        RouteNextHopResourceNotFound = 43,
+        /// Route's next hop instance doesn't have a NIC in the route's network.
+        RouteNextHopInstanceWrongNetwork = 49,
+        /// Route's next hop IP address is not a primary IP address of the next hop
+        /// instance.
+        RouteNextHopInstanceNonPrimaryIp = 50,
+        /// Route's next hop forwarding rule doesn't match next hop IP address.
+        RouteNextHopForwardingRuleIpMismatch = 51,
+        /// Route's next hop VPN tunnel is down (does not have valid IKE SAs).
+        RouteNextHopVpnTunnelNotEstablished = 52,
+        /// Route's next hop forwarding rule type is invalid (it's not a forwarding
+        /// rule of the internal passthrough load balancer).
+        RouteNextHopForwardingRuleTypeInvalid = 53,
+        /// Packet is sent from the Internet to the private IPv6 address.
+        NoRouteFromInternetToPrivateIpv6Address = 44,
+        /// The packet does not match a policy-based VPN tunnel local selector.
+        VpnTunnelLocalSelectorMismatch = 45,
+        /// The packet does not match a policy-based VPN tunnel remote selector.
+        VpnTunnelRemoteSelectorMismatch = 46,
         /// Packet with internal destination address sent to the internet gateway.
         PrivateTrafficToInternet = 7,
         /// Instance with only an internal IP address tries to access Google API and
-        /// services, but private Google access is not enabled.
+        /// services, but private Google access is not enabled in the subnet.
         PrivateGoogleAccessDisallowed = 8,
+        /// Source endpoint tries to access Google API and services through the VPN
+        /// tunnel to another network, but Private Google Access needs to be enabled
+        /// in the source endpoint network.
+        PrivateGoogleAccessViaVpnTunnelUnsupported = 47,
         /// Instance with only an internal IP address tries to access external hosts,
         /// but Cloud NAT is not enabled in the subnet, unless special configurations
         /// on a VM allow this connection.
@@ -810,6 +1070,10 @@ pub mod drop_info {
         /// Packet is sent from or to a Compute Engine instance that is not in a
         /// running state.
         InstanceNotRunning = 14,
+        /// Packet sent from or to a GKE cluster that is not in running state.
+        GkeClusterNotRunning = 27,
+        /// Packet sent from or to a Cloud SQL instance that is not in running state.
+        CloudSqlInstanceNotRunning = 28,
         /// The type of traffic is blocked and the user cannot configure a firewall
         /// rule to enable it. See [Always blocked
         /// traffic](<https://cloud.google.com/vpc/docs/firewalls#blockedtraffic>) for
@@ -832,10 +1096,35 @@ pub mod drop_info {
         /// Packet was dropped because there is no peering between the originating
         /// network and the Google Managed Services Network.
         GoogleManagedServiceNoPeering = 20,
+        /// Packet was dropped because the Google-managed service uses Private
+        /// Service Connect (PSC), but the PSC endpoint is not found in the project.
+        GoogleManagedServiceNoPscEndpoint = 38,
+        /// Packet was dropped because the GKE cluster uses Private Service Connect
+        /// (PSC), but the PSC endpoint is not found in the project.
+        GkePscEndpointMissing = 36,
         /// Packet was dropped because the Cloud SQL instance has neither a private
         /// nor a public IP address.
         CloudSqlInstanceNoIpAddress = 21,
-        /// Packet could be dropped because the Cloud function is not in an active
+        /// Packet was dropped because a GKE cluster private endpoint is
+        /// unreachable from a region different from the cluster's region.
+        GkeControlPlaneRegionMismatch = 30,
+        /// Packet sent from a public GKE cluster control plane to a private
+        /// IP address.
+        PublicGkeControlPlaneToPrivateDestination = 31,
+        /// Packet was dropped because there is no route from a GKE cluster
+        /// control plane to a destination network.
+        GkeControlPlaneNoRoute = 32,
+        /// Packet sent from a Cloud SQL instance to an external IP address is not
+        /// allowed. The Cloud SQL instance is not configured to send packets to
+        /// external IP addresses.
+        CloudSqlInstanceNotConfiguredForExternalTraffic = 33,
+        /// Packet sent from a Cloud SQL instance with only a public IP address to a
+        /// private IP address.
+        PublicCloudSqlInstanceToPrivateDestination = 34,
+        /// Packet was dropped because there is no route from a Cloud SQL
+        /// instance to a destination network.
+        CloudSqlInstanceNoRoute = 35,
+        /// Packet could be dropped because the Cloud Function is not in an active
         /// status.
         CloudFunctionNotActive = 22,
         /// Packet could be dropped because no VPC connector is set.
@@ -846,8 +1135,45 @@ pub mod drop_info {
         /// Packet could be dropped because it was sent from a different region
         /// to a regional forwarding without global access.
         ForwardingRuleRegionMismatch = 25,
-        /// Privte Service Connect (PSC) connection is not in accepted state.
+        /// The Private Service Connect endpoint is in a project that is not approved
+        /// to connect to the service.
         PscConnectionNotAccepted = 26,
+        /// The packet is sent to the Private Service Connect endpoint over the
+        /// peering, but [it's not
+        /// supported](<https://cloud.google.com/vpc/docs/configure-private-service-connect-services#on-premises>).
+        PscEndpointAccessedFromPeeredNetwork = 41,
+        /// The packet is sent to the Private Service Connect backend (network
+        /// endpoint group), but the producer PSC forwarding rule does not have
+        /// global access enabled.
+        PscNegProducerEndpointNoGlobalAccess = 48,
+        /// The packet is sent to the Private Service Connect backend (network
+        /// endpoint group), but the producer PSC forwarding rule has multiple ports
+        /// specified.
+        PscNegProducerForwardingRuleMultiplePorts = 54,
+        /// The packet is sent to the Private Service Connect backend (network
+        /// endpoint group) targeting a Cloud SQL service attachment, but this
+        /// configuration is not supported.
+        CloudSqlPscNegUnsupported = 58,
+        /// No NAT subnets are defined for the PSC service attachment.
+        NoNatSubnetsForPscServiceAttachment = 57,
+        /// The packet sent from the hybrid NEG proxy matches a non-dynamic route,
+        /// but such a configuration is not supported.
+        HybridNegNonDynamicRouteMatched = 55,
+        /// The packet sent from the hybrid NEG proxy matches a dynamic route with a
+        /// next hop in a different region, but such a configuration is not
+        /// supported.
+        HybridNegNonLocalDynamicRouteMatched = 56,
+        /// Packet sent from a Cloud Run revision that is not ready.
+        CloudRunRevisionNotReady = 29,
+        /// Packet was dropped inside Private Service Connect service producer.
+        DroppedInsidePscServiceProducer = 37,
+        /// Packet sent to a load balancer, which requires a proxy-only subnet and
+        /// the subnet is not found.
+        LoadBalancerHasNoProxySubnet = 39,
+        /// Packet sent to Cloud Nat without active NAT IPs.
+        CloudNatNoAddresses = 40,
+        /// Packet is stuck in a routing loop.
+        RoutingLoop = 59,
     }
 }
 /// For display only. Metadata associated with a Google Kubernetes Engine (GKE)
@@ -890,21 +1216,53 @@ pub struct CloudSqlInstanceInfo {
     #[prost(string, tag = "7")]
     pub region: ::prost::alloc::string::String,
 }
-/// For display only. Metadata associated with a Cloud function.
+/// For display only. Metadata associated with a Cloud Function.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CloudFunctionInfo {
-    /// Name of a Cloud function.
+    /// Name of a Cloud Function.
     #[prost(string, tag = "1")]
     pub display_name: ::prost::alloc::string::String,
-    /// URI of a Cloud function.
+    /// URI of a Cloud Function.
     #[prost(string, tag = "2")]
     pub uri: ::prost::alloc::string::String,
-    /// Location in which the Cloud function is deployed.
+    /// Location in which the Cloud Function is deployed.
     #[prost(string, tag = "3")]
     pub location: ::prost::alloc::string::String,
-    /// Latest successfully deployed version id of the Cloud function.
+    /// Latest successfully deployed version id of the Cloud Function.
     #[prost(int64, tag = "4")]
     pub version_id: i64,
+}
+/// For display only. Metadata associated with a Cloud Run revision.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudRunRevisionInfo {
+    /// Name of a Cloud Run revision.
+    #[prost(string, tag = "1")]
+    pub display_name: ::prost::alloc::string::String,
+    /// URI of a Cloud Run revision.
+    #[prost(string, tag = "2")]
+    pub uri: ::prost::alloc::string::String,
+    /// Location in which this revision is deployed.
+    #[prost(string, tag = "4")]
+    pub location: ::prost::alloc::string::String,
+    /// URI of Cloud Run service this revision belongs to.
+    #[prost(string, tag = "5")]
+    pub service_uri: ::prost::alloc::string::String,
+}
+/// For display only. Metadata associated with an App Engine version.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AppEngineVersionInfo {
+    /// Name of an App Engine version.
+    #[prost(string, tag = "1")]
+    pub display_name: ::prost::alloc::string::String,
+    /// URI of an App Engine version.
+    #[prost(string, tag = "2")]
+    pub uri: ::prost::alloc::string::String,
+    /// Runtime of the App Engine version.
+    #[prost(string, tag = "3")]
+    pub runtime: ::prost::alloc::string::String,
+    /// App Engine execution environment for a version.
+    #[prost(string, tag = "4")]
+    pub environment: ::prost::alloc::string::String,
 }
 /// For display only. Metadata associated with a VPC connector.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -918,6 +1276,218 @@ pub struct VpcConnectorInfo {
     /// Location in which the VPC connector is deployed.
     #[prost(string, tag = "3")]
     pub location: ::prost::alloc::string::String,
+}
+/// For display only. Metadata associated with NAT.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NatInfo {
+    /// Type of NAT.
+    #[prost(enumeration = "nat_info::Type", tag = "1")]
+    pub r#type: i32,
+    /// IP protocol in string format, for example: "TCP", "UDP", "ICMP".
+    #[prost(string, tag = "2")]
+    pub protocol: ::prost::alloc::string::String,
+    /// URI of the network where NAT translation takes place.
+    #[prost(string, tag = "3")]
+    pub network_uri: ::prost::alloc::string::String,
+    /// Source IP address before NAT translation.
+    #[prost(string, tag = "4")]
+    pub old_source_ip: ::prost::alloc::string::String,
+    /// Source IP address after NAT translation.
+    #[prost(string, tag = "5")]
+    pub new_source_ip: ::prost::alloc::string::String,
+    /// Destination IP address before NAT translation.
+    #[prost(string, tag = "6")]
+    pub old_destination_ip: ::prost::alloc::string::String,
+    /// Destination IP address after NAT translation.
+    #[prost(string, tag = "7")]
+    pub new_destination_ip: ::prost::alloc::string::String,
+    /// Source port before NAT translation. Only valid when protocol is TCP or UDP.
+    #[prost(int32, tag = "8")]
+    pub old_source_port: i32,
+    /// Source port after NAT translation. Only valid when protocol is TCP or UDP.
+    #[prost(int32, tag = "9")]
+    pub new_source_port: i32,
+    /// Destination port before NAT translation. Only valid when protocol is TCP or
+    /// UDP.
+    #[prost(int32, tag = "10")]
+    pub old_destination_port: i32,
+    /// Destination port after NAT translation. Only valid when protocol is TCP or
+    /// UDP.
+    #[prost(int32, tag = "11")]
+    pub new_destination_port: i32,
+    /// Uri of the Cloud Router. Only valid when type is CLOUD_NAT.
+    #[prost(string, tag = "12")]
+    pub router_uri: ::prost::alloc::string::String,
+    /// The name of Cloud NAT Gateway. Only valid when type is CLOUD_NAT.
+    #[prost(string, tag = "13")]
+    pub nat_gateway_name: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `NatInfo`.
+pub mod nat_info {
+    /// Types of NAT.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Type {
+        /// Type is unspecified.
+        Unspecified = 0,
+        /// From Compute Engine instance's internal address to external address.
+        InternalToExternal = 1,
+        /// From Compute Engine instance's external address to internal address.
+        ExternalToInternal = 2,
+        /// Cloud NAT Gateway.
+        CloudNat = 3,
+        /// Private service connect NAT.
+        PrivateServiceConnect = 4,
+    }
+}
+/// For display only. Metadata associated with ProxyConnection.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProxyConnectionInfo {
+    /// IP protocol in string format, for example: "TCP", "UDP", "ICMP".
+    #[prost(string, tag = "1")]
+    pub protocol: ::prost::alloc::string::String,
+    /// Source IP address of an original connection.
+    #[prost(string, tag = "2")]
+    pub old_source_ip: ::prost::alloc::string::String,
+    /// Source IP address of a new connection.
+    #[prost(string, tag = "3")]
+    pub new_source_ip: ::prost::alloc::string::String,
+    /// Destination IP address of an original connection
+    #[prost(string, tag = "4")]
+    pub old_destination_ip: ::prost::alloc::string::String,
+    /// Destination IP address of a new connection.
+    #[prost(string, tag = "5")]
+    pub new_destination_ip: ::prost::alloc::string::String,
+    /// Source port of an original connection. Only valid when protocol is TCP or
+    /// UDP.
+    #[prost(int32, tag = "6")]
+    pub old_source_port: i32,
+    /// Source port of a new connection. Only valid when protocol is TCP or UDP.
+    #[prost(int32, tag = "7")]
+    pub new_source_port: i32,
+    /// Destination port of an original connection. Only valid when protocol is TCP
+    /// or UDP.
+    #[prost(int32, tag = "8")]
+    pub old_destination_port: i32,
+    /// Destination port of a new connection. Only valid when protocol is TCP or
+    /// UDP.
+    #[prost(int32, tag = "9")]
+    pub new_destination_port: i32,
+    /// Uri of proxy subnet.
+    #[prost(string, tag = "10")]
+    pub subnet_uri: ::prost::alloc::string::String,
+    /// URI of the network where connection is proxied.
+    #[prost(string, tag = "11")]
+    pub network_uri: ::prost::alloc::string::String,
+}
+/// For display only. Metadata associated with the load balancer backend.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LoadBalancerBackendInfo {
+    /// Display name of the backend. For example, it might be an instance name for
+    /// the instance group backends, or an IP address and port for zonal network
+    /// endpoint group backends.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// URI of the backend instance (if applicable). Populated for instance group
+    /// backends, and zonal NEG backends.
+    #[prost(string, tag = "2")]
+    pub instance_uri: ::prost::alloc::string::String,
+    /// URI of the backend service this backend belongs to (if applicable).
+    #[prost(string, tag = "3")]
+    pub backend_service_uri: ::prost::alloc::string::String,
+    /// URI of the instance group this backend belongs to (if applicable).
+    #[prost(string, tag = "4")]
+    pub instance_group_uri: ::prost::alloc::string::String,
+    /// URI of the network endpoint group this backend belongs to (if applicable).
+    #[prost(string, tag = "5")]
+    pub network_endpoint_group_uri: ::prost::alloc::string::String,
+    /// URI of the backend bucket this backend targets (if applicable).
+    #[prost(string, tag = "8")]
+    pub backend_bucket_uri: ::prost::alloc::string::String,
+    /// URI of the PSC service attachment this PSC NEG backend targets (if
+    /// applicable).
+    #[prost(string, tag = "9")]
+    pub psc_service_attachment_uri: ::prost::alloc::string::String,
+    /// PSC Google API target this PSC NEG backend targets (if applicable).
+    #[prost(string, tag = "10")]
+    pub psc_google_api_target: ::prost::alloc::string::String,
+    /// URI of the health check attached to this backend (if applicable).
+    #[prost(string, tag = "6")]
+    pub health_check_uri: ::prost::alloc::string::String,
+    /// Output only. Health check firewalls configuration state for the backend.
+    /// This is a result of the static firewall analysis (verifying that health
+    /// check traffic from required IP ranges to the backend is allowed or not).
+    /// The backend might still be unhealthy even if these firewalls are
+    /// configured. Please refer to the documentation for more information:
+    /// <https://cloud.google.com/load-balancing/docs/firewall-rules>
+    #[prost(
+        enumeration = "load_balancer_backend_info::HealthCheckFirewallsConfigState",
+        tag = "7"
+    )]
+    pub health_check_firewalls_config_state: i32,
+}
+/// Nested message and enum types in `LoadBalancerBackendInfo`.
+pub mod load_balancer_backend_info {
+    /// Health check firewalls configuration state enum.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum HealthCheckFirewallsConfigState {
+        /// Configuration state unspecified. It usually means that the backend has
+        /// no health check attached, or there was an unexpected configuration error
+        /// preventing Connectivity tests from verifying health check configuration.
+        Unspecified = 0,
+        /// Firewall rules (policies) allowing health check traffic from all required
+        /// IP ranges to the backend are configured.
+        FirewallsConfigured = 1,
+        /// Firewall rules (policies) allow health check traffic only from a part of
+        /// required IP ranges.
+        FirewallsPartiallyConfigured = 2,
+        /// Firewall rules (policies) deny health check traffic from all required
+        /// IP ranges to the backend.
+        FirewallsNotConfigured = 3,
+        /// The network contains firewall rules of unsupported types, so Connectivity
+        /// tests were not able to verify health check configuration status. Please
+        /// refer to the documentation for the list of unsupported configurations:
+        /// <https://cloud.google.com/network-intelligence-center/docs/connectivity-tests/concepts/overview#unsupported-configs>
+        FirewallsUnsupported = 4,
+    }
+}
+/// For display only. Metadata associated with Storage Bucket.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StorageBucketInfo {
+    /// Cloud Storage Bucket name.
+    #[prost(string, tag = "1")]
+    pub bucket: ::prost::alloc::string::String,
+}
+/// Type of a load balancer. For more information, see [Summary of Google Cloud
+/// load
+/// balancers](<https://cloud.google.com/load-balancing/docs/load-balancing-overview#summary-of-google-cloud-load-balancers>).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum LoadBalancerType {
+    /// Forwarding rule points to a different target than a load balancer or a
+    /// load balancer type is unknown.
+    Unspecified = 0,
+    /// Global external HTTP(S) load balancer.
+    HttpsAdvancedLoadBalancer = 1,
+    /// Global external HTTP(S) load balancer (classic)
+    HttpsLoadBalancer = 2,
+    /// Regional external HTTP(S) load balancer.
+    RegionalHttpsLoadBalancer = 3,
+    /// Internal HTTP(S) load balancer.
+    InternalHttpsLoadBalancer = 4,
+    /// External SSL proxy load balancer.
+    SslProxyLoadBalancer = 5,
+    /// External TCP proxy load balancer.
+    TcpProxyLoadBalancer = 6,
+    /// Internal regional TCP proxy load balancer.
+    InternalTcpProxyLoadBalancer = 7,
+    /// External TCP/UDP Network load balancer.
+    NetworkLoadBalancer = 8,
+    /// Target-pool based external TCP/UDP Network load balancer.
+    LegacyNetworkLoadBalancer = 9,
+    /// Internal TCP/UDP load balancer.
+    TcpUdpInternalLoadBalancer = 10,
 }
 /// A Connectivity Test for a network reachability analysis.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1005,14 +1575,15 @@ pub struct ConnectivityTest {
     /// existing test.
     #[prost(message, optional, tag = "14")]
     pub probing_details: ::core::option::Option<ProbingDetails>,
+    /// Whether the test should skip firewall checking.
+    /// If not provided, we assume false.
+    #[prost(bool, tag = "17")]
+    pub bypass_firewall_checks: bool,
 }
 /// Source or destination of the Connectivity Test.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Endpoint {
     /// The IP address of the endpoint, which can be an external or internal IP.
-    /// An IPv6 address is only allowed when the test's destination is a
-    /// [global load balancer
-    /// VIP](<https://cloud.google.com/load-balancing/docs/load-balancing-overview>).
     #[prost(string, tag = "1")]
     pub ip_address: ::prost::alloc::string::String,
     /// The IP protocol port of the endpoint.
@@ -1022,6 +1593,24 @@ pub struct Endpoint {
     /// A Compute Engine instance URI.
     #[prost(string, tag = "3")]
     pub instance: ::prost::alloc::string::String,
+    /// A forwarding rule and its corresponding IP address represent the frontend
+    /// configuration of a Google Cloud load balancer. Forwarding rules are also
+    /// used for protocol forwarding, Private Service Connect and other network
+    /// services to provide forwarding information in the control plane. Format:
+    ///  projects/{project}/global/forwardingRules/{id} or
+    ///  projects/{project}/regions/{region}/forwardingRules/{id}
+    #[prost(string, tag = "13")]
+    pub forwarding_rule: ::prost::alloc::string::String,
+    /// Output only. Specifies the type of the target of the forwarding rule.
+    #[prost(enumeration = "endpoint::ForwardingRuleTarget", optional, tag = "14")]
+    pub forwarding_rule_target: ::core::option::Option<i32>,
+    /// Output only. ID of the load balancer the forwarding rule points to. Empty
+    /// for forwarding rules not related to load balancers.
+    #[prost(string, optional, tag = "15")]
+    pub load_balancer_id: ::core::option::Option<::prost::alloc::string::String>,
+    /// Output only. Type of the load balancer the forwarding rule points to.
+    #[prost(enumeration = "LoadBalancerType", optional, tag = "16")]
+    pub load_balancer_type: ::core::option::Option<i32>,
     /// A cluster URI for [Google Kubernetes Engine
     /// master](<https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture>).
     #[prost(string, tag = "7")]
@@ -1029,9 +1618,17 @@ pub struct Endpoint {
     /// A [Cloud SQL](<https://cloud.google.com/sql>) instance URI.
     #[prost(string, tag = "8")]
     pub cloud_sql_instance: ::prost::alloc::string::String,
-    /// A [Cloud function](<https://cloud.google.com/functions>).
+    /// A [Cloud Function](<https://cloud.google.com/functions>).
     #[prost(message, optional, tag = "10")]
     pub cloud_function: ::core::option::Option<endpoint::CloudFunctionEndpoint>,
+    /// An [App Engine](<https://cloud.google.com/appengine>) [service
+    /// version](<https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions>).
+    #[prost(message, optional, tag = "11")]
+    pub app_engine_version: ::core::option::Option<endpoint::AppEngineVersionEndpoint>,
+    /// A [Cloud Run](<https://cloud.google.com/run>)
+    /// \[revision\](<https://cloud.google.com/run/docs/reference/rest/v1/namespaces.revisions/get>)
+    #[prost(message, optional, tag = "12")]
+    pub cloud_run_revision: ::core::option::Option<endpoint::CloudRunRevisionEndpoint>,
     /// A Compute Engine network URI.
     #[prost(string, tag = "4")]
     pub network: ::prost::alloc::string::String,
@@ -1054,10 +1651,29 @@ pub struct Endpoint {
 }
 /// Nested message and enum types in `Endpoint`.
 pub mod endpoint {
-    /// Wrapper for cloud function attributes.
+    /// Wrapper for Cloud Function attributes.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct CloudFunctionEndpoint {
-        /// A [Cloud function](<https://cloud.google.com/functions>) name.
+        /// A [Cloud Function](<https://cloud.google.com/functions>) name.
+        #[prost(string, tag = "1")]
+        pub uri: ::prost::alloc::string::String,
+    }
+    /// Wrapper for the App Engine service version attributes.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AppEngineVersionEndpoint {
+        /// An [App Engine](<https://cloud.google.com/appengine>) [service
+        /// version](<https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions>)
+        /// name.
+        #[prost(string, tag = "1")]
+        pub uri: ::prost::alloc::string::String,
+    }
+    /// Wrapper for Cloud Run revision attributes.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct CloudRunRevisionEndpoint {
+        /// A [Cloud Run](<https://cloud.google.com/run>)
+        /// \[revision\](<https://cloud.google.com/run/docs/reference/rest/v1/namespaces.revisions/get>)
+        /// URI. The format is:
+        /// projects/{project}/locations/{location}/revisions/{revision}
         #[prost(string, tag = "1")]
         pub uri: ::prost::alloc::string::String,
     }
@@ -1076,6 +1692,22 @@ pub mod endpoint {
         /// This can be an on-premises network, or a network hosted by another cloud
         /// provider.
         NonGcpNetwork = 2,
+    }
+    /// Type of the target of a forwarding rule.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ForwardingRuleTarget {
+        /// Forwarding rule target is unknown.
+        Unspecified = 0,
+        /// Compute Engine instance for protocol forwarding.
+        Instance = 1,
+        /// Load Balancer. The specific type can be found from \[load_balancer_type\]
+        /// \[google.cloud.networkmanagement.v1beta1.Endpoint.load_balancer_type\].
+        LoadBalancer = 2,
+        /// Classic Cloud VPN Gateway.
+        VpnGateway = 3,
+        /// Forwarding Rule is a Private Service Connect endpoint.
+        Psc = 4,
     }
 }
 /// Results of the configuration analysis from the last run of the test.
@@ -1118,7 +1750,9 @@ pub mod reachability_details {
         /// The source and destination endpoints do not uniquely identify
         /// the test location in the network, and the reachability result contains
         /// multiple traces. For some traces, a packet could be delivered, and for
-        /// others, it would not be.
+        /// others, it would not be. This result is also assigned to
+        /// configuration analysis of return path if on its own it should be
+        /// REACHABLE, but configuration analysis of forward path is AMBIGUOUS.
         Ambiguous = 4,
         /// The configuration analysis did not complete. Possible reasons are:
         ///

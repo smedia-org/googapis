@@ -390,7 +390,7 @@ pub struct ReadRowsResponse {
     pub rows: ::core::option::Option<read_rows_response::Rows>,
     /// The schema for the read. If read_options.selected_fields is set, the
     /// schema may be different from the table schema as it will only contain
-    /// the selected fields. This schema is equivelant to the one returned by
+    /// the selected fields. This schema is equivalent to the one returned by
     /// CreateSession. This field is only populated in the first ReadRowsResponse
     /// RPC.
     #[prost(oneof = "read_rows_response::Schema", tags = "7, 8")]
@@ -410,7 +410,7 @@ pub mod read_rows_response {
     }
     /// The schema for the read. If read_options.selected_fields is set, the
     /// schema may be different from the table schema as it will only contain
-    /// the selected fields. This schema is equivelant to the one returned by
+    /// the selected fields. This schema is equivalent to the one returned by
     /// CreateSession. This field is only populated in the first ReadRowsResponse
     /// RPC.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
@@ -465,9 +465,9 @@ pub struct CreateWriteStreamRequest {
 /// Request message for `AppendRows`.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AppendRowsRequest {
-    /// Required. The stream that is the target of the append operation. This value must be
-    /// specified for the initial request. If subsequent requests specify the
-    /// stream name, it must equal to the value provided in the first request.
+    /// Required. The stream that is the target of the append operation. This value
+    /// must be specified for the initial request. If subsequent requests specify
+    /// the stream name, it must equal to the value provided in the first request.
     /// To write to the _default stream, populate this field with a string in the
     /// format `projects/{project}/datasets/{dataset}/tables/{table}/_default`.
     #[prost(string, tag = "1")]
@@ -573,8 +573,8 @@ pub struct GetWriteStreamRequest {
 /// Request message for `BatchCommitWriteStreams`.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchCommitWriteStreamsRequest {
-    /// Required. Parent table that all the streams should belong to, in the form of
-    /// `projects/{project}/datasets/{dataset}/tables/{table}`.
+    /// Required. Parent table that all the streams should belong to, in the form
+    /// of `projects/{project}/datasets/{dataset}/tables/{table}`.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The group of streams that will be committed atomically.
@@ -824,6 +824,11 @@ pub mod big_query_write_client {
     #[doc = " BigQuery Write API."]
     #[doc = ""]
     #[doc = " The Write API can be used to write data to BigQuery."]
+    #[doc = ""]
+    #[doc = ""]
+    #[doc = " The [google.cloud.bigquery.storage.v1"]
+    #[doc = "   API](/bigquery/docs/reference/storage/rpc/google.cloud.bigquery.storage.v1)"]
+    #[doc = "   should be used instead of the v1beta2 API for BigQueryWrite operations."]
     #[derive(Debug, Clone)]
     pub struct BigQueryWriteClient<T> {
         inner: tonic::client::Grpc<T>,

@@ -236,17 +236,17 @@ pub mod precondition_failure {
             CannotCreateMoreLabels = 8,
             /// The Field type cannot be changed because the Field has been published.
             CannotChangePublishedFieldType = 9,
-            /// The Label component is locked and cannot be modified
+            /// The Label component is locked and cannot be deleted
             CannotModifyLockedComponent = 10,
+            /// The Label cannot be enabled in the target application or applications.
+            UnsupportEnabledAppSettings = 11,
         }
     }
 }
-/// Normalized internal-only message that identifies the exact exception that
-/// caused the error on the server.
+/// Exception detail.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExceptionDetail {
-    /// The type of exception that occurred.
-    /// required
+    /// The type of exception that occurred. Required.
     #[prost(enumeration = "ExceptionType", tag = "1")]
     pub error_type: i32,
 }
@@ -453,16 +453,6 @@ pub mod field {
     /// Options for the Text field type.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct TextOptions {
-        /// Output only. The minimum valid length of values for the text field.
-        #[prost(int32, tag = "1")]
-        pub min_length: i32,
-        /// Output only. The maximum valid length of values for the text field.
-        #[prost(int32, tag = "2")]
-        pub max_length: i32,
-    }
-    /// Options the Long Text field type.
-    #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct LongTextOptions {
         /// Output only. The minimum valid length of values for the text field.
         #[prost(int32, tag = "1")]
         pub min_length: i32,
@@ -751,6 +741,10 @@ pub struct Label {
     /// when the label is not disabled.
     #[prost(message, optional, tag = "12")]
     pub disable_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The customer this label belongs to.
+    /// For example: "customers/123abc789."
+    #[prost(string, tag = "13")]
+    pub customer: ::prost::alloc::string::String,
     /// Required. The basic properties of the label.
     #[prost(message, optional, tag = "14")]
     pub properties: ::core::option::Option<label::Properties>,
@@ -886,6 +880,9 @@ pub mod label {
         /// Admin-owned label. Only creatable and editable by admins. Supports some
         /// additional admin-only features.
         Admin = 2,
+        /// A label owned by an internal Google application rather than a customer.
+        /// These labels are read-only.
+        GoogleApp = 3,
     }
 }
 /// Label constraints governing the structure of a Label; such as, the maximum
@@ -1176,6 +1173,11 @@ pub struct GetUserCapabilitiesRequest {
     /// supported.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// The customer to scope this request to.
+    /// For example: "customers/abcd1234".
+    /// If unset, will return settings within the current customer.
+    #[prost(string, tag = "2")]
+    pub customer: ::prost::alloc::string::String,
 }
 /// Request to create a Label.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1377,7 +1379,7 @@ pub mod delta_update_label_request {
         pub id: ::prost::alloc::string::String,
         #[prost(
             oneof = "update_field_type_request::TypeOptions",
-            tags = "3, 4, 5, 6, 7, 8"
+            tags = "3, 5, 6, 7, 8"
         )]
         pub type_options: ::core::option::Option<update_field_type_request::TypeOptions>,
     }
@@ -1388,9 +1390,6 @@ pub mod delta_update_label_request {
             /// Update field to Text.
             #[prost(message, tag = "3")]
             TextOptions(super::super::field::TextOptions),
-            /// Update field to Long Text.
-            #[prost(message, tag = "4")]
-            LongTextOptions(super::super::field::LongTextOptions),
             /// Update field to Integer.
             #[prost(message, tag = "5")]
             IntegerOptions(super::super::field::IntegerOptions),
@@ -1649,6 +1648,11 @@ pub struct ListLabelsRequest {
     ///   revision (`labels/{id}`).
     #[prost(bool, tag = "1")]
     pub published_only: bool,
+    /// The customer to scope this list request to.
+    /// For example: "customers/abcd1234".
+    /// If unset, will return all labels within the current customer.
+    #[prost(string, tag = "2")]
+    pub customer: ::prost::alloc::string::String,
     /// The BCP-47 language code to use for evaluating localized field labels.
     /// When not specified, values in the default configured language are used.
     #[prost(string, tag = "5")]

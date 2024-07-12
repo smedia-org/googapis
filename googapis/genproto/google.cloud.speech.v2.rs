@@ -230,7 +230,7 @@ pub struct UndeleteRecognizerRequest {
 /// A Recognizer message. Stores recognition configuration and metadata.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Recognizer {
-    /// Output only. The resource name of the Recognizer.
+    /// Output only. Identifier. The resource name of the Recognizer.
     /// Format: `projects/{project}/locations/{location}/recognizers/{recognizer}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -241,8 +241,12 @@ pub struct Recognizer {
     /// characters or less.
     #[prost(string, tag = "3")]
     pub display_name: ::prost::alloc::string::String,
-    /// Required. Which model to use for recognition requests. Select the model
-    /// best suited to your domain to get best results.
+    /// Optional. This field is now deprecated. Prefer the
+    /// \[`model`][google.cloud.speech.v2.RecognitionConfig.model\] field in the
+    /// \[`RecognitionConfig`][google.cloud.speech.v2.RecognitionConfig\] message.
+    ///
+    /// Which model to use for recognition requests. Select the model best suited
+    /// to your domain to get best results.
     ///
     /// Guidance for choosing which model to use can be found in the [Transcription
     /// Models
@@ -250,9 +254,15 @@ pub struct Recognizer {
     /// and the models supported in each region can be found in the [Table Of
     /// Supported
     /// Models](<https://cloud.google.com/speech-to-text/v2/docs/speech-to-text-supported-languages>).
+    #[deprecated]
     #[prost(string, tag = "4")]
     pub model: ::prost::alloc::string::String,
-    /// Required. The language of the supplied audio as a
+    /// Optional. This field is now deprecated. Prefer the
+    /// \[`language_codes`][google.cloud.speech.v2.RecognitionConfig.language_codes\]
+    /// field in the
+    /// \[`RecognitionConfig`][google.cloud.speech.v2.RecognitionConfig\] message.
+    ///
+    /// The language of the supplied audio as a
     /// \[BCP-47\](<https://www.rfc-editor.org/rfc/bcp/bcp47.txt>) language tag.
     ///
     /// Supported languages for each model are listed in the [Table of Supported
@@ -264,6 +274,7 @@ pub struct Recognizer {
     /// When you create or update a Recognizer, these values are
     /// stored in normalized BCP-47 form. For example, "en-us" is stored as
     /// "en-US".
+    #[deprecated]
     #[prost(string, repeated, tag = "17")]
     pub language_codes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Default configuration to use for requests with this Recognizer.
@@ -349,6 +360,8 @@ pub mod recognizer {
 /// * OGG_OPUS: Opus audio frames in an Ogg container.
 ///
 /// * WEBM_OPUS: Opus audio frames in a WebM container.
+///
+/// * M4A: M4A audio format.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AutoDetectDecodingConfig {}
 /// Explicitly specified decoding parameters.
@@ -490,6 +503,43 @@ pub mod recognition_features {
         SeparateRecognitionPerChannel = 1,
     }
 }
+/// Transcription normalization configuration. Use transcription normalization
+/// to automatically replace parts of the transcript with phrases of your
+/// choosing. For StreamingRecognize, this normalization only applies to stable
+/// partial transcripts (stability > 0.8) and final transcripts.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TranscriptNormalization {
+    /// A list of replacement entries. We will perform replacement with one entry
+    /// at a time. For example, the second entry in ["cat" => "dog", "mountain cat"
+    /// => "mountain dog"] will never be applied because we will always process the
+    /// first entry before it. At most 100 entries.
+    #[prost(message, repeated, tag = "1")]
+    pub entries: ::prost::alloc::vec::Vec<transcript_normalization::Entry>,
+}
+/// Nested message and enum types in `TranscriptNormalization`.
+pub mod transcript_normalization {
+    /// A single replacement configuration.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Entry {
+        /// What to replace. Max length is 100 characters.
+        #[prost(string, tag = "1")]
+        pub search: ::prost::alloc::string::String,
+        /// What to replace with. Max length is 100 characters.
+        #[prost(string, tag = "2")]
+        pub replace: ::prost::alloc::string::String,
+        /// Whether the search is case sensitive.
+        #[prost(bool, tag = "3")]
+        pub case_sensitive: bool,
+    }
+}
+/// Translation configuration. Use to translate the given audio into text for the
+/// desired language.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TranslationConfig {
+    /// Required. The language code to translate to.
+    #[prost(string, tag = "1")]
+    pub target_language: ::prost::alloc::string::String,
+}
 /// Provides "hints" to the speech recognizer to favor specific words and phrases
 /// in the results. PhraseSets can be specified as an inline resource, or a
 /// reference to an existing PhraseSet resource.
@@ -530,6 +580,30 @@ pub mod speech_adaptation {
 /// recognition request.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RecognitionConfig {
+    /// Optional. Which model to use for recognition requests. Select the model
+    /// best suited to your domain to get best results.
+    ///
+    /// Guidance for choosing which model to use can be found in the [Transcription
+    /// Models
+    /// Documentation](<https://cloud.google.com/speech-to-text/v2/docs/transcription-model>)
+    /// and the models supported in each region can be found in the [Table Of
+    /// Supported
+    /// Models](<https://cloud.google.com/speech-to-text/v2/docs/speech-to-text-supported-languages>).
+    #[prost(string, tag = "9")]
+    pub model: ::prost::alloc::string::String,
+    /// Optional. The language of the supplied audio as a
+    /// \[BCP-47\](<https://www.rfc-editor.org/rfc/bcp/bcp47.txt>) language tag.
+    /// Language tags are normalized to BCP-47 before they are used eg "en-us"
+    /// becomes "en-US".
+    ///
+    /// Supported languages for each model are listed in the [Table of Supported
+    /// Models](<https://cloud.google.com/speech-to-text/v2/docs/speech-to-text-supported-languages>).
+    ///
+    /// If additional languages are provided, recognition result will contain
+    /// recognition in the most likely language detected. The recognition result
+    /// will include the language tag of the language detected in the audio.
+    #[prost(string, repeated, tag = "10")]
+    pub language_codes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Speech recognition features to enable.
     #[prost(message, optional, tag = "2")]
     pub features: ::core::option::Option<RecognitionFeatures>,
@@ -537,6 +611,16 @@ pub struct RecognitionConfig {
     /// words and phrases.
     #[prost(message, optional, tag = "6")]
     pub adaptation: ::core::option::Option<SpeechAdaptation>,
+    /// Optional. Use transcription normalization to automatically replace parts of
+    /// the transcript with phrases of your choosing. For StreamingRecognize, this
+    /// normalization only applies to stable partial transcripts (stability > 0.8)
+    /// and final transcripts.
+    #[prost(message, optional, tag = "11")]
+    pub transcript_normalization: ::core::option::Option<TranscriptNormalization>,
+    /// Optional. Optional configuration used to automatically run translation on
+    /// the given audio to the desired language for supported models.
+    #[prost(message, optional, tag = "15")]
+    pub translation_config: ::core::option::Option<TranslationConfig>,
     /// Decoding parameters for audio being sent for recognition.
     #[prost(oneof = "recognition_config::DecodingConfig", tags = "7, 8")]
     pub decoding_config: ::core::option::Option<recognition_config::DecodingConfig>,
@@ -565,7 +649,8 @@ pub mod recognition_config {
 pub struct RecognizeRequest {
     /// Required. The name of the Recognizer to use during recognition. The
     /// expected format is
-    /// `projects/{project}/locations/{location}/recognizers/{recognizer}`.
+    /// `projects/{project}/locations/{location}/recognizers/{recognizer}`. The
+    /// {recognizer} segment may be set to `_` to use an empty implicit Recognizer.
     #[prost(string, tag = "3")]
     pub recognizer: ::prost::alloc::string::String,
     /// Features and audio metadata to use for the Automatic Speech Recognition.
@@ -797,25 +882,28 @@ pub struct StreamingRecognitionConfig {
 /// \[StreamingRecognize][google.cloud.speech.v2.Speech.StreamingRecognize\]
 /// method. Multiple
 /// \[StreamingRecognizeRequest][google.cloud.speech.v2.StreamingRecognizeRequest\]
-/// messages are sent. The first message must contain a
+/// messages are sent in one call.
+///
+/// If the \[Recognizer][google.cloud.speech.v2.Recognizer\] referenced by
+/// \[recognizer][google.cloud.speech.v2.StreamingRecognizeRequest.recognizer\]
+/// contains a fully specified request configuration then the stream may only
+/// contain messages with only
+/// \[audio][google.cloud.speech.v2.StreamingRecognizeRequest.audio\] set.
+///
+/// Otherwise the first message must contain a
 /// \[recognizer][google.cloud.speech.v2.StreamingRecognizeRequest.recognizer\] and
-/// optionally a
+/// a
 /// \[streaming_config][google.cloud.speech.v2.StreamingRecognizeRequest.streaming_config\]
-/// message and must not contain
-/// \[audio][google.cloud.speech.v2.StreamingRecognizeRequest.audio\]. All
-/// subsequent messages must contain
-/// \[audio][google.cloud.speech.v2.StreamingRecognizeRequest.audio\] and must not
-/// contain a
-/// \[streaming_config][google.cloud.speech.v2.StreamingRecognizeRequest.streaming_config\]
-/// message.
+/// message that together fully specify the request configuration and must not
+/// contain \[audio][google.cloud.speech.v2.StreamingRecognizeRequest.audio\]. All
+/// subsequent messages must only have
+/// \[audio][google.cloud.speech.v2.StreamingRecognizeRequest.audio\] set.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StreamingRecognizeRequest {
-    /// Required. Streaming recognition should start with an initial request having
-    /// a `recognizer`. Subsequent requests carry the audio data to be recognized.
-    ///
-    /// The initial request with configuration can be omitted if the Recognizer
-    /// being used has a
-    /// \[default_recognition_config][google.cloud.speech.v2.Recognizer.default_recognition_config\].
+    /// Required. The name of the Recognizer to use during recognition. The
+    /// expected format is
+    /// `projects/{project}/locations/{location}/recognizers/{recognizer}`. The
+    /// {recognizer} segment may be set to `_` to use an empty implicit Recognizer.
     #[prost(string, tag = "3")]
     pub recognizer: ::prost::alloc::string::String,
     #[prost(oneof = "streaming_recognize_request::StreamingRequest", tags = "6, 5")]
@@ -841,7 +929,10 @@ pub mod streaming_recognize_request {
 /// method.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchRecognizeRequest {
-    /// Required. Resource name of the recognizer to be used for ASR.
+    /// Required. The name of the Recognizer to use during recognition. The
+    /// expected format is
+    /// `projects/{project}/locations/{location}/recognizers/{recognizer}`. The
+    /// {recognizer} segment may be set to `_` to use an empty implicit Recognizer.
     #[prost(string, tag = "1")]
     pub recognizer: ::prost::alloc::string::String,
     /// Features and audio metadata to use for the Automatic Speech Recognition.
@@ -903,9 +994,42 @@ pub struct GcsOutputConfig {
 /// Output configurations for inline response.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InlineOutputConfig {}
+/// Output configurations for serialized `BatchRecognizeResults` protos.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NativeOutputFileFormatConfig {}
+/// Output configurations for \[WebVTT\](<https://www.w3.org/TR/webvtt1/>) formatted
+/// subtitle file.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VttOutputFileFormatConfig {}
+/// Output configurations [SubRip
+/// Text](<https://www.matroska.org/technical/subtitles.html#srt-subtitles>)
+/// formatted subtitle file.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SrtOutputFileFormatConfig {}
+/// Configuration for the format of the results stored to `output`.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct OutputFormatConfig {
+    /// Configuration for the native output format. If this field is set or if no
+    /// other output format field is set then transcripts will be written to the
+    /// sink in the native format.
+    #[prost(message, optional, tag = "1")]
+    pub native: ::core::option::Option<NativeOutputFileFormatConfig>,
+    /// Configuration for the vtt output format. If this field is set then
+    /// transcripts will be written to the sink in the vtt format.
+    #[prost(message, optional, tag = "2")]
+    pub vtt: ::core::option::Option<VttOutputFileFormatConfig>,
+    /// Configuration for the srt output format. If this field is set then
+    /// transcripts will be written to the sink in the srt format.
+    #[prost(message, optional, tag = "3")]
+    pub srt: ::core::option::Option<SrtOutputFileFormatConfig>,
+}
 /// Configuration options for the output(s) of recognition.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RecognitionOutputConfig {
+    /// Optional. Configuration for the format of the results stored to `output`.
+    /// If unspecified transcripts will be written in the `NATIVE` format only.
+    #[prost(message, optional, tag = "3")]
+    pub output_format_config: ::core::option::Option<OutputFormatConfig>,
     #[prost(oneof = "recognition_output_config::Output", tags = "1, 2")]
     pub output: ::core::option::Option<recognition_output_config::Output>,
 }
@@ -952,23 +1076,73 @@ pub struct BatchRecognizeResults {
     #[prost(message, optional, tag = "2")]
     pub metadata: ::core::option::Option<RecognitionResponseMetadata>,
 }
-/// Final results for a single file.
+/// Final results written to Cloud Storage.
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BatchRecognizeFileResult {
+pub struct CloudStorageResult {
     /// The Cloud Storage URI to which recognition results were written.
     #[prost(string, tag = "1")]
     pub uri: ::prost::alloc::string::String,
+    /// The Cloud Storage URI to which recognition results were written as VTT
+    /// formatted captions. This is populated only when `VTT` output is requested.
+    #[prost(string, tag = "2")]
+    pub vtt_format_uri: ::prost::alloc::string::String,
+    /// The Cloud Storage URI to which recognition results were written as SRT
+    /// formatted captions. This is populated only when `SRT` output is requested.
+    #[prost(string, tag = "3")]
+    pub srt_format_uri: ::prost::alloc::string::String,
+}
+/// Final results returned inline in the recognition response.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct InlineResult {
+    /// The transcript for the audio file.
+    #[prost(message, optional, tag = "1")]
+    pub transcript: ::core::option::Option<BatchRecognizeResults>,
+    /// The transcript for the audio file as VTT formatted captions. This is
+    /// populated only when `VTT` output is requested.
+    #[prost(string, tag = "2")]
+    pub vtt_captions: ::prost::alloc::string::String,
+    /// The transcript for the audio file as SRT formatted captions. This is
+    /// populated only when `SRT` output is requested.
+    #[prost(string, tag = "3")]
+    pub srt_captions: ::prost::alloc::string::String,
+}
+/// Final results for a single file.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchRecognizeFileResult {
     /// Error if one was encountered.
     #[prost(message, optional, tag = "2")]
     pub error: ::core::option::Option<super::super::super::rpc::Status>,
     #[prost(message, optional, tag = "3")]
     pub metadata: ::core::option::Option<RecognitionResponseMetadata>,
-    /// The transcript for the audio file. This is populated only when
-    /// \[InlineOutputConfig][google.cloud.speech.v2.InlineOutputConfig\] is set in
-    /// the
-    /// \[RecognitionOutputConfig][[google.cloud.speech.v2.RecognitionOutputConfig\].
+    /// Deprecated. Use `cloud_storage_result.native_format_uri` instead.
+    #[deprecated]
+    #[prost(string, tag = "1")]
+    pub uri: ::prost::alloc::string::String,
+    /// Deprecated. Use `inline_result.transcript` instead.
+    #[deprecated]
     #[prost(message, optional, tag = "4")]
     pub transcript: ::core::option::Option<BatchRecognizeResults>,
+    #[prost(oneof = "batch_recognize_file_result::Result", tags = "5, 6")]
+    pub result: ::core::option::Option<batch_recognize_file_result::Result>,
+}
+/// Nested message and enum types in `BatchRecognizeFileResult`.
+pub mod batch_recognize_file_result {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Result {
+        /// Recognition results written to Cloud Storage. This is
+        /// populated only when
+        /// \[GcsOutputConfig][google.cloud.speech.v2.GcsOutputConfig\] is set in
+        /// the
+        /// \[RecognitionOutputConfig][[google.cloud.speech.v2.RecognitionOutputConfig\].
+        #[prost(message, tag = "5")]
+        CloudStorageResult(super::CloudStorageResult),
+        /// Recognition results. This is populated only when
+        /// \[InlineOutputConfig][google.cloud.speech.v2.InlineOutputConfig\] is set in
+        /// the
+        /// \[RecognitionOutputConfig][[google.cloud.speech.v2.RecognitionOutputConfig\].
+        #[prost(message, tag = "6")]
+        InlineResult(super::InlineResult),
+    }
 }
 /// Metadata about transcription for a single file (for example, progress
 /// percent).
@@ -1182,8 +1356,8 @@ pub mod streaming_recognize_response {
 /// with which incoming data will be encrypted.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Config {
-    /// Output only. The name of the config resource. There is exactly one config
-    /// resource per project per location. The expected format is
+    /// Output only. Identifier. The name of the config resource. There is exactly
+    /// one config resource per project per location. The expected format is
     /// `projects/{project}/locations/{location}/config`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -1228,7 +1402,7 @@ pub struct UpdateConfigRequest {
 /// audio, for example a list of passenger ship names.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CustomClass {
-    /// Output only. The resource name of the CustomClass.
+    /// Output only. Identifier. The resource name of the CustomClass.
     /// Format:
     /// `projects/{project}/locations/{location}/customClasses/{custom_class}`.
     #[prost(string, tag = "1")]
@@ -1236,8 +1410,8 @@ pub struct CustomClass {
     /// Output only. System-assigned unique identifier for the CustomClass.
     #[prost(string, tag = "2")]
     pub uid: ::prost::alloc::string::String,
-    /// User-settable, human-readable name for the CustomClass. Must be 63
-    /// characters or less.
+    /// Optional. User-settable, human-readable name for the CustomClass. Must be
+    /// 63 characters or less.
     #[prost(string, tag = "4")]
     pub display_name: ::prost::alloc::string::String,
     /// A collection of class items.
@@ -1258,7 +1432,7 @@ pub struct CustomClass {
     /// Output only. The time at which this resource will be purged.
     #[prost(message, optional, tag = "9")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Allows users to store small amounts of arbitrary data.
+    /// Optional. Allows users to store small amounts of arbitrary data.
     /// Both the key and the value must be 63 characters or less each.
     /// At most 100 annotations.
     #[prost(map = "string, string", tag = "10")]
@@ -1313,7 +1487,7 @@ pub mod custom_class {
 /// results.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PhraseSet {
-    /// Output only. The resource name of the PhraseSet.
+    /// Output only. Identifier. The resource name of the PhraseSet.
     /// Format: `projects/{project}/locations/{location}/phraseSets/{phrase_set}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,

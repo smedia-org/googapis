@@ -192,6 +192,9 @@ pub struct OAuthSettings {
     /// since access behavior is managed by IAM policies.
     #[prost(message, optional, tag = "2")]
     pub login_hint: ::core::option::Option<::prost::alloc::string::String>,
+    /// List of OAuth client IDs allowed to programmatically authenticate with IAP.
+    #[prost(string, repeated, tag = "5")]
+    pub programmatic_clients: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Configuration for IAP reauthentication policies.
 #[derive(Clone, PartialEq, ::prost::Message)]

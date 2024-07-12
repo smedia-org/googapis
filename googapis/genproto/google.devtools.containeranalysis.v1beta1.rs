@@ -34,6 +34,23 @@ pub mod packages_summary_response {
         pub count: i64,
     }
 }
+/// The request to a call of ExportSBOM
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportSbomRequest {
+    /// Required. The name of the resource in the form of
+    /// `projects/\[PROJECT_ID]/resources/[RESOURCE_URL\]`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// The response from a call to ExportSBOM
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExportSbomResponse {
+    /// The name of the discovery occurrence in the form
+    /// "projects/{project_id}/occurrences/{OCCURRENCE_ID}
+    /// It can be used to track the progression of the SBOM export.
+    #[prost(string, tag = "1")]
+    pub discovery_occurrence_id: ::prost::alloc::string::String,
+}
 #[doc = r" Generated client implementations."]
 pub mod container_analysis_v1_beta1_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -185,6 +202,23 @@ pub mod container_analysis_v1_beta1_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http :: uri :: PathAndQuery :: from_static ("/google.devtools.containeranalysis.v1beta1.ContainerAnalysisV1Beta1/GeneratePackagesSummary") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Generates an SBOM and other dependency information for the given resource."]
+        pub async fn export_sbom(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ExportSbomRequest>,
+        ) -> Result<tonic::Response<super::ExportSbomResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.devtools.containeranalysis.v1beta1.ContainerAnalysisV1Beta1/ExportSBOM",
+            );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }

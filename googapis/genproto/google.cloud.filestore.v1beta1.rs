@@ -31,8 +31,8 @@ pub struct NetworkConfig {
     /// network.
     #[prost(string, tag = "4")]
     pub reserved_ip_range: ::prost::alloc::string::String,
-    /// Output only. IPv4 addresses in the format `{octet1}.{octet2}.{octet3}.{octet4}` or
-    /// IPv6 addresses in the format
+    /// Output only. IPv4 addresses in the format
+    /// `{octet1}.{octet2}.{octet3}.{octet4}` or IPv6 addresses in the format
     /// `{block1}:{block2}:{block3}:{block4}:{block5}:{block6}:{block7}:{block8}`.
     #[prost(string, repeated, tag = "5")]
     pub ip_addresses: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -69,9 +69,10 @@ pub mod network_config {
 /// File share configuration for the instance.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FileShareConfig {
-    /// The name of the file share (must be 32 characters or less for
-    /// Enterprise and High Scale SSD tiers and 16 characters or less for all other
-    /// tiers).
+    /// Required. The name of the file share. Must use 1-16 characters for the
+    /// basic service tier and 1-63 characters for all other service tiers.
+    /// Must use lowercase letters, numbers, or underscores `\[a-z0-9_\]`. Must
+    /// start with a letter. Immutable.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// File share capacity in gigabytes (GB).
@@ -135,6 +136,14 @@ pub struct NfsExportOptions {
     /// returned if this field is specified for other squash_mode settings.
     #[prost(int64, tag = "5")]
     pub anon_gid: i64,
+    /// The security flavors allowed for mount operations.
+    /// The default is AUTH_SYS.
+    #[prost(
+        enumeration = "nfs_export_options::SecurityFlavor",
+        repeated,
+        tag = "6"
+    )]
+    pub security_flavors: ::prost::alloc::vec::Vec<i32>,
 }
 /// Nested message and enum types in `NfsExportOptions`.
 pub mod nfs_export_options {
@@ -159,6 +168,55 @@ pub mod nfs_export_options {
         NoRootSquash = 1,
         /// The Root user has squashed access to the anonymous uid/gid.
         RootSquash = 2,
+    }
+    /// The security flavor. In general, a "flavor" represents a designed process
+    /// or system. A "security flavor" is a system designed for the purpose of
+    /// authenticating a data originator (client), recipient (server), and the data
+    /// they transmit between one another.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum SecurityFlavor {
+        /// SecurityFlavor not set.
+        Unspecified = 0,
+        /// The user's UNIX user-id and group-ids are transferred "in the clear" (not
+        /// encrypted) on the network, unauthenticated by the NFS server (default).
+        AuthSys = 1,
+        /// End-user authentication through Kerberos V5.
+        Krb5 = 2,
+        /// krb5 plus integrity protection (data packets are tamper proof).
+        Krb5i = 3,
+        /// krb5i plus privacy protection (data packets are tamper proof and
+        /// encrypted).
+        Krb5p = 4,
+    }
+}
+/// ManagedActiveDirectoryConfig contains all the parameters for connecting
+/// to Managed Active Directory.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ManagedActiveDirectoryConfig {
+    /// Fully qualified domain name.
+    #[prost(string, tag = "1")]
+    pub domain: ::prost::alloc::string::String,
+    /// The computer name is used as a prefix to the mount remote target.
+    /// Example: if the computer_name is `my-computer`, the mount command will
+    /// look like: `$mount -o vers=4,sec=krb5
+    /// my-computer.filestore.<domain>:<share>`.
+    #[prost(string, tag = "2")]
+    pub computer: ::prost::alloc::string::String,
+}
+/// Directory Services configuration for Kerberos-based authentication.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DirectoryServicesConfig {
+    #[prost(oneof = "directory_services_config::Config", tags = "1")]
+    pub config: ::core::option::Option<directory_services_config::Config>,
+}
+/// Nested message and enum types in `DirectoryServicesConfig`.
+pub mod directory_services_config {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Config {
+        /// Configuration for Managed Service for Microsoft Active Directory.
+        #[prost(message, tag = "1")]
+        ManagedActiveDirectory(super::ManagedActiveDirectoryConfig),
     }
 }
 /// A Filestore instance.
@@ -202,10 +260,14 @@ pub struct Instance {
     /// Output only. Reserved for future use.
     #[prost(message, optional, tag = "13")]
     pub satisfies_pzs: ::core::option::Option<bool>,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "26")]
+    pub satisfies_pzi: bool,
     /// KMS key name used for data encryption.
     #[prost(string, tag = "14")]
     pub kms_key_name: ::prost::alloc::string::String,
-    /// Output only. Field indicates all the reasons the instance is in "SUSPENDED" state.
+    /// Output only. Field indicates all the reasons the instance is in "SUSPENDED"
+    /// state.
     #[prost(
         enumeration = "instance::SuspensionReason",
         repeated,
@@ -219,7 +281,7 @@ pub struct Instance {
     /// Output only. The increase/decrease capacity step size.
     #[prost(int64, tag = "17")]
     pub capacity_step_size_gb: i64,
-    /// Output only. The max number of shares allowed.
+    /// The max number of shares allowed.
     #[prost(int64, tag = "18")]
     pub max_share_count: i64,
     /// The storage capacity of the instance in gigabytes (GB = 1024^3 bytes).
@@ -232,6 +294,15 @@ pub struct Instance {
     /// updated and removed through the separate file-share APIs.
     #[prost(bool, tag = "20")]
     pub multi_share_enabled: bool,
+    /// Immutable. The protocol indicates the access protocol for all shares in the
+    /// instance. This field is immutable and it cannot be changed after the
+    /// instance has been created. Default value: `NFS_V3`.
+    #[prost(enumeration = "instance::FileProtocol", tag = "21")]
+    pub protocol: i32,
+    /// Directory Services configuration for Kerberos-based authentication.
+    /// Should only be set if protocol is "NFS_V4_1".
+    #[prost(message, optional, tag = "24")]
+    pub directory_services: ::core::option::Option<DirectoryServicesConfig>,
 }
 /// Nested message and enum types in `Instance`.
 pub mod instance {
@@ -291,6 +362,12 @@ pub mod instance {
         /// ENTERPRISE instances offer the features and availability needed for
         /// mission-critical workloads.
         Enterprise = 7,
+        /// ZONAL instances offer expanded capacity and performance scaling
+        /// capabilities.
+        Zonal = 8,
+        /// REGIONAL instances offer the features and availability needed for
+        /// mission-critical workloads.
+        Regional = 9,
     }
     /// SuspensionReason contains the possible reasons for a suspension.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -301,13 +378,25 @@ pub mod instance {
         /// The KMS key used by the instance is either revoked or denied access to.
         KmsKeyIssue = 1,
     }
+    /// File access protocol.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum FileProtocol {
+        /// FILE_PROTOCOL_UNSPECIFIED serves a "not set" default value when
+        /// a FileProtocol is a separate field in a message.
+        Unspecified = 0,
+        /// NFS 3.0.
+        NfsV3 = 1,
+        /// NFS 4.1.
+        NfsV41 = 2,
+    }
 }
 /// CreateInstanceRequest creates an instance.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateInstanceRequest {
     /// Required. The instance's project and location, in the format
     /// `projects/{project_id}/locations/{location}`. In Filestore,
-    /// locations map to GCP zones, for example **us-west1-b**.
+    /// locations map to Google Cloud zones, for example **us-west1-b**.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The ID of the instance to create.
@@ -332,9 +421,9 @@ pub struct GetInstanceRequest {
 /// UpdateInstanceRequest updates the settings of an instance.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateInstanceRequest {
-    /// Required. Mask of fields to update.  At least one path must be supplied in this
-    /// field.  The elements of the repeated paths field may only include these
-    /// fields:
+    /// Required. Mask of fields to update.  At least one path must be supplied in
+    /// this field.  The elements of the repeated paths field may only include
+    /// these fields:
     ///
     /// * "description"
     /// * "file_shares"
@@ -346,14 +435,14 @@ pub struct UpdateInstanceRequest {
     pub instance: ::core::option::Option<Instance>,
 }
 /// RestoreInstanceRequest restores an existing instance's file share from a
-/// snapshot or backup.
+/// backup.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RestoreInstanceRequest {
     /// Required. The resource name of the instance, in the format
     /// `projects/{project_id}/locations/{location_id}/instances/{instance_id}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. Name of the file share in the Filestore instance that the snapshot
+    /// Required. Name of the file share in the Filestore instance that the backup
     /// is being restored to.
     #[prost(string, tag = "2")]
     pub file_share: ::prost::alloc::string::String,
@@ -378,13 +467,14 @@ pub mod restore_instance_request {
 /// specified snapshot.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RevertInstanceRequest {
-    /// Required. projects/{project_id}/locations/{location_id}/instances/{instance_id}.
+    /// Required.
+    /// `projects/{project_id}/locations/{location_id}/instances/{instance_id}`.
     /// The resource name of the instance, in the format
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. The snapshot resource ID, in the format 'my-snapshot', where the specified
-    /// ID is the {snapshot_id} of the fully qualified name like
-    /// projects/{project_id}/locations/{location_id}/instances/{instance_id}/snapshots/{snapshot_id}
+    /// Required. The snapshot resource ID, in the format 'my-snapshot', where the
+    /// specified ID is the {snapshot_id} of the fully qualified name like
+    /// `projects/{project_id}/locations/{location_id}/instances/{instance_id}/snapshots/{snapshot_id}`
     #[prost(string, tag = "2")]
     pub target_snapshot_id: ::prost::alloc::string::String,
 }
@@ -403,10 +493,11 @@ pub struct DeleteInstanceRequest {
 /// ListInstancesRequest lists instances.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListInstancesRequest {
-    /// Required. The project and location for which to retrieve instance information,
-    /// in the format `projects/{project_id}/locations/{location}`. In Cloud
-    /// Filestore, locations map to GCP zones, for example **us-west1-b**. To
-    /// retrieve instance information for all locations, use "-" for the
+    /// Required. The project and location for which to retrieve instance
+    /// information, in the format `projects/{project_id}/locations/{location}`. In
+    /// Cloud Filestore, locations map to Google Cloud zones, for example
+    /// **us-west1-b**. To retrieve instance information for all locations, use "-"
+    /// for the
     /// `{location}` value.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
@@ -464,7 +555,8 @@ pub struct Snapshot {
     #[prost(map = "string, string", tag = "5")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Output only. The amount of bytes needed to allocate a full copy of the snapshot content
+    /// Output only. The amount of bytes needed to allocate a full copy of the
+    /// snapshot content
     #[prost(int64, tag = "12")]
     pub filesystem_used_bytes: i64,
 }
@@ -521,8 +613,8 @@ pub struct DeleteSnapshotRequest {
 /// UpdateSnapshotRequest updates description and/or labels for a snapshot.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateSnapshotRequest {
-    /// Required. Mask of fields to update.  At least one path must be supplied in this
-    /// field.
+    /// Required. Mask of fields to update.  At least one path must be supplied in
+    /// this field.
     #[prost(message, optional, tag = "1")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
     /// Required. A snapshot resource
@@ -586,8 +678,8 @@ pub struct Backup {
     /// Output only. Capacity of the source file share when the backup was created.
     #[prost(int64, tag = "6")]
     pub capacity_gb: i64,
-    /// Output only. The size of the storage used by the backup. As backups share storage,
-    /// this number is expected to change with backup creation/deletion.
+    /// Output only. The size of the storage used by the backup. As backups share
+    /// storage, this number is expected to change with backup creation/deletion.
     #[prost(int64, tag = "7")]
     pub storage_bytes: i64,
     /// The resource name of the source Filestore instance, in the format
@@ -599,16 +691,20 @@ pub struct Backup {
     /// backup is created from.
     #[prost(string, tag = "9")]
     pub source_file_share: ::prost::alloc::string::String,
-    /// Output only. The service tier of the source Filestore instance that this backup
-    /// is created from.
+    /// Output only. The service tier of the source Filestore instance that this
+    /// backup is created from.
     #[prost(enumeration = "instance::Tier", tag = "10")]
     pub source_instance_tier: i32,
-    /// Output only. Amount of bytes that will be downloaded if the backup is restored
+    /// Output only. Amount of bytes that will be downloaded if the backup is
+    /// restored
     #[prost(int64, tag = "11")]
     pub download_bytes: i64,
     /// Output only. Reserved for future use.
     #[prost(message, optional, tag = "12")]
     pub satisfies_pzs: ::core::option::Option<bool>,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "14")]
+    pub satisfies_pzi: bool,
     /// Immutable. KMS key name used for data encryption.
     #[prost(string, tag = "13")]
     pub kms_key_name: ::prost::alloc::string::String,
@@ -630,6 +726,9 @@ pub mod backup {
         Ready = 3,
         /// Backup is being deleted.
         Deleting = 4,
+        /// Backup is not valid and cannot be used for creating new instances or
+        /// restoring existing instances.
+        Invalid = 5,
     }
 }
 /// CreateBackupRequest creates a backup.
@@ -637,7 +736,7 @@ pub mod backup {
 pub struct CreateBackupRequest {
     /// Required. The backup's project and location, in the format
     /// `projects/{project_id}/locations/{location}`. In Filestore,
-    /// backup locations map to GCP regions, for example **us-west1**.
+    /// backup locations map to Google Cloud regions, for example **us-west1**.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. A [backup resource]\[google.cloud.filestore.v1beta1.Backup\]
@@ -665,8 +764,8 @@ pub struct UpdateBackupRequest {
     /// Required. A [backup resource]\[google.cloud.filestore.v1beta1.Backup\]
     #[prost(message, optional, tag = "1")]
     pub backup: ::core::option::Option<Backup>,
-    /// Required. Mask of fields to update.  At least one path must be supplied in this
-    /// field.
+    /// Required. Mask of fields to update.  At least one path must be supplied in
+    /// this field.
     #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
@@ -681,11 +780,11 @@ pub struct GetBackupRequest {
 /// ListBackupsRequest lists backups.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListBackupsRequest {
-    /// Required. The project and location for which to retrieve backup information,
-    /// in the format `projects/{project_id}/locations/{location}`.
-    /// In Filestore, backup locations map to GCP regions,
-    /// for example **us-west1**.
-    /// To retrieve backup information for all locations, use "-" for the
+    /// Required. The project and location for which to retrieve backup
+    /// information, in the format `projects/{project_id}/locations/{location}`. In
+    /// Filestore, backup locations map to Google Cloud regions, for example
+    /// **us-west1**. To retrieve backup information for all locations, use "-" for
+    /// the
     /// `{location}` value.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
@@ -756,6 +855,10 @@ pub struct Share {
     #[prost(map = "string, string", tag = "8")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// The source that this Share has been restored from. Empty if the Share is
+    /// created from scratch.
+    #[prost(oneof = "share::Source", tags = "9")]
+    pub source: ::core::option::Option<share::Source>,
 }
 /// Nested message and enum types in `Share`.
 pub mod share {
@@ -771,6 +874,18 @@ pub mod share {
         Ready = 3,
         /// Share is being deleted.
         Deleting = 4,
+    }
+    /// The source that this Share has been restored from. Empty if the Share is
+    /// created from scratch.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Source {
+        /// Immutable. Full name of the Cloud Filestore Backup resource that this
+        /// Share is restored from, in the format of
+        /// projects/{project_id}/locations/{location_id}/backups/{backup_id}.
+        /// Empty, if the Share is created from scratch and not restored from a
+        /// backup.
+        #[prost(string, tag = "9")]
+        Backup(::prost::alloc::string::String),
     }
 }
 /// CreateShareRequest creates a share.
@@ -850,9 +965,9 @@ pub struct UpdateShareRequest {
     /// Only fields specified in update_mask are updated.
     #[prost(message, optional, tag = "1")]
     pub share: ::core::option::Option<Share>,
-    /// Required. Mask of fields to update. At least one path must be supplied in this
-    /// field.
-    /// The elements of the repeated paths field may only include these fields:
+    /// Required. Mask of fields to update. At least one path must be supplied in
+    /// this field. The elements of the repeated paths field may only include these
+    /// fields:
     ///
     /// * "description"
     /// * "capacity_gb"
@@ -880,10 +995,8 @@ pub mod cloud_filestore_manager_client {
     #[doc = "   backups are resources of the form:"]
     #[doc = "   `/projects/{project_id}/locations/{location_id}/backup/{backup_id}`"]
     #[doc = ""]
-    #[doc = " Note that location_id can represent a GCP `zone` or `region` depending on the"]
-    #[doc = " resource."]
-    #[doc = " for example:"]
-    #[doc = " A zonal Filestore instance:"]
+    #[doc = " Note that location_id can represent a Google Cloud `zone` or `region`"]
+    #[doc = " depending on the resource. for example: A zonal Filestore instance:"]
     #[doc = " * `projects/my-project/locations/us-central1-c/instances/my-basic-tier-filer`"]
     #[doc = " A regional Filestore instance:"]
     #[doc = " * `projects/my-project/locations/us-central1/instances/my-enterprise-filer`"]

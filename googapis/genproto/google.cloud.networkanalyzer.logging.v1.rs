@@ -120,6 +120,7 @@ pub enum ReportCauseCode {
     RouteInvalidNextHopIlbMisconfigured = 4,
     RouteInvalidNextHopVpnTunnelDeleted = 5,
     RouteInvalidNextHopIlbBackendIpForwardingDisabled = 6,
+    RouteInvalidNextHopIlbVipNotAssigned = 7,
     IpUtilizationIpAllocationRatioHigh = 20,
     /// Summary of ip utilization of all subnet ranges in the project.
     IpUtilizationIpAllocationSummary = 21,
@@ -131,6 +132,9 @@ pub enum ReportCauseCode {
     GkeControlPlaneToNodeBlockedByIngressFirewallOnNode = 212,
     GkeIpUtilizationPodRangesAllocationHigh = 221,
     GkeIpUtilizationPodRangesAllocationLimitesAutoscaling = 222,
+    GkeNodeServiceAccountServiceAccountDisabled = 243,
+    GkeNodeServiceAccountDefaultServiceAccountUsed = 244,
+    GkeNodeServiceAccountBadOauthScopes = 245,
     /// Managed Services
     CloudSqlPrivateIpBlockedByEgressFirewall = 601,
     CloudSqlPrivateIpBlockedByRoutingIssue = 602,

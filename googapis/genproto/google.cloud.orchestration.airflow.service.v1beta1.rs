@@ -404,6 +404,259 @@ pub mod poll_airflow_command_response {
         pub error: ::prost::alloc::string::String,
     }
 }
+/// Create user workloads Secret request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateUserWorkloadsSecretRequest {
+    /// Required. The environment name to create a Secret for, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}"
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. User workloads Secret to create.
+    #[prost(message, optional, tag = "2")]
+    pub user_workloads_secret: ::core::option::Option<UserWorkloadsSecret>,
+}
+/// Get user workloads Secret request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetUserWorkloadsSecretRequest {
+    /// Required. The resource name of the Secret to get, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsSecrets/{userWorkloadsSecretId}"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// List user workloads Secrets request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListUserWorkloadsSecretsRequest {
+    /// Required. List Secrets in the given environment, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}"
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of Secrets to return.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. The next_page_token value returned from a previous List request,
+    /// if any.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Update user workloads Secret request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateUserWorkloadsSecretRequest {
+    /// Optional. User workloads Secret to override.
+    #[prost(message, optional, tag = "1")]
+    pub user_workloads_secret: ::core::option::Option<UserWorkloadsSecret>,
+}
+/// Delete user workloads Secret request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteUserWorkloadsSecretRequest {
+    /// Required. The Secret to delete, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsSecrets/{userWorkloadsSecretId}"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Create user workloads ConfigMap request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateUserWorkloadsConfigMapRequest {
+    /// Required. The environment name to create a ConfigMap for, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}"
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. User workloads ConfigMap to create.
+    #[prost(message, optional, tag = "2")]
+    pub user_workloads_config_map: ::core::option::Option<UserWorkloadsConfigMap>,
+}
+/// Get user workloads ConfigMap request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetUserWorkloadsConfigMapRequest {
+    /// Required. The resource name of the ConfigMap to get, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsConfigMaps/{userWorkloadsConfigMapId}"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// List user workloads ConfigMaps request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListUserWorkloadsConfigMapsRequest {
+    /// Required. List ConfigMaps in the given environment, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}"
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of ConfigMaps to return.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. The next_page_token value returned from a previous List request,
+    /// if any.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Update user workloads ConfigMap request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateUserWorkloadsConfigMapRequest {
+    /// Optional. User workloads ConfigMap to override.
+    #[prost(message, optional, tag = "1")]
+    pub user_workloads_config_map: ::core::option::Option<UserWorkloadsConfigMap>,
+}
+/// Delete user workloads ConfigMap request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteUserWorkloadsConfigMapRequest {
+    /// Required. The ConfigMap to delete, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsConfigMaps/{userWorkloadsConfigMapId}"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// User workloads Secret used by Airflow tasks that run with Kubernetes executor
+/// or KubernetesPodOperator.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserWorkloadsSecret {
+    /// Identifier. The resource name of the Secret, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsSecrets/{userWorkloadsSecretId}"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. The "data" field of Kubernetes Secret, organized in key-value
+    /// pairs, which can contain sensitive values such as a password, a token, or a
+    /// key. The values for all keys have to be base64-encoded strings. For details
+    /// see: <https://kubernetes.io/docs/concepts/configuration/secret/>
+    #[prost(map = "string, string", tag = "2")]
+    pub data:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// The user workloads Secrets for a given environment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListUserWorkloadsSecretsResponse {
+    /// The list of Secrets returned by a ListUserWorkloadsSecretsRequest.
+    #[prost(message, repeated, tag = "1")]
+    pub user_workloads_secrets: ::prost::alloc::vec::Vec<UserWorkloadsSecret>,
+    /// The page token used to query for the next page if one exists.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// User workloads ConfigMap used by Airflow tasks that run with Kubernetes
+/// executor or KubernetesPodOperator.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserWorkloadsConfigMap {
+    /// Identifier. The resource name of the ConfigMap, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}/userWorkloadsConfigMaps/{userWorkloadsConfigMapId}"
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. The "data" field of Kubernetes ConfigMap, organized in key-value
+    /// pairs. For details see:
+    /// <https://kubernetes.io/docs/concepts/configuration/configmap/>
+    #[prost(map = "string, string", tag = "2")]
+    pub data:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// The user workloads ConfigMaps for a given environment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListUserWorkloadsConfigMapsResponse {
+    /// The list of ConfigMaps returned by a ListUserWorkloadsConfigMapsRequest.
+    #[prost(message, repeated, tag = "1")]
+    pub user_workloads_config_maps: ::prost::alloc::vec::Vec<UserWorkloadsConfigMap>,
+    /// The page token used to query for the next page if one exists.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request for listing workloads in a Cloud Composer environment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListWorkloadsRequest {
+    /// Required. The environment name to get workloads for, in the form:
+    /// "projects/{projectId}/locations/{locationId}/environments/{environmentId}"
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. The maximum number of environments to return.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. The next_page_token value returned from a previous List request,
+    /// if any.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. The list filter.
+    /// Currently only supports equality on the type field. The value of a field
+    /// specified in the filter expression must be one ComposerWorkloadType enum
+    /// option. It's possible to get multiple types using "OR" operator, e.g.:
+    /// "type=SCHEDULER OR type=CELERY_WORKER". If not specified, all items are
+    /// returned.
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Response to ListWorkloadsRequest.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListWorkloadsResponse {
+    /// The list of environment workloads.
+    #[prost(message, repeated, tag = "1")]
+    pub workloads: ::prost::alloc::vec::Vec<list_workloads_response::ComposerWorkload>,
+    /// The page token used to query for the next page if one exists.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `ListWorkloadsResponse`.
+pub mod list_workloads_response {
+    /// Information about a single workload.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ComposerWorkload {
+        /// Name of a workload.
+        #[prost(string, tag = "1")]
+        pub name: ::prost::alloc::string::String,
+        /// Type of a workload.
+        #[prost(enumeration = "ComposerWorkloadType", tag = "2")]
+        pub r#type: i32,
+        /// Output only. Status of a workload.
+        #[prost(message, optional, tag = "3")]
+        pub status: ::core::option::Option<ComposerWorkloadStatus>,
+    }
+    /// Workload status.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct ComposerWorkloadStatus {
+        /// Output only. Workload state.
+        #[prost(enumeration = "ComposerWorkloadState", tag = "1")]
+        pub state: i32,
+        /// Output only. Text to provide more descriptive status.
+        #[prost(string, tag = "2")]
+        pub status_message: ::prost::alloc::string::String,
+        /// Output only. Detailed message of the status.
+        #[prost(string, tag = "3")]
+        pub detailed_status_message: ::prost::alloc::string::String,
+    }
+    /// Supported workload types.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ComposerWorkloadType {
+        /// Not able to determine the type of the workload.
+        Unspecified = 0,
+        /// Celery worker.
+        CeleryWorker = 1,
+        /// Kubernetes worker.
+        KubernetesWorker = 2,
+        /// Workload created by Kubernetes Pod Operator.
+        KubernetesOperatorPod = 3,
+        /// Airflow scheduler.
+        Scheduler = 4,
+        /// Airflow Dag processor.
+        DagProcessor = 5,
+        /// Airflow triggerer.
+        Triggerer = 6,
+        /// Airflow web server UI.
+        WebServer = 7,
+        /// Redis.
+        Redis = 8,
+    }
+    /// Workload states.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ComposerWorkloadState {
+        /// Not able to determine the status of the workload.
+        Unspecified = 0,
+        /// Workload is in pending state and has not yet started.
+        Pending = 1,
+        /// Workload is running fine.
+        Ok = 2,
+        /// Workload is running but there are some non-critical problems.
+        Warning = 3,
+        /// Workload is not running due to an error.
+        Error = 4,
+        /// Workload has finished execution with success.
+        Succeeded = 5,
+        /// Workload has finished execution with failure.
+        Failed = 6,
+    }
+}
 /// Request to create a snapshot of a Cloud Composer environment.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SaveSnapshotRequest {
@@ -566,8 +819,9 @@ pub struct EnvironmentConfig {
     /// This may be split into multiple chunks, each with a size of
     /// at least 4 hours.
     ///
-    /// If this value is omitted, Cloud Composer components may be subject to
-    /// maintenance at any time.
+    /// If this value is omitted, the default value for maintenance window is
+    /// applied. By default, maintenance windows are from 00:00:00 to 04:00:00
+    /// (GMT) on Friday, Saturday, and Sunday every week.
     #[prost(message, optional, tag = "13")]
     pub maintenance_window: ::core::option::Option<MaintenanceWindow>,
     /// Optional. The workloads configuration settings for the GKE cluster
@@ -597,6 +851,10 @@ pub struct EnvironmentConfig {
     /// composer-2.*.*-airflow-*.*.* and newer.
     #[prost(message, optional, tag = "18")]
     pub recovery_config: ::core::option::Option<RecoveryConfig>,
+    /// Optional. The configuration setting for Airflow database data retention
+    /// mechanism.
+    #[prost(message, optional, tag = "19")]
+    pub data_retention_config: ::core::option::Option<DataRetentionConfig>,
     /// Optional. Resilience mode of the Cloud Composer Environment.
     ///
     /// This field is supported for Cloud Composer environments in versions
@@ -761,6 +1019,27 @@ pub struct SoftwareConfig {
     /// Optional. The configuration for Cloud Data Lineage integration.
     #[prost(message, optional, tag = "8")]
     pub cloud_data_lineage_integration: ::core::option::Option<CloudDataLineageIntegration>,
+    /// Optional. Whether or not the web server uses custom plugins.
+    /// If unspecified, the field defaults to `PLUGINS_ENABLED`.
+    ///
+    /// This field is supported for Cloud Composer environments in versions
+    /// composer-3.*.*-airflow-*.*.* and newer.
+    #[prost(enumeration = "software_config::WebServerPluginsMode", tag = "10")]
+    pub web_server_plugins_mode: i32,
+}
+/// Nested message and enum types in `SoftwareConfig`.
+pub mod software_config {
+    /// Web server plugins mode of the Cloud Composer environment.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum WebServerPluginsMode {
+        /// Default mode.
+        Unspecified = 0,
+        /// Web server plugins are not supported.
+        PluginsDisabled = 1,
+        /// Web server plugins are supported.
+        PluginsEnabled = 2,
+    }
 }
 /// Configuration for controlling how IPs are allocated in the
 /// GKE cluster.
@@ -956,6 +1235,29 @@ pub struct NodeConfig {
     /// <https://cloud.google.com/kubernetes-engine/docs/how-to/ip-masquerade-agent>
     #[prost(bool, tag = "11")]
     pub enable_ip_masq_agent: bool,
+    /// Optional. Network Attachment that Cloud Composer environment is connected
+    /// to, which provides connectivity with a user's VPC network. Takes precedence
+    /// over network and subnetwork settings. If not provided, but network and
+    /// subnetwork are defined during environment, it will be provisioned. If not
+    /// provided and network and subnetwork are also empty, then connectivity to
+    /// user's VPC network is disabled. Network attachment must be provided in
+    /// format
+    /// projects/{project}/regions/{region}/networkAttachments/{networkAttachment}.
+    ///
+    /// This field is supported for Cloud Composer environments in versions
+    /// composer-3.*.*-airflow-*.*.* and newer.
+    #[prost(string, tag = "12")]
+    pub composer_network_attachment: ::prost::alloc::string::String,
+    /// Optional. The IP range in CIDR notation to use internally by Cloud
+    /// Composer. IP addresses are not reserved - and the same range can be used by
+    /// multiple Cloud Composer environments. In case of overlap, IPs from this
+    /// range will not be accessible in the user's VPC network. Cannot be updated.
+    /// If not specified, the default value of '100.64.128.0/20' is used.
+    ///
+    /// This field is supported for Cloud Composer environments in versions
+    /// composer-3.*.*-airflow-*.*.* and newer.
+    #[prost(string, tag = "13")]
+    pub composer_internal_ipv4_cidr_block: ::prost::alloc::string::String,
 }
 /// Configuration options for the private GKE cluster in a Cloud Composer
 /// environment.
@@ -1016,6 +1318,17 @@ pub struct PrivateEnvironmentConfig {
     /// composer-1.*.*-airflow-*.*.*.
     #[prost(bool, tag = "1")]
     pub enable_private_environment: bool,
+    /// Optional. If `true`, builds performed during operations that install Python
+    /// packages have only private connectivity to Google services (including
+    /// Artifact Registry) and VPC network (if either `NodeConfig.network` and
+    /// `NodeConfig.subnetwork` fields or `NodeConfig.composer_network_attachment`
+    /// field are specified). If `false`, the builds also have access to the
+    /// internet.
+    ///
+    /// This field is supported for Cloud Composer environments in versions
+    /// composer-3.*.*-airflow-*.*.* and newer.
+    #[prost(bool, tag = "11")]
+    pub enable_private_builds_only: bool,
     /// Optional. Configuration for the private GKE cluster for a Private IP
     /// Cloud Composer environment.
     #[prost(message, optional, tag = "2")]
@@ -1083,6 +1396,13 @@ pub struct DatabaseConfig {
     /// composer-1.*.*-airflow-*.*.*.
     #[prost(string, tag = "1")]
     pub machine_type: ::prost::alloc::string::String,
+    /// Optional. The Compute Engine zone where the Airflow database is created. If
+    /// zone is provided, it must be in the region selected for the environment. If
+    /// zone is not provided, a zone is automatically selected. The zone can only
+    /// be set during environment creation. Supported for Cloud Composer
+    /// environments in versions composer-2.*.*-airflow-*.*.*.
+    #[prost(string, tag = "2")]
+    pub zone: ::prost::alloc::string::String,
 }
 /// The configuration settings for the Airflow web server App Engine instance.
 /// Supported for Cloud Composer environments in versions
@@ -1156,6 +1476,12 @@ pub struct WorkloadsConfig {
     /// Optional. Resources used by Airflow triggerers.
     #[prost(message, optional, tag = "4")]
     pub triggerer: ::core::option::Option<workloads_config::TriggererResource>,
+    /// Optional. Resources used by Airflow DAG processors.
+    ///
+    /// This field is supported for Cloud Composer environments in versions
+    /// composer-3.*.*-airflow-*.*.* and newer.
+    #[prost(message, optional, tag = "5")]
+    pub dag_processor: ::core::option::Option<workloads_config::DagProcessorResource>,
 }
 /// Nested message and enum types in `WorkloadsConfig`.
 pub mod workloads_config {
@@ -1225,6 +1551,106 @@ pub mod workloads_config {
         #[prost(float, tag = "3")]
         pub memory_gb: f32,
     }
+    /// Configuration for resources used by Airflow DAG processors.
+    ///
+    /// This field is supported for Cloud Composer environments in versions
+    /// composer-3.*.*-airflow-*.*.* and newer.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct DagProcessorResource {
+        /// Optional. CPU request and limit for a single Airflow DAG processor
+        /// replica.
+        #[prost(float, tag = "1")]
+        pub cpu: f32,
+        /// Optional. Memory (GB) request and limit for a single Airflow DAG
+        /// processor replica.
+        #[prost(float, tag = "2")]
+        pub memory_gb: f32,
+        /// Optional. Storage (GB) request and limit for a single Airflow DAG
+        /// processor replica.
+        #[prost(float, tag = "3")]
+        pub storage_gb: f32,
+        /// Optional. The number of DAG processors. If not provided or set to 0, a
+        /// single DAG processor instance will be created.
+        #[prost(int32, tag = "4")]
+        pub count: i32,
+    }
+}
+/// The configuration setting for Airflow database data retention mechanism.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DataRetentionConfig {
+    /// Optional. The number of days describing for how long to store event-based
+    /// records in airflow database. If the retention mechanism is enabled this
+    /// value must be a positive integer otherwise, value should be set to 0.
+    #[deprecated]
+    #[prost(int32, tag = "1")]
+    pub airflow_database_retention_days: i32,
+    /// Optional. The configuration settings for task logs retention
+    #[prost(message, optional, tag = "4")]
+    pub task_logs_retention_config: ::core::option::Option<TaskLogsRetentionConfig>,
+    /// Optional. The retention policy for airflow metadata database.
+    #[prost(message, optional, tag = "5")]
+    pub airflow_metadata_retention_config:
+        ::core::option::Option<AirflowMetadataRetentionPolicyConfig>,
+}
+/// The configuration setting for Task Logs.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TaskLogsRetentionConfig {
+    /// Optional. The mode of storage for Airflow workers task logs.
+    #[prost(
+        enumeration = "task_logs_retention_config::TaskLogsStorageMode",
+        tag = "2"
+    )]
+    pub storage_mode: i32,
+}
+/// Nested message and enum types in `TaskLogsRetentionConfig`.
+pub mod task_logs_retention_config {
+    /// The definition of task_logs_storage_mode.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum TaskLogsStorageMode {
+        /// This configuration is not specified by the user.
+        Unspecified = 0,
+        /// Store task logs in Cloud Logging and in the environment's Cloud Storage
+        /// bucket.
+        CloudLoggingAndCloudStorage = 1,
+        /// Store task logs in Cloud Logging only.
+        CloudLoggingOnly = 2,
+    }
+}
+/// The policy for airflow metadata database retention.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AirflowMetadataRetentionPolicyConfig {
+    /// Optional. Retention can be either enabled or disabled.
+    #[prost(
+        enumeration = "airflow_metadata_retention_policy_config::RetentionMode",
+        tag = "1"
+    )]
+    pub retention_mode: i32,
+    /// Optional. How many days data should be retained for.
+    #[prost(int32, tag = "2")]
+    pub retention_days: i32,
+}
+/// Nested message and enum types in `AirflowMetadataRetentionPolicyConfig`.
+pub mod airflow_metadata_retention_policy_config {
+    /// Describes retention policy.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RetentionMode {
+        /// Default mode doesn't change environment parameters.
+        Unspecified = 0,
+        /// Retention policy is enabled.
+        Enabled = 1,
+        /// Retention policy is disabled.
+        Disabled = 2,
+    }
+}
+/// The configuration for data storage in the environment.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StorageConfig {
+    /// Optional. The name of the Cloud Storage bucket used by the environment. No
+    /// `gs://` prefix.
+    #[prost(string, tag = "1")]
+    pub bucket: ::prost::alloc::string::String,
 }
 /// The Recovery settings of an environment.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1324,6 +1750,12 @@ pub struct Environment {
     #[prost(map = "string, string", tag = "7")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Reserved for future use.
+    #[prost(bool, tag = "8")]
+    pub satisfies_pzs: bool,
+    /// Optional. Storage configuration for this environment.
+    #[prost(message, optional, tag = "9")]
+    pub storage_config: ::core::option::Option<StorageConfig>,
 }
 /// Nested message and enum types in `Environment`.
 pub mod environment {
@@ -1641,6 +2073,210 @@ pub mod environments_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/PollAirflowCommand") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists workloads in a Cloud Composer environment. Workload is a unit that"]
+        #[doc = " runs a single Composer component."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn list_workloads(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListWorkloadsRequest>,
+        ) -> Result<tonic::Response<super::ListWorkloadsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.orchestration.airflow.service.v1beta1.Environments/ListWorkloads",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a user workloads Secret."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn create_user_workloads_secret(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateUserWorkloadsSecretRequest>,
+        ) -> Result<tonic::Response<super::UserWorkloadsSecret>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/CreateUserWorkloadsSecret") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets an existing user workloads Secret."]
+        #[doc = " Values of the \"data\" field in the response are cleared."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn get_user_workloads_secret(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetUserWorkloadsSecretRequest>,
+        ) -> Result<tonic::Response<super::UserWorkloadsSecret>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/GetUserWorkloadsSecret") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists user workloads Secrets."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn list_user_workloads_secrets(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListUserWorkloadsSecretsRequest>,
+        ) -> Result<tonic::Response<super::ListUserWorkloadsSecretsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/ListUserWorkloadsSecrets") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a user workloads Secret."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn update_user_workloads_secret(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateUserWorkloadsSecretRequest>,
+        ) -> Result<tonic::Response<super::UserWorkloadsSecret>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/UpdateUserWorkloadsSecret") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a user workloads Secret."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn delete_user_workloads_secret(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteUserWorkloadsSecretRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/DeleteUserWorkloadsSecret") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a user workloads ConfigMap."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn create_user_workloads_config_map(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateUserWorkloadsConfigMapRequest>,
+        ) -> Result<tonic::Response<super::UserWorkloadsConfigMap>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/CreateUserWorkloadsConfigMap") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets an existing user workloads ConfigMap."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn get_user_workloads_config_map(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetUserWorkloadsConfigMapRequest>,
+        ) -> Result<tonic::Response<super::UserWorkloadsConfigMap>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/GetUserWorkloadsConfigMap") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists user workloads ConfigMaps."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn list_user_workloads_config_maps(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListUserWorkloadsConfigMapsRequest>,
+        ) -> Result<tonic::Response<super::ListUserWorkloadsConfigMapsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/ListUserWorkloadsConfigMaps") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a user workloads ConfigMap."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn update_user_workloads_config_map(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateUserWorkloadsConfigMapRequest>,
+        ) -> Result<tonic::Response<super::UserWorkloadsConfigMap>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/UpdateUserWorkloadsConfigMap") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a user workloads ConfigMap."]
+        #[doc = ""]
+        #[doc = " This method is supported for Cloud Composer environments in versions"]
+        #[doc = " composer-3.*.*-airflow-*.*.* and newer."]
+        pub async fn delete_user_workloads_config_map(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteUserWorkloadsConfigMapRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.orchestration.airflow.service.v1beta1.Environments/DeleteUserWorkloadsConfigMap") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Creates a snapshots of a Cloud Composer environment."]

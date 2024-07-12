@@ -331,6 +331,8 @@ pub struct AuxiliaryVersionConfig {
     pub network_config: ::core::option::Option<NetworkConfig>,
 }
 /// Network configuration for the Dataproc Metastore service.
+///
+/// Next available ID: 4
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NetworkConfig {
     /// Immutable. The consumer-side network configuration for the Dataproc
@@ -345,12 +347,18 @@ pub struct NetworkConfig {
 /// Nested message and enum types in `NetworkConfig`.
 pub mod network_config {
     /// Contains information of the customer's network configurations.
+    ///
+    /// Next available ID: 5
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Consumer {
         /// Output only. The URI of the endpoint used to access the metastore
         /// service.
         #[prost(string, tag = "3")]
         pub endpoint_uri: ::prost::alloc::string::String,
+        /// Output only. The location of the endpoint URI. Format:
+        /// `projects/{project}/locations/{location}`.
+        #[prost(string, tag = "4")]
+        pub endpoint_location: ::prost::alloc::string::String,
         #[prost(oneof = "consumer::VpcResource", tags = "1")]
         pub vpc_resource: ::core::option::Option<consumer::VpcResource>,
     }
@@ -1285,6 +1293,18 @@ pub struct QueryMetadataResponse {
     /// against the metadata finishes.
     #[prost(string, tag = "1")]
     pub result_manifest_uri: ::prost::alloc::string::String,
+}
+/// Error details in public error message for
+/// \[DataprocMetastore.QueryMetadata][google.cloud.metastore.v1alpha.DataprocMetastore.QueryMetadata\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ErrorDetails {
+    /// Additional structured details about this error.
+    ///
+    /// Keys define the failure items.
+    /// Value describes the exception or details of the item.
+    #[prost(map = "string, string", tag = "1")]
+    pub details:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
 /// Request message for
 /// \[DataprocMetastore.MoveTableToDatabase][google.cloud.metastore.v1alpha.DataprocMetastore.MoveTableToDatabase\].

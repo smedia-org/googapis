@@ -4,7 +4,8 @@
 pub struct Notification {
     /// The resource name of the notification.
     /// Format:
-    /// organizations/{organization}/locations/{location}/notifications/{notification}.
+    /// organizations/{organization}/locations/{location}/notifications/{notification}
+    /// or projects/{project}/locations/{location}/notifications/{notification}.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The subject line of the notification.
@@ -113,7 +114,8 @@ pub mod csv {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListNotificationsRequest {
     /// Required. The parent, which owns this collection of notifications.
-    /// Must be of the form "organizations/{organization}/locations/{location}".
+    /// Must be of the form "organizations/{organization}/locations/{location}"
+    /// or "projects/{project}/locations/{location}".
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of notifications to return. The service may return
@@ -158,7 +160,8 @@ pub struct ListNotificationsResponse {
 pub struct GetNotificationRequest {
     /// Required. A name of the notification to retrieve.
     /// Format:
-    /// organizations/{organization}/locations/{location}/notifications/{notification}.
+    /// organizations/{organization}/locations/{location}/notifications/{notification}
+    /// or projects/{projects}/locations/{location}/notifications/{notification}.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// ISO code for requested localization language. If unset, will be
@@ -168,6 +171,52 @@ pub struct GetNotificationRequest {
     /// this RPC will throw an error.
     #[prost(string, tag = "5")]
     pub language_code: ::prost::alloc::string::String,
+}
+/// Settings for Advisory Notifications.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Settings {
+    /// Identifier. The resource name of the settings to retrieve.
+    /// Format:
+    /// organizations/{organization}/locations/{location}/settings or
+    /// projects/{projects}/locations/{location}/settings.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. Map of each notification type and its settings to get/set all
+    /// settings at once. The server will validate the value for each notification
+    /// type.
+    #[prost(map = "string, message", tag = "2")]
+    pub notification_settings:
+        ::std::collections::HashMap<::prost::alloc::string::String, NotificationSettings>,
+    /// Required. Fingerprint for optimistic concurrency returned in Get requests.
+    /// Must be provided for Update requests. If the value provided does not match
+    /// the value known to the server, ABORTED will be thrown, and the client
+    /// should retry the read-modify-write cycle.
+    #[prost(string, tag = "3")]
+    pub etag: ::prost::alloc::string::String,
+}
+/// Settings for each NotificationType.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NotificationSettings {
+    /// Whether the associated NotificationType is enabled.
+    #[prost(bool, tag = "1")]
+    pub enabled: bool,
+}
+/// Request of GetSettings endpoint.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSettingsRequest {
+    /// Required. The resource name of the settings to retrieve.
+    /// Format:
+    /// organizations/{organization}/locations/{location}/settings or
+    /// projects/{projects}/locations/{location}/settings.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request of UpdateSettings endpoint.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateSettingsRequest {
+    /// Required. New settings.
+    #[prost(message, optional, tag = "1")]
+    pub settings: ::core::option::Option<Settings>,
 }
 /// Notification view.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -210,6 +259,10 @@ pub enum NotificationType {
     SecurityPrivacyAdvisory = 1,
     /// Sensitive action notifications
     SensitiveActions = 2,
+    /// General security MSA
+    SecurityMsa = 3,
+    /// Threat horizons MSA
+    ThreatHorizons = 4,
 }
 #[doc = r" Generated client implementations."]
 pub mod advisory_notifications_service_client {
@@ -289,6 +342,38 @@ pub mod advisory_notifications_service_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.advisorynotifications.v1.AdvisoryNotificationsService/GetNotification") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Get notification settings."]
+        pub async fn get_settings(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSettingsRequest>,
+        ) -> Result<tonic::Response<super::Settings>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.advisorynotifications.v1.AdvisoryNotificationsService/GetSettings",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Update notification settings."]
+        pub async fn update_settings(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateSettingsRequest>,
+        ) -> Result<tonic::Response<super::Settings>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.advisorynotifications.v1.AdvisoryNotificationsService/UpdateSettings") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
     }

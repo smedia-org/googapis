@@ -30,6 +30,9 @@ pub struct Conversation {
     #[prost(map = "string, string", tag = "6")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Conversation metadata related to quality management.
+    #[prost(message, optional, tag = "24")]
+    pub quality_metadata: ::core::option::Option<conversation::QualityMetadata>,
     /// Output only. The conversation transcript.
     #[prost(message, optional, tag = "8")]
     pub transcript: ::core::option::Option<conversation::Transcript>,
@@ -83,6 +86,42 @@ pub mod conversation {
         /// The audio channel that contains the agent.
         #[prost(int32, tag = "2")]
         pub agent_channel: i32,
+    }
+    /// Conversation metadata related to quality management.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct QualityMetadata {
+        /// An arbitrary integer value indicating the customer's satisfaction rating.
+        #[prost(int32, tag = "1")]
+        pub customer_satisfaction_rating: i32,
+        /// The amount of time the customer waited to connect with an agent.
+        #[prost(message, optional, tag = "2")]
+        pub wait_duration: ::core::option::Option<::prost_types::Duration>,
+        /// An arbitrary string value specifying the menu path the customer took.
+        #[prost(string, tag = "3")]
+        pub menu_path: ::prost::alloc::string::String,
+        /// Information about agents involved in the call.
+        #[prost(message, repeated, tag = "4")]
+        pub agent_info: ::prost::alloc::vec::Vec<quality_metadata::AgentInfo>,
+    }
+    /// Nested message and enum types in `QualityMetadata`.
+    pub mod quality_metadata {
+        /// Information about an agent involved in the conversation.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct AgentInfo {
+            /// A user-specified string representing the agent.
+            #[prost(string, tag = "1")]
+            pub agent_id: ::prost::alloc::string::String,
+            /// The agent's name.
+            #[prost(string, tag = "2")]
+            pub display_name: ::prost::alloc::string::String,
+            /// A user-specified string representing the agent's team.
+            #[prost(string, tag = "3")]
+            pub team: ::prost::alloc::string::String,
+            /// A user-provided string indicating the outcome of the agent's segment of
+            /// the call.
+            #[prost(string, tag = "4")]
+            pub disposition_code: ::prost::alloc::string::String,
+        }
     }
     /// A message representing the transcript of a conversation.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -646,6 +685,12 @@ pub struct IssueModel {
     /// data.
     #[prost(message, optional, tag = "7")]
     pub training_stats: ::core::option::Option<IssueModelLabelStats>,
+    /// Type of the model.
+    #[prost(enumeration = "issue_model::ModelType", tag = "9")]
+    pub model_type: i32,
+    /// Language of the model.
+    #[prost(string, tag = "10")]
+    pub language_code: ::prost::alloc::string::String,
 }
 /// Nested message and enum types in `IssueModel`.
 pub mod issue_model {
@@ -683,6 +728,17 @@ pub mod issue_model {
         Undeploying = 4,
         /// Model is being deleted.
         Deleting = 5,
+    }
+    /// Type of the model.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ModelType {
+        /// Unspecified model type.
+        Unspecified = 0,
+        /// Type V1.
+        TypeV1 = 1,
+        /// Type V2.
+        TypeV2 = 2,
     }
 }
 /// The issue resource.
@@ -921,6 +977,10 @@ pub struct Settings {
     /// conversations.
     #[prost(message, optional, tag = "10")]
     pub redaction_config: ::core::option::Option<RedactionConfig>,
+    /// Optional. Default Speech-to-Text resources to be used while ingesting audio
+    /// files. Optional, CCAI Insights will create a default if not provided.
+    #[prost(message, optional, tag = "11")]
+    pub speech_config: ::core::option::Option<SpeechConfig>,
 }
 /// Nested message and enum types in `Settings`.
 pub mod settings {
@@ -951,9 +1011,18 @@ pub struct RedactionConfig {
     pub deidentify_template: ::prost::alloc::string::String,
     /// The fully-qualified DLP inspect template resource name.
     /// Format:
-    /// `projects/{project}/inspectTemplates/{template}`
+    /// `projects/{project}/locations/{location}/inspectTemplates/{template}`
     #[prost(string, tag = "2")]
     pub inspect_template: ::prost::alloc::string::String,
+}
+/// Speech-to-Text configuration.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SpeechConfig {
+    /// The fully-qualified Speech Recognizer resource name.
+    /// Format:
+    /// `projects/{project_id}/locations/{location}/recognizer/{recognizer}`
+    #[prost(string, tag = "1")]
+    pub speech_recognizer: ::prost::alloc::string::String,
 }
 /// An annotation that was generated during the customer and agent interaction.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1315,7 +1384,7 @@ pub mod annotator_selector {
         pub enum SummarizationModel {
             /// Unspecified summarization model.
             Unspecified = 0,
-            /// The Insights baseline model.
+            /// The CCAI baseline model.
             BaselineModel = 1,
         }
         /// Summarization must use either a preexisting conversation profile or one
@@ -1465,10 +1534,14 @@ pub struct UploadConversationRequest {
     /// expression `^\[a-z0-9-\]{4,64}$`. Valid characters are `\[a-z][0-9\]-`
     #[prost(string, tag = "3")]
     pub conversation_id: ::prost::alloc::string::String,
-    /// Optional. DLP settings for transcript redaction. Optional, will default to
-    /// the config specified in Settings.
+    /// Optional. DLP settings for transcript redaction. Will default to the config
+    /// specified in Settings.
     #[prost(message, optional, tag = "4")]
     pub redaction_config: ::core::option::Option<RedactionConfig>,
+    /// Optional. Speech-to-Text configuration. Will default to the config
+    /// specified in Settings.
+    #[prost(message, optional, tag = "11")]
+    pub speech_config: ::core::option::Option<SpeechConfig>,
 }
 /// The metadata for an UploadConversation operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1569,6 +1642,14 @@ pub struct IngestConversationsRequest {
     #[prost(message, optional, tag = "4")]
     pub conversation_config:
         ::core::option::Option<ingest_conversations_request::ConversationConfig>,
+    /// Optional. DLP settings for transcript redaction. Optional, will default to
+    /// the config specified in Settings.
+    #[prost(message, optional, tag = "5")]
+    pub redaction_config: ::core::option::Option<RedactionConfig>,
+    /// Optional. Default Speech-to-Text configuration. Optional, will default to
+    /// the config specified in Settings.
+    #[prost(message, optional, tag = "6")]
+    pub speech_config: ::core::option::Option<SpeechConfig>,
     /// Configuration for an external data store containing objects that will
     /// be converted to conversations.
     #[prost(oneof = "ingest_conversations_request::Source", tags = "2")]
@@ -1585,6 +1666,24 @@ pub mod ingest_conversations_request {
         /// Required. The Cloud Storage bucket containing source objects.
         #[prost(string, tag = "1")]
         pub bucket_uri: ::prost::alloc::string::String,
+        /// Optional. Specifies the type of the objects in `bucket_uri`.
+        #[prost(enumeration = "gcs_source::BucketObjectType", tag = "2")]
+        pub bucket_object_type: i32,
+    }
+    /// Nested message and enum types in `GcsSource`.
+    pub mod gcs_source {
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum BucketObjectType {
+            /// The object type is unspecified and will default to `TRANSCRIPT`.
+            Unspecified = 0,
+            /// The object is a transcript.
+            Transcript = 1,
+            /// The object is an audio file.
+            Audio = 2,
+        }
     }
     /// Configuration for processing transcript objects.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1600,12 +1699,23 @@ pub mod ingest_conversations_request {
         /// the conversations.
         #[prost(string, tag = "1")]
         pub agent_id: ::prost::alloc::string::String,
+        /// Optional. Indicates which of the channels, 1 or 2, contains the agent.
+        /// Note that this must be set for conversations to be properly displayed and
+        /// analyzed.
+        #[prost(int32, tag = "2")]
+        pub agent_channel: i32,
+        /// Optional. Indicates which of the channels, 1 or 2, contains the agent.
+        /// Note that this must be set for conversations to be properly displayed and
+        /// analyzed.
+        #[prost(int32, tag = "3")]
+        pub customer_channel: i32,
     }
     /// Configuration for an external data store containing objects that will
     /// be converted to conversations.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Source {
-        /// A cloud storage bucket source.
+        /// A cloud storage bucket source. Note that any previously ingested objects
+        /// from the source will be skipped to avoid duplication.
         #[prost(message, tag = "2")]
         GcsSource(GcsSource),
     }
@@ -1760,6 +1870,10 @@ pub struct BulkAnalyzeConversationsMetadata {
     /// returned by `filter` multiplied by `analysis_percentage` in the request.
     #[prost(int32, tag = "6")]
     pub total_requested_analyses_count: i32,
+    /// Output only. Partial errors during bulk analyze operation that might cause
+    /// the operation output to be incomplete.
+    #[prost(message, repeated, tag = "7")]
+    pub partial_errors: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
 }
 /// The response for a bulk analyze conversations operation.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1771,6 +1885,46 @@ pub struct BulkAnalyzeConversationsResponse {
     #[prost(int32, tag = "2")]
     pub failed_analysis_count: i32,
 }
+/// The request to delete conversations in bulk.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BulkDeleteConversationsRequest {
+    /// Required. The parent resource to delete conversations from.
+    /// Format:
+    /// projects/{project}/locations/{location}
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Filter used to select the subset of conversations to delete.
+    #[prost(string, tag = "2")]
+    pub filter: ::prost::alloc::string::String,
+    /// Maximum number of conversations to delete.
+    #[prost(int32, tag = "3")]
+    pub max_delete_count: i32,
+    /// If set to true, all of this conversation's analyses will also be deleted.
+    /// Otherwise, the request will only succeed if the conversation has no
+    /// analyses.
+    #[prost(bool, tag = "4")]
+    pub force: bool,
+}
+/// The metadata for a bulk delete conversations operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BulkDeleteConversationsMetadata {
+    /// The time the operation was created.
+    #[prost(message, optional, tag = "1")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time the operation finished running.
+    #[prost(message, optional, tag = "2")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The original request for bulk delete.
+    #[prost(message, optional, tag = "3")]
+    pub request: ::core::option::Option<BulkDeleteConversationsRequest>,
+    /// Partial errors during bulk delete conversations operation that might cause
+    /// the operation output to be incomplete.
+    #[prost(message, repeated, tag = "4")]
+    pub partial_errors: ::prost::alloc::vec::Vec<super::super::super::rpc::Status>,
+}
+/// The response for a bulk delete conversations operation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BulkDeleteConversationsResponse {}
 /// The request to export insights.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExportInsightsDataRequest {
@@ -2442,6 +2596,24 @@ pub mod contact_center_insights_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.contactcenterinsights.v1.ContactCenterInsights/BulkAnalyzeConversations") ;
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes multiple conversations in a single request."]
+        pub async fn bulk_delete_conversations(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BulkDeleteConversationsRequest>,
+        ) -> Result<
+            tonic::Response<super::super::super::super::longrunning::Operation>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.contactcenterinsights.v1.ContactCenterInsights/BulkDeleteConversations") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Imports conversations and processes them according to the user's"]

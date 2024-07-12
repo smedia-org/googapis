@@ -134,8 +134,6 @@ pub mod safety_setting {
         BlockMediumAndAbove = 2,
         /// Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed.
         BlockOnlyHigh = 3,
-        /// All content will be allowed.
-        BlockNone = 4,
     }
 }
 /// The category of a rating.
@@ -225,11 +223,6 @@ pub struct GenerateMessageResponse {
     /// This indicates which `SafetyCategory`(s) blocked a
     /// candidate from this response, the lowest `HarmProbability`
     /// that triggered a block, and the HarmThreshold setting for that category.
-    /// This indicates the smallest change to the `SafetySettings` that would be
-    /// necessary to unblock at least 1 response.
-    ///
-    /// The blocking is configured by the `SafetySettings` in the request (or the
-    /// default `SafetySettings` of the API).
     #[prost(message, repeated, tag = "3")]
     pub filters: ::prost::alloc::vec::Vec<ContentFilter>,
 }
@@ -314,10 +307,10 @@ pub struct MessagePrompt {
 /// It demonstrates how the model should respond or format its response.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Example {
-    /// An example of an input `Message` from the user.
+    /// Required. An example of an input `Message` from the user.
     #[prost(message, optional, tag = "1")]
     pub input: ::core::option::Option<Message>,
-    /// An example of what the model should output given the input.
+    /// Required. An example of what the model should output given the input.
     #[prost(message, optional, tag = "2")]
     pub output: ::core::option::Option<Message>,
 }

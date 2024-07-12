@@ -13,6 +13,9 @@ pub struct Execution {
     /// Output only. Marks the end of execution, successful or not.
     #[prost(message, optional, tag = "3")]
     pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. Measures the duration of the execution.
+    #[prost(message, optional, tag = "12")]
+    pub duration: ::core::option::Option<::prost_types::Duration>,
     /// Output only. Current state of the execution.
     #[prost(enumeration = "execution::State", tag = "4")]
     pub state: i32,
@@ -39,6 +42,25 @@ pub struct Execution {
     /// The call logging level associated to this execution.
     #[prost(enumeration = "execution::CallLogLevel", tag = "9")]
     pub call_log_level: i32,
+    /// Output only. Status tracks the current steps and progress data of this
+    /// execution.
+    #[prost(message, optional, tag = "10")]
+    pub status: ::core::option::Option<execution::Status>,
+    /// Labels associated with this execution.
+    /// Labels can contain at most 64 entries. Keys and values can be no longer
+    /// than 63 characters and can only contain lowercase letters, numeric
+    /// characters, underscores, and dashes. Label keys must start with a letter.
+    /// International characters are allowed.
+    /// By default, labels are inherited from the workflow but are overridden by
+    /// any labels associated with the execution.
+    #[prost(map = "string, string", tag = "11")]
+    pub labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Error regarding the state of the Execution resource. For
+    /// example, this field will have error details if the execution data is
+    /// unavailable due to revoked KMS key permissions.
+    #[prost(message, optional, tag = "13")]
+    pub state_error: ::core::option::Option<execution::StateError>,
 }
 /// Nested message and enum types in `Execution`.
 pub mod execution {
@@ -94,6 +116,56 @@ pub mod execution {
         #[prost(message, optional, tag = "3")]
         pub stack_trace: ::core::option::Option<StackTrace>,
     }
+    /// Represents the current status of this execution.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Status {
+        /// A list of currently executing or last executed step names for the
+        /// workflow execution currently running. If the workflow has succeeded or
+        /// failed, this is the last attempted or executed step. Presently, if the
+        /// current step is inside a subworkflow, the list only includes that step.
+        /// In the future, the list will contain items for each step in the call
+        /// stack, starting with the outermost step in the `main` subworkflow, and
+        /// ending with the most deeply nested step.
+        #[prost(message, repeated, tag = "1")]
+        pub current_steps: ::prost::alloc::vec::Vec<status::Step>,
+    }
+    /// Nested message and enum types in `Status`.
+    pub mod status {
+        /// Represents a step of the workflow this execution is running.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Step {
+            /// Name of a routine within the workflow.
+            #[prost(string, tag = "1")]
+            pub routine: ::prost::alloc::string::String,
+            /// Name of a step within the routine.
+            #[prost(string, tag = "2")]
+            pub step: ::prost::alloc::string::String,
+        }
+    }
+    /// Describes an error related to the current state of the Execution resource.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct StateError {
+        /// Provides specifics about the error.
+        #[prost(string, tag = "1")]
+        pub details: ::prost::alloc::string::String,
+        /// The type of this state error.
+        #[prost(enumeration = "state_error::Type", tag = "2")]
+        pub r#type: i32,
+    }
+    /// Nested message and enum types in `StateError`.
+    pub mod state_error {
+        /// Describes the possible types of a state error.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum Type {
+            /// No type specified.
+            Unspecified = 0,
+            /// Caused by an issue with KMS.
+            KmsError = 1,
+        }
+    }
     /// Describes the current state of the execution. More states might be added
     /// in the future.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -109,19 +181,25 @@ pub mod execution {
         Failed = 3,
         /// The execution was stopped intentionally.
         Cancelled = 4,
+        /// Execution data is unavailable. See the `state_error` field.
+        Unavailable = 5,
+        /// Request has been placed in the backlog for processing at a later time.
+        Queued = 6,
     }
     /// Describes the level of platform logging to apply to calls and call
     /// responses during workflow executions.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum CallLogLevel {
-        /// No call logging specified.
+        /// No call logging level specified.
         Unspecified = 0,
         /// Log all call steps within workflows, all call returns, and all exceptions
         /// raised.
         LogAllCalls = 1,
         /// Log only exceptions that are raised from call steps within workflows.
         LogErrorsOnly = 2,
+        /// Explicitly log nothing.
+        LogNone = 3,
     }
 }
 /// Request for the
@@ -134,7 +212,7 @@ pub struct ListExecutionsRequest {
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number of executions to return per call.
-    /// Max supported value depends on the selected Execution view: it's 10000 for
+    /// Max supported value depends on the selected Execution view: it's 1000 for
     /// BASIC and 100 for FULL. The default value used if the field is not
     /// specified is 100, regardless of the selected view. Values greater than
     /// the max value will be coerced down to it.
@@ -145,12 +223,27 @@ pub struct ListExecutionsRequest {
     ///
     /// When paginating, all other parameters provided to `ListExecutions` must
     /// match the call that provided the page token.
+    ///
+    /// Note that pagination is applied to dynamic data. The list of executions
+    /// returned can change between page requests.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
-    /// Optional. A view defining which fields should be filled in the returned executions.
-    /// The API will default to the BASIC view.
+    /// Optional. A view defining which fields should be filled in the returned
+    /// executions. The API will default to the BASIC view.
     #[prost(enumeration = "ExecutionView", tag = "4")]
     pub view: i32,
+    /// Optional. Filters applied to the \[Executions.ListExecutions\] results.
+    /// The following fields are supported for filtering:
+    /// executionID, state, startTime, endTime, duration, workflowRevisionID,
+    /// stepName, and label.
+    #[prost(string, tag = "5")]
+    pub filter: ::prost::alloc::string::String,
+    /// Optional. The ordering applied to the \[Executions.ListExecutions\] results.
+    /// By default the ordering is based on descending start time.
+    /// The following fields are supported for order by:
+    /// executionID, startTime, endTime, duration, state, and workflowRevisionID.
+    #[prost(string, tag = "6")]
+    pub order_by: ::prost::alloc::string::String,
 }
 /// Response for the
 /// \[ListExecutions][google.cloud.workflows.executions.v1.Executions.ListExecutions\]
@@ -189,8 +282,8 @@ pub struct GetExecutionRequest {
     /// projects/{project}/locations/{location}/workflows/{workflow}/executions/{execution}
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Optional. A view defining which fields should be filled in the returned execution.
-    /// The API will default to the FULL view.
+    /// Optional. A view defining which fields should be filled in the returned
+    /// execution. The API will default to the FULL view.
     #[prost(enumeration = "ExecutionView", tag = "2")]
     pub view: i32,
 }
@@ -212,8 +305,8 @@ pub enum ExecutionView {
     /// The default / unset value.
     Unspecified = 0,
     /// Includes only basic metadata about the execution.
-    /// Following fields are returned: name, start_time, end_time, state
-    /// and workflow_revision_id.
+    /// The following fields are returned: name, start_time, end_time, duration,
+    /// state, and workflow_revision_id.
     Basic = 1,
     /// Includes all data.
     Full = 2,

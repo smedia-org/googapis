@@ -149,6 +149,12 @@ pub struct OracleConnectionProfile {
     /// Required. Database service for the Oracle connection.
     #[prost(string, tag = "6")]
     pub database_service: ::prost::alloc::string::String,
+    /// SSL configuration for the connection to the source Oracle database.
+    ///
+    ///  * Only `SERVER_ONLY` configuration is supported for Oracle SSL.
+    ///  * SSL is supported for Oracle versions 12 and above.
+    #[prost(message, optional, tag = "7")]
+    pub ssl: ::core::option::Option<SslConfig>,
     /// Connectivity options used to establish a connection to the database server.
     #[prost(
         oneof = "oracle_connection_profile::Connectivity",
@@ -359,6 +365,9 @@ pub struct CloudSqlSettings {
     /// region (it is highly available).
     #[prost(enumeration = "cloud_sql_settings::SqlAvailabilityType", tag = "17")]
     pub availability_type: i32,
+    /// Optional. The edition of the given Cloud SQL instance.
+    #[prost(enumeration = "cloud_sql_settings::Edition", tag = "19")]
+    pub edition: i32,
 }
 /// Nested message and enum types in `CloudSqlSettings`.
 pub mod cloud_sql_settings {
@@ -408,6 +417,8 @@ pub mod cloud_sql_settings {
         Postgres13 = 8,
         /// PostgreSQL 14.
         Postgres14 = 17,
+        /// PostgreSQL 15.
+        Postgres15 = 18,
     }
     /// The availability type of the given Cloud SQL instance.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -419,6 +430,18 @@ pub mod cloud_sql_settings {
         Zonal = 1,
         /// Regional availability instance.
         Regional = 2,
+    }
+    /// The edition of the given Cloud SQL instance.
+    /// Can be ENTERPRISE or ENTERPRISE_PLUS.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Edition {
+        /// The instance did not specify the edition.
+        Unspecified = 0,
+        /// The instance is an enterprise edition.
+        Enterprise = 2,
+        /// The instance is an enterprise plus edition.
+        EnterprisePlus = 3,
     }
 }
 /// Settings for creating an AlloyDB cluster.
@@ -525,8 +548,8 @@ pub mod alloy_db_settings {
 /// configuration is required.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StaticIpConnectivity {}
-/// Private Service Connect connectivity
-/// (<https://cloud.google.com/vpc/docs/private-service-connect#service-attachments>)
+/// [Private Service Connect
+/// connectivity](<https://cloud.google.com/vpc/docs/private-service-connect#service-attachments>)
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrivateServiceConnectConnectivity {
     /// Required. A service attachment that exposes a database, and has the
@@ -712,6 +735,10 @@ pub struct MigrationJob {
     /// projects/\[PROJECT]/locations/[REGION]/keyRings/[RING]/cryptoKeys/[KEY_NAME\]
     #[prost(string, tag = "21")]
     pub cmek_key_name: ::prost::alloc::string::String,
+    /// Optional. Data dump parallelism settings used by the migration.
+    /// Currently applicable only for MySQL to Cloud SQL for MySQL migrations only.
+    #[prost(message, optional, tag = "22")]
+    pub performance_config: ::core::option::Option<migration_job::PerformanceConfig>,
     /// The connectivity method.
     #[prost(oneof = "migration_job::Connectivity", tags = "101, 102, 103")]
     pub connectivity: ::core::option::Option<migration_job::Connectivity>,
@@ -734,6 +761,31 @@ pub mod migration_job {
         /// The flags for the initial dump.
         #[prost(message, repeated, tag = "1")]
         pub dump_flags: ::prost::alloc::vec::Vec<DumpFlag>,
+    }
+    /// Performance configuration definition.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct PerformanceConfig {
+        /// Initial dump parallelism level.
+        #[prost(enumeration = "performance_config::DumpParallelLevel", tag = "1")]
+        pub dump_parallel_level: i32,
+    }
+    /// Nested message and enum types in `PerformanceConfig`.
+    pub mod performance_config {
+        /// Describes the parallelism level during initial dump.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum DumpParallelLevel {
+            /// Unknown dump parallel level. Will be defaulted to OPTIMAL.
+            Unspecified = 0,
+            /// Minimal parallel level.
+            Min = 1,
+            /// Optimal parallel level.
+            Optimal = 2,
+            /// Maximum parallel level.
+            Max = 3,
+        }
     }
     /// The current migration job states.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -975,6 +1027,8 @@ pub mod migration_job_verification_error {
         UnsupportedDefiner = 19,
         /// Migration is already running at the time of restart request.
         CantRestartRunningMigration = 21,
+        /// The source already has a replication setup.
+        SourceAlreadySetup = 23,
         /// The source has tables with limited support.
         /// E.g. PostgreSQL tables without primary keys.
         TablesWithLimitedSupport = 24,
@@ -987,6 +1041,11 @@ pub mod migration_job_verification_error {
         /// The source DB size in Bytes exceeds a certain threshold. The migration
         /// might require an increase of quota, or might not be supported.
         SourceSizeExceedsThreshold = 28,
+        /// The destination DB contains existing databases that are conflicting with
+        /// those in the source DB.
+        ExistingConflictingDatabases = 29,
+        /// Insufficient privilege to enable the parallelism configuration.
+        ParallelImportInsufficientPrivilege = 30,
     }
 }
 /// The PrivateConnection resource is used to establish private connectivity
@@ -1121,7 +1180,7 @@ pub struct ConversionWorkspace {
     /// Required. The destination engine details.
     #[prost(message, optional, tag = "3")]
     pub destination: ::core::option::Option<DatabaseEngineInfo>,
-    /// A generic list of settings for the workspace.
+    /// Optional. A generic list of settings for the workspace.
     /// The settings are database pair dependant and can indicate default behavior
     /// for the mapping rules engine or turn on or off specific features.
     /// Such examples can be: convert_foreign_key_to_interleave=true,
@@ -1145,7 +1204,7 @@ pub struct ConversionWorkspace {
     /// Output only. The timestamp when the workspace resource was last updated.
     #[prost(message, optional, tag = "10")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// The display name for the workspace.
+    /// Optional. The display name for the workspace.
     #[prost(string, tag = "11")]
     pub display_name: ::prost::alloc::string::String,
 }
@@ -1164,18 +1223,19 @@ pub struct BackgroundJobLogEntry {
     /// The timestamp when the background job was finished.
     #[prost(message, optional, tag = "4")]
     pub finish_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Job completion state, i.e. the final state after the job completed.
+    /// Output only. Job completion state, i.e. the final state after the job
+    /// completed.
     #[prost(
         enumeration = "background_job_log_entry::JobCompletionState",
         tag = "5"
     )]
     pub completion_state: i32,
-    /// Job completion comment, such as how many entities were seeded,
+    /// Output only. Job completion comment, such as how many entities were seeded,
     /// how many warnings were found during conversion, and similar information.
     #[prost(string, tag = "6")]
     pub completion_comment: ::prost::alloc::string::String,
-    /// Whether the client requested the conversion workspace to be committed after
-    /// a successful completion of the job.
+    /// Output only. Whether the client requested the conversion workspace to be
+    /// committed after a successful completion of the job.
     #[prost(bool, tag = "7")]
     pub request_autocommit: bool,
     #[prost(
@@ -1189,34 +1249,34 @@ pub mod background_job_log_entry {
     /// Details regarding a Seed background job.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct SeedJobDetails {
-        /// The connection profile which was used for the seed job.
+        /// Output only. The connection profile which was used for the seed job.
         #[prost(string, tag = "1")]
         pub connection_profile: ::prost::alloc::string::String,
     }
     /// Details regarding an Import Rules background job.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ImportRulesJobDetails {
-        /// File names used for the import rules job.
+        /// Output only. File names used for the import rules job.
         #[prost(string, repeated, tag = "1")]
         pub files: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-        /// The requested file format.
+        /// Output only. The requested file format.
         #[prost(enumeration = "super::ImportRulesFileFormat", tag = "2")]
         pub file_format: i32,
     }
     /// Details regarding a Convert background job.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ConvertJobDetails {
-        /// AIP-160 based filter used to specify the entities to convert
+        /// Output only. AIP-160 based filter used to specify the entities to convert
         #[prost(string, tag = "1")]
         pub filter: ::prost::alloc::string::String,
     }
     /// Details regarding an Apply background job.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ApplyJobDetails {
-        /// The connection profile which was used for the apply job.
+        /// Output only. The connection profile which was used for the apply job.
         #[prost(string, tag = "1")]
         pub connection_profile: ::prost::alloc::string::String,
-        /// AIP-160 based filter used to specify the entities to apply
+        /// Output only. AIP-160 based filter used to specify the entities to apply
         #[prost(string, tag = "2")]
         pub filter: ::prost::alloc::string::String,
     }
@@ -1234,19 +1294,592 @@ pub mod background_job_log_entry {
     }
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum JobDetails {
-        /// Seed job details.
+        /// Output only. Seed job details.
         #[prost(message, tag = "100")]
         SeedJobDetails(SeedJobDetails),
-        /// Import rules job details.
+        /// Output only. Import rules job details.
         #[prost(message, tag = "101")]
         ImportRulesJobDetails(ImportRulesJobDetails),
-        /// Convert job details.
+        /// Output only. Convert job details.
         #[prost(message, tag = "102")]
         ConvertJobDetails(ConvertJobDetails),
-        /// Apply job details.
+        /// Output only. Apply job details.
         #[prost(message, tag = "103")]
         ApplyJobDetails(ApplyJobDetails),
     }
+}
+/// A filter defining the entities that a mapping rule should be applied to.
+/// When more than one field is specified, the rule is applied only to
+/// entities which match all the fields.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MappingRuleFilter {
+    /// Optional. The rule should be applied to entities whose parent entity
+    /// (fully qualified name) matches the given value.
+    /// For example, if the rule applies to a table entity, the expected value
+    /// should be a schema (schema). If the rule applies to a column or index
+    /// entity, the expected value can be either a schema (schema) or a table
+    /// (schema.table)
+    #[prost(string, tag = "1")]
+    pub parent_entity: ::prost::alloc::string::String,
+    /// Optional. The rule should be applied to entities whose non-qualified name
+    /// starts with the given prefix.
+    #[prost(string, tag = "2")]
+    pub entity_name_prefix: ::prost::alloc::string::String,
+    /// Optional. The rule should be applied to entities whose non-qualified name
+    /// ends with the given suffix.
+    #[prost(string, tag = "3")]
+    pub entity_name_suffix: ::prost::alloc::string::String,
+    /// Optional. The rule should be applied to entities whose non-qualified name
+    /// contains the given string.
+    #[prost(string, tag = "4")]
+    pub entity_name_contains: ::prost::alloc::string::String,
+    /// Optional. The rule should be applied to specific entities defined by their
+    /// fully qualified names.
+    #[prost(string, repeated, tag = "5")]
+    pub entities: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Definition of a transformation that is to be applied to a group of entities
+/// in the source schema. Several such transformations can be applied to an
+/// entity sequentially to define the corresponding entity in the target schema.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MappingRule {
+    /// Full name of the mapping rule resource, in the form of:
+    /// projects/{project}/locations/{location}/conversionWorkspaces/{set}/mappingRule/{rule}.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A human readable name
+    #[prost(string, tag = "2")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Optional. The mapping rule state
+    #[prost(enumeration = "mapping_rule::State", tag = "3")]
+    pub state: i32,
+    /// Required. The rule scope
+    #[prost(enumeration = "DatabaseEntityType", tag = "4")]
+    pub rule_scope: i32,
+    /// Required. The rule filter
+    #[prost(message, optional, tag = "5")]
+    pub filter: ::core::option::Option<MappingRuleFilter>,
+    /// Required. The order in which the rule is applied. Lower order rules are
+    /// applied before higher value rules so they may end up being overridden.
+    #[prost(int64, tag = "6")]
+    pub rule_order: i64,
+    /// Output only. The revision ID of the mapping rule.
+    /// A new revision is committed whenever the mapping rule is changed in any
+    /// way. The format is an 8-character hexadecimal string.
+    #[prost(string, tag = "7")]
+    pub revision_id: ::prost::alloc::string::String,
+    /// Output only. The timestamp that the revision was created.
+    #[prost(message, optional, tag = "8")]
+    pub revision_create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The rule specific details.
+    #[prost(
+        oneof = "mapping_rule::Details",
+        tags = "102, 103, 105, 106, 107, 108, 114, 115, 116, 117, 118"
+    )]
+    pub details: ::core::option::Option<mapping_rule::Details>,
+}
+/// Nested message and enum types in `MappingRule`.
+pub mod mapping_rule {
+    /// The current mapping rule state such as enabled, disabled or deleted.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The state of the mapping rule is unknown.
+        Unspecified = 0,
+        /// The rule is enabled.
+        Enabled = 1,
+        /// The rule is disabled.
+        Disabled = 2,
+        /// The rule is logically deleted.
+        Deleted = 3,
+    }
+    /// The rule specific details.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Details {
+        /// Optional. Rule to specify how a single entity should be renamed.
+        #[prost(message, tag = "102")]
+        SingleEntityRename(super::SingleEntityRename),
+        /// Optional. Rule to specify how multiple entities should be renamed.
+        #[prost(message, tag = "103")]
+        MultiEntityRename(super::MultiEntityRename),
+        /// Optional. Rule to specify how multiple entities should be relocated into
+        /// a different schema.
+        #[prost(message, tag = "105")]
+        EntityMove(super::EntityMove),
+        /// Optional. Rule to specify how a single column is converted.
+        #[prost(message, tag = "106")]
+        SingleColumnChange(super::SingleColumnChange),
+        /// Optional. Rule to specify how multiple columns should be converted to a
+        /// different data type.
+        #[prost(message, tag = "107")]
+        MultiColumnDataTypeChange(super::MultiColumnDatatypeChange),
+        /// Optional. Rule to specify how the data contained in a column should be
+        /// transformed (such as trimmed, rounded, etc) provided that the data meets
+        /// certain criteria.
+        #[prost(message, tag = "108")]
+        ConditionalColumnSetValue(super::ConditionalColumnSetValue),
+        /// Optional. Rule to specify how multiple tables should be converted with an
+        /// additional rowid column.
+        #[prost(message, tag = "114")]
+        ConvertRowidColumn(super::ConvertRowIdToColumn),
+        /// Optional. Rule to specify the primary key for a table
+        #[prost(message, tag = "115")]
+        SetTablePrimaryKey(super::SetTablePrimaryKey),
+        /// Optional. Rule to specify how a single package is converted.
+        #[prost(message, tag = "116")]
+        SinglePackageChange(super::SinglePackageChange),
+        /// Optional. Rule to change the sql code for an entity, for example,
+        /// function, procedure.
+        #[prost(message, tag = "117")]
+        SourceSqlChange(super::SourceSqlChange),
+        /// Optional. Rule to specify the list of columns to include or exclude from
+        /// a table.
+        #[prost(message, tag = "118")]
+        FilterTableColumns(super::FilterTableColumns),
+    }
+}
+/// Options to configure rule type SingleEntityRename.
+/// The rule is used to rename an entity.
+///
+/// The rule filter field can refer to only one entity.
+///
+/// The rule scope can be one of: Database, Schema, Table, Column, Constraint,
+/// Index, View, Function, Stored Procedure, Materialized View, Sequence, UDT,
+/// Synonym
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SingleEntityRename {
+    /// Required. The new name of the destination entity
+    #[prost(string, tag = "1")]
+    pub new_name: ::prost::alloc::string::String,
+}
+/// Options to configure rule type MultiEntityRename.
+/// The rule is used to rename multiple entities.
+///
+/// The rule filter field can refer to one or more entities.
+///
+/// The rule scope can be one of: Database, Schema, Table, Column, Constraint,
+/// Index, View, Function, Stored Procedure, Materialized View, Sequence, UDT
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MultiEntityRename {
+    /// Optional. The pattern used to generate the new entity's name. This pattern
+    /// must include the characters '{name}', which will be replaced with the name
+    /// of the original entity. For example, the pattern 't_{name}' for an entity
+    /// name jobs would be converted to 't_jobs'.
+    ///
+    /// If unspecified, the default value for this field is '{name}'
+    #[prost(string, tag = "1")]
+    pub new_name_pattern: ::prost::alloc::string::String,
+    /// Optional. Additional transformation that can be done on the source entity
+    /// name before it is being used by the new_name_pattern, for example lower
+    /// case. If no transformation is desired, use NO_TRANSFORMATION
+    #[prost(enumeration = "EntityNameTransformation", tag = "2")]
+    pub source_name_transformation: i32,
+}
+/// Options to configure rule type EntityMove.
+/// The rule is used to move an entity to a new schema.
+///
+/// The rule filter field can refer to one or more entities.
+///
+/// The rule scope can be one of: Table, Column, Constraint, Index, View,
+/// Function, Stored Procedure, Materialized View, Sequence, UDT
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EntityMove {
+    /// Required. The new schema
+    #[prost(string, tag = "1")]
+    pub new_schema: ::prost::alloc::string::String,
+}
+/// Options to configure rule type SingleColumnChange.
+/// The rule is used to change the properties of a column.
+///
+/// The rule filter field can refer to one entity.
+///
+/// The rule scope can be one of: Column.
+///
+/// When using this rule, if a field is not specified than the destination
+/// column's configuration will be the same as the one in the source column..
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SingleColumnChange {
+    /// Optional. Column data type name.
+    #[prost(string, tag = "1")]
+    pub data_type: ::prost::alloc::string::String,
+    /// Optional. Charset override - instead of table level charset.
+    #[prost(string, tag = "2")]
+    pub charset: ::prost::alloc::string::String,
+    /// Optional. Collation override - instead of table level collation.
+    #[prost(string, tag = "3")]
+    pub collation: ::prost::alloc::string::String,
+    /// Optional. Column length - e.g. 50 as in varchar (50) - when relevant.
+    #[prost(int64, tag = "4")]
+    pub length: i64,
+    /// Optional. Column precision - e.g. 8 as in double (8,2) - when relevant.
+    #[prost(int32, tag = "5")]
+    pub precision: i32,
+    /// Optional. Column scale - e.g. 2 as in double (8,2) - when relevant.
+    #[prost(int32, tag = "6")]
+    pub scale: i32,
+    /// Optional. Column fractional seconds precision - e.g. 2 as in timestamp (2)
+    /// - when relevant.
+    #[prost(int32, tag = "7")]
+    pub fractional_seconds_precision: i32,
+    /// Optional. Is the column of array type.
+    #[prost(bool, tag = "8")]
+    pub array: bool,
+    /// Optional. The length of the array, only relevant if the column type is an
+    /// array.
+    #[prost(int32, tag = "9")]
+    pub array_length: i32,
+    /// Optional. Is the column nullable.
+    #[prost(bool, tag = "10")]
+    pub nullable: bool,
+    /// Optional. Is the column auto-generated/identity.
+    #[prost(bool, tag = "11")]
+    pub auto_generated: bool,
+    /// Optional. Is the column a UDT (User-defined Type).
+    #[prost(bool, tag = "12")]
+    pub udt: bool,
+    /// Optional. Custom engine specific features.
+    #[prost(message, optional, tag = "13")]
+    pub custom_features: ::core::option::Option<::prost_types::Struct>,
+    /// Optional. Specifies the list of values allowed in the column.
+    #[prost(string, repeated, tag = "14")]
+    pub set_values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Comment associated with the column.
+    #[prost(string, tag = "15")]
+    pub comment: ::prost::alloc::string::String,
+}
+/// Options to configure rule type MultiColumnDatatypeChange.
+/// The rule is used to change the data type and associated properties of
+/// multiple columns at once.
+///
+/// The rule filter field can refer to one or more entities.
+///
+/// The rule scope can be one of:Column.
+///
+/// This rule requires additional filters to be specified beyond the basic rule
+/// filter field, which is the source data type, but the rule supports additional
+/// filtering capabilities such as the minimum and maximum field length. All
+/// additional filters which are specified are required to be met in order for
+/// the rule to be applied (logical AND between the fields).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MultiColumnDatatypeChange {
+    /// Required. Filter on source data type.
+    #[prost(string, tag = "1")]
+    pub source_data_type_filter: ::prost::alloc::string::String,
+    /// Required. New data type.
+    #[prost(string, tag = "2")]
+    pub new_data_type: ::prost::alloc::string::String,
+    /// Optional. Column length - e.g. varchar (50) - if not specified and relevant
+    /// uses the source column length.
+    #[prost(int64, tag = "3")]
+    pub override_length: i64,
+    /// Optional. Column scale - when relevant - if not specified and relevant
+    /// uses the source column scale.
+    #[prost(int32, tag = "4")]
+    pub override_scale: i32,
+    /// Optional. Column precision - when relevant - if not specified and relevant
+    /// uses the source column precision.
+    #[prost(int32, tag = "5")]
+    pub override_precision: i32,
+    /// Optional. Column fractional seconds precision - used only for timestamp
+    /// based datatypes - if not specified and relevant uses the source column
+    /// fractional seconds precision.
+    #[prost(int32, tag = "6")]
+    pub override_fractional_seconds_precision: i32,
+    /// Optional. Custom engine specific features.
+    #[prost(message, optional, tag = "7")]
+    pub custom_features: ::core::option::Option<::prost_types::Struct>,
+    /// Filter on source column parameters.
+    #[prost(
+        oneof = "multi_column_datatype_change::SourceFilter",
+        tags = "100, 101"
+    )]
+    pub source_filter: ::core::option::Option<multi_column_datatype_change::SourceFilter>,
+}
+/// Nested message and enum types in `MultiColumnDatatypeChange`.
+pub mod multi_column_datatype_change {
+    /// Filter on source column parameters.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SourceFilter {
+        /// Optional. Filter for text-based data types like varchar.
+        #[prost(message, tag = "100")]
+        SourceTextFilter(super::SourceTextFilter),
+        /// Optional. Filter for fixed point number data types such as
+        /// NUMERIC/NUMBER.
+        #[prost(message, tag = "101")]
+        SourceNumericFilter(super::SourceNumericFilter),
+    }
+}
+/// Filter for text-based data types like varchar.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SourceTextFilter {
+    /// Optional. The filter will match columns with length greater than or equal
+    /// to this number.
+    #[prost(int64, tag = "1")]
+    pub source_min_length_filter: i64,
+    /// Optional. The filter will match columns with length smaller than or equal
+    /// to this number.
+    #[prost(int64, tag = "2")]
+    pub source_max_length_filter: i64,
+}
+/// Filter for fixed point number data types such as NUMERIC/NUMBER
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SourceNumericFilter {
+    /// Optional. The filter will match columns with scale greater than or equal to
+    /// this number.
+    #[prost(int32, tag = "1")]
+    pub source_min_scale_filter: i32,
+    /// Optional. The filter will match columns with scale smaller than or equal to
+    /// this number.
+    #[prost(int32, tag = "2")]
+    pub source_max_scale_filter: i32,
+    /// Optional. The filter will match columns with precision greater than or
+    /// equal to this number.
+    #[prost(int32, tag = "3")]
+    pub source_min_precision_filter: i32,
+    /// Optional. The filter will match columns with precision smaller than or
+    /// equal to this number.
+    #[prost(int32, tag = "4")]
+    pub source_max_precision_filter: i32,
+    /// Required. Enum to set the option defining the datatypes numeric filter has
+    /// to be applied to
+    #[prost(enumeration = "NumericFilterOption", tag = "5")]
+    pub numeric_filter_option: i32,
+}
+/// Options to configure rule type ConditionalColumnSetValue.
+/// The rule is used to transform the data which is being replicated/migrated.
+///
+/// The rule filter field can refer to one or more entities.
+///
+/// The rule scope can be one of: Column.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConditionalColumnSetValue {
+    /// Required. Description of data transformation during migration.
+    #[prost(message, optional, tag = "1")]
+    pub value_transformation: ::core::option::Option<ValueTransformation>,
+    /// Optional. Custom engine specific features.
+    #[prost(message, optional, tag = "2")]
+    pub custom_features: ::core::option::Option<::prost_types::Struct>,
+    #[prost(
+        oneof = "conditional_column_set_value::SourceFilter",
+        tags = "100, 101"
+    )]
+    pub source_filter: ::core::option::Option<conditional_column_set_value::SourceFilter>,
+}
+/// Nested message and enum types in `ConditionalColumnSetValue`.
+pub mod conditional_column_set_value {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SourceFilter {
+        /// Optional. Optional filter on source column length. Used for text based
+        /// data types like varchar.
+        #[prost(message, tag = "100")]
+        SourceTextFilter(super::SourceTextFilter),
+        /// Optional. Optional filter on source column precision and scale. Used for
+        /// fixed point numbers such as NUMERIC/NUMBER data types.
+        #[prost(message, tag = "101")]
+        SourceNumericFilter(super::SourceNumericFilter),
+    }
+}
+/// Description of data transformation during migration as part of the
+/// ConditionalColumnSetValue.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValueTransformation {
+    #[prost(oneof = "value_transformation::Filter", tags = "100, 101, 102, 103")]
+    pub filter: ::core::option::Option<value_transformation::Filter>,
+    #[prost(
+        oneof = "value_transformation::Action",
+        tags = "200, 201, 202, 203, 204, 205"
+    )]
+    pub action: ::core::option::Option<value_transformation::Action>,
+}
+/// Nested message and enum types in `ValueTransformation`.
+pub mod value_transformation {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Filter {
+        /// Optional. Value is null
+        #[prost(message, tag = "100")]
+        IsNull(()),
+        /// Optional. Value is found in the specified list.
+        #[prost(message, tag = "101")]
+        ValueList(super::ValueListFilter),
+        /// Optional. Filter on relation between source value and compare value of
+        /// type integer.
+        #[prost(message, tag = "102")]
+        IntComparison(super::IntComparisonFilter),
+        /// Optional. Filter on relation between source value and compare value of
+        /// type double.
+        #[prost(message, tag = "103")]
+        DoubleComparison(super::DoubleComparisonFilter),
+    }
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Action {
+        /// Optional. Set to null
+        #[prost(message, tag = "200")]
+        AssignNull(()),
+        /// Optional. Set to a specific value (value is converted to fit the target
+        /// data type)
+        #[prost(message, tag = "201")]
+        AssignSpecificValue(super::AssignSpecificValue),
+        /// Optional. Set to min_value - if integer or numeric, will use
+        /// int.minvalue, etc
+        #[prost(message, tag = "202")]
+        AssignMinValue(()),
+        /// Optional. Set to max_value - if integer or numeric, will use
+        /// int.maxvalue, etc
+        #[prost(message, tag = "203")]
+        AssignMaxValue(()),
+        /// Optional. Allows the data to change scale
+        #[prost(message, tag = "204")]
+        RoundScale(super::RoundToScale),
+        /// Optional. Applies a hash function on the data
+        #[prost(message, tag = "205")]
+        ApplyHash(super::ApplyHash),
+    }
+}
+/// Options to configure rule type ConvertROWIDToColumn.
+/// The rule is used to add column rowid to destination tables based on an Oracle
+/// rowid function/property.
+///
+/// The rule filter field can refer to one or more entities.
+///
+/// The rule scope can be one of: Table.
+///
+/// This rule requires additional filter to be specified beyond the basic rule
+/// filter field, which is whether or not to work on tables which already have a
+/// primary key defined.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ConvertRowIdToColumn {
+    /// Required. Only work on tables without primary key defined
+    #[prost(bool, tag = "1")]
+    pub only_if_no_primary_key: bool,
+}
+/// Options to configure rule type SetTablePrimaryKey.
+/// The rule is used to specify the columns and name to configure/alter the
+/// primary key of a table.
+///
+/// The rule filter field can refer to one entity.
+///
+/// The rule scope can be one of: Table.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SetTablePrimaryKey {
+    /// Required. List of column names for the primary key
+    #[prost(string, repeated, tag = "1")]
+    pub primary_key_columns: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. Name for the primary key
+    #[prost(string, tag = "2")]
+    pub primary_key: ::prost::alloc::string::String,
+}
+/// Options to configure rule type SinglePackageChange.
+/// The rule is used to alter the sql code for a package entities.
+///
+/// The rule filter field can refer to one entity.
+///
+/// The rule scope can be: Package
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SinglePackageChange {
+    /// Optional. Sql code for package description
+    #[prost(string, tag = "1")]
+    pub package_description: ::prost::alloc::string::String,
+    /// Optional. Sql code for package body
+    #[prost(string, tag = "2")]
+    pub package_body: ::prost::alloc::string::String,
+}
+/// Options to configure rule type SourceSqlChange.
+/// The rule is used to alter the sql code for database entities.
+///
+/// The rule filter field can refer to one entity.
+///
+/// The rule scope can be: StoredProcedure, Function, Trigger, View
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SourceSqlChange {
+    /// Required. Sql code for source (stored procedure, function, trigger or view)
+    #[prost(string, tag = "1")]
+    pub sql_code: ::prost::alloc::string::String,
+}
+/// Options to configure rule type FilterTableColumns.
+/// The rule is used to filter the list of columns to include or exclude from a
+/// table.
+///
+/// The rule filter field can refer to one entity.
+///
+/// The rule scope can be: Table
+///
+/// Only one of the two lists can be specified for the rule.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FilterTableColumns {
+    /// Optional. List of columns to be included for a particular table.
+    #[prost(string, repeated, tag = "1")]
+    pub include_columns: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Optional. List of columns to be excluded for a particular table.
+    #[prost(string, repeated, tag = "2")]
+    pub exclude_columns: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// A list of values to filter by in ConditionalColumnSetValue
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValueListFilter {
+    /// Required. Indicates whether the filter matches rows with values that are
+    /// present in the list or those with values not present in it.
+    #[prost(enumeration = "ValuePresentInList", tag = "1")]
+    pub value_present_list: i32,
+    /// Required. The list to be used to filter by
+    #[prost(string, repeated, tag = "2")]
+    pub values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Required. Whether to ignore case when filtering by values. Defaults to
+    /// false
+    #[prost(bool, tag = "3")]
+    pub ignore_case: bool,
+}
+/// Filter based on relation between source value and compare value of type
+/// integer in ConditionalColumnSetValue
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IntComparisonFilter {
+    /// Required. Relation between source value and compare value
+    #[prost(enumeration = "ValueComparison", tag = "1")]
+    pub value_comparison: i32,
+    /// Required. Integer compare value to be used
+    #[prost(int64, tag = "2")]
+    pub value: i64,
+}
+/// Filter based on relation between source
+/// value and compare value of type double in ConditionalColumnSetValue
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DoubleComparisonFilter {
+    /// Required. Relation between source value and compare value
+    #[prost(enumeration = "ValueComparison", tag = "1")]
+    pub value_comparison: i32,
+    /// Required. Double compare value to be used
+    #[prost(double, tag = "2")]
+    pub value: f64,
+}
+/// Set to a specific value (value is converted to fit the target data type)
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AssignSpecificValue {
+    /// Required. Specific value to be assigned
+    #[prost(string, tag = "1")]
+    pub value: ::prost::alloc::string::String,
+}
+/// Apply a hash function on the value.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ApplyHash {
+    #[prost(oneof = "apply_hash::HashFunction", tags = "100")]
+    pub hash_function: ::core::option::Option<apply_hash::HashFunction>,
+}
+/// Nested message and enum types in `ApplyHash`.
+pub mod apply_hash {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum HashFunction {
+        /// Optional. Generate UUID from the data's byte array
+        #[prost(message, tag = "100")]
+        UuidFromBytes(()),
+    }
+}
+/// This allows the data to change scale, for example if the source is 2 digits
+/// after the decimal point, specify round to scale value = 2. If for example the
+/// value needs to be converted to an integer, use round to scale value = 0.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RoundToScale {
+    /// Required. Scale value to be used
+    #[prost(int32, tag = "1")]
+    pub scale: i32,
 }
 /// The base entity type for all the database related entities.
 /// The message contains the entity name, the name of its parent, the entity
@@ -1273,10 +1906,18 @@ pub struct DatabaseEntity {
     /// Destination entities will have no mapping details.
     #[prost(message, repeated, tag = "5")]
     pub mappings: ::prost::alloc::vec::Vec<EntityMapping>,
+    /// Details about the entity DDL script. Multiple DDL scripts are provided for
+    /// child entities such as a table entity will have one DDL for the table with
+    /// additional DDLs for each index, constraint and such.
+    #[prost(message, repeated, tag = "6")]
+    pub entity_ddl: ::prost::alloc::vec::Vec<EntityDdl>,
+    /// Details about the various issues found for the entity.
+    #[prost(message, repeated, tag = "7")]
+    pub issues: ::prost::alloc::vec::Vec<EntityIssue>,
     /// The specific body for each entity type.
     #[prost(
         oneof = "database_entity::EntityBody",
-        tags = "102, 103, 104, 105, 106, 107, 108, 109"
+        tags = "101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111"
     )]
     pub entity_body: ::core::option::Option<database_entity::EntityBody>,
 }
@@ -1298,6 +1939,9 @@ pub mod database_entity {
     /// The specific body for each entity type.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum EntityBody {
+        /// Database.
+        #[prost(message, tag = "101")]
+        Database(super::DatabaseInstanceEntity),
         /// Schema.
         #[prost(message, tag = "102")]
         Schema(super::SchemaEntity),
@@ -1322,7 +1966,20 @@ pub mod database_entity {
         /// Package.
         #[prost(message, tag = "109")]
         DatabasePackage(super::PackageEntity),
+        /// UDT.
+        #[prost(message, tag = "110")]
+        Udt(super::UdtEntity),
+        /// Materialized view.
+        #[prost(message, tag = "111")]
+        MaterializedView(super::MaterializedViewEntity),
     }
+}
+/// DatabaseInstance acts as a parent entity to other database entities.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DatabaseInstanceEntity {
+    /// Custom engine specific features.
+    #[prost(message, optional, tag = "1")]
+    pub custom_features: ::core::option::Option<::prost_types::Struct>,
 }
 /// Schema typically has no parent entity, but can have a parent entity
 /// DatabaseInstance (for database engines which support it).  For some database
@@ -1556,6 +2213,16 @@ pub struct FunctionEntity {
     #[prost(message, optional, tag = "2")]
     pub custom_features: ::core::option::Option<::prost_types::Struct>,
 }
+/// MaterializedView's parent is a schema.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MaterializedViewEntity {
+    /// The SQL code which creates the view.
+    #[prost(string, tag = "1")]
+    pub sql_code: ::prost::alloc::string::String,
+    /// Custom engine specific features.
+    #[prost(message, optional, tag = "2")]
+    pub custom_features: ::core::option::Option<::prost_types::Struct>,
+}
 /// Synonym's parent is a schema.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SynonymEntity {
@@ -1580,6 +2247,19 @@ pub struct PackageEntity {
     /// has cursors or subprograms, then the package body is mandatory.
     #[prost(string, tag = "2")]
     pub package_body: ::prost::alloc::string::String,
+    /// Custom engine specific features.
+    #[prost(message, optional, tag = "3")]
+    pub custom_features: ::core::option::Option<::prost_types::Struct>,
+}
+/// UDT's parent is a schema.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UdtEntity {
+    /// The SQL code which creates the udt.
+    #[prost(string, tag = "1")]
+    pub udt_sql_code: ::prost::alloc::string::String,
+    /// The SQL code which creates the udt body.
+    #[prost(string, tag = "2")]
+    pub udt_body: ::prost::alloc::string::String,
     /// Custom engine specific features.
     #[prost(message, optional, tag = "3")]
     pub custom_features: ::core::option::Option<::prost_types::Struct>,
@@ -1624,6 +2304,110 @@ pub struct EntityMappingLogEntry {
     #[prost(string, tag = "3")]
     pub mapping_comment: ::prost::alloc::string::String,
 }
+/// A single DDL statement for a specific entity
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EntityDdl {
+    /// Type of DDL (Create, Alter).
+    #[prost(string, tag = "1")]
+    pub ddl_type: ::prost::alloc::string::String,
+    /// The name of the database entity the ddl refers to.
+    #[prost(string, tag = "2")]
+    pub entity: ::prost::alloc::string::String,
+    /// The actual ddl code.
+    #[prost(string, tag = "3")]
+    pub ddl: ::prost::alloc::string::String,
+    /// The entity type (if the DDL is for a sub entity).
+    #[prost(enumeration = "DatabaseEntityType", tag = "4")]
+    pub entity_type: i32,
+    /// EntityIssues found for this ddl.
+    #[prost(string, repeated, tag = "100")]
+    pub issue_id: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Issue related to the entity.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EntityIssue {
+    /// Unique Issue ID.
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    /// The type of the issue.
+    #[prost(enumeration = "entity_issue::IssueType", tag = "2")]
+    pub r#type: i32,
+    /// Severity of the issue
+    #[prost(enumeration = "entity_issue::IssueSeverity", tag = "3")]
+    pub severity: i32,
+    /// Issue detailed message
+    #[prost(string, tag = "4")]
+    pub message: ::prost::alloc::string::String,
+    /// Error/Warning code
+    #[prost(string, tag = "5")]
+    pub code: ::prost::alloc::string::String,
+    /// The ddl which caused the issue, if relevant.
+    #[prost(string, optional, tag = "6")]
+    pub ddl: ::core::option::Option<::prost::alloc::string::String>,
+    /// The position of the issue found, if relevant.
+    #[prost(message, optional, tag = "7")]
+    pub position: ::core::option::Option<entity_issue::Position>,
+    /// The entity type (if the DDL is for a sub entity).
+    #[prost(enumeration = "DatabaseEntityType", tag = "8")]
+    pub entity_type: i32,
+}
+/// Nested message and enum types in `EntityIssue`.
+pub mod entity_issue {
+    /// Issue position.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Position {
+        /// Issue line number
+        #[prost(int32, tag = "1")]
+        pub line: i32,
+        /// Issue column number
+        #[prost(int32, tag = "2")]
+        pub column: i32,
+        /// Issue offset
+        #[prost(int32, tag = "3")]
+        pub offset: i32,
+        /// Issue length
+        #[prost(int32, tag = "4")]
+        pub length: i32,
+    }
+    /// Type of issue.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum IssueType {
+        /// Unspecified issue type.
+        Unspecified = 0,
+        /// Issue originated from the DDL
+        Ddl = 1,
+        /// Issue originated during the apply process
+        Apply = 2,
+        /// Issue originated during the convert process
+        Convert = 3,
+    }
+    /// Severity of issue.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum IssueSeverity {
+        /// Unspecified issue severity
+        Unspecified = 0,
+        /// Info
+        Info = 1,
+        /// Warning
+        Warning = 2,
+        /// Error
+        Error = 3,
+    }
+}
+/// Enum used by ValueListFilter to indicate whether the source value is in the
+/// supplied list
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ValuePresentInList {
+    /// Value present in list unspecified
+    Unspecified = 0,
+    /// If the source value is in the supplied list at value_list
+    IfValueList = 1,
+    /// If the source value is not in the supplied list at value_list
+    IfValueNotList = 2,
+}
 /// The type of database entities supported,
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -1661,6 +2445,21 @@ pub enum DatabaseEntityType {
     /// Database.
     Database = 15,
 }
+/// Entity Name Transformation Types
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum EntityNameTransformation {
+    /// Entity name transformation unspecified.
+    Unspecified = 0,
+    /// No transformation.
+    NoTransformation = 1,
+    /// Transform to lower case.
+    LowerCase = 2,
+    /// Transform to upper case.
+    UpperCase = 3,
+    /// Transform to capitalized case.
+    CapitalizedCase = 4,
+}
 /// The types of jobs that can be executed in the background.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -1688,6 +2487,37 @@ pub enum ImportRulesFileFormat {
     HarbourBridgeSessionFile = 1,
     /// Ora2Pg configuration file.
     OratopgConfigFile = 2,
+}
+/// Enum used by IntComparisonFilter and DoubleComparisonFilter to indicate the
+/// relation between source value and compare value.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ValueComparison {
+    /// Value comparison unspecified.
+    Unspecified = 0,
+    /// Value is smaller than the Compare value.
+    IfValueSmallerThan = 1,
+    /// Value is smaller or equal than the Compare value.
+    IfValueSmallerEqualThan = 2,
+    /// Value is larger than the Compare value.
+    IfValueLargerThan = 3,
+    /// Value is larger or equal than the Compare value.
+    IfValueLargerEqualThan = 4,
+}
+/// Specifies the columns on which numeric filter needs to be applied.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum NumericFilterOption {
+    /// Numeric filter option unspecified
+    Unspecified = 0,
+    /// Numeric filter option that matches all numeric columns.
+    All = 1,
+    /// Numeric filter option that matches columns having numeric datatypes with
+    /// specified precision and scale within the limited range of filter.
+    Limit = 2,
+    /// Numeric filter option that matches only the numeric columns with no
+    /// precision and scale specified.
+    Limitless = 3,
 }
 /// Retrieves a list of all migration jobs in a given project and location.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1760,8 +2590,8 @@ pub struct CreateMigrationJobRequest {
     /// object.
     #[prost(message, optional, tag = "3")]
     pub migration_job: ::core::option::Option<MigrationJob>,
-    /// A unique ID used to identify the request. If the server receives two
-    /// requests with the same ID, then the second request is ignored.
+    /// Optional. A unique ID used to identify the request. If the server receives
+    /// two requests with the same ID, then the second request is ignored.
     ///
     /// It is recommended to always set this value to a UUID.
     ///
@@ -1817,6 +2647,10 @@ pub struct StartMigrationJobRequest {
     /// Name of the migration job resource to start.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// Optional. Start the migration job without running prior configuration
+    /// verification. Defaults to `false`.
+    #[prost(bool, tag = "2")]
+    pub skip_validation: bool,
 }
 /// Request message for 'StopMigrationJob' request.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1845,6 +2679,14 @@ pub struct VerifyMigrationJobRequest {
     /// Name of the migration job resource to verify.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// Optional. Field mask is used to specify the changed fields to be verified.
+    /// It will not update the migration job.
+    #[prost(message, optional, tag = "2")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+    /// Optional. The changed migration job parameters to verify.
+    /// It will not update the migration job.
+    #[prost(message, optional, tag = "3")]
+    pub migration_job: ::core::option::Option<MigrationJob>,
 }
 /// Request message for 'RestartMigrationJob' request.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1852,6 +2694,10 @@ pub struct RestartMigrationJobRequest {
     /// Name of the migration job resource to restart.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// Optional. Restart the migration job without running prior configuration
+    /// verification. Defaults to `false`.
+    #[prost(bool, tag = "2")]
+    pub skip_validation: bool,
 }
 /// Request message for 'GenerateSshScript' request.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1906,6 +2752,38 @@ pub struct VmSelectionConfig {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SshScript {
     /// The ssh configuration script.
+    #[prost(string, tag = "1")]
+    pub script: ::prost::alloc::string::String,
+}
+/// Request message for 'GenerateTcpProxyScript' request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenerateTcpProxyScriptRequest {
+    /// Name of the migration job resource to generate the TCP Proxy script.
+    #[prost(string, tag = "1")]
+    pub migration_job: ::prost::alloc::string::String,
+    /// Required. The name of the Compute instance that will host the proxy.
+    #[prost(string, tag = "2")]
+    pub vm_name: ::prost::alloc::string::String,
+    /// Required. The type of the Compute instance that will host the proxy.
+    #[prost(string, tag = "3")]
+    pub vm_machine_type: ::prost::alloc::string::String,
+    /// Optional. The Google Cloud Platform zone to create the VM in. The fully
+    /// qualified name of the zone must be specified, including the region name,
+    /// for example "us-central1-b". If not specified, uses the "-b" zone of the
+    /// destination Connection Profile's region.
+    #[prost(string, tag = "4")]
+    pub vm_zone: ::prost::alloc::string::String,
+    /// Required. The name of the subnet the Compute instance will use for private
+    /// connectivity. Must be supplied in the form of
+    /// projects/{project}/regions/{region}/subnetworks/{subnetwork}.
+    /// Note: the region for the subnet must match the Compute instance region.
+    #[prost(string, tag = "5")]
+    pub vm_subnet: ::prost::alloc::string::String,
+}
+/// Response message for 'GenerateTcpProxyScript' request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TcpProxyScript {
+    /// The TCP Proxy configuration script.
     #[prost(string, tag = "1")]
     pub script: ::prost::alloc::string::String,
 }
@@ -2278,6 +3156,10 @@ pub struct DeleteConversionWorkspaceRequest {
     /// (_), and hyphens (-). The maximum length is 40 characters.
     #[prost(string, tag = "2")]
     pub request_id: ::prost::alloc::string::String,
+    /// Force delete the conversion workspace, even if there's a running migration
+    /// that is using the workspace.
+    #[prost(bool, tag = "3")]
+    pub force: bool,
 }
 /// Request message for 'CommitConversionWorkspace' request.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2308,6 +3190,15 @@ pub struct ApplyConversionWorkspaceRequest {
     /// the entities. Supports Google AIP 160 based filtering.
     #[prost(string, tag = "2")]
     pub filter: ::prost::alloc::string::String,
+    /// Optional. Only validates the apply process, but doesn't change the
+    /// destination database. Only works for PostgreSQL destination connection
+    /// profile.
+    #[prost(bool, tag = "3")]
+    pub dry_run: bool,
+    /// Optional. Specifies whether the conversion workspace is to be committed
+    /// automatically after the apply.
+    #[prost(bool, tag = "4")]
+    pub auto_commit: bool,
     /// Which destination to use when applying the conversion workspace.
     #[prost(
         oneof = "apply_conversion_workspace_request::Destination",
@@ -2320,10 +3211,55 @@ pub mod apply_conversion_workspace_request {
     /// Which destination to use when applying the conversion workspace.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Destination {
-        /// Fully qualified (Uri) name of the destination connection profile.
+        /// Optional. Fully qualified (Uri) name of the destination connection
+        /// profile.
         #[prost(string, tag = "100")]
         ConnectionProfile(::prost::alloc::string::String),
     }
+}
+/// Retrieve a list of all mapping rules in a given conversion workspace.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListMappingRulesRequest {
+    /// Required. Name of the conversion workspace resource whose mapping rules are
+    /// listed in the form of:
+    /// projects/{project}/locations/{location}/conversionWorkspaces/{conversion_workspace}.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of rules to return. The service may return
+    /// fewer than this value.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// The nextPageToken value received in the previous call to
+    /// mappingRules.list, used in the subsequent request to retrieve the next
+    /// page of results. On first call this should be left blank. When paginating,
+    /// all other parameters provided to mappingRules.list must match the call
+    /// that provided the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// Response message for 'ListMappingRulesRequest' request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListMappingRulesResponse {
+    /// The list of conversion workspace mapping rules.
+    #[prost(message, repeated, tag = "1")]
+    pub mapping_rules: ::prost::alloc::vec::Vec<MappingRule>,
+    /// A token which can be sent as `page_token` to retrieve the next page.
+    /// If this field is omitted, there are no subsequent pages.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for 'GetMappingRule' request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetMappingRuleRequest {
+    /// Required. Name of the mapping rule resource to get.
+    /// Example: conversionWorkspaces/123/mappingRules/rule123
+    ///
+    /// In order to retrieve a previous revision of the mapping rule, also provide
+    /// the revision ID.
+    /// Example:
+    /// conversionWorkspace/123/mappingRules/rule123@c7cfa2a8c7cfa2a8c7cfa2a8c7cfa2a8
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
 }
 /// Request message for 'SeedConversionWorkspace' request.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2353,10 +3289,11 @@ pub mod seed_conversion_workspace_request {
     /// through a connection profile or a DDL file.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum SeedFrom {
-        /// Fully qualified (Uri) name of the source connection profile.
+        /// Optional. Fully qualified (Uri) name of the source connection profile.
         #[prost(string, tag = "100")]
         SourceConnectionProfile(::prost::alloc::string::String),
-        /// Fully qualified (Uri) name of the destination connection profile.
+        /// Optional. Fully qualified (Uri) name of the destination connection
+        /// profile.
         #[prost(string, tag = "101")]
         DestinationConnectionProfile(::prost::alloc::string::String),
     }
@@ -2368,14 +3305,19 @@ pub struct ConvertConversionWorkspaceRequest {
     /// projects/{project}/locations/{location}/conversionWorkspaces/{conversion_workspace}.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Specifies whether the conversion workspace is to be committed automatically
-    /// after the conversion.
+    /// Optional. Specifies whether the conversion workspace is to be committed
+    /// automatically after the conversion.
     #[prost(bool, tag = "4")]
     pub auto_commit: bool,
-    /// Filter the entities to convert. Leaving this field empty will convert all
-    /// of the entities. Supports Google AIP-160 style filtering.
+    /// Optional. Filter the entities to convert. Leaving this field empty will
+    /// convert all of the entities. Supports Google AIP-160 style filtering.
     #[prost(string, tag = "5")]
     pub filter: ::prost::alloc::string::String,
+    /// Optional. Automatically convert the full entity path for each entity
+    /// specified by the filter. For example, if the filter specifies a table, that
+    /// table schema (and database if there is one) will also be converted.
+    #[prost(bool, tag = "6")]
+    pub convert_full_path: bool,
 }
 /// Request message for 'ImportMappingRules' request.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2385,14 +3327,14 @@ pub struct ImportMappingRulesRequest {
     /// projects/{project}/locations/{location}/conversionWorkspaces/{conversion_workspace}.
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// The format of the rules content file.
+    /// Required. The format of the rules content file.
     #[prost(enumeration = "ImportRulesFileFormat", tag = "2")]
     pub rules_format: i32,
-    /// One or more rules files.
+    /// Required. One or more rules files.
     #[prost(message, repeated, tag = "3")]
     pub rules_files: ::prost::alloc::vec::Vec<import_mapping_rules_request::RulesFile>,
-    /// Should the conversion workspace be committed automatically after the
-    /// import operation.
+    /// Required. Should the conversion workspace be committed automatically after
+    /// the import operation.
     #[prost(bool, tag = "6")]
     pub auto_commit: bool,
 }
@@ -2401,12 +3343,12 @@ pub mod import_mapping_rules_request {
     /// Details of a single rules file.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct RulesFile {
-        /// The filename of the rules that needs to be converted. The filename is
-        /// used mainly so that future logs of the import rules job contain it, and
-        /// can therefore be searched by it.
+        /// Required. The filename of the rules that needs to be converted. The
+        /// filename is used mainly so that future logs of the import rules job
+        /// contain it, and can therefore be searched by it.
         #[prost(string, tag = "1")]
         pub rules_source_filename: ::prost::alloc::string::String,
-        /// The text content of the rules that needs to be converted.
+        /// Required. The text content of the rules that needs to be converted.
         #[prost(string, tag = "2")]
         pub rules_content: ::prost::alloc::string::String,
     }
@@ -2419,11 +3361,11 @@ pub struct DescribeDatabaseEntitiesRequest {
     /// projects/{project}/locations/{location}/conversionWorkspaces/{conversion_workspace}.
     #[prost(string, tag = "1")]
     pub conversion_workspace: ::prost::alloc::string::String,
-    /// The maximum number of entities to return. The service may return
+    /// Optional. The maximum number of entities to return. The service may return
     /// fewer entities than the value specifies.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
-    /// The nextPageToken value received in the previous call to
+    /// Optional. The nextPageToken value received in the previous call to
     /// conversionWorkspace.describeDatabaseEntities, used in the subsequent
     /// request to retrieve the next page of results. On first call this should be
     /// left blank. When paginating, all other parameters provided to
@@ -2431,23 +3373,27 @@ pub struct DescribeDatabaseEntitiesRequest {
     /// provided the page token.
     #[prost(string, tag = "4")]
     pub page_token: ::prost::alloc::string::String,
-    /// The tree to fetch.
+    /// Required. The tree to fetch.
     #[prost(
         enumeration = "describe_database_entities_request::DbTreeType",
         tag = "6"
     )]
     pub tree: i32,
-    /// Whether to retrieve the latest committed version of the entities or the
-    /// latest version. This field is ignored if a specific commit_id is specified.
+    /// Optional. Whether to retrieve the latest committed version of the entities
+    /// or the latest version. This field is ignored if a specific commit_id is
+    /// specified.
     #[prost(bool, tag = "11")]
     pub uncommitted: bool,
-    /// Request a specific commit ID. If not specified, the entities from the
-    /// latest commit are returned.
+    /// Optional. Request a specific commit ID. If not specified, the entities from
+    /// the latest commit are returned.
     #[prost(string, tag = "12")]
     pub commit_id: ::prost::alloc::string::String,
-    /// Filter the returned entities based on AIP-160 standard.
+    /// Optional. Filter the returned entities based on AIP-160 standard.
     #[prost(string, tag = "13")]
     pub filter: ::prost::alloc::string::String,
+    /// Optional. Results view based on AIP-157
+    #[prost(enumeration = "DatabaseEntityView", tag = "14")]
+    pub view: i32,
 }
 /// Nested message and enum types in `DescribeDatabaseEntitiesRequest`.
 pub mod describe_database_entities_request {
@@ -2524,6 +3470,46 @@ pub struct DescribeConversionWorkspaceRevisionsResponse {
     #[prost(message, repeated, tag = "1")]
     pub revisions: ::prost::alloc::vec::Vec<ConversionWorkspace>,
 }
+/// Request message for 'CreateMappingRule' command.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateMappingRuleRequest {
+    /// Required. The parent which owns this collection of mapping rules.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The ID of the rule to create.
+    #[prost(string, tag = "2")]
+    pub mapping_rule_id: ::prost::alloc::string::String,
+    /// Required. Represents a [mapping rule]
+    /// (<https://cloud.google.com/database-migration/reference/rest/v1/projects.locations.mappingRules>)
+    /// object.
+    #[prost(message, optional, tag = "3")]
+    pub mapping_rule: ::core::option::Option<MappingRule>,
+    /// A unique ID used to identify the request. If the server receives two
+    /// requests with the same ID, then the second request is ignored.
+    ///
+    /// It is recommended to always set this value to a UUID.
+    ///
+    /// The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores
+    /// (_), and hyphens (-). The maximum length is 40 characters.
+    #[prost(string, tag = "4")]
+    pub request_id: ::prost::alloc::string::String,
+}
+/// Request message for 'DeleteMappingRule' request.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteMappingRuleRequest {
+    /// Required. Name of the mapping rule resource to delete.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Optional. A unique ID used to identify the request. If the server receives
+    /// two requests with the same ID, then the second request is ignored.
+    ///
+    /// It is recommended to always set this value to a UUID.
+    ///
+    /// The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores
+    /// (_), and hyphens (-). The maximum length is 40 characters.
+    #[prost(string, tag = "2")]
+    pub request_id: ::prost::alloc::string::String,
+}
 /// Request message for 'FetchStaticIps' request.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FetchStaticIpsRequest {
@@ -2548,6 +3534,23 @@ pub struct FetchStaticIpsResponse {
     /// If this field is omitted, there are no subsequent pages.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
+}
+/// AIP-157 Partial Response view for Database Entity.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum DatabaseEntityView {
+    /// Unspecified view. Defaults to basic view.
+    Unspecified = 0,
+    /// Default view. Does not return DDLs or Issues.
+    Basic = 1,
+    /// Return full entity details including mappings, ddl and issues.
+    Full = 2,
+    /// Top-most (Database, Schema) nodes which are returned contains summary
+    /// details for their decendents such as the number of entities per type and
+    /// issues rollups. When this view is used, only a single page of result is
+    /// returned and the page_size property of the request is ignored. The
+    /// returned page will only include the top-most node types.
+    RootSummary = 3,
 }
 #[doc = r" Generated client implementations."]
 pub mod data_migration_service_client {
@@ -2836,6 +3839,24 @@ pub mod data_migration_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Generate a TCP Proxy configuration script to configure a cloud-hosted VM"]
+        #[doc = " running a TCP Proxy."]
+        pub async fn generate_tcp_proxy_script(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GenerateTcpProxyScriptRequest>,
+        ) -> Result<tonic::Response<super::TcpProxyScript>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.clouddms.v1.DataMigrationService/GenerateTcpProxyScript",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Retrieves a list of all connection profiles in a given project and"]
         #[doc = " location."]
         pub async fn list_connection_profiles(
@@ -3099,6 +4120,74 @@ pub mod data_migration_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.cloud.clouddms.v1.DataMigrationService/DeleteConversionWorkspace",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Creates a new mapping rule for a given conversion workspace."]
+        pub async fn create_mapping_rule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateMappingRuleRequest>,
+        ) -> Result<tonic::Response<super::MappingRule>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.clouddms.v1.DataMigrationService/CreateMappingRule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a single mapping rule."]
+        pub async fn delete_mapping_rule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteMappingRuleRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.clouddms.v1.DataMigrationService/DeleteMappingRule",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists the mapping rules for a specific conversion workspace."]
+        pub async fn list_mapping_rules(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListMappingRulesRequest>,
+        ) -> Result<tonic::Response<super::ListMappingRulesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.clouddms.v1.DataMigrationService/ListMappingRules",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets the details of a mapping rule."]
+        pub async fn get_mapping_rule(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetMappingRuleRequest>,
+        ) -> Result<tonic::Response<super::MappingRule>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.cloud.clouddms.v1.DataMigrationService/GetMappingRule",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

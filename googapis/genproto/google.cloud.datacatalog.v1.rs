@@ -98,6 +98,8 @@ pub enum IntegratedSystem {
     CloudSql = 8,
     /// Looker
     Looker = 9,
+    /// Vertex AI
+    VertexAi = 10,
 }
 /// This enum describes all the systems that manage
 /// Taxonomy and PolicyTag resources in DataCatalog.
@@ -428,6 +430,14 @@ pub struct ColumnSchema {
     /// sub-columns.
     #[prost(message, repeated, tag = "7")]
     pub subcolumns: ::prost::alloc::vec::Vec<ColumnSchema>,
+    /// Optional. The subtype of the RANGE, if the type of this field is RANGE. If
+    /// the type is RANGE, this field is required. Possible values for the field
+    /// element type of a RANGE include:
+    /// * DATE
+    /// * DATETIME
+    /// * TIMESTAMP
+    #[prost(message, optional, tag = "19")]
+    pub range_element_type: ::core::option::Option<column_schema::FieldElementType>,
     /// Optional. Garbage collection policy for the column or column family.
     /// Applies to systems like Cloud Bigtable.
     #[prost(string, tag = "11")]
@@ -466,6 +476,14 @@ pub mod column_schema {
             /// Parameter.
             Parameter = 5,
         }
+    }
+    /// Represents the type of a field element.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct FieldElementType {
+        /// Required. The type of a field element. See
+        /// \[ColumnSchema.type][google.cloud.datacatalog.v1.ColumnSchema.type\].
+        #[prost(string, tag = "1")]
+        pub r#type: ::prost::alloc::string::String,
     }
     /// Specifies inclusion of the column in an index
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -1029,7 +1047,7 @@ pub struct SearchCatalogRequest {
     /// * `description:z`
     #[prost(string, tag = "1")]
     pub query: ::prost::alloc::string::String,
-    /// Number of results to return in a single search page.
+    /// Upper bound on the number of results you can get in a single response.
     ///
     /// Can't be negative or 0, defaults to 10 in this case.
     /// The maximum number is 1000. If exceeded, throws an "invalid argument"
@@ -1054,9 +1072,23 @@ pub struct SearchCatalogRequest {
     /// * `last_modified_timestamp \[asc|desc\]` with descending (`desc`) as default
     /// * `default` that can only be descending
     ///
+    /// Search queries don't guarantee full recall. Results that match your query
+    /// might not be returned, even in subsequent result pages. Additionally,
+    /// returned (and not returned) results can vary if you repeat search queries.
+    /// If you are experiencing recall issues and you don't have to fetch the
+    /// results in any specific order, consider setting this parameter to
+    /// `default`.
+    ///
     /// If this parameter is omitted, it defaults to the descending `relevance`.
     #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
+    /// Optional. If set, use searchAll permission granted on organizations from
+    /// `include_org_ids` and projects from `include_project_ids` instead of the
+    /// fine grained per resource permissions when filtering the search results.
+    /// The only allowed `order_by` criteria for admin_search mode is `default`.
+    /// Using this flags guarantees a full recall of the search results.
+    #[prost(bool, tag = "17")]
+    pub admin_search: bool,
 }
 /// Nested message and enum types in `SearchCatalogRequest`.
 pub mod search_catalog_request {
@@ -1482,7 +1514,7 @@ pub struct Entry {
     ///
     /// When extending the API with new types and systems, use this field instead
     /// of the legacy `type_spec`.
-    #[prost(oneof = "entry::Spec", tags = "24, 27, 28, 33, 42")]
+    #[prost(oneof = "entry::Spec", tags = "24, 27, 28, 32, 33, 42, 43")]
     pub spec: ::core::option::Option<entry::Spec>,
 }
 /// Nested message and enum types in `Entry`.
@@ -1491,10 +1523,8 @@ pub mod entry {
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum EntryType {
         /// The type of the entry.
-        /// Only used for entries with types listed in the `EntryType` enum.
         ///
-        /// Currently, only `FILESET` enum value is allowed. All other entries
-        /// created in Data Catalog must use the `user_specified_type`.
+        /// For details, see \[`EntryType`\](#entrytype).
         #[prost(enumeration = "super::EntryType", tag = "2")]
         Type(i32),
         /// Custom entry type that doesn't match any of the values allowed for input
@@ -1589,6 +1619,9 @@ pub mod entry {
         /// only for entries with the `ROUTINE` type.
         #[prost(message, tag = "28")]
         RoutineSpec(super::RoutineSpec),
+        /// Specification that applies to a dataset.
+        #[prost(message, tag = "32")]
+        DatasetSpec(super::DatasetSpec),
         /// Specification that applies to a fileset resource. Valid only
         /// for entries with the `FILESET` type.
         #[prost(message, tag = "33")]
@@ -1596,6 +1629,9 @@ pub mod entry {
         /// Specification that applies to a Service resource.
         #[prost(message, tag = "42")]
         ServiceSpec(super::ServiceSpec),
+        /// Model specification.
+        #[prost(message, tag = "43")]
+        ModelSpec(super::ModelSpec),
     }
 }
 /// Specification that applies to a table resource. Valid only
@@ -1765,6 +1801,24 @@ pub mod routine_spec {
         BigqueryRoutineSpec(super::BigQueryRoutineSpec),
     }
 }
+/// Specification that applies to a dataset. Valid only for
+/// entries with the `DATASET` type.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DatasetSpec {
+    /// Fields specific to the source system.
+    #[prost(oneof = "dataset_spec::SystemSpec", tags = "2")]
+    pub system_spec: ::core::option::Option<dataset_spec::SystemSpec>,
+}
+/// Nested message and enum types in `DatasetSpec`.
+pub mod dataset_spec {
+    /// Fields specific to the source system.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SystemSpec {
+        /// Vertex AI Dataset specific fields
+        #[prost(message, tag = "2")]
+        VertexDatasetSpec(super::VertexDatasetSpec),
+    }
+}
 /// Specification that applies to
 /// entries that are part `SQL_DATABASE` system
 /// (user_specified_type)
@@ -1876,6 +1930,124 @@ pub mod service_spec {
         /// system.
         #[prost(message, tag = "1")]
         CloudBigtableInstanceSpec(super::CloudBigtableInstanceSpec),
+    }
+}
+/// Detail description of the source information of a Vertex model.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VertexModelSourceInfo {
+    /// Type of the model source.
+    #[prost(enumeration = "vertex_model_source_info::ModelSourceType", tag = "1")]
+    pub source_type: i32,
+    /// If this Model is copy of another Model. If true then
+    /// \[source_type][google.cloud.datacatalog.v1.VertexModelSourceInfo.source_type\]
+    /// pertains to the original.
+    #[prost(bool, tag = "2")]
+    pub copy: bool,
+}
+/// Nested message and enum types in `VertexModelSourceInfo`.
+pub mod vertex_model_source_info {
+    /// Source of the model.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ModelSourceType {
+        /// Should not be used.
+        Unspecified = 0,
+        /// The Model is uploaded by automl training pipeline.
+        Automl = 1,
+        /// The Model is uploaded by user or custom training pipeline.
+        Custom = 2,
+        /// The Model is registered and sync'ed from BigQuery ML.
+        Bqml = 3,
+        /// The Model is saved or tuned from Model Garden.
+        ModelGarden = 4,
+    }
+}
+/// Specification for vertex model resources.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VertexModelSpec {
+    /// The version ID of the model.
+    #[prost(string, tag = "1")]
+    pub version_id: ::prost::alloc::string::String,
+    /// User provided version aliases so that a model version can be referenced via
+    /// alias
+    #[prost(string, repeated, tag = "2")]
+    pub version_aliases: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The description of this version.
+    #[prost(string, tag = "3")]
+    pub version_description: ::prost::alloc::string::String,
+    /// Source of a Vertex model.
+    #[prost(message, optional, tag = "4")]
+    pub vertex_model_source_info: ::core::option::Option<VertexModelSourceInfo>,
+    /// URI of the Docker image to be used as the custom container for serving
+    /// predictions.
+    #[prost(string, tag = "5")]
+    pub container_image_uri: ::prost::alloc::string::String,
+}
+/// Specification for vertex dataset resources.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VertexDatasetSpec {
+    /// The number of DataItems in this Dataset. Only apply for non-structured
+    /// Dataset.
+    #[prost(int64, tag = "1")]
+    pub data_item_count: i64,
+    /// Type of the dataset.
+    #[prost(enumeration = "vertex_dataset_spec::DataType", tag = "2")]
+    pub data_type: i32,
+}
+/// Nested message and enum types in `VertexDatasetSpec`.
+pub mod vertex_dataset_spec {
+    /// Type of data stored in the dataset.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DataType {
+        /// Should not be used.
+        Unspecified = 0,
+        /// Structured data dataset.
+        Table = 1,
+        /// Image dataset which supports ImageClassification, ImageObjectDetection
+        /// and ImageSegmentation problems.
+        Image = 2,
+        /// Document dataset which supports TextClassification, TextExtraction and
+        /// TextSentiment problems.
+        Text = 3,
+        /// Video dataset which supports VideoClassification, VideoObjectTracking and
+        /// VideoActionRecognition problems.
+        Video = 4,
+        /// Conversation dataset which supports conversation problems.
+        Conversation = 5,
+        /// TimeSeries dataset.
+        TimeSeries = 6,
+        /// Document dataset which supports DocumentAnnotation problems.
+        Document = 7,
+        /// TextToSpeech dataset which supports TextToSpeech problems.
+        TextToSpeech = 8,
+        /// Translation dataset which supports Translation problems.
+        Translation = 9,
+        /// Store Vision dataset which is used for HITL integration.
+        StoreVision = 10,
+        /// Enterprise Knowledge Graph dataset which is used for HITL labeling
+        /// integration.
+        EnterpriseKnowledgeGraph = 11,
+        /// Text prompt dataset which supports Large Language Models.
+        TextPrompt = 12,
+    }
+}
+/// Specification that applies to a model. Valid only for
+/// entries with the `MODEL` type.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ModelSpec {
+    /// System spec
+    #[prost(oneof = "model_spec::SystemSpec", tags = "1")]
+    pub system_spec: ::core::option::Option<model_spec::SystemSpec>,
+}
+/// Nested message and enum types in `ModelSpec`.
+pub mod model_spec {
+    /// System spec
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum SystemSpec {
+        /// Specification for vertex model resources.
+        #[prost(message, tag = "1")]
+        VertexModelSpec(super::VertexModelSpec),
     }
 }
 /// Business Context of the entry.
@@ -2395,8 +2567,18 @@ pub struct ModifyEntryContactsRequest {
     #[prost(message, optional, tag = "2")]
     pub contacts: ::core::option::Option<Contacts>,
 }
-/// The enum field that lists all the types of entry resources in Data
-/// Catalog. For example, a BigQuery table entry has the `TABLE` type.
+/// Metadata automatically ingested from Google Cloud resources like BigQuery
+/// tables or Pub/Sub topics always uses enum values from `EntryType` as the type
+/// of entry.
+///
+/// Other sources of metadata like Hive or Oracle databases can identify the type
+/// by either using one of the enum values from `EntryType` (for example,
+/// `FILESET` for a Cloud Storage fileset) or specifying a custom value using
+/// the \[`Entry`\](#resource:-entry) field `user_specified_type`. For more
+/// information, see
+/// [Surface files from Cloud Storage with fileset
+/// entries](/data-catalog/docs/how-to/filesets) or [Create custom entries for
+/// your data sources](/data-catalog/docs/how-to/custom-entries).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum EntryType {
@@ -2405,10 +2587,10 @@ pub enum EntryType {
     /// The entry type that has a GoogleSQL schema, including
     /// logical views.
     Table = 2,
-    /// Output only. The type of models.
+    /// The type of models.
     ///
-    /// For more information, see [Supported models in BigQuery ML]
-    /// (<https://cloud.google.com/bigquery-ml/docs/introduction#supported_models_in>).
+    /// For more information, see [Supported models in BigQuery
+    /// ML](/bigquery/docs/bqml-introduction#supported_models).
     Model = 5,
     /// An entry type for streaming entries. For example, a Pub/Sub topic.
     DataStream = 3,
@@ -2419,10 +2601,10 @@ pub enum EntryType {
     Cluster = 6,
     /// A database.
     Database = 7,
-    /// Output only. Connection to a data source. For example, a BigQuery
+    /// Connection to a data source. For example, a BigQuery
     /// connection.
     DataSourceConnection = 8,
-    /// Output only. Routine, for example, a BigQuery routine.
+    /// Routine, for example, a BigQuery routine.
     Routine = 9,
     /// A Dataplex lake.
     Lake = 10,
@@ -3376,7 +3558,7 @@ pub mod dump_item {
 /// ```
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Taxonomy {
-    /// Output only. Resource name of this taxonomy in URL format.
+    /// Identifier. Resource name of this taxonomy in URL format.
     ///
     /// Note: Policy tag manager generates unique taxonomy IDs.
     #[prost(string, tag = "1")]
@@ -3455,7 +3637,7 @@ pub mod taxonomy {
 /// Where the "Geolocation" policy tag contains three children.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PolicyTag {
-    /// Output only. Resource name of this policy tag in the URL format.
+    /// Identifier. Resource name of this policy tag in the URL format.
     ///
     /// The policy tag manager generates unique taxonomy IDs and policy tag IDs.
     #[prost(string, tag = "1")]

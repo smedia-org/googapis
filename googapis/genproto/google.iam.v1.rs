@@ -42,6 +42,7 @@ pub struct GetPolicyOptions {
 ///
 /// **JSON example:**
 ///
+/// ```
 ///     {
 ///       "bindings": [
 ///         {
@@ -69,9 +70,11 @@ pub struct GetPolicyOptions {
 ///       "etag": "BwWWja0YfJA=",
 ///       "version": 3
 ///     }
+/// ```
 ///
 /// **YAML example:**
 ///
+/// ```
 ///     bindings:
 ///     - members:
 ///       - user:mike@example.com
@@ -88,6 +91,7 @@ pub struct GetPolicyOptions {
 ///         expression: request.time < timestamp('2020-10-01T00:00:00.000Z')
 ///     etag: BwWWja0YfJA=
 ///     version: 3
+/// ```
 ///
 /// For a description of IAM and its features, see the
 /// [IAM documentation](<https://cloud.google.com/iam/docs/>).
@@ -157,7 +161,7 @@ pub struct Binding {
     /// For example, `roles/viewer`, `roles/editor`, or `roles/owner`.
     #[prost(string, tag = "1")]
     pub role: ::prost::alloc::string::String,
-    /// Specifies the principals requesting access for a Cloud Platform resource.
+    /// Specifies the principals requesting access for a Google Cloud resource.
     /// `members` can have the following values:
     ///
     /// * `allUsers`: A special identifier that represents anyone who is
@@ -267,8 +271,8 @@ pub struct Binding {
 ///     }
 ///
 /// For sampleservice, this policy enables DATA_READ, DATA_WRITE and ADMIN_READ
-/// logging. It also exempts jose@example.com from DATA_READ logging, and
-/// aliya@example.com from DATA_WRITE logging.
+/// logging. It also exempts `jose@example.com` from DATA_READ logging, and
+/// `aliya@example.com` from DATA_WRITE logging.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AuditConfig {
     /// Specifies a service that will be enabled for audit logging.
@@ -351,7 +355,7 @@ pub struct BindingDelta {
     /// Required
     #[prost(string, tag = "2")]
     pub role: ::prost::alloc::string::String,
-    /// A single identity requesting access for a Cloud Platform resource.
+    /// A single identity requesting access for a Google Cloud resource.
     /// Follows the same format of Binding.members.
     /// Required
     #[prost(string, tag = "3")]

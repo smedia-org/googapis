@@ -14,3 +14,49 @@ pub struct SystemActivityLogEntry {
     #[prost(string, tag = "1")]
     pub message: ::prost::alloc::string::String,
 }
+/// Cloud Logging log schema for scheduled backup events.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ScheduledBackupLogEntry {
+    /// The ID of the backup.
+    #[prost(string, tag = "1")]
+    pub backup_id: ::prost::alloc::string::String,
+    /// The relative resource name of a Metastore service in the form of
+    /// `projects/{project_id}/locations/{location_id}/services/{service_id}`
+    #[prost(string, tag = "2")]
+    pub service: ::prost::alloc::string::String,
+    /// Timestamp when the backup was started.
+    #[prost(message, optional, tag = "3")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Timestamp when the backup was completed.
+    #[prost(message, optional, tag = "4")]
+    pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The current state of the backup.
+    #[prost(enumeration = "scheduled_backup_log_entry::State", tag = "5")]
+    pub state: i32,
+    /// Size of the backup data in bytes.
+    #[prost(int64, tag = "6")]
+    pub backup_size_bytes: i64,
+    /// A Cloud Storage URI of a folder, in the format
+    /// `gs://<bucket_name>/<path_inside_bucket>`.
+    #[prost(string, tag = "7")]
+    pub backup_location: ::prost::alloc::string::String,
+    /// Message that provides (optional) details about the backup.
+    #[prost(string, tag = "8")]
+    pub message: ::prost::alloc::string::String,
+}
+/// Nested message and enum types in `ScheduledBackupLogEntry`.
+pub mod scheduled_backup_log_entry {
+    /// The current state of the backup.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// The state of the backup is unknown.
+        Unspecified = 0,
+        /// The backup is in progress.
+        InProgress = 1,
+        /// The backup completed.
+        Succeeded = 2,
+        /// The backup failed.
+        Failed = 3,
+    }
+}

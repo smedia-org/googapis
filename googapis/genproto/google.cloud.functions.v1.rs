@@ -46,7 +46,7 @@ pub enum OperationType {
     DeleteFunction = 3,
 }
 /// Describes a Cloud Function that contains user computation executed in
-/// response to an event. It encapsulates function and triggers configurations.
+/// response to an event. It encapsulate function and triggers configurations.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CloudFunction {
     /// A user-defined name of the function. Function names must be unique
@@ -59,12 +59,9 @@ pub struct CloudFunction {
     /// Output only. Status of the function deployment.
     #[prost(enumeration = "CloudFunctionStatus", tag = "7")]
     pub status: i32,
-    /// The name of the function (as defined in source code) that is executed.
-    /// Defaults to the resource name suffix, if not specified. For
-    /// backward compatibility, if function with given name is not found, the
-    /// system tries to use the function named "function".
-    /// For Node.js, this is the name of a function exported by the module
-    /// as specified in `source_location`.
+    /// The name of the function (as defined in source code) that will be
+    /// executed. Defaults to the resource name suffix (ID of the function), if not
+    /// specified.
     #[prost(string, tag = "8")]
     pub entry_point: ::prost::alloc::string::String,
     /// The runtime in which to run the function. Required when deploying a new
@@ -106,29 +103,17 @@ pub struct CloudFunction {
     #[prost(map = "string, string", tag = "28")]
     pub build_environment_variables:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// The Serverless VPC Access connector that this cloud function can connect
-    /// to. It can be either the fully qualified URI, or the short name of the
-    /// connector resource. If the connector name is used, the connector must
-    /// belong to the same project as the function. Otherwise, it must belong to a
-    /// project within the same organization. The format of this field is either
-    /// `projects/{project}/global/networks/{network}` or `{network}`, where
-    /// `{project}` is a project id where the network is defined, and `{network}`
-    /// is the short name of the network.
-    ///
-    /// This field is mutually exclusive with `vpc_connector` and will be replaced
-    /// by it.
-    ///
-    /// See [the VPC documentation](<https://cloud.google.com/compute/docs/vpc>) for
-    /// more information on connecting Cloud projects.
+    /// Deprecated: use vpc_connector
+    #[deprecated]
     #[prost(string, tag = "18")]
     pub network: ::prost::alloc::string::String,
-    /// The limit on the maximum number of function instances that can coexist at a
+    /// The limit on the maximum number of function instances that may coexist at a
     /// given time.
     ///
-    /// In some cases, such as rapid traffic surges, Cloud Functions can for a
-    /// short period of time create more instances than the specified max
+    /// In some cases, such as rapid traffic surges, Cloud Functions may, for a
+    /// short period of time, create more instances than the specified max
     /// instances limit. If your function cannot tolerate this temporary behavior,
-    /// you might want to factor in a safety margin and set a lower max instances
+    /// you may want to factor in a safety margin and set a lower max instances
     /// value than your function can tolerate.
     ///
     /// See the [Max
@@ -136,12 +121,12 @@ pub struct CloudFunction {
     /// more details.
     #[prost(int32, tag = "20")]
     pub max_instances: i32,
-    /// A lower bound for the number function instances that can coexist at a
+    /// A lower bound for the number function instances that may coexist at a
     /// given time.
     #[prost(int32, tag = "32")]
     pub min_instances: i32,
     /// The VPC Network Connector that this cloud function can connect to. It can
-    /// be either the fully qualified URI, or the short name of the network
+    /// be either the fully-qualified URI, or the short name of the network
     /// connector resource. The format of this field is
     /// `projects/*/locations/*/connectors/*`
     ///
@@ -228,7 +213,7 @@ pub struct CloudFunction {
     /// Artifact Registry. If unspecified and the deployment is eligible to use
     /// Artifact Registry, GCF will create and use a repository named
     /// 'gcf-artifacts' for every deployed region. This is the repository to which
-    /// the function docker image is pushed after it is built by Cloud Build.
+    /// the function docker image will be pushed after it is built by Cloud Build.
     ///
     /// It must match the pattern
     /// `projects/{project}/locations/{location}/repositories/{repository}`.
@@ -240,10 +225,9 @@ pub struct CloudFunction {
     pub docker_repository: ::prost::alloc::string::String,
     /// Docker Registry to use for this deployment.
     ///
-    /// If `docker_repository` field is specified, this field is automatically
-    /// set as `ARTIFACT_REGISTRY`.
-    /// If unspecified, it currently defaults to `CONTAINER_REGISTRY`.
-    /// This field may be overridden by the backend for eligible deployments.
+    /// If unspecified, it defaults to `ARTIFACT_REGISTRY`.
+    /// If `docker_repository` field is specified, this field should either be left
+    /// unspecified or set to `ARTIFACT_REGISTRY`.
     #[prost(enumeration = "cloud_function::DockerRegistry", tag = "35")]
     pub docker_registry: i32,
     /// The location of the function source code.
@@ -252,30 +236,44 @@ pub struct CloudFunction {
     /// An event that triggers the function.
     #[prost(oneof = "cloud_function::Trigger", tags = "5, 6")]
     pub trigger: ::core::option::Option<cloud_function::Trigger>,
+    /// Runtime update policy can be one of the following.
+    #[prost(oneof = "cloud_function::RuntimeUpdatePolicy", tags = "40, 41")]
+    pub runtime_update_policy: ::core::option::Option<cloud_function::RuntimeUpdatePolicy>,
 }
 /// Nested message and enum types in `CloudFunction`.
 pub mod cloud_function {
+    /// Security patches are applied automatically to the runtime without requiring
+    /// the function to be redeployed.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AutomaticUpdatePolicy {}
+    /// Security patches are only applied when a function is redeployed.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct OnDeployUpdatePolicy {
+        /// Output only. contains the runtime version which was used during latest
+        /// function deployment.
+        #[prost(string, tag = "1")]
+        pub runtime_version: ::prost::alloc::string::String,
+    }
     /// Available egress settings.
     ///
-    /// This controls what traffic is diverted through the Serverless VPC Access
-    /// connector resource. By default, PRIVATE_RANGES_ONLY is used.
+    /// This controls what traffic is diverted through the VPC Access Connector
+    /// resource. By default PRIVATE_RANGES_ONLY will be used.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum VpcConnectorEgressSettings {
         /// Unspecified.
         Unspecified = 0,
-        /// Use the Serverless VPC Access connector only for private IP space from
-        /// RFC1918.
+        /// Use the VPC Access Connector only for private IP space from RFC1918.
         PrivateRangesOnly = 1,
-        /// Force the use of Serverless VPC Access connector for all egress traffic
-        /// from the function.
+        /// Force the use of VPC Access Connector for all egress traffic from the
+        /// function.
         AllTraffic = 2,
     }
     /// Available ingress settings.
     ///
     /// This controls what traffic can reach the function.
     ///
-    /// If unspecified, ALLOW_ALL is used.
+    /// If unspecified, ALLOW_ALL will be used.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum IngressSettings {
@@ -294,14 +292,14 @@ pub mod cloud_function {
     pub enum DockerRegistry {
         /// Unspecified.
         Unspecified = 0,
-        /// Docker images are stored in multi-regional Container Registry
+        /// Docker images will be stored in multi-regional Container Registry
         /// repositories named `gcf`.
         ContainerRegistry = 1,
-        /// Docker images are stored in regional Artifact Registry repositories.
-        /// By default, Cloud Functions creates and uses repositories named
-        /// `gcf-artifacts` in every region in which a function is deployed. But the
-        /// repository to use can also be specified by the user by using the
-        /// `docker_repository` field.
+        /// Docker images will be stored in regional Artifact Registry repositories.
+        /// By default, GCF will create and use repositories named `gcf-artifacts`
+        /// in every region in which a function is deployed. But the repository to
+        /// use can also be specified by the user using the `docker_repository`
+        /// field.
         ArtifactRegistry = 2,
     }
     /// The location of the function source code.
@@ -316,7 +314,7 @@ pub mod cloud_function {
         /// The source repository where a function is hosted.
         #[prost(message, tag = "4")]
         SourceRepository(super::SourceRepository),
-        /// The Google Cloud Storage-signed URL used for source uploading, generated
+        /// The Google Cloud Storage signed URL used for source uploading, generated
         /// by calling \[google.cloud.functions.v1.GenerateUploadUrl\].
         ///
         /// The signature is validated on write methods (Create, Update)
@@ -335,6 +333,16 @@ pub mod cloud_function {
         #[prost(message, tag = "6")]
         EventTrigger(super::EventTrigger),
     }
+    /// Runtime update policy can be one of the following.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum RuntimeUpdatePolicy {
+        /// See the comment next to this message for more details.
+        #[prost(message, tag = "40")]
+        AutomaticUpdatePolicy(AutomaticUpdatePolicy),
+        /// See the comment next to this message for more details.
+        #[prost(message, tag = "41")]
+        OnDeployUpdatePolicy(OnDeployUpdatePolicy),
+    }
 }
 /// Describes SourceRepository, used to represent parameters related to
 /// source repository where a function is hosted.
@@ -352,7 +360,7 @@ pub struct SourceRepository {
     /// To refer to a specific fixed alias (tag):
     /// `<https://source.developers.google.com/projects/*/repos/*/fixed-aliases/*/paths/*`>
     ///
-    /// You can omit `paths/*` if you want to use the main directory.
+    /// You may omit `paths/*` if you want to use the main directory.
     #[prost(string, tag = "1")]
     pub url: ::prost::alloc::string::String,
     /// Output only. The URL pointing to the hosted repository where the function
@@ -373,11 +381,11 @@ pub struct HttpsTrigger {
 }
 /// Nested message and enum types in `HttpsTrigger`.
 pub mod https_trigger {
-    /// Available security-level settings.
+    /// Available security level settings.
     ///
     /// This controls the methods to enforce security (HTTPS) on a URL.
     ///
-    /// If unspecified, SECURE_OPTIONAL is used.
+    /// If unspecified, SECURE_OPTIONAL will be used.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum SecurityLevel {
@@ -393,7 +401,7 @@ pub mod https_trigger {
         SecureOptional = 2,
     }
 }
-/// Describes EventTrigger, used to request that events be sent from another
+/// Describes EventTrigger, used to request events be sent from another
 /// service.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EventTrigger {
@@ -410,7 +418,7 @@ pub struct EventTrigger {
     ///    example, the Google Cloud Storage API includes the type `object`.
     /// 3. action: The action that generates the event. For example, action for
     ///    a Google Cloud Storage Object is 'change'.
-    /// These parts are lowercase.
+    /// These parts are lower case.
     #[prost(string, tag = "1")]
     pub event_type: ::prost::alloc::string::String,
     /// Required. The resource(s) from which to observe events, for example,
@@ -428,7 +436,7 @@ pub struct EventTrigger {
     ///    that matches Google Cloud Pub/Sub topics.
     ///
     /// Additionally, some services may support short names when creating an
-    /// `EventTrigger`. These are always returned in the normalized "long"
+    /// `EventTrigger`. These will always be returned in the normalized "long"
     /// format.
     ///
     /// See each *service's* documentation for supported formats.
@@ -446,7 +454,7 @@ pub struct EventTrigger {
     pub failure_policy: ::core::option::Option<FailurePolicy>,
 }
 /// Describes the policy in case of function's execution failure.
-/// If empty, then defaults to ignoring failures (i.e., not retrying them).
+/// If empty, then defaults to ignoring failures (i.e. not retrying them).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FailurePolicy {
     /// Defines the action taken in case of a function execution failure.
@@ -456,8 +464,8 @@ pub struct FailurePolicy {
 /// Nested message and enum types in `FailurePolicy`.
 pub mod failure_policy {
     /// Describes the retry policy in case of function's execution failure.
-    /// A function execution is retried on any failure.
-    /// A failed execution is retried up to 7 days with an exponential backoff
+    /// A function execution will be retried on any failure.
+    /// A failed execution will be retried up to 7 days with an exponential backoff
     /// (capped at 10 seconds).
     /// Retried execution is charged as any other execution.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -465,13 +473,13 @@ pub mod failure_policy {
     /// Defines the action taken in case of a function execution failure.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Action {
-        /// If specified, the function is retried in case of a failure.
+        /// If specified, then the function will be retried in case of a failure.
         #[prost(message, tag = "1")]
         Retry(Retry),
     }
 }
 /// Configuration for a secret environment variable. It has the information
-/// necessary to fetch the secret value from Secret Manager and expose it as an
+/// necessary to fetch the secret value from secret manager and expose it as an
 /// environment variable.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SecretEnvVar {
@@ -479,12 +487,12 @@ pub struct SecretEnvVar {
     #[prost(string, tag = "1")]
     pub key: ::prost::alloc::string::String,
     /// Project identifier (preferrably project number but can also be the project
-    /// ID) of the project that contains the secret. If not set, it is
-    /// populated with the function's project, assuming that the secret exists in
-    /// the same project as the function.
+    /// ID) of the project that contains the secret. If not set, it will be
+    /// populated with the function's project assuming that the secret exists in
+    /// the same project as of the function.
     #[prost(string, tag = "2")]
     pub project_id: ::prost::alloc::string::String,
-    /// Name of the secret in Secret Manager (not the full resource name).
+    /// Name of the secret in secret manager (not the full resource name).
     #[prost(string, tag = "3")]
     pub secret: ::prost::alloc::string::String,
     /// Version of the secret (version number or the string 'latest'). It is
@@ -494,15 +502,15 @@ pub struct SecretEnvVar {
     pub version: ::prost::alloc::string::String,
 }
 /// Configuration for a secret volume. It has the information necessary to fetch
-/// the secret value from Secret Manager and make it available as files mounted
+/// the secret value from secret manager and make it available as files mounted
 /// at the requested paths within the application container. Secret value is not
-/// a part of the configuration. Every file system read operation performs a
-/// lookup in Secret Manager to retrieve the secret value.
+/// a part of the configuration. Every filesystem read operation performs a
+/// lookup in secret manager to retrieve the secret value.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SecretVolume {
     /// The path within the container to mount the secret volume. For example,
-    /// setting the mount_path as `/etc/secrets` mounts the secret value files
-    /// under the `/etc/secrets` directory. This directory is also completely
+    /// setting the mount_path as `/etc/secrets` would mount the secret value files
+    /// under the `/etc/secrets` directory. This directory will also be completely
     /// shadowed and unavailable to mount any other secrets.
     ///
     /// Recommended mount paths: /etc/secrets
@@ -510,16 +518,16 @@ pub struct SecretVolume {
     #[prost(string, tag = "1")]
     pub mount_path: ::prost::alloc::string::String,
     /// Project identifier (preferrably project number but can also be the project
-    /// ID) of the project that contains the secret. If not set, it is
-    /// populated with the function's project, assuming that the secret exists in
-    /// the same project as the function.
+    /// ID) of the project that contains the secret. If not set, it will be
+    /// populated with the function's project assuming that the secret exists in
+    /// the same project as of the function.
     #[prost(string, tag = "2")]
     pub project_id: ::prost::alloc::string::String,
-    /// Name of the secret in Secret Manager (not the full resource name).
+    /// Name of the secret in secret manager (not the full resource name).
     #[prost(string, tag = "3")]
     pub secret: ::prost::alloc::string::String,
     /// List of secret versions to mount for this secret. If empty, the `latest`
-    /// version of the secret is made available in a file named after the
+    /// version of the secret will be made available in a file named after the
     /// secret under the mount point.
     #[prost(message, repeated, tag = "4")]
     pub versions: ::prost::alloc::vec::Vec<secret_volume::SecretVersion>,
@@ -535,8 +543,8 @@ pub mod secret_volume {
         #[prost(string, tag = "1")]
         pub version: ::prost::alloc::string::String,
         /// Relative path of the file under the mount path where the secret value for
-        /// this version is fetched and made available. For example, setting the
-        /// mount_path as '/etc/secrets' and path as `/secret_foo` mounts the
+        /// this version will be fetched and made available. For example, setting the
+        /// mount_path as '/etc/secrets' and path as `/secret_foo` would mount the
         /// secret value file at `/etc/secrets/secret_foo`.
         #[prost(string, tag = "2")]
         pub path: ::prost::alloc::string::String,
@@ -569,6 +577,14 @@ pub struct GetFunctionRequest {
     /// Required. The name of the function which details should be obtained.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    /// Optional. The optional version of the function whose details should be
+    /// obtained. The version of a 1st Gen function is an integer that starts from
+    /// 1 and gets incremented on redeployments. Each deployment creates a config
+    /// version of the underlying function. GCF may keep historical configs for old
+    /// versions. This field can be specified to fetch the historical configs.
+    /// Leave it blank or set to 0 to get the latest version of the function.
+    #[prost(int64, tag = "2")]
+    pub version_id: i64,
 }
 /// Request for the `ListFunctions` method.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -648,11 +664,11 @@ pub struct GenerateUploadUrlRequest {
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Resource name of a KMS crypto key (managed by the user) used to
-    /// encrypt/decrypt function source code objects in staging Cloud Storage
+    /// encrypt/decrypt function source code objects in intermediate Cloud Storage
     /// buckets. When you generate an upload url and upload your source code, it
-    /// gets copied to a staging Cloud Storage bucket in an internal regional
-    /// project. The source code is then copied to a versioned directory in the
-    /// sources bucket in the consumer project during the function deployment.
+    /// gets copied to an intermediate Cloud Storage bucket. The source code is
+    /// then copied to a versioned directory in the sources bucket in the consumer
+    /// project during the function deployment.
     ///
     /// It must match the pattern
     /// `projects/{project}/locations/{location}/keyRings/{key_ring}/cryptoKeys/{crypto_key}`.
@@ -799,7 +815,7 @@ pub mod cloud_functions_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Creates a new function. If a function with the given name already exists in"]
-        #[doc = " the specified project, the long running operation returns an"]
+        #[doc = " the specified project, the long running operation will return"]
         #[doc = " `ALREADY_EXISTS` error."]
         pub async fn create_function(
             &mut self,
@@ -841,7 +857,7 @@ pub mod cloud_functions_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Deletes a function with the given name from the specified project. If the"]
-        #[doc = " given function is used by some trigger, the trigger is updated to"]
+        #[doc = " given function is used by some trigger, the trigger will be updated to"]
         #[doc = " remove this function."]
         pub async fn delete_function(
             &mut self,
@@ -899,12 +915,12 @@ pub mod cloud_functions_service_client {
         #[doc = "   attached, the identity from the credentials would be used, but that"]
         #[doc = "   identity does not have permissions to upload files to the URL."]
         #[doc = ""]
-        #[doc = " When making an HTTP PUT request, these two headers must be specified:"]
+        #[doc = " When making a HTTP PUT request, these two headers need to be specified:"]
         #[doc = ""]
         #[doc = " * `content-type: application/zip`"]
         #[doc = " * `x-goog-content-length-range: 0,104857600`"]
         #[doc = ""]
-        #[doc = " And this header must NOT be specified:"]
+        #[doc = " And this header SHOULD NOT be specified:"]
         #[doc = ""]
         #[doc = " * `Authorization: Bearer YOUR_TOKEN`"]
         pub async fn generate_upload_url(
@@ -924,9 +940,9 @@ pub mod cloud_functions_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Returns a signed URL for downloading deployed function source code."]
-        #[doc = " The URL is only valid for a limited period and must be used within"]
+        #[doc = " The URL is only valid for a limited period and should be used within"]
         #[doc = " minutes after generation."]
-        #[doc = " For more information about the signed URL usage, see:"]
+        #[doc = " For more information about the signed URL usage see:"]
         #[doc = " https://cloud.google.com/storage/docs/access-control/signed-urls"]
         pub async fn generate_download_url(
             &mut self,
@@ -985,7 +1001,7 @@ pub mod cloud_functions_service_client {
         }
         #[doc = " Tests the specified permissions against the IAM access control policy"]
         #[doc = " for a function."]
-        #[doc = " If the function does not exist, this returns an empty set of"]
+        #[doc = " If the function does not exist, this will return an empty set of"]
         #[doc = " permissions, not a NOT_FOUND error."]
         pub async fn test_iam_permissions(
             &mut self,

@@ -56,8 +56,8 @@ pub struct RunWorkflowCustomOperationMetadata {
     #[prost(string, tag = "7")]
     pub pipeline_run_id: ::prost::alloc::string::String,
 }
-/// A connection to a SCM like GitHub, GitHub Enterprise, Bitbucket Server or
-/// GitLab.
+/// A connection to a SCM like GitHub, GitHub Enterprise, Bitbucket Data Center,
+/// Bitbucket Cloud or GitLab.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Connection {
     /// Immutable. The resource name of the connection, in the format
@@ -92,7 +92,7 @@ pub struct Connection {
     #[prost(string, tag = "16")]
     pub etag: ::prost::alloc::string::String,
     /// Configuration for the connection depending on the type of provider.
-    #[prost(oneof = "connection::ConnectionConfig", tags = "5, 6")]
+    #[prost(oneof = "connection::ConnectionConfig", tags = "5, 6, 7, 8, 9")]
     pub connection_config: ::core::option::Option<connection::ConnectionConfig>,
 }
 /// Nested message and enum types in `Connection`.
@@ -106,6 +106,16 @@ pub mod connection {
         /// Configuration for connections to an instance of GitHub Enterprise.
         #[prost(message, tag = "6")]
         GithubEnterpriseConfig(super::GitHubEnterpriseConfig),
+        /// Configuration for connections to gitlab.com or an instance of GitLab
+        /// Enterprise.
+        #[prost(message, tag = "7")]
+        GitlabConfig(super::GitLabConfig),
+        /// Configuration for connections to Bitbucket Data Center.
+        #[prost(message, tag = "8")]
+        BitbucketDataCenterConfig(super::BitbucketDataCenterConfig),
+        /// Configuration for connections to Bitbucket Cloud.
+        #[prost(message, tag = "9")]
+        BitbucketCloudConfig(super::BitbucketCloudConfig),
     }
 }
 /// Describes stage and necessary actions to be taken by the
@@ -220,6 +230,97 @@ pub struct GitHubEnterpriseConfig {
     #[prost(string, tag = "14")]
     pub server_version: ::prost::alloc::string::String,
 }
+/// Configuration for connections to gitlab.com or an instance of GitLab
+/// Enterprise.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GitLabConfig {
+    /// The URI of the GitLab Enterprise host this connection is for.
+    /// If not specified, the default value is <https://gitlab.com.>
+    #[prost(string, tag = "1")]
+    pub host_uri: ::prost::alloc::string::String,
+    /// Required. Immutable. SecretManager resource containing the webhook secret
+    /// of a GitLab Enterprise project, formatted as
+    /// `projects/*/secrets/*/versions/*`.
+    #[prost(string, tag = "2")]
+    pub webhook_secret_secret_version: ::prost::alloc::string::String,
+    /// Required. A GitLab personal access token with the minimum `read_api` scope
+    /// access.
+    #[prost(message, optional, tag = "3")]
+    pub read_authorizer_credential: ::core::option::Option<UserCredential>,
+    /// Required. A GitLab personal access token with the `api` scope access.
+    #[prost(message, optional, tag = "4")]
+    pub authorizer_credential: ::core::option::Option<UserCredential>,
+    /// Configuration for using Service Directory to privately connect to a GitLab
+    /// Enterprise server. This should only be set if the GitLab Enterprise server
+    /// is hosted on-premises and not reachable by public internet. If this field
+    /// is left empty, calls to the GitLab Enterprise server will be made over the
+    /// public internet.
+    #[prost(message, optional, tag = "5")]
+    pub service_directory_config: ::core::option::Option<ServiceDirectoryConfig>,
+    /// SSL certificate to use for requests to GitLab Enterprise.
+    #[prost(string, tag = "6")]
+    pub ssl_ca: ::prost::alloc::string::String,
+    /// Output only. Version of the GitLab Enterprise server running on the
+    /// `host_uri`.
+    #[prost(string, tag = "7")]
+    pub server_version: ::prost::alloc::string::String,
+}
+/// Configuration for connections to Bitbucket Data Center.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BitbucketDataCenterConfig {
+    /// Required. The URI of the Bitbucket Data Center instance or cluster this
+    /// connection is for.
+    #[prost(string, tag = "1")]
+    pub host_uri: ::prost::alloc::string::String,
+    /// Required. Immutable. SecretManager resource containing the webhook secret
+    /// used to verify webhook events, formatted as
+    /// `projects/*/secrets/*/versions/*`.
+    #[prost(string, tag = "2")]
+    pub webhook_secret_secret_version: ::prost::alloc::string::String,
+    /// Required. A http access token with the `REPO_READ` access.
+    #[prost(message, optional, tag = "3")]
+    pub read_authorizer_credential: ::core::option::Option<UserCredential>,
+    /// Required. A http access token with the `REPO_ADMIN` scope access.
+    #[prost(message, optional, tag = "4")]
+    pub authorizer_credential: ::core::option::Option<UserCredential>,
+    /// Optional. Configuration for using Service Directory to privately connect to
+    /// a Bitbucket Data Center. This should only be set if the Bitbucket Data
+    /// Center is hosted on-premises and not reachable by public internet. If this
+    /// field is left empty, calls to the Bitbucket Data Center will be made over
+    /// the public internet.
+    #[prost(message, optional, tag = "5")]
+    pub service_directory_config: ::core::option::Option<ServiceDirectoryConfig>,
+    /// Optional. SSL certificate to use for requests to the Bitbucket Data Center.
+    #[prost(string, tag = "6")]
+    pub ssl_ca: ::prost::alloc::string::String,
+    /// Output only. Version of the Bitbucket Data Center running on the
+    /// `host_uri`.
+    #[prost(string, tag = "7")]
+    pub server_version: ::prost::alloc::string::String,
+}
+/// Configuration for connections to Bitbucket Cloud.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BitbucketCloudConfig {
+    /// Required. The Bitbucket Cloud Workspace ID to be connected to Google Cloud
+    /// Platform.
+    #[prost(string, tag = "1")]
+    pub workspace: ::prost::alloc::string::String,
+    /// Required. SecretManager resource containing the webhook secret used to
+    /// verify webhook events, formatted as `projects/*/secrets/*/versions/*`.
+    #[prost(string, tag = "2")]
+    pub webhook_secret_secret_version: ::prost::alloc::string::String,
+    /// Required. An access token with the `repository` access. It can be either a
+    /// workspace, project or repository access token. It's recommended to use a
+    /// system account to generate the credentials.
+    #[prost(message, optional, tag = "3")]
+    pub read_authorizer_credential: ::core::option::Option<UserCredential>,
+    /// Required. An access token with the `webhook`, `repository`,
+    /// `repository:admin` and `pullrequest` scope access. It can be either a
+    /// workspace, project or repository access token. It's recommended to use a
+    /// system account to generate these credentials.
+    #[prost(message, optional, tag = "4")]
+    pub authorizer_credential: ::core::option::Option<UserCredential>,
+}
 /// ServiceDirectoryConfig represents Service Directory configuration for a
 /// connection.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -255,6 +356,9 @@ pub struct Repository {
     /// client has an up-to-date value before proceeding.
     #[prost(string, tag = "7")]
     pub etag: ::prost::alloc::string::String,
+    /// Output only. External ID of the webhook created for the repository.
+    #[prost(string, tag = "8")]
+    pub webhook_id: ::prost::alloc::string::String,
 }
 /// Represents an OAuth token of the account that authorized the Connection,
 /// and associated metadata.
@@ -264,6 +368,19 @@ pub struct OAuthCredential {
     /// the Cloud Build connection. Format: `projects/*/secrets/*/versions/*`.
     #[prost(string, tag = "1")]
     pub oauth_token_secret_version: ::prost::alloc::string::String,
+    /// Output only. The username associated to this token.
+    #[prost(string, tag = "2")]
+    pub username: ::prost::alloc::string::String,
+}
+/// Represents a personal access token that authorized the Connection,
+/// and associated metadata.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserCredential {
+    /// Required. A SecretManager resource containing the user token that
+    /// authorizes the Cloud Build connection. Format:
+    /// `projects/*/secrets/*/versions/*`.
+    #[prost(string, tag = "1")]
+    pub user_token_secret_version: ::prost::alloc::string::String,
     /// Output only. The username associated to this token.
     #[prost(string, tag = "2")]
     pub username: ::prost::alloc::string::String,
@@ -483,11 +600,58 @@ pub struct FetchReadWriteTokenResponse {
     #[prost(message, optional, tag = "2")]
     pub expiration_time: ::core::option::Option<::prost_types::Timestamp>,
 }
+/// RPC request object accepted by the ProcessWebhook RPC method.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProcessWebhookRequest {
+    /// Required. Project and location where the webhook will be received.
+    /// Format: `projects/*/locations/*`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// HTTP request body.
+    #[prost(message, optional, tag = "2")]
+    pub body: ::core::option::Option<super::super::super::api::HttpBody>,
+    /// Arbitrary additional key to find the maching repository for a webhook event
+    /// if needed.
+    #[prost(string, tag = "3")]
+    pub webhook_key: ::prost::alloc::string::String,
+}
+/// Request for fetching git refs
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FetchGitRefsRequest {
+    /// Required. The resource name of the repository in the format
+    /// `projects/*/locations/*/connections/*/repositories/*`.
+    #[prost(string, tag = "1")]
+    pub repository: ::prost::alloc::string::String,
+    /// Type of refs to fetch
+    #[prost(enumeration = "fetch_git_refs_request::RefType", tag = "2")]
+    pub ref_type: i32,
+}
+/// Nested message and enum types in `FetchGitRefsRequest`.
+pub mod fetch_git_refs_request {
+    /// Type of refs
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum RefType {
+        /// No type specified.
+        Unspecified = 0,
+        /// To fetch tags.
+        Tag = 1,
+        /// To fetch branches.
+        Branch = 2,
+    }
+}
+/// Response for fetching git refs
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FetchGitRefsResponse {
+    /// Name of the refs fetched.
+    #[prost(string, repeated, tag = "1")]
+    pub ref_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
 #[doc = r" Generated client implementations."]
 pub mod repository_manager_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    #[doc = " Manages connections to source code repostiories."]
+    #[doc = " Manages connections to source code repositories."]
     #[derive(Debug, Clone)]
     pub struct RepositoryManagerClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -771,6 +935,23 @@ pub mod repository_manager_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.devtools.cloudbuild.v2.RepositoryManager/FetchLinkableRepositories",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Fetch the list of branches or tags for a given repository."]
+        pub async fn fetch_git_refs(
+            &mut self,
+            request: impl tonic::IntoRequest<super::FetchGitRefsRequest>,
+        ) -> Result<tonic::Response<super::FetchGitRefsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.devtools.cloudbuild.v2.RepositoryManager/FetchGitRefs",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

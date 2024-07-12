@@ -35,6 +35,9 @@ pub struct Timing {
 /// to define a graph or a workflow paradigm through resources.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Dependency {
+    /// The ID of the resource depended upon, matching resource name above.
+    #[prost(message, optional, tag = "5")]
+    pub id: ::core::option::Option<dependency::Id>,
     /// A label describing this dependency.
     /// The label "Root Cause" is handled specially. It is used to point to the
     /// exact resource that caused a resource to fail.
@@ -47,22 +50,38 @@ pub struct Dependency {
 }
 /// Nested message and enum types in `Dependency`.
 pub mod dependency {
+    /// The resource ID components of a resource depended upon. It may be a Target,
+    /// ConfiguredTarget, or Action, with the appropriate components filled in.
+    /// Invocation ID is elided, as this must point to a resource under this
+    /// Invocation.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Id {
+        /// The unencoded Target ID of the Target, ConfiguredTarget, or Action.
+        #[prost(string, tag = "2")]
+        pub target_id: ::prost::alloc::string::String,
+        /// The Configuration ID of the ConfiguredTarget, or Action.
+        #[prost(string, tag = "3")]
+        pub configuration_id: ::prost::alloc::string::String,
+        /// The Action ID of the Action.
+        #[prost(string, tag = "4")]
+        pub action_id: ::prost::alloc::string::String,
+    }
     /// The resource depended upon. It may be a Target, ConfiguredTarget, or
     /// Action.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Resource {
-        /// The name of a target.  Its format must be:
+        /// Output only. The name of a target.  Its format must be:
         /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}
-        /// This must point to an target under the same invocation.
+        /// This must point to a target under the same invocation.
         #[prost(string, tag = "1")]
         Target(::prost::alloc::string::String),
-        /// The name of a configured target.  Its format must be:
-        /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}/configuredTargets/${url_encode(CONFIG_ID)}
-        /// This must point to an configured target under the same invocation.
+        /// Output only. The name of a configured target.  Its format must be:
+        /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}/configuredTargets/${CONFIG_ID}
+        /// This must point to a configured target under the same invocation.
         #[prost(string, tag = "2")]
         ConfiguredTarget(::prost::alloc::string::String),
-        /// The name of an action.  Its format must be:
-        /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}/configuredTargets/${url_encode(CONFIG_ID)}/actions/${url_encode(ACTION_ID)}
+        /// Output only. The name of an action.  Its format must be:
+        /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}/configuredTargets/${CONFIG_ID}/actions/${ACTION_ID}
         /// This must point to an action under the same invocation.
         #[prost(string, tag = "3")]
         Action(::prost::alloc::string::String),
@@ -106,7 +125,7 @@ pub enum Language {
     Sh = 15,
     /// Swift
     Swift = 16,
-    /// Typescript
+    /// TypeScript
     Ts = 18,
     /// Webtesting
     Web = 19,
@@ -173,6 +192,7 @@ pub enum UploadStatus {
     /// the invocation.
     PostProcessing = 2,
     /// All post-processing is complete, and the invocation is now immutable.
+    /// Data may be subject to TTL and can be deleted.
     Immutable = 3,
 }
 /// Describes line coverage for a file
@@ -489,6 +509,16 @@ pub struct TestCase {
     /// result in an error. Files will be returned in lexicographical order by ID.
     #[prost(message, repeated, tag = "9")]
     pub files: ::prost::alloc::vec::Vec<File>,
+    /// The 0-indexed retry number of the test case. A value of `0` may indicate
+    /// either that this is the first in a series of retries, or that no retries
+    /// were requested.
+    #[prost(int32, tag = "10")]
+    pub retry_number: i32,
+    /// The 0-indexed repeat number of the test case. A value of `0` may indicate
+    /// either that this is the first in a series of repeats, or that no repeats
+    /// were requested.
+    #[prost(int32, tag = "11")]
+    pub repeat_number: i32,
 }
 /// Nested message and enum types in `TestCase`.
 pub mod test_case {
@@ -927,7 +957,7 @@ pub enum TestCaching {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Configuration {
     /// The format of this Configuration resource name must be:
-    /// invocations/${INVOCATION_ID}/configs/${url_encode(CONFIG_ID)}
+    /// invocations/${INVOCATION_ID}/configs/${CONFIG_ID}
     /// The configuration ID of "default" should be preferred for the default
     /// configuration in a single-config invocation.
     #[prost(string, tag = "1")]
@@ -1097,6 +1127,21 @@ pub struct DownloadMetadata {
     /// post-processing, or immutable, etc.
     #[prost(enumeration = "UploadStatus", tag = "2")]
     pub upload_status: i32,
+    /// If populated, the time when CreateInvocation is called.
+    /// This does not necessarily line up with the start time of the invocation.
+    /// Please use invocation.timing.start_time for that purpose.
+    #[prost(message, optional, tag = "3")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// If populated, the time when FinalizeInvocation is called or when invocation
+    /// is automatically finalized. This field is populated when upload_status
+    /// becomes POST_PROCESSING.
+    #[prost(message, optional, tag = "4")]
+    pub finalize_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// If populated, the time when all post processing is done and the invocation
+    /// is marked as immutable. This field is populated when upload_status becomes
+    /// IMMUTABLE.
+    #[prost(message, optional, tag = "5")]
+    pub immutable_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// This resource represents a set of Files and other (nested) FileSets.
 /// A FileSet is a node in the graph, and the file_sets field represents the
@@ -1266,13 +1311,12 @@ pub struct CommandLine {
 /// Attributes that apply to all invocations.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InvocationAttributes {
-    /// Immutable. The Cloud Project that owns this invocation (this is different than the
-    /// Consumer Cloud Project that calls this API).
-    /// This must be set in the CreateInvocation call, and can't be changed.
-    /// As input, callers can set this field to a project id (string) or a
-    /// stringified int64 project number. As output, the API populates this field
-    /// with the stringified int64 project number (per
-    /// <https://google.aip.dev/cloud/2510>).
+    /// Immutable. The Cloud Project that owns this invocation (this is different
+    /// than the Consumer Cloud Project that calls this API). This must be set in
+    /// the CreateInvocation call, and can't be changed. As input, callers can set
+    /// this field to a project id (string) or a stringified int64 project number.
+    /// As output, the API populates this field with the stringified int64 project
+    /// number (per <https://google.aip.dev/cloud/2510>).
     #[prost(string, tag = "1")]
     pub project_id: ::prost::alloc::string::String,
     /// The list of users in the command chain.  The first user in this sequence
@@ -1330,6 +1374,8 @@ pub struct Target {
     #[prost(message, optional, tag = "2")]
     pub id: ::core::option::Option<target::Id>,
     /// This is the aggregate status of the target.
+    /// DEPRECATED - use ConfiguredTarget.status_attributes instead
+    #[deprecated]
     #[prost(message, optional, tag = "3")]
     pub status_attributes: ::core::option::Option<StatusAttributes>,
     /// When this target started and its duration.
@@ -1432,9 +1478,9 @@ pub enum TestSize {
 /// Request passed into GetInvocation
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetInvocationRequest {
-    /// Required. The name of the invocation to retrieve. It must match this format:
-    /// invocations/${INVOCATION_ID}
-    /// where INVOCATION_ID must be an RFC 4122-compliant UUID.
+    /// Required. The name of the invocation to retrieve. It must match this
+    /// format: invocations/${INVOCATION_ID} where INVOCATION_ID must be an RFC
+    /// 4122-compliant UUID.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -1452,9 +1498,11 @@ pub struct SearchInvocationsRequest {
     ///
     /// Fields that support equals ("=") restrictions:
     ///
+    /// id.invocation_id
     /// name
     /// status_attributes.status
     /// workspace_info.hostname
+    /// download_metadata.upload_status
     ///
     /// Fields that support contains (":") restrictions:
     ///
@@ -1511,15 +1559,33 @@ pub struct SearchInvocationsResponse {
 /// Request passed into ExportInvocationRequest
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExportInvocationRequest {
-    /// Required. The name of the invocation to retrieve. It must match this format:
-    /// invocations/${INVOCATION_ID}
-    /// where INVOCATION_ID must be an RFC 4122-compliant UUID.
+    /// Required. The name of the invocation to retrieve. It must match this
+    /// format: invocations/${INVOCATION_ID} where INVOCATION_ID must be an RFC
+    /// 4122-compliant UUID.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The maximum number of items to return. Zero means all, but may be capped by
     /// the server.
     #[prost(int32, tag = "2")]
     pub page_size: i32,
+    /// Filters Targets, ConfiguredTargets, and Actions returned
+    ///
+    /// Only id.target_id field with single equals ("=") restriction supported
+    #[prost(string, tag = "6")]
+    pub targets_filter: ::prost::alloc::string::String,
+    /// Requires targets_filter to be populated
+    /// Filters ConfiguredTargets and Actions returned
+    ///
+    /// Only id.configuration_id field with single equals ("=") restriction
+    /// supported
+    #[prost(string, tag = "7")]
+    pub configured_targets_filter: ::prost::alloc::string::String,
+    /// Requires both targets_filter and configured_targets_filter to be populated
+    /// Filters Actions returned
+    ///
+    /// Only id.action_id field with single equals ("=") restriction supported
+    #[prost(string, tag = "8")]
+    pub actions_filter: ::prost::alloc::string::String,
     /// Options for pagination.
     #[prost(oneof = "export_invocation_request::PageStart", tags = "3, 4")]
     pub page_start: ::core::option::Option<export_invocation_request::PageStart>,
@@ -1545,6 +1611,10 @@ pub struct ExportInvocationResponse {
     /// Parent Invocation resource.
     #[prost(message, optional, tag = "1")]
     pub invocation: ::core::option::Option<Invocation>,
+    /// download metadata of request invocation
+    /// download_metadata and invocation count towards page_size once.
+    #[prost(message, optional, tag = "8")]
+    pub download_metadata: ::core::option::Option<DownloadMetadata>,
     /// Targets matching the request invocation.
     #[prost(message, repeated, tag = "2")]
     pub targets: ::prost::alloc::vec::Vec<Target>,
@@ -1568,17 +1638,17 @@ pub struct ExportInvocationResponse {
 /// Request passed into GetInvocationDownloadMetadata
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetInvocationDownloadMetadataRequest {
-    /// Required. The name of the download metadata to retrieve. It must match this format:
-    /// invocations/${INVOCATION_ID}/downloadMetadata
-    /// where INVOCATION_ID must be an RFC 4122-compliant UUID.
+    /// Required. The name of the download metadata to retrieve. It must match this
+    /// format: invocations/${INVOCATION_ID}/downloadMetadata where INVOCATION_ID
+    /// must be an RFC 4122-compliant UUID.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request passed into GetConfiguration
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetConfigurationRequest {
-    /// Required. The name of the configuration to retrieve. It must match this format:
-    /// invocations/${INVOCATION_ID}/configs/${CONFIGURATION_ID}
+    /// Required. The name of the configuration to retrieve. It must match this
+    /// format: invocations/${INVOCATION_ID}/configs/${CONFIGURATION_ID}
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -1638,8 +1708,8 @@ pub struct GetTargetRequest {
 /// Request passed into ListTargets
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListTargetsRequest {
-    /// Required. The invocation name of the targets to retrieve. It must match this format:
-    /// invocations/${INVOCATION_ID}
+    /// Required. The invocation name of the targets to retrieve. It must match
+    /// this format: invocations/${INVOCATION_ID}
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The maximum number of items to return.
@@ -1683,7 +1753,8 @@ pub struct ListTargetsResponse {
 /// Request passed into GetConfiguredTarget
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetConfiguredTargetRequest {
-    /// Required. The name of the configured target to retrieve. It must match this format:
+    /// Required. The name of the configured target to retrieve. It must match this
+    /// format:
     /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}/configuredTargets/${CONFIGURATION_ID}
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -1691,8 +1762,8 @@ pub struct GetConfiguredTargetRequest {
 /// Request passed into ListConfiguredTargets
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListConfiguredTargetsRequest {
-    /// Required. The invocation and target name of the configured targets to retrieve.
-    /// It must match this format:
+    /// Required. The invocation and target name of the configured targets to
+    /// retrieve. It must match this format:
     /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}
     /// Supports '-' for ${TARGET_ID} meaning all targets.
     #[prost(string, tag = "1")]
@@ -1777,7 +1848,7 @@ pub struct SearchConfiguredTargetsRequest {
     /// Fields that support comparison ("<", "<=", ">", ">=") restrictions;
     ///
     /// timing.start_time
-    ///
+    /// coalesced_start_time
     /// Supported custom function global restrictions:
     ///
     /// invocationPropertyEquals("key", "value")
@@ -1789,9 +1860,7 @@ pub struct SearchConfiguredTargetsRequest {
     /// The project id to search under.
     #[prost(string, tag = "6")]
     pub project_id: ::prost::alloc::string::String,
-    /// If true, all equals or contains restrictions on string fields in query will
-    /// require exact match. Otherwise, a string field restriction may ignore case
-    /// and punctuation.
+    /// Unimplemented
     #[prost(bool, tag = "7")]
     pub exact_match: bool,
     /// Options for pagination.
@@ -1835,8 +1904,8 @@ pub struct GetActionRequest {
 /// Request passed into ListActions
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListActionsRequest {
-    /// Required. The invocation, target, and configuration name of the action to retrieve.
-    /// It must match this format:
+    /// Required. The invocation, target, and configuration name of the action to
+    /// retrieve. It must match this format:
     /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}/configuredTargets/${CONFIGURATION_ID}
     /// Supports '-' for ${CONFIGURATION_ID} to mean all Actions for all
     /// Configurations for a Target, or '-' for ${TARGET_ID} and
@@ -1885,8 +1954,8 @@ pub struct ListActionsResponse {
 /// Request passed into BatchListActionsRequest
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchListActionsRequest {
-    /// Required. The invocation name of the actions to retrieve. It must match this format:
-    /// invocations/${INVOCATION_ID}
+    /// Required. The invocation name of the actions to retrieve. It must match
+    /// this format: invocations/${INVOCATION_ID}
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The names of the configured targets to retrieve.
@@ -2056,6 +2125,8 @@ pub mod result_store_download_client {
     #[doc = " This is the interface used to download information from the ResultStore"]
     #[doc = " database."]
     #[doc = ""]
+    #[doc = " Clients are encourage to use ExportInvocation for most traffic."]
+    #[doc = ""]
     #[doc = " Most APIs require setting a response FieldMask via the 'fields' URL query"]
     #[doc = " parameter or the X-Goog-FieldMask HTTP/gRPC header."]
     #[derive(Debug, Clone)]
@@ -2103,6 +2174,46 @@ pub mod result_store_download_client {
             self.inner = self.inner.accept_gzip();
             self
         }
+        #[doc = " Exports the invocation with the given name and its child resources."]
+        #[doc = ""]
+        #[doc = " The order in which resources are returned is defined as follows,"]
+        #[doc = " invocation; download_metadata; configurations; targets interleaving"]
+        #[doc = " configured_targets and actions; file_sets."]
+        #[doc = ""]
+        #[doc = " - Invocation"]
+        #[doc = " - DownloadMetadata"]
+        #[doc = " - Configurations"]
+        #[doc = " - Targets"]
+        #[doc = "   └─ ConfiguredTargets"]
+        #[doc = "      └─Actions"]
+        #[doc = " - FileSets"]
+        #[doc = ""]
+        #[doc = " All child resources will be returned before the next parent"]
+        #[doc = " resource is returned. For example, all actions under a configured_target"]
+        #[doc = " will be returned before the next configured_target is returned."]
+        #[doc = " The order in which results within a given resource type are returned is"]
+        #[doc = " undefined, but stable."]
+        #[doc = ""]
+        #[doc = " An error will be reported in the following cases:"]
+        #[doc = " - If the invocation is not found."]
+        #[doc = " - If the given invocation name is badly formatted."]
+        #[doc = " - If no field mask was given."]
+        pub async fn export_invocation(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ExportInvocationRequest>,
+        ) -> Result<tonic::Response<super::ExportInvocationResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.devtools.resultstore.v2.ResultStoreDownload/ExportInvocation",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Retrieves the invocation with the given name."]
         #[doc = ""]
         #[doc = " An error will be reported in the following cases:"]
@@ -2147,28 +2258,6 @@ pub mod result_store_download_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.devtools.resultstore.v2.ResultStoreDownload/SearchInvocations",
-            );
-            self.inner.unary(request.into_request(), path, codec).await
-        }
-        #[doc = " Exports the invocation and its child resources with a given name."]
-        #[doc = ""]
-        #[doc = " An error will be reported in the following cases:"]
-        #[doc = " - If the invocation is not found."]
-        #[doc = " - If the given invocation name is badly formatted."]
-        #[doc = " - If no field mask was given."]
-        pub async fn export_invocation(
-            &mut self,
-            request: impl tonic::IntoRequest<super::ExportInvocationRequest>,
-        ) -> Result<tonic::Response<super::ExportInvocationResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
-                )
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/google.devtools.resultstore.v2.ResultStoreDownload/ExportInvocation",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -2520,7 +2609,11 @@ pub mod result_store_download_client {
 /// Request object for GetFile
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetFileRequest {
-    /// This corresponds to the uri field in the File message.
+    /// This corresponds to the uri field in the File message: for an obfuscated
+    /// File.uri like
+    /// CglidWlsZC5sb2cSJDI3YmI5ZWQxLTVjYzEtNGFlNi1iMWRkLTVlODY0YWEzYmE2ZQ, the
+    /// value here should be
+    /// files/CglidWlsZC5sb2cSJDI3YmI5ZWQxLTVjYzEtNGFlNi1iMWRkLTVlODY0YWEzYmE2ZQ
     #[prost(string, tag = "1")]
     pub uri: ::prost::alloc::string::String,
     /// The offset for the first byte to return in the read, relative to the start
@@ -2555,7 +2648,11 @@ pub struct GetFileResponse {
 /// Request object for GetFileTail
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetFileTailRequest {
-    /// This corresponds to the uri field in the File message.
+    /// This corresponds to the uri field in the File message: for an obfuscated
+    /// File.uri like
+    /// CglidWlsZC5sb2cSJDI3YmI5ZWQxLTVjYzEtNGFlNi1iMWRkLTVlODY0YWEzYmE2ZQ, the
+    /// value here should be
+    /// files/CglidWlsZC5sb2cSJDI3YmI5ZWQxLTVjYzEtNGFlNi1iMWRkLTVlODY0YWEzYmE2ZQ
     #[prost(string, tag = "1")]
     pub uri: ::prost::alloc::string::String,
     /// The offset for the first byte to return in the read, relative to the end
@@ -2720,8 +2817,9 @@ pub struct CreateInvocationRequest {
     /// are allowed too.
     #[prost(string, tag = "2")]
     pub invocation_id: ::prost::alloc::string::String,
-    /// Required. The invocation to create.  Its name field will be ignored, since the name
-    /// will be derived from the id field above and assigned by the server.
+    /// Required. The invocation to create.  Its name field will be ignored, since
+    /// the name will be derived from the id field above and assigned by the
+    /// server.
     #[prost(message, optional, tag = "3")]
     pub invocation: ::core::option::Option<Invocation>,
     /// This is a token to authorize upload access to this invocation. It must be
@@ -2885,8 +2983,8 @@ pub struct CreateTargetRequest {
     /// long except for the reserved id '-'.
     #[prost(string, tag = "3")]
     pub target_id: ::prost::alloc::string::String,
-    /// Required. The target to create.  Its name field will be ignored, since the name will
-    /// be derived from the id field above and assigned by the server.
+    /// Required. The target to create.  Its name field will be ignored, since the
+    /// name will be derived from the id field above and assigned by the server.
     #[prost(message, optional, tag = "4")]
     pub target: ::core::option::Option<Target>,
     /// This is a token to authorize access to this invocation. It must be set to
@@ -2974,8 +3072,8 @@ pub struct CreateConfiguredTargetRequest {
     /// request ID.  Restricted to 36 Unicode characters.
     #[prost(string, tag = "1")]
     pub request_id: ::prost::alloc::string::String,
-    /// Required. The name of the parent target in which the configured target is created.
-    /// Its format must be:
+    /// Required. The name of the parent target in which the configured target is
+    /// created. Its format must be:
     /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}
     #[prost(string, tag = "2")]
     pub parent: ::prost::alloc::string::String,
@@ -2983,8 +3081,9 @@ pub struct CreateConfiguredTargetRequest {
     /// Configuration under this Invocation. Cannot be the reserved id '-'.
     #[prost(string, tag = "3")]
     pub config_id: ::prost::alloc::string::String,
-    /// Required. The configured target to create. Its name field will be ignored, since the
-    /// name will be derived from the id field above and assigned by the server.
+    /// Required. The configured target to create. Its name field will be ignored,
+    /// since the name will be derived from the id field above and assigned by the
+    /// server.
     #[prost(message, optional, tag = "4")]
     pub configured_target: ::core::option::Option<ConfiguredTarget>,
     /// This is a token to authorize access to this invocation. It must be set to
@@ -3072,13 +3171,13 @@ pub struct CreateActionRequest {
     /// request ID.  Restricted to 36 Unicode characters.
     #[prost(string, tag = "1")]
     pub request_id: ::prost::alloc::string::String,
-    /// Required. The name of the parent configured target in which the action is created.
-    /// Its format must be:
+    /// Required. The name of the parent configured target in which the action is
+    /// created. Its format must be:
     /// invocations/${INVOCATION_ID}/targets/${url_encode(TARGET_ID)}/configuredTargets/${CONFIG_ID}
     #[prost(string, tag = "2")]
     pub parent: ::prost::alloc::string::String,
-    /// The action identifier. It can be any string up to 512 Unicode characters
-    /// long, except for the reserved id '-'.
+    /// The action identifier. It can be any string of up to 512 alphanumeric
+    /// characters \[a-zA-Z_-\], except for the reserved id '-'.
     ///
     /// Recommended IDs for Test Actions:
     /// "test": For a single test action.
@@ -3155,18 +3254,19 @@ pub struct CreateConfigurationRequest {
     /// request ID.  Restricted to 36 Unicode characters.
     #[prost(string, tag = "1")]
     pub request_id: ::prost::alloc::string::String,
-    /// Required. The name of the parent invocation in which the configuration is created.
-    /// Its format must be invocations/${INVOCATION_ID}
+    /// Required. The name of the parent invocation in which the configuration is
+    /// created. Its format must be invocations/${INVOCATION_ID}
     #[prost(string, tag = "2")]
     pub parent: ::prost::alloc::string::String,
-    /// The configuration identifier. It can be any string up to 256 Unicode
-    /// characters long. The configuration ID of "default" should be preferred for
-    /// the default configuration in a single-config invocation. Cannot be the
-    /// reserved id '-'.
+    /// The configuration identifier.  It can be any string of up to 512
+    /// alphanumeric characters \[a-zA-Z_-\], except for the reserved id '-'. The
+    /// configuration ID of "default" should be preferred for the default
+    /// configuration in a single-config invocation.
     #[prost(string, tag = "3")]
     pub config_id: ::prost::alloc::string::String,
-    /// Required. The configuration to create. Its name field will be ignored, since the name
-    /// will be derived from the id field above and assigned by the server.
+    /// Required. The configuration to create. Its name field will be ignored,
+    /// since the name will be derived from the id field above and assigned by the
+    /// server.
     #[prost(message, optional, tag = "4")]
     pub configuration: ::core::option::Option<Configuration>,
     /// This is a token to authorize access to this invocation. It must be set to
@@ -3204,16 +3304,16 @@ pub struct CreateFileSetRequest {
     /// request ID.  Restricted to 36 Unicode characters.
     #[prost(string, tag = "1")]
     pub request_id: ::prost::alloc::string::String,
-    /// Required. The name of the parent invocation in which the file set is created.
-    /// Its format must be invocations/${INVOCATION_ID}
+    /// Required. The name of the parent invocation in which the file set is
+    /// created. Its format must be invocations/${INVOCATION_ID}
     #[prost(string, tag = "2")]
     pub parent: ::prost::alloc::string::String,
-    /// The file set identifier. It can be any string up to 256 Unicode characters
-    /// long.
+    /// The file set identifier.  It can be any string of up to 512 alphanumeric
+    /// characters \[a-zA-Z_-\], except for the reserved id '-'.
     #[prost(string, tag = "3")]
     pub file_set_id: ::prost::alloc::string::String,
-    /// Required. The file set to create. Its name field will be ignored, since the name will
-    /// be derived from the id field above and assigned by the server.
+    /// Required. The file set to create. Its name field will be ignored, since the
+    /// name will be derived from the id field above and assigned by the server.
     #[prost(message, optional, tag = "4")]
     pub file_set: ::core::option::Option<FileSet>,
     /// This is a token to authorize access to this invocation. It must be set to
@@ -3274,20 +3374,21 @@ pub struct UploadBatchRequest {
     /// The name format must be: invocations/${INVOCATION_ID}
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Required. A UUID that must match the value provided in CreateInvocationRequest.
+    /// Required. A UUID that must match the value provided in
+    /// CreateInvocationRequest.
     #[prost(string, tag = "2")]
     pub authorization_token: ::prost::alloc::string::String,
-    /// Required. The token of this batch, that will be committed in this UploadBatchRequest.
-    /// If this matches the previously uploaded resume_token, then this request
-    /// will silently do nothing.
-    /// See CreateInvocationRequest.initial_resume_token for more information.
-    /// Must be web safe Base64 encoded bytes.
+    /// Required. The token of this batch, that will be committed in this
+    /// UploadBatchRequest. If this matches the previously uploaded resume_token,
+    /// then this request will silently do nothing. See
+    /// CreateInvocationRequest.initial_resume_token for more information. Must be
+    /// web safe Base64 encoded bytes.
     #[prost(string, tag = "3")]
     pub next_resume_token: ::prost::alloc::string::String,
-    /// Required. The token of the previous batch that was committed in a UploadBatchRequest.
-    /// This will be checked after next_resume_token match is checked. If this does
-    /// not match the previously uploaded resume_token, a 409 Conflict (HTTPS) or
-    /// ABORTED (gRPC ) error code indicating a concurrency
+    /// Required. The token of the previous batch that was committed in a
+    /// UploadBatchRequest. This will be checked after next_resume_token match is
+    /// checked. If this does not match the previously uploaded resume_token, a 409
+    /// Conflict (HTTPS) or ABORTED (gRPC ) error code indicating a concurrency
     /// failure will be returned, and that the user should call
     /// GetInvocationUploadMetadata to fetch the current resume_token to
     /// reconstruct the state of the upload to resume it.
@@ -3437,7 +3538,8 @@ pub struct GetInvocationUploadMetadataRequest {
     /// The name format must be: invocations/${INVOCATION_ID}/uploadMetadata
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// Required. A UUID that must match the value provided in CreateInvocationRequest.
+    /// Required. A UUID that must match the value provided in
+    /// CreateInvocationRequest.
     #[prost(string, tag = "2")]
     pub authorization_token: ::prost::alloc::string::String,
 }

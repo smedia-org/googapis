@@ -356,7 +356,7 @@ pub struct OperationMetadata {
 pub mod rapid_migration_assessment_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    #[doc = " Rapid Migration Assessment service"]
+    #[doc = " Service describing handlers for resources."]
     #[derive(Debug, Clone)]
     pub struct RapidMigrationAssessmentClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -509,6 +509,7 @@ pub mod rapid_migration_assessment_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Deletes a single Collector - changes state of collector to \"Deleting\"."]
+        #[doc = " Background jobs does final deletion thorugh producer api."]
         pub async fn delete_collector(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteCollectorRequest>,

@@ -1922,3 +1922,56 @@ pub mod firestore_client {
         }
     }
 }
+/// A message signifying an event that cannot be delivered to Cloud Functions
+/// from Firestore using [Cloud Firestore triggers 1st
+/// gen](<https://cloud.google.com/functions/docs/calling/cloud-firestore>)
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UndeliverableFirstGenEvent {
+    /// Error message for events being undeliverable.
+    #[prost(string, tag = "1")]
+    pub message: ::prost::alloc::string::String,
+    /// Reason for events being undeliverable.
+    #[prost(enumeration = "undeliverable_first_gen_event::Reason", tag = "2")]
+    pub reason: i32,
+    /// The resource name of the changed document, in the format of
+    /// `projects/{projectId}/databases/{databaseId}/documents/{document_path}`.
+    #[prost(string, tag = "3")]
+    pub document_name: ::prost::alloc::string::String,
+    /// The type of the document change.
+    #[prost(
+        enumeration = "undeliverable_first_gen_event::DocumentChangeType",
+        tag = "4"
+    )]
+    pub document_change_type: i32,
+    /// The names of the functions that were supposed to be triggered.
+    #[prost(string, repeated, tag = "5")]
+    pub function_name: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The commit time of triggered write operation.
+    #[prost(message, optional, tag = "6")]
+    pub triggered_time: ::core::option::Option<::prost_types::Timestamp>,
+}
+/// Nested message and enum types in `UndeliverableFirstGenEvent`.
+pub mod undeliverable_first_gen_event {
+    /// Reason for events being undeliverable.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Reason {
+        /// Unspecified.
+        Unspecified = 0,
+        /// Exceeding maximum event size limit
+        ExceedingSizeLimit = 1,
+    }
+    /// Document change type.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DocumentChangeType {
+        /// Unspecified.
+        Unspecified = 0,
+        /// Represent creation operation.
+        Create = 1,
+        /// Represent delete operation.
+        Delete = 2,
+        /// Represent update operation.
+        Update = 3,
+    }
+}

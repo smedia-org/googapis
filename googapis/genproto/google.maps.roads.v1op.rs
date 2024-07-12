@@ -78,6 +78,8 @@ pub enum TravelMode {
 pub mod roads_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
+    #[doc = " The Roads API maps one or more GPS coordinates to the geometry of the road"]
+    #[doc = " and determines the speed limit along road segments."]
     #[derive(Debug, Clone)]
     pub struct RoadsServiceClient<T> {
         inner: tonic::client::Grpc<T>,

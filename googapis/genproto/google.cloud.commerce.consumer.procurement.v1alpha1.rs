@@ -16,7 +16,6 @@ pub struct Order {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Required. The user-specified name of the order.
-    /// Must be unique within a billing account.
     #[prost(string, tag = "10")]
     pub display_name: ::prost::alloc::string::String,
     /// Output only. The items being purchased.
@@ -50,9 +49,10 @@ pub struct LineItem {
     /// a change.
     #[prost(message, optional, tag = "3")]
     pub pending_change: ::core::option::Option<LineItemChange>,
-    /// Output only. Changes made on the item that are not pending anymore which might be
-    /// because they already took effect, were reverted by the customer, or were
-    /// rejected by the partner. No more operations are allowed on these changes.
+    /// Output only. Changes made on the item that are not pending anymore which
+    /// might be because they already took effect, were reverted by the customer,
+    /// or were rejected by the partner. No more operations are allowed on these
+    /// changes.
     #[prost(message, repeated, tag = "4")]
     pub change_history: ::prost::alloc::vec::Vec<LineItemChange>,
 }
@@ -81,8 +81,8 @@ pub struct LineItemChange {
     /// denied or canceled in the case of `REJECTED` and `CANCELED` states.
     #[prost(string, tag = "6")]
     pub state_reason: ::prost::alloc::string::String,
-    /// Output only. Predefined enum types for why this line item change is in current state.
-    /// For example, a line item change's state could be
+    /// Output only. Predefined enum types for why this line item change is in
+    /// current state. For example, a line item change's state could be
     /// `LINE_ITEM_CHANGE_STATE_COMPLETED` because of end-of-term expiration,
     /// immediate cancellation initiated by the user, or system-initiated
     /// cancellation.
@@ -219,7 +219,8 @@ pub enum LineItemChangeStateReasonType {
     /// Change is in current state due to system-initiated cancellation.
     SystemCancelled = 3,
 }
-/// Request message for \[ConsumerProcurementService.PlaceOrder][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.PlaceOrder\].
+/// Request message for
+/// \[ConsumerProcurementService.PlaceOrder][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.PlaceOrder\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PlaceOrderRequest {
     /// Required. The resource name of the parent resource.
@@ -227,10 +228,10 @@ pub struct PlaceOrderRequest {
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Required. The user-specified name of the order being placed.
-    /// Must be unique within a billing account.
     #[prost(string, tag = "6")]
     pub display_name: ::prost::alloc::string::String,
-    /// Optional. Places order for offer. Required when an offer-based order is being placed.
+    /// Optional. Places order for offer. Required when an offer-based order is
+    /// being placed.
     #[prost(message, repeated, tag = "10")]
     pub line_item_info: ::prost::alloc::vec::Vec<LineItemInfo>,
     /// Optional. A unique identifier for this request.
@@ -246,14 +247,16 @@ pub struct PlaceOrderRequest {
 /// \[ConsumerProcurementService.PlaceOrder][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.PlaceOrder\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PlaceOrderMetadata {}
-/// Request message for \[ConsumerProcurementService.GetOrder][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.GetOrder\]
+/// Request message for
+/// \[ConsumerProcurementService.GetOrder][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.GetOrder\]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetOrderRequest {
     /// Required. The name of the order to retrieve.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
-/// Request message for \[ConsumerProcurementService.ListOrders][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.ListOrders\].
+/// Request message for
+/// \[ConsumerProcurementService.ListOrders][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.ListOrders\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListOrdersRequest {
     /// Required. The parent resource to query for orders.
@@ -286,7 +289,8 @@ pub struct ListOrdersRequest {
     #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
 }
-/// Response message for \[ConsumerProcurementService.ListOrders][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.ListOrders\].
+/// Response message for
+/// \[ConsumerProcurementService.ListOrders][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService.ListOrders\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListOrdersResponse {
     /// The list of orders in this response.
@@ -305,9 +309,10 @@ pub mod consumer_procurement_service_client {
     #[doc = ""]
     #[doc = ""]
     #[doc = " When purchases are made, the"]
-    #[doc = " [ConsumerProcurementService][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService] programs the appropriate backends, including"]
-    #[doc = " both Google's own infrastructure, as well as third-party systems, and to"]
-    #[doc = " enable billing setup for charging for the procured item."]
+    #[doc = " [ConsumerProcurementService][google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService]"]
+    #[doc = " programs the appropriate backends, including both Google's own"]
+    #[doc = " infrastructure, as well as third-party systems, and to enable billing setup"]
+    #[doc = " for charging for the procured item."]
     #[doc = ""]
     #[derive(Debug, Clone)]
     pub struct ConsumerProcurementServiceClient<T> {
@@ -354,12 +359,17 @@ pub mod consumer_procurement_service_client {
             self.inner = self.inner.accept_gzip();
             self
         }
-        #[doc = " Creates a new [Order][google.cloud.commerce.consumer.procurement.v1alpha1.Order]."]
+        #[doc = " Creates a new"]
+        #[doc = " [Order][google.cloud.commerce.consumer.procurement.v1alpha1.Order]."]
+        #[doc = ""]
+        #[doc = " This API only supports GCP spend-based committed use"]
+        #[doc = " discounts specified by GCP documentation."]
         #[doc = ""]
         #[doc = " The returned long-running operation is in-progress until the backend"]
         #[doc = " completes the creation of the resource. Once completed, the order is"]
-        #[doc = " in [OrderState.ORDER_STATE_ACTIVE][google.cloud.commerce.consumer.procurement.v1alpha1.OrderState.ORDER_STATE_ACTIVE]. In case of failure, the"]
-        #[doc = " order resource will be removed."]
+        #[doc = " in"]
+        #[doc = " [OrderState.ORDER_STATE_ACTIVE][google.cloud.commerce.consumer.procurement.v1alpha1.OrderState.ORDER_STATE_ACTIVE]."]
+        #[doc = " In case of failure, the order resource will be removed."]
         pub async fn place_order(
             &mut self,
             request: impl tonic::IntoRequest<super::PlaceOrderRequest>,
@@ -377,7 +387,9 @@ pub mod consumer_procurement_service_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService/PlaceOrder") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Returns the requested [Order][google.cloud.commerce.consumer.procurement.v1alpha1.Order] resource."]
+        #[doc = " Returns the requested"]
+        #[doc = " [Order][google.cloud.commerce.consumer.procurement.v1alpha1.Order]"]
+        #[doc = " resource."]
         pub async fn get_order(
             &mut self,
             request: impl tonic::IntoRequest<super::GetOrderRequest>,
@@ -392,8 +404,9 @@ pub mod consumer_procurement_service_client {
             let path = http :: uri :: PathAndQuery :: from_static ("/google.cloud.commerce.consumer.procurement.v1alpha1.ConsumerProcurementService/GetOrder") ;
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " Lists [Order][google.cloud.commerce.consumer.procurement.v1alpha1.Order] resources that the user has access to, within the"]
-        #[doc = " scope of the parent resource."]
+        #[doc = " Lists [Order][google.cloud.commerce.consumer.procurement.v1alpha1.Order]"]
+        #[doc = " resources that the user has access to, within the scope of the parent"]
+        #[doc = " resource."]
         pub async fn list_orders(
             &mut self,
             request: impl tonic::IntoRequest<super::ListOrdersRequest>,

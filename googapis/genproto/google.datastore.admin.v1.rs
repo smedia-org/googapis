@@ -10,10 +10,15 @@ pub struct Index {
     /// Required. The entity kind to which this index applies.
     #[prost(string, tag = "4")]
     pub kind: ::prost::alloc::string::String,
-    /// Required. The index's ancestor mode.  Must not be ANCESTOR_MODE_UNSPECIFIED.
+    /// Required. The index's ancestor mode.  Must not be
+    /// ANCESTOR_MODE_UNSPECIFIED.
     #[prost(enumeration = "index::AncestorMode", tag = "5")]
     pub ancestor: i32,
     /// Required. An ordered sequence of property names and their index attributes.
+    ///
+    /// Requires:
+    ///
+    /// * A maximum of 100 properties.
     #[prost(message, repeated, tag = "6")]
     pub properties: ::prost::alloc::vec::Vec<index::IndexedProperty>,
     /// Output only. The state of the index.
@@ -28,7 +33,8 @@ pub mod index {
         /// Required. The property name to index.
         #[prost(string, tag = "1")]
         pub name: ::prost::alloc::string::String,
-        /// Required. The indexed property's direction.  Must not be DIRECTION_UNSPECIFIED.
+        /// Required. The indexed property's direction.  Must not be
+        /// DIRECTION_UNSPECIFIED.
         #[prost(enumeration = "Direction", tag = "2")]
         pub direction: i32,
     }
@@ -273,8 +279,8 @@ pub struct ExportEntitiesRequest {
     ///
     /// The resulting files will be nested deeper than the specified URL prefix.
     /// The final output URL will be provided in the
-    /// \[google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url\] field. That
-    /// value should be used for subsequent ImportEntities operations.
+    /// \[google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url\]
+    /// field. That value should be used for subsequent ImportEntities operations.
     ///
     /// By nesting the data files deeper, the same Cloud Storage bucket can be used
     /// in multiple ExportEntities operations without conflict.
@@ -292,8 +298,9 @@ pub struct ImportEntitiesRequest {
     #[prost(map = "string, string", tag = "2")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
-    /// Required. The full resource URL of the external storage location. Currently, only
-    /// Google Cloud Storage is supported. So input_url should be of the form:
+    /// Required. The full resource URL of the external storage location.
+    /// Currently, only Google Cloud Storage is supported. So input_url should be
+    /// of the form:
     /// `gs://BUCKET_NAME\[/NAMESPACE_PATH\]/OVERALL_EXPORT_METADATA_FILE`, where
     /// `BUCKET_NAME` is the name of the Cloud Storage bucket, `NAMESPACE_PATH` is
     /// an optional Cloud Storage namespace path (this is not a Cloud Datastore
@@ -364,7 +371,9 @@ pub struct ImportEntitiesMetadata {
     #[prost(message, optional, tag = "4")]
     pub entity_filter: ::core::option::Option<EntityFilter>,
     /// The location of the import metadata file. This will be the same value as
-    /// the \[google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url\] field.
+    /// the
+    /// \[google.datastore.admin.v1.ExportEntitiesResponse.output_url][google.datastore.admin.v1.ExportEntitiesResponse.output_url\]
+    /// field.
     #[prost(string, tag = "5")]
     pub input_url: ::prost::alloc::string::String,
 }
@@ -425,7 +434,8 @@ pub struct DeleteIndexRequest {
     #[prost(string, tag = "3")]
     pub index_id: ::prost::alloc::string::String,
 }
-/// The request for \[google.datastore.admin.v1.DatastoreAdmin.GetIndex][google.datastore.admin.v1.DatastoreAdmin.GetIndex\].
+/// The request for
+/// \[google.datastore.admin.v1.DatastoreAdmin.GetIndex][google.datastore.admin.v1.DatastoreAdmin.GetIndex\].
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetIndexRequest {
     /// Project ID against which to make the request.
@@ -516,14 +526,10 @@ pub mod datastore_admin_client {
     use tonic::codegen::*;
     #[doc = " Google Cloud Datastore Admin API"]
     #[doc = ""]
-    #[doc = ""]
     #[doc = " The Datastore Admin API provides several admin services for Cloud Datastore."]
     #[doc = ""]
-    #[doc = " -----------------------------------------------------------------------------"]
-    #[doc = " ## Concepts"]
-    #[doc = ""]
-    #[doc = " Project, namespace, kind, and entity as defined in the Google Cloud Datastore"]
-    #[doc = " API."]
+    #[doc = " Concepts: Project, namespace, kind, and entity as defined in the Google Cloud"]
+    #[doc = " Datastore API."]
     #[doc = ""]
     #[doc = " Operation: An Operation represents work being performed in the background."]
     #[doc = ""]
@@ -531,50 +537,40 @@ pub mod datastore_admin_client {
     #[doc = " specified as a combination of kinds and namespaces (either or both of which"]
     #[doc = " may be all)."]
     #[doc = ""]
-    #[doc = " -----------------------------------------------------------------------------"]
-    #[doc = " ## Services"]
+    #[doc = " Export/Import Service:"]
     #[doc = ""]
-    #[doc = " # Export/Import"]
-    #[doc = ""]
-    #[doc = " The Export/Import service provides the ability to copy all or a subset of"]
+    #[doc = " - The Export/Import service provides the ability to copy all or a subset of"]
     #[doc = " entities to/from Google Cloud Storage."]
-    #[doc = ""]
-    #[doc = " Exported data may be imported into Cloud Datastore for any Google Cloud"]
+    #[doc = " - Exported data may be imported into Cloud Datastore for any Google Cloud"]
     #[doc = " Platform project. It is not restricted to the export source project. It is"]
     #[doc = " possible to export from one project and then import into another."]
-    #[doc = ""]
-    #[doc = " Exported data can also be loaded into Google BigQuery for analysis."]
-    #[doc = ""]
-    #[doc = " Exports and imports are performed asynchronously. An Operation resource is"]
+    #[doc = " - Exported data can also be loaded into Google BigQuery for analysis."]
+    #[doc = " - Exports and imports are performed asynchronously. An Operation resource is"]
     #[doc = " created for each export/import. The state (including any errors encountered)"]
     #[doc = " of the export/import may be queried via the Operation resource."]
     #[doc = ""]
-    #[doc = " # Index"]
+    #[doc = " Index Service:"]
     #[doc = ""]
-    #[doc = " The index service manages Cloud Datastore composite indexes."]
-    #[doc = ""]
-    #[doc = " Index creation and deletion are performed asynchronously."]
+    #[doc = " - The index service manages Cloud Datastore composite indexes."]
+    #[doc = " - Index creation and deletion are performed asynchronously."]
     #[doc = " An Operation resource is created for each such asynchronous operation."]
     #[doc = " The state of the operation (including any errors encountered)"]
     #[doc = " may be queried via the Operation resource."]
     #[doc = ""]
-    #[doc = " # Operation"]
+    #[doc = " Operation Service:"]
     #[doc = ""]
-    #[doc = " The Operations collection provides a record of actions performed for the"]
+    #[doc = " - The Operations collection provides a record of actions performed for the"]
     #[doc = " specified project (including any operations in progress). Operations are not"]
     #[doc = " created directly but through calls on other collections or resources."]
-    #[doc = ""]
-    #[doc = " An operation that is not yet done may be cancelled. The request to cancel is"]
-    #[doc = " asynchronous and the operation may continue to run for some time after the"]
+    #[doc = " - An operation that is not yet done may be cancelled. The request to cancel"]
+    #[doc = " is asynchronous and the operation may continue to run for some time after the"]
     #[doc = " request to cancel is made."]
-    #[doc = ""]
-    #[doc = " An operation that is done may be deleted so that it is no longer listed as"]
+    #[doc = " - An operation that is done may be deleted so that it is no longer listed as"]
     #[doc = " part of the Operation collection."]
-    #[doc = ""]
-    #[doc = " ListOperations returns all pending operations, but not completed operations."]
-    #[doc = ""]
-    #[doc = " Operations are created by service DatastoreAdmin,"]
-    #[doc = " but are accessed via service google.longrunning.Operations."]
+    #[doc = " - ListOperations returns all pending operations, but not completed"]
+    #[doc = " operations."]
+    #[doc = " - Operations are created by service DatastoreAdmin, but are accessed via"]
+    #[doc = " service google.longrunning.Operations."]
     #[derive(Debug, Clone)]
     pub struct DatastoreAdminClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -673,9 +669,9 @@ pub mod datastore_admin_client {
         }
         #[doc = " Creates the specified index."]
         #[doc = " A newly created index's initial state is `CREATING`. On completion of the"]
-        #[doc = " returned [google.longrunning.Operation][google.longrunning.Operation], the state will be `READY`."]
-        #[doc = " If the index already exists, the call will return an `ALREADY_EXISTS`"]
-        #[doc = " status."]
+        #[doc = " returned [google.longrunning.Operation][google.longrunning.Operation], the"]
+        #[doc = " state will be `READY`. If the index already exists, the call will return an"]
+        #[doc = " `ALREADY_EXISTS` status."]
         #[doc = ""]
         #[doc = " During index creation, the process could result in an error, in which"]
         #[doc = " case the index will move to the `ERROR` state. The process can be recovered"]
@@ -708,7 +704,8 @@ pub mod datastore_admin_client {
         #[doc = " An index can only be deleted if it is in a `READY` or `ERROR` state. On"]
         #[doc = " successful execution of the request, the index will be in a `DELETING`"]
         #[doc = " [state][google.datastore.admin.v1.Index.State]. And on completion of the"]
-        #[doc = " returned [google.longrunning.Operation][google.longrunning.Operation], the index will be removed."]
+        #[doc = " returned [google.longrunning.Operation][google.longrunning.Operation], the"]
+        #[doc = " index will be removed."]
         #[doc = ""]
         #[doc = " During index deletion, the process could result in an error, in which"]
         #[doc = " case the index will move to the `ERROR` state. The process can be recovered"]

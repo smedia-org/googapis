@@ -120,6 +120,23 @@ pub mod inventory {
         /// The version of the package.
         #[prost(string, tag = "3")]
         pub version: ::prost::alloc::string::String,
+        /// Optional. The source of the package.
+        #[prost(message, optional, tag = "4")]
+        pub source: ::core::option::Option<versioned_package::Source>,
+    }
+    /// Nested message and enum types in `VersionedPackage`.
+    pub mod versioned_package {
+        /// Information related to the actuall source of the versioned package. This
+        /// includes source package name and version if available.
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct Source {
+            /// Required. The name of the source package.
+            #[prost(string, tag = "1")]
+            pub name: ::prost::alloc::string::String,
+            /// Optional. The version of the source package.
+            #[prost(string, tag = "2")]
+            pub version: ::prost::alloc::string::String,
+        }
     }
     /// Details related to a Zypper Patch.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -377,8 +394,8 @@ pub mod os_policy {
             /// Specifies a file available via some URI.
             #[derive(Clone, PartialEq, ::prost::Message)]
             pub struct Remote {
-                /// Required. URI from which to fetch the object. It should contain both the
-                /// protocol and path following the format `{protocol}://{location}`.
+                /// Required. URI from which to fetch the object. It should contain both
+                /// the protocol and path following the format `{protocol}://{location}`.
                 #[prost(string, tag = "1")]
                 pub uri: ::prost::alloc::string::String,
                 /// SHA256 checksum of the remote file.
@@ -415,8 +432,8 @@ pub mod os_policy {
         /// A resource that manages a system package.
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct PackageResource {
-            /// Required. The desired state the agent should maintain for this package. The
-            /// default is to ensure the package is installed.
+            /// Required. The desired state the agent should maintain for this package.
+            /// The default is to ensure the package is installed.
             #[prost(enumeration = "package_resource::DesiredState", tag = "1")]
             pub desired_state: i32,
             /// A system package.
@@ -557,8 +574,8 @@ pub mod os_policy {
             /// /etc/apt/sources.list.d/google_osconfig.list.
             #[derive(Clone, PartialEq, ::prost::Message)]
             pub struct AptRepository {
-                /// Required. Type of archive files in this repository. The default behavior is
-                /// DEB.
+                /// Required. Type of archive files in this repository. The default
+                /// behavior is DEB.
                 #[prost(enumeration = "apt_repository::ArchiveType", tag = "1")]
                 pub archive_type: i32,
                 /// Required. URI for this repository.
@@ -567,8 +584,8 @@ pub mod os_policy {
                 /// Required. Distribution of this repository.
                 #[prost(string, tag = "3")]
                 pub distribution: ::prost::alloc::string::String,
-                /// Required. List of components for this repository. Must contain at least one
-                /// item.
+                /// Required. List of components for this repository. Must contain at
+                /// least one item.
                 #[prost(string, repeated, tag = "4")]
                 pub components: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
                 /// URI of the key file for this repository. The agent maintains a
@@ -597,8 +614,8 @@ pub mod os_policy {
             /// `/etc/yum.repos.d/google_osconfig.repo`.
             #[derive(Clone, PartialEq, ::prost::Message)]
             pub struct YumRepository {
-                /// Required. A one word, unique name for this repository. This is  the `repo
-                /// id` in the yum config file and also the `display_name` if
+                /// Required. A one word, unique name for this repository. This is  the
+                /// `repo id` in the yum config file and also the `display_name` if
                 /// `display_name` is omitted. This id is also used as the unique
                 /// identifier when checking for resource conflicts.
                 #[prost(string, tag = "1")]
@@ -618,8 +635,8 @@ pub mod os_policy {
             /// `/etc/zypp/repos.d/google_osconfig.repo`.
             #[derive(Clone, PartialEq, ::prost::Message)]
             pub struct ZypperRepository {
-                /// Required. A one word, unique name for this repository. This is the `repo
-                /// id` in the zypper config file and also the `display_name` if
+                /// Required. A one word, unique name for this repository. This is the
+                /// `repo id` in the zypper config file and also the `display_name` if
                 /// `display_name` is omitted. This id is also used as the unique
                 /// identifier when checking for GuestPolicy conflicts.
                 #[prost(string, tag = "1")]
@@ -666,10 +683,10 @@ pub mod os_policy {
         /// A resource that contains custom validation and enforcement steps.
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct ExecResource {
-            /// Required. What to run to validate this resource is in the desired state.
-            /// An exit code of 100 indicates "in desired state", and exit code of 101
-            /// indicates "not in desired state". Any other exit code indicates a
-            /// failure running validate.
+            /// Required. What to run to validate this resource is in the desired
+            /// state. An exit code of 100 indicates "in desired state", and exit code
+            /// of 101 indicates "not in desired state". Any other exit code indicates
+            /// a failure running validate.
             #[prost(message, optional, tag = "1")]
             pub validate: ::core::option::Option<exec_resource::Exec>,
             /// What to run to bring this resource into the desired state.
@@ -1070,20 +1087,22 @@ pub struct ExecStepConfig {
 }
 /// Nested message and enum types in `ExecStepConfig`.
 pub mod exec_step_config {
-    /// The interpreter used to execute the a file.
+    /// The interpreter used to run the file.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum Interpreter {
-        /// Deprecated, defaults to NONE for compatibility reasons.
+        /// If the interpreter is not specified, the value defaults to `NONE`.
         Unspecified = 0,
-        /// Invalid for a Windows ExecStepConfig. For a Linux ExecStepConfig, the
-        /// interpreter will be parsed from the shebang line of the script if
-        /// unspecified.
+        /// Indicates that the file is run as follows on each operating system:
+        /// + For Linux VMs, the file is ran as an executable and the interpreter
+        /// might be parsed from the [shebang
+        /// line](<https://wikipedia.org/wiki/Shebang_(Unix>)) of the file.
+        /// + For Windows VM, this value is not supported.
         None = 3,
-        /// Indicates that the script will be run with /bin/sh on Linux and cmd
-        /// on windows.
+        /// Indicates that the file is run with `/bin/sh` on Linux and `cmd`
+        /// on Windows.
         Shell = 1,
-        /// Indicates that the file will be run with PowerShell.
+        /// Indicates that the file is run with PowerShell.
         Powershell = 2,
     }
     /// Location of the executable.
@@ -1244,7 +1263,8 @@ pub struct ExecStepTaskOutput {
     /// Required. The final state of the exec step.
     #[prost(enumeration = "exec_step_task_output::State", tag = "1")]
     pub state: i32,
-    /// Required. The exit code received from the script which ran as part of the exec step.
+    /// Required. The exit code received from the script which ran as part of the
+    /// exec step.
     #[prost(int32, tag = "2")]
     pub exit_code: i32,
 }
@@ -1438,9 +1458,9 @@ pub struct ReportTaskProgressRequest {
     ///
     /// Progress must include the appropriate message based on this enum as
     /// specified below:
-    /// APPLY_PATCHES = ApplyPatchesTaskProgress
-    /// EXEC_STEP = Progress not supported for this type.
-    /// APPLY_CONFIG_TASK = ApplyConfigTaskProgress
+    /// `APPLY_PATCHES` = ApplyPatchesTaskProgress
+    /// `EXEC_STEP` = Progress not supported for this type.
+    /// `APPLY_CONFIG_TASK` = ApplyConfigTaskProgress
     #[prost(enumeration = "TaskType", tag = "3")]
     pub task_type: i32,
     /// Intermediate progress of the current task.
@@ -1560,13 +1580,13 @@ pub struct ReportInventoryRequest {
     /// where the audience is 'osconfig.googleapis.com' and the format is 'full'.
     #[prost(string, tag = "1")]
     pub instance_id_token: ::prost::alloc::string::String,
-    /// Required. This is a client created checksum that should be generated based on the
-    /// contents of the reported inventory.  This will be used by the service to
-    /// determine if it has the latest version of inventory.
+    /// Required. This is a client created checksum that should be generated based
+    /// on the contents of the reported inventory.  This will be used by the
+    /// service to determine if it has the latest version of inventory.
     #[prost(string, tag = "2")]
     pub inventory_checksum: ::prost::alloc::string::String,
-    /// Optional. This is the details of the inventory.  Should only be provided if the
-    /// inventory has changed since the last report, or if instructed by the
+    /// Optional. This is the details of the inventory.  Should only be provided if
+    /// the inventory has changed since the last report, or if instructed by the
     /// service to provide full inventory.
     #[prost(message, optional, tag = "3")]
     pub inventory: ::core::option::Option<Inventory>,

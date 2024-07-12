@@ -71,6 +71,10 @@ pub struct Profile {
     #[prost(map = "string, string", tag = "6")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// Output only. Start time for the profile.
+    /// This output is only present in response from the ListProfiles method.
+    #[prost(message, optional, tag = "7")]
+    pub start_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Deployment contains the deployment identification information.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -103,6 +107,43 @@ pub struct Deployment {
     #[prost(map = "string, string", tag = "3")]
     pub labels:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+}
+/// ListProfilesRequest contains request parameters for listing profiles for
+/// deployments in projects which the user has permissions to view.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListProfilesRequest {
+    /// Required. The parent, which owns this collection of profiles.
+    /// Format: projects/{user_project_id}
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// The maximum number of items to return.
+    /// Default page_size is 1000.
+    /// Max limit is 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// The token to continue pagination and get profiles from a particular page.
+    /// When paginating, all other parameters provided to `ListProfiles` must match
+    /// the call that provided the page token.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+}
+/// ListProfileResponse contains the list of collected profiles for deployments
+/// in projects which the user has permissions to view.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListProfilesResponse {
+    /// List of profiles fetched.
+    #[prost(message, repeated, tag = "1")]
+    pub profiles: ::prost::alloc::vec::Vec<Profile>,
+    /// Token to receive the next page of results.
+    /// This field maybe empty if there are no more profiles to fetch.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+    /// Number of profiles that were skipped in the current page since they were
+    /// not able to be fetched successfully. This should typically be zero. A
+    /// non-zero value may indicate a transient failure, in which case if the
+    /// number is too high for your use case, the call may be retried.
+    #[prost(int32, tag = "3")]
+    pub skipped_profiles: i32,
 }
 /// ProfileType is type of profiling data.
 /// NOTE: the enumeration member names are used (in lowercase) as unique string
@@ -140,9 +181,8 @@ pub mod profiler_service_client {
     #[doc = " Manage the collection of continuous profiling data provided by profiling"]
     #[doc = " agents running in the cloud or by an offline provider of profiling data."]
     #[doc = ""]
-    #[doc = " General guidelines:"]
-    #[doc = " * Profiles for a single deployment must be created in ascending time order."]
-    #[doc = " * Profiles can be created in either online or offline mode, see below."]
+    #[doc = " __The APIs listed in this service are intended for use within our profiler"]
+    #[doc = " agents only.__"]
     #[derive(Debug, Clone)]
     pub struct ProfilerServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -190,6 +230,11 @@ pub mod profiler_service_client {
         }
         #[doc = " CreateProfile creates a new profile resource in the online mode."]
         #[doc = ""]
+        #[doc = " _Direct use of this API is discouraged, please use a [supported"]
+        #[doc = " profiler"]
+        #[doc = " agent](https://cloud.google.com/profiler/docs/about-profiler#profiling_agent)"]
+        #[doc = " instead for profile collection._"]
+        #[doc = ""]
         #[doc = " The server ensures that the new profiles are created at a constant rate per"]
         #[doc = " deployment, so the creation request may hang for some time until the next"]
         #[doc = " profile session is available."]
@@ -218,9 +263,14 @@ pub mod profiler_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
-        #[doc = " CreateOfflineProfile creates a new profile resource in the offline mode."]
-        #[doc = " The client provides the profile to create along with the profile bytes, the"]
-        #[doc = " server records it."]
+        #[doc = " CreateOfflineProfile creates a new profile resource in the offline"]
+        #[doc = " mode. The client provides the profile to create along with the profile"]
+        #[doc = " bytes, the server records it."]
+        #[doc = ""]
+        #[doc = " _Direct use of this API is discouraged, please use a [supported"]
+        #[doc = " profiler"]
+        #[doc = " agent](https://cloud.google.com/profiler/docs/about-profiler#profiling_agent)"]
+        #[doc = " instead for profile collection._"]
         pub async fn create_offline_profile(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateOfflineProfileRequest>,
@@ -241,6 +291,11 @@ pub mod profiler_service_client {
         #[doc = " created in the online mode. Updating the bytes for profiles created in the"]
         #[doc = " offline mode is currently not supported: the profile content must be"]
         #[doc = " provided at the time of the profile creation."]
+        #[doc = ""]
+        #[doc = " _Direct use of this API is discouraged, please use a [supported"]
+        #[doc = " profiler"]
+        #[doc = " agent](https://cloud.google.com/profiler/docs/about-profiler#profiling_agent)"]
+        #[doc = " instead for profile collection._"]
         pub async fn update_profile(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateProfileRequest>,
@@ -254,6 +309,77 @@ pub mod profiler_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.devtools.cloudprofiler.v2.ProfilerService/UpdateProfile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+    }
+}
+#[doc = r" Generated client implementations."]
+pub mod export_service_client {
+    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    use tonic::codegen::*;
+    #[doc = " Service allows existing Cloud Profiler customers to export their profile data"]
+    #[doc = " out of Google Cloud."]
+    #[derive(Debug, Clone)]
+    pub struct ExportServiceClient<T> {
+        inner: tonic::client::Grpc<T>,
+    }
+    impl<T> ExportServiceClient<T>
+    where
+        T: tonic::client::GrpcService<tonic::body::BoxBody>,
+        T::ResponseBody: Body + Send + 'static,
+        T::Error: Into<StdError>,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+    {
+        pub fn new(inner: T) -> Self {
+            let inner = tonic::client::Grpc::new(inner);
+            Self { inner }
+        }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> ExportServiceClient<InterceptedService<T, F>>
+        where
+            F: tonic::service::Interceptor,
+            T: tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            ExportServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
+        }
+        #[doc = " Lists profiles which have been collected so far and for which the caller"]
+        #[doc = " has permission to view."]
+        pub async fn list_profiles(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListProfilesRequest>,
+        ) -> Result<tonic::Response<super::ListProfilesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.devtools.cloudprofiler.v2.ExportService/ListProfiles",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

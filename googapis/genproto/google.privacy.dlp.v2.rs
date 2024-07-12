@@ -3,40 +3,51 @@
 pub struct InfoType {
     /// Name of the information type. Either a name of your choosing when
     /// creating a CustomInfoType, or one of the names listed
-    /// at <https://cloud.google.com/dlp/docs/infotypes-reference> when specifying
-    /// a built-in type.  When sending Cloud DLP results to Data Catalog, infoType
-    /// names should conform to the pattern `\[A-Za-z0-9$_-\]{1,64}`.
+    /// at
+    /// <https://cloud.google.com/sensitive-data-protection/docs/infotypes-reference>
+    /// when specifying a built-in type.  When sending Cloud DLP results to Data
+    /// Catalog, infoType names should conform to the pattern
+    /// `\[A-Za-z0-9$_-\]{1,64}`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Optional version name for this InfoType.
     #[prost(string, tag = "2")]
     pub version: ::prost::alloc::string::String,
+    /// Optional custom sensitivity for this InfoType.
+    /// This only applies to data profiling.
+    #[prost(message, optional, tag = "3")]
+    pub sensitivity_score: ::core::option::Option<SensitivityScore>,
 }
-/// Score is a summary of all elements in the data profile.
-/// A higher number means more sensitive.
+/// Score is calculated from of all elements in the data profile.
+/// A higher level means the data is more sensitive.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SensitivityScore {
-    /// The score applied to the resource.
+    /// The sensitivity score applied to the resource.
     #[prost(enumeration = "sensitivity_score::SensitivityScoreLevel", tag = "1")]
     pub score: i32,
 }
 /// Nested message and enum types in `SensitivityScore`.
 pub mod sensitivity_score {
-    /// Various score levels for resources.
+    /// Various sensitivity score levels for resources.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum SensitivityScoreLevel {
         /// Unused.
         SensitivityScoreUnspecified = 0,
-        /// No sensitive information detected. Limited access.
+        /// No sensitive information detected. The resource isn't publicly
+        /// accessible.
         SensitivityLow = 10,
-        /// Medium risk - PII, potentially sensitive data, or fields with free-text
-        /// data that are at higher risk of having intermittent sensitive data.
-        /// Consider limiting access.
+        /// Unable to determine sensitivity.
+        SensitivityUnknown = 12,
+        /// Medium risk. Contains personally identifiable information (PII),
+        /// potentially sensitive data, or fields with free-text data that are at a
+        /// higher risk of having intermittent sensitive data. Consider limiting
+        /// access.
         SensitivityModerate = 20,
-        /// High risk – SPII may be present. Exfiltration of data may lead to user
-        /// data loss. Re-identification of users may be possible. Consider limiting
-        /// usage and or removing SPII.
+        /// High risk. Sensitive personally identifiable information (SPII) can be
+        /// present. Exfiltration of data can lead to user data loss.
+        /// Re-identification of users might be possible. Consider limiting usage and
+        /// or removing SPII.
         SensitivityHigh = 30,
     }
 }
@@ -79,6 +90,14 @@ pub struct CustomInfoType {
     /// to be returned. It still can be used for rules matching.
     #[prost(enumeration = "custom_info_type::ExclusionType", tag = "8")]
     pub exclusion_type: i32,
+    /// Sensitivity for this CustomInfoType. If this CustomInfoType extends an
+    /// existing InfoType, the sensitivity here will take precedence over that of
+    /// the original InfoType. If unset for a CustomInfoType, it will default to
+    /// HIGH.
+    /// This only applies to data profiling.
+    #[prost(message, optional, tag = "9")]
+    pub sensitivity_score: ::core::option::Option<SensitivityScore>,
+    /// Type of custom detector.
     #[prost(oneof = "custom_info_type::Type", tags = "2, 3, 4, 5")]
     pub r#type: ::core::option::Option<custom_info_type::Type>,
 }
@@ -103,12 +122,13 @@ pub mod custom_info_type {
     /// Dictionary words containing a large number of characters that are not
     /// letters or digits may result in unexpected findings because such characters
     /// are treated as whitespace. The
-    /// \[limits\](<https://cloud.google.com/dlp/limits>) page contains details about
-    /// the size limits of dictionaries. For dictionaries that do not fit within
-    /// these constraints, consider using `LargeCustomDictionaryConfig` in the
-    /// `StoredInfoType` API.
+    /// \[limits\](<https://cloud.google.com/sensitive-data-protection/limits>) page
+    /// contains details about the size limits of dictionaries. For dictionaries
+    /// that do not fit within these constraints, consider using
+    /// `LargeCustomDictionaryConfig` in the `StoredInfoType` API.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Dictionary {
+        /// The potential places the data can be read from.
         #[prost(oneof = "dictionary::Source", tags = "1, 3")]
         pub source: ::core::option::Option<dictionary::Source>,
     }
@@ -123,6 +143,7 @@ pub mod custom_info_type {
             #[prost(string, repeated, tag = "1")]
             pub words: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
         }
+        /// The potential places the data can be read from.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Source {
             /// List of words or phrases to search for.
@@ -149,7 +170,7 @@ pub mod custom_info_type {
     }
     /// Message for detecting output from deidentification transformations
     /// such as
-    /// \[`CryptoReplaceFfxFpeConfig`\](<https://cloud.google.com/dlp/docs/reference/rest/v2/organizations.deidentifyTemplates#cryptoreplaceffxfpeconfig>).
+    /// \[`CryptoReplaceFfxFpeConfig`\](<https://cloud.google.com/sensitive-data-protection/docs/reference/rest/v2/organizations.deidentifyTemplates#cryptoreplaceffxfpeconfig>).
     /// These types of transformations are
     /// those that perform pseudonymization, thereby producing a "surrogate" as
     /// output. This should be used in conjunction with a field on the
@@ -163,6 +184,7 @@ pub mod custom_info_type {
     /// custom infoType.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct DetectionRule {
+        /// Type of hotword rule.
         #[prost(oneof = "detection_rule::Type", tags = "1")]
         pub r#type: ::core::option::Option<detection_rule::Type>,
     }
@@ -176,7 +198,7 @@ pub mod custom_info_type {
             /// if you want to modify the likelihood of an entire column of findngs,
             /// set this to 1. For more information, see
             /// [Hotword example: Set the match likelihood of a table column]
-            /// (<https://cloud.google.com/dlp/docs/creating-custom-infotypes-likelihood#match-column-values>).
+            /// (<https://cloud.google.com/sensitive-data-protection/docs/creating-custom-infotypes-likelihood#match-column-values>).
             #[prost(int32, tag = "1")]
             pub window_before: i32,
             /// Number of characters after the finding to consider.
@@ -187,11 +209,13 @@ pub mod custom_info_type {
         /// part of a detection rule.
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct LikelihoodAdjustment {
+            /// How the likelihood will be modified.
             #[prost(oneof = "likelihood_adjustment::Adjustment", tags = "1, 2")]
             pub adjustment: ::core::option::Option<likelihood_adjustment::Adjustment>,
         }
         /// Nested message and enum types in `LikelihoodAdjustment`.
         pub mod likelihood_adjustment {
+            /// How the likelihood will be modified.
             #[derive(Clone, PartialEq, ::prost::Oneof)]
             pub enum Adjustment {
                 /// Set the likelihood of a finding to a fixed value.
@@ -228,13 +252,14 @@ pub mod custom_info_type {
             /// For tabular data, if you want to modify the likelihood of an entire
             /// column of findngs, see
             /// [Hotword example: Set the match likelihood of a table column]
-            /// (<https://cloud.google.com/dlp/docs/creating-custom-infotypes-likelihood#match-column-values>).
+            /// (<https://cloud.google.com/sensitive-data-protection/docs/creating-custom-infotypes-likelihood#match-column-values>).
             #[prost(message, optional, tag = "2")]
             pub proximity: ::core::option::Option<Proximity>,
             /// Likelihood adjustment to apply to all matching findings.
             #[prost(message, optional, tag = "3")]
             pub likelihood_adjustment: ::core::option::Option<LikelihoodAdjustment>,
         }
+        /// Type of hotword rule.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Type {
             /// Hotword-based detection rule.
@@ -242,6 +267,7 @@ pub mod custom_info_type {
             HotwordRule(HotwordRule),
         }
     }
+    /// Type of exclusion rule.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum ExclusionType {
@@ -251,6 +277,7 @@ pub mod custom_info_type {
         /// but can still affect rule execution.
         Exclude = 1,
     }
+    /// Type of custom detector.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Type {
         /// A list of phrases to detect as a CustomInfoType.
@@ -375,16 +402,22 @@ pub struct CloudStorageOptions {
     #[prost(message, optional, tag = "1")]
     pub file_set: ::core::option::Option<cloud_storage_options::FileSet>,
     /// Max number of bytes to scan from a file. If a scanned file's size is bigger
-    /// than this value then the rest of the bytes are omitted. Only one
-    /// of bytes_limit_per_file and bytes_limit_per_file_percent can be specified.
-    /// Cannot be set if de-identification is requested.
+    /// than this value then the rest of the bytes are omitted. Only one of
+    /// `bytes_limit_per_file` and `bytes_limit_per_file_percent` can be specified.
+    /// This field can't be set if de-identification is requested. For certain file
+    /// types, setting this field has no effect. For more information, see [Limits
+    /// on bytes scanned per
+    /// file](<https://cloud.google.com/sensitive-data-protection/docs/supported-file-types#max-byte-size-per-file>).
     #[prost(int64, tag = "4")]
     pub bytes_limit_per_file: i64,
     /// Max percentage of bytes to scan from a file. The rest are omitted. The
     /// number of bytes scanned is rounded down. Must be between 0 and 100,
-    /// inclusively. Both 0 and 100 means no limit. Defaults to 0. Only one
-    /// of bytes_limit_per_file and bytes_limit_per_file_percent can be specified.
-    /// Cannot be set if de-identification is requested.
+    /// inclusively. Both 0 and 100 means no limit. Defaults to 0. Only one of
+    /// bytes_limit_per_file and bytes_limit_per_file_percent can be specified.
+    /// This field can't be set if de-identification is requested. For certain file
+    /// types, setting this field has no effect. For more information, see [Limits
+    /// on bytes scanned per
+    /// file](<https://cloud.google.com/sensitive-data-protection/docs/supported-file-types#max-byte-size-per-file>).
     #[prost(int32, tag = "8")]
     pub bytes_limit_per_file_percent: i32,
     /// List of file type groups to include in the scan.
@@ -396,6 +429,7 @@ pub struct CloudStorageOptions {
     /// Image inspection is restricted to 'global', 'us', 'asia', and 'europe'.
     #[prost(enumeration = "FileType", repeated, tag = "5")]
     pub file_types: ::prost::alloc::vec::Vec<i32>,
+    /// How to sample the data.
     #[prost(enumeration = "cloud_storage_options::SampleMethod", tag = "6")]
     pub sample_method: i32,
     /// Limits the number of files to scan to this percentage of the input FileSet.
@@ -432,6 +466,7 @@ pub mod cloud_storage_options {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum SampleMethod {
+        /// No sampling.
         Unspecified = 0,
         /// Scan from the top (default).
         Top = 1,
@@ -451,8 +486,8 @@ pub struct CloudStorageFileSet {
 /// Message representing a single file or path in Cloud Storage.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CloudStoragePath {
-    /// A url representing a file or path (no wildcards) in Cloud Storage.
-    /// Example: gs://\[BUCKET_NAME\]/dictionary.txt
+    /// A URL representing a file or path (no wildcards) in Cloud Storage.
+    /// Example: `gs://\[BUCKET_NAME\]/dictionary.txt`
     #[prost(string, tag = "1")]
     pub path: ::prost::alloc::string::String,
 }
@@ -480,15 +515,27 @@ pub struct BigQueryOptions {
     /// 100 means no limit. Defaults to 0. Only one of rows_limit and
     /// rows_limit_percent can be specified. Cannot be used in conjunction with
     /// TimespanConfig.
+    ///
+    /// Caution: A [known
+    /// issue](<https://cloud.google.com/sensitive-data-protection/docs/known-issues#bq-sampling>)
+    /// is causing the `rowsLimitPercent` field to behave unexpectedly. We
+    /// recommend using `rowsLimit` instead.
     #[prost(int32, tag = "6")]
     pub rows_limit_percent: i32,
+    /// How to sample the data.
     #[prost(enumeration = "big_query_options::SampleMethod", tag = "4")]
     pub sample_method: i32,
     /// References to fields excluded from scanning. This allows you to skip
     /// inspection of entire columns which you know have no findings.
+    /// When inspecting a table, we recommend that you inspect all columns.
+    /// Otherwise, findings might be affected because hints from excluded columns
+    /// will not be used.
     #[prost(message, repeated, tag = "5")]
     pub excluded_fields: ::prost::alloc::vec::Vec<FieldId>,
     /// Limit scanning only to these fields.
+    /// When inspecting a table, we recommend that you inspect all columns.
+    /// Otherwise, findings might be affected because hints from excluded columns
+    /// will not be used.
     #[prost(message, repeated, tag = "7")]
     pub included_fields: ::prost::alloc::vec::Vec<FieldId>,
 }
@@ -500,6 +547,7 @@ pub mod big_query_options {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum SampleMethod {
+        /// No sampling.
         Unspecified = 0,
         /// Scan groups of rows in the order BigQuery provides (default). Multiple
         /// groups of rows may be scanned in parallel, so results may not appear in
@@ -512,8 +560,10 @@ pub mod big_query_options {
 /// Shared message indicating Cloud storage type.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StorageConfig {
+    /// Configuration of the timespan of the items to include in scanning.
     #[prost(message, optional, tag = "6")]
     pub timespan_config: ::core::option::Option<storage_config::TimespanConfig>,
+    /// Type of storage system to inspect.
     #[prost(oneof = "storage_config::Type", tags = "2, 3, 4, 9")]
     pub r#type: ::core::option::Option<storage_config::Type>,
 }
@@ -563,7 +613,8 @@ pub mod storage_config {
         /// Valid data types of the provided timestamp property are: `TIMESTAMP`.
         ///
         /// See the
-        /// [known issue](<https://cloud.google.com/dlp/docs/known-issues#bq-timespan>)
+        /// [known
+        /// issue](<https://cloud.google.com/sensitive-data-protection/docs/known-issues#bq-timespan>)
         /// related to this operation.
         #[prost(message, optional, tag = "3")]
         pub timestamp_field: ::core::option::Option<super::FieldId>,
@@ -572,9 +623,21 @@ pub mod storage_config {
         /// since the last time the JobTrigger executed. This will be based on the
         /// time of the execution of the last run of the JobTrigger or the timespan
         /// end_time used in the last run of the JobTrigger.
+        ///
+        /// **For BigQuery**
+        ///
+        /// Inspect jobs triggered by automatic population will scan data that is at
+        /// least three hours old when the job starts. This is because streaming
+        /// buffer rows are not read during inspection and reading up to the current
+        /// timestamp will result in skipped rows.
+        ///
+        /// See the [known
+        /// issue](<https://cloud.google.com/sensitive-data-protection/docs/known-issues#recently-streamed-data>)
+        /// related to this operation.
         #[prost(bool, tag = "4")]
         pub enable_auto_population_of_timespan_config: bool,
     }
+    /// Type of storage system to inspect.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Type {
         /// Google Cloud Datastore options.
@@ -620,6 +683,7 @@ pub struct HybridOptions {
     /// No more than 10 labels can be associated with a given finding.
     ///
     /// Examples:
+    ///
     /// * `"environment" : "production"`
     /// * `"pipeline" : "etl"`
     #[prost(map = "string, string", tag = "3")]
@@ -718,15 +782,19 @@ pub struct RecordKey {
     /// the order of `identifying_fields` specified in the scanning request.
     #[prost(string, repeated, tag = "5")]
     pub id_values: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Type of key
     #[prost(oneof = "record_key::Type", tags = "2, 3")]
     pub r#type: ::core::option::Option<record_key::Type>,
 }
 /// Nested message and enum types in `RecordKey`.
 pub mod record_key {
+    /// Type of key
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Type {
+        /// BigQuery key
         #[prost(message, tag = "2")]
         DatastoreKey(super::DatastoreKey),
+        /// Datastore key
         #[prost(message, tag = "3")]
         BigQueryKey(super::BigQueryKey),
     }
@@ -747,6 +815,17 @@ pub struct BigQueryTable {
     pub dataset_id: ::prost::alloc::string::String,
     /// Name of the table.
     #[prost(string, tag = "3")]
+    pub table_id: ::prost::alloc::string::String,
+}
+/// Message defining the location of a BigQuery table with the projectId inferred
+/// from the parent project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TableReference {
+    /// Dataset ID of the table.
+    #[prost(string, tag = "1")]
+    pub dataset_id: ::prost::alloc::string::String,
+    /// Name of the table.
+    #[prost(string, tag = "2")]
     pub table_id: ::prost::alloc::string::String,
 }
 /// Message defining a field of a BigQuery table.
@@ -780,20 +859,35 @@ pub struct TableOptions {
     #[prost(message, repeated, tag = "1")]
     pub identifying_fields: ::prost::alloc::vec::Vec<FieldId>,
 }
-/// Categorization of results based on how likely they are to represent a match,
-/// based on the number of elements they contain which imply a match.
+/// Coarse-grained confidence level of how well a particular finding
+/// satisfies the criteria to match a particular infoType.
+///
+/// Likelihood is calculated based on the number of signals a
+/// finding has that implies that the finding matches the infoType. For
+/// example, a string that has an '@' and a '.com' is more likely to be a
+/// match for an email address than a string that only has an '@'.
+///
+/// In general, the highest likelihood level has the strongest signals that
+/// indicate a match. That is, a finding with a high likelihood has a low chance
+/// of being a false positive.
+///
+/// For more information about each likelihood level
+/// and how likelihood works, see [Match
+/// likelihood](<https://cloud.google.com/sensitive-data-protection/docs/likelihood>).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum Likelihood {
     /// Default value; same as POSSIBLE.
     Unspecified = 0,
-    /// Few matching elements.
+    /// Highest chance of a false positive.
     VeryUnlikely = 1,
+    /// High chance of a false positive.
     Unlikely = 2,
-    /// Some matching elements.
+    /// Some matching signals. The default value.
     Possible = 3,
+    /// Low chance of a false positive.
     Likely = 4,
-    /// Many matching elements.
+    /// Confidence level is high. Lowest chance of a false positive.
     VeryLikely = 5,
 }
 /// Definitions of file type groups to scan. New types will be added to this
@@ -807,28 +901,34 @@ pub enum FileType {
     /// scanning attempts to convert the content of the file to utf_8 to scan
     /// the file.
     /// If you wish to avoid this fall back, specify one or more of the other
-    /// FileType's in your storage scan.
+    /// file types in your storage scan.
     BinaryFile = 1,
     /// Included file extensions:
     ///   asc,asp, aspx, brf, c, cc,cfm, cgi, cpp, csv, cxx, c++, cs, css, dart,
     ///   dat, dot, eml,, epbub, ged, go, h, hh, hpp, hxx, h++, hs, html, htm,
     ///   mkd, markdown, m, ml, mli, perl, pl, plist, pm, php, phtml, pht,
     ///   properties, py, pyw, rb, rbw, rs, rss,  rc, scala, sh, sql, swift, tex,
-    ///   shtml, shtm, xhtml, lhs, ics, ini, java, js, json, kix, kml, ocaml, md,
-    ///   txt, text, tsv, vb, vcard, vcs, wml, xcodeproj, xml, xsl, xsd, yml, yaml.
+    ///   shtml, shtm, xhtml, lhs, ics, ini, java, js, json, jsonl, kix, kml,
+    ///   ocaml, md, txt, text, tsv, vb, vcard, vcs, wml, xcodeproj, xml, xsl, xsd,
+    ///   yml, yaml.
     TextFile = 2,
     /// Included file extensions:
-    ///   bmp, gif, jpg, jpeg, jpe, png.
-    /// bytes_limit_per_file has no effect on image files.
-    /// Image inspection is restricted to 'global', 'us', 'asia', and 'europe'.
+    ///   bmp, gif, jpg, jpeg, jpe, png. Setting
+    /// \[bytes_limit_per_file][google.privacy.dlp.v2.CloudStorageOptions.bytes_limit_per_file\]
+    /// or
+    /// \[bytes_limit_per_file_percent][google.privacy.dlp.v2.CloudStorageOptions.bytes_limit_per_file\]
+    /// has no effect on image files. Image inspection is restricted to the
+    /// `global`, `us`, `asia`, and `europe` regions.
     Image = 3,
-    /// Word files >30 MB will be scanned as binary files.
+    /// Microsoft Word files larger than 30 MB will be scanned as binary files.
     /// Included file extensions:
-    ///   docx, dotx, docm, dotm
+    ///   docx, dotx, docm, dotm. Setting `bytes_limit_per_file` or
+    ///   `bytes_limit_per_file_percent` has no effect on Word files.
     Word = 5,
-    /// PDF files >30 MB will be scanned as binary files.
+    /// PDF files larger than 30 MB will be scanned as binary files.
     /// Included file extensions:
-    ///   pdf
+    ///   pdf. Setting `bytes_limit_per_file` or `bytes_limit_per_file_percent`
+    /// has no effect on PDF files.
     Pdf = 6,
     /// Included file extensions:
     ///   avro
@@ -839,13 +939,15 @@ pub enum FileType {
     /// Included file extensions:
     ///   tsv
     Tsv = 9,
-    /// Powerpoint files >30 MB will be scanned as binary files.
-    /// Included file extensions:
-    ///   pptx, pptm, potx, potm, pot
+    /// Microsoft PowerPoint files larger than 30 MB will be scanned as binary
+    /// files. Included file extensions:
+    ///   pptx, pptm, potx, potm, pot. Setting `bytes_limit_per_file` or
+    ///   `bytes_limit_per_file_percent` has no effect on PowerPoint files.
     Powerpoint = 11,
-    /// Excel files >30 MB will be scanned as binary files.
+    /// Microsoft Excel files larger than 30 MB will be scanned as binary files.
     /// Included file extensions:
-    ///   xlsx, xlsm, xltx, xltm
+    ///   xlsx, xlsm, xltx, xltm. Setting `bytes_limit_per_file` or
+    ///   `bytes_limit_per_file_percent` has no effect on Excel files.
     Excel = 12,
 }
 /// List of excluded infoTypes.
@@ -864,7 +966,8 @@ pub struct ExcludeInfoTypes {
 }
 /// The rule to exclude findings based on a hotword. For record inspection of
 /// tables, column names are considered hotwords. An example of this is to
-/// exclude a finding if a BigQuery column matches a specific pattern.
+/// exclude a finding if it belongs to a BigQuery column that matches a specific
+/// pattern.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExcludeByHotword {
     /// Regular expression pattern defining what qualifies as a hotword.
@@ -947,22 +1050,32 @@ pub struct InspectionRuleSet {
 pub struct InspectConfig {
     /// Restricts what info_types to look for. The values must correspond to
     /// InfoType values returned by ListInfoTypes or listed at
-    /// <https://cloud.google.com/dlp/docs/infotypes-reference.>
+    /// <https://cloud.google.com/sensitive-data-protection/docs/infotypes-reference.>
     ///
     /// When no InfoTypes or CustomInfoTypes are specified in a request, the
-    /// system may automatically choose what detectors to run. By default this may
-    /// be all types, but may change over time as detectors are updated.
+    /// system may automatically choose a default list of detectors to run, which
+    /// may change over time.
     ///
     /// If you need precise control and predictability as to what detectors are
     /// run you should specify specific InfoTypes listed in the reference,
     /// otherwise a default list will be used, which may change over time.
     #[prost(message, repeated, tag = "1")]
     pub info_types: ::prost::alloc::vec::Vec<InfoType>,
-    /// Only returns findings equal or above this threshold. The default is
+    /// Only returns findings equal to or above this threshold. The default is
     /// POSSIBLE.
-    /// See <https://cloud.google.com/dlp/docs/likelihood> to learn more.
+    ///
+    /// In general, the highest likelihood setting yields the fewest findings in
+    /// results and the lowest chance of a false positive. For more information,
+    /// see [Match
+    /// likelihood](<https://cloud.google.com/sensitive-data-protection/docs/likelihood>).
     #[prost(enumeration = "Likelihood", tag = "2")]
     pub min_likelihood: i32,
+    /// Minimum likelihood per infotype. For each infotype, a user can specify a
+    /// minimum likelihood. The system only returns a finding if its likelihood is
+    /// above this threshold. If this field is not set, the system uses the
+    /// InspectConfig min_likelihood.
+    #[prost(message, repeated, tag = "11")]
+    pub min_likelihood_per_info_type: ::prost::alloc::vec::Vec<inspect_config::InfoTypeLikelihood>,
     /// Configuration to control the number of findings returned.
     /// This is not used for data profiling.
     ///
@@ -971,11 +1084,19 @@ pub struct InspectConfig {
     /// redacted. Don't include finding limits in
     /// \[RedactImage][google.privacy.dlp.v2.DlpService.RedactImage\]
     /// requests. Otherwise, Cloud DLP returns an error.
+    ///
+    /// When set within an
+    /// \[InspectJobConfig][google.privacy.dlp.v2.InspectJobConfig\], the specified
+    /// maximum values aren't hard limits. If an inspection job reaches these
+    /// limits, the job ends gradually, not abruptly. Therefore, the actual number
+    /// of findings that Cloud DLP returns can be multiple times higher than these
+    /// maximum values.
     #[prost(message, optional, tag = "3")]
     pub limits: ::core::option::Option<inspect_config::FindingLimits>,
     /// When true, a contextual quote from the data that triggered a finding is
-    /// included in the response; see \[Finding.quote][google.privacy.dlp.v2.Finding.quote\].
-    /// This is not used for data profiling.
+    /// included in the response; see
+    /// \[Finding.quote][google.privacy.dlp.v2.Finding.quote\]. This is not used for
+    /// data profiling.
     #[prost(bool, tag = "4")]
     pub include_quote: bool,
     /// When true, excludes type information of the findings.
@@ -983,7 +1104,8 @@ pub struct InspectConfig {
     #[prost(bool, tag = "5")]
     pub exclude_info_types: bool,
     /// CustomInfoTypes provided by the user. See
-    /// <https://cloud.google.com/dlp/docs/creating-custom-infotypes> to learn more.
+    /// <https://cloud.google.com/sensitive-data-protection/docs/creating-custom-infotypes>
+    /// to learn more.
     #[prost(message, repeated, tag = "6")]
     pub custom_info_types: ::prost::alloc::vec::Vec<CustomInfoType>,
     /// Deprecated and unused.
@@ -997,6 +1119,23 @@ pub struct InspectConfig {
 }
 /// Nested message and enum types in `InspectConfig`.
 pub mod inspect_config {
+    /// Configuration for setting a minimum likelihood per infotype. Used to
+    /// customize the minimum likelihood level for specific infotypes in the
+    /// request. For example, use this if you want to lower the precision for
+    /// PERSON_NAME without lowering the precision for the other infotypes in the
+    /// request.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct InfoTypeLikelihood {
+        /// Type of information the likelihood threshold applies to. Only one
+        /// likelihood per info_type should be provided. If InfoTypeLikelihood does
+        /// not have an info_type, the configuration fails.
+        #[prost(message, optional, tag = "1")]
+        pub info_type: ::core::option::Option<super::InfoType>,
+        /// Only returns findings equal to or above this threshold. This field is
+        /// required or else the configuration fails.
+        #[prost(enumeration = "super::Likelihood", tag = "2")]
+        pub min_likelihood: i32,
+    }
     /// Configuration to control the number of findings returned for inspection.
     /// This is not used for de-identification or data profiling.
     ///
@@ -1007,15 +1146,29 @@ pub mod inspect_config {
     /// requests. Otherwise, Cloud DLP returns an error.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct FindingLimits {
-        /// Max number of findings that will be returned for each item scanned.
-        /// When set within `InspectJobConfig`,
-        /// the maximum returned is 2000 regardless if this is set higher.
-        /// When set within `InspectContentRequest`, this field is ignored.
+        /// Max number of findings that are returned for each item scanned.
+        ///
+        /// When set within an
+        /// \[InspectContentRequest][google.privacy.dlp.v2.InspectContentRequest\],
+        /// this field is ignored.
+        ///
+        /// This value isn't a hard limit. If the number of findings for an item
+        /// reaches this limit, the inspection of that item ends gradually, not
+        /// abruptly. Therefore, the actual number of findings that Cloud DLP returns
+        /// for the item can be multiple times higher than this value.
         #[prost(int32, tag = "1")]
         pub max_findings_per_item: i32,
-        /// Max number of findings that will be returned per request/job.
-        /// When set within `InspectContentRequest`, the maximum returned is 2000
-        /// regardless if this is set higher.
+        /// Max number of findings that are returned per request or job.
+        ///
+        /// If you set this field in an
+        /// \[InspectContentRequest][google.privacy.dlp.v2.InspectContentRequest\], the
+        /// resulting maximum value is the value that you set or 3,000, whichever is
+        /// lower.
+        ///
+        /// This value isn't a hard limit. If an inspection reaches this limit, the
+        /// inspection ends gradually, not abruptly. Therefore, the actual number of
+        /// findings that Cloud DLP returns can be multiple times higher than this
+        /// value.
         #[prost(int32, tag = "2")]
         pub max_findings_per_request: i32,
         /// Configuration of findings limit given for specified infoTypes.
@@ -1054,7 +1207,7 @@ pub struct ByteContentItem {
 pub mod byte_content_item {
     /// The type of data being sent for inspection. To learn more, see
     /// [Supported file
-    /// types](<https://cloud.google.com/dlp/docs/supported-file-types>).
+    /// types](<https://cloud.google.com/sensitive-data-protection/docs/supported-file-types>).
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum BytesType {
@@ -1086,8 +1239,15 @@ pub mod byte_content_item {
         Csv = 12,
         /// tsv
         Tsv = 13,
+        /// Audio file types. Only used for profiling.
+        Audio = 15,
+        /// Video file types. Only used for profiling.
+        Video = 16,
+        /// Executable file types. Only used for profiling.
+        Executable = 17,
     }
 }
+/// Type of content to inspect.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContentItem {
     /// Data of the item either in the byte array or UTF-8 string form, or table.
@@ -1103,8 +1263,8 @@ pub mod content_item {
         #[prost(string, tag = "3")]
         Value(::prost::alloc::string::String),
         /// Structured content for inspection. See
-        /// <https://cloud.google.com/dlp/docs/inspecting-text#inspecting_a_table> to
-        /// learn more.
+        /// <https://cloud.google.com/sensitive-data-protection/docs/inspecting-text#inspecting_a_table>
+        /// to learn more.
         #[prost(message, tag = "4")]
         Table(super::Table),
         /// Content data to inspect or redact. Replaces `type` and `data`.
@@ -1113,7 +1273,7 @@ pub mod content_item {
     }
 }
 /// Structured content to inspect. Up to 50,000 `Value`s per request allowed. See
-/// <https://cloud.google.com/dlp/docs/inspecting-structured-text#inspecting_a_table>
+/// <https://cloud.google.com/sensitive-data-protection/docs/inspecting-structured-text#inspecting_a_table>
 /// to learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Table {
@@ -1199,6 +1359,7 @@ pub struct Finding {
     /// No more than 10 labels can be associated with a given finding.
     ///
     /// Examples:
+    ///
     /// * `"environment" : "production"`
     /// * `"pipeline" : "etl"`
     #[prost(map = "string, string", tag = "10")]
@@ -1311,6 +1472,7 @@ pub mod metadata_location {
 /// Storage metadata label to indicate which metadata entry contains findings.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StorageMetadataLabel {
+    /// Label name.
     #[prost(string, tag = "1")]
     pub key: ::prost::alloc::string::String,
 }
@@ -1434,11 +1596,11 @@ pub struct RedactImageRequest {
     ///
     /// The format of this value varies depending on whether you have [specified a
     /// processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -1532,11 +1694,11 @@ pub struct DeidentifyContentRequest {
     ///
     /// The format of this value varies depending on whether you have [specified a
     /// processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -1601,11 +1763,11 @@ pub struct ReidentifyContentRequest {
     ///
     /// The format of this value varies depending on whether you have [specified a
     /// processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -1670,11 +1832,11 @@ pub struct InspectContentRequest {
     ///
     /// The format of this value varies depending on whether you have [specified a
     /// processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -1816,9 +1978,40 @@ pub mod inspect_data_source_details {
         /// inspect job.
         #[prost(message, repeated, tag = "3")]
         pub info_type_stats: ::prost::alloc::vec::Vec<super::InfoTypeStats>,
+        /// Number of rows scanned after sampling and time filtering (applicable for
+        /// row based stores such as BigQuery).
+        #[prost(int64, tag = "5")]
+        pub num_rows_processed: i64,
         /// Statistics related to the processing of hybrid inspect.
         #[prost(message, optional, tag = "7")]
         pub hybrid_stats: ::core::option::Option<super::HybridInspectStatistics>,
+    }
+}
+/// The schema of data to be saved to the BigQuery table when the
+/// `DataProfileAction` is enabled.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DataProfileBigQueryRowSchema {
+    /// Data profile type.
+    #[prost(
+        oneof = "data_profile_big_query_row_schema::DataProfile",
+        tags = "1, 2, 3"
+    )]
+    pub data_profile: ::core::option::Option<data_profile_big_query_row_schema::DataProfile>,
+}
+/// Nested message and enum types in `DataProfileBigQueryRowSchema`.
+pub mod data_profile_big_query_row_schema {
+    /// Data profile type.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum DataProfile {
+        /// Table data profile column
+        #[prost(message, tag = "1")]
+        TableProfile(super::TableDataProfile),
+        /// Column data profile column
+        #[prost(message, tag = "2")]
+        ColumnProfile(super::ColumnDataProfile),
+        /// File store data profile column.
+        #[prost(message, tag = "3")]
+        FileStoreProfile(super::FileStoreDataProfile),
     }
 }
 /// Statistics related to processing hybrid inspect requests.
@@ -1838,6 +2031,69 @@ pub struct HybridInspectStatistics {
     /// may impact how long a request is enqueued for.
     #[prost(int64, tag = "3")]
     pub pending_count: i64,
+}
+/// The results of an \[Action][google.privacy.dlp.v2.Action\].
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ActionDetails {
+    /// Summary of what occurred in the actions.
+    #[prost(oneof = "action_details::Details", tags = "1")]
+    pub details: ::core::option::Option<action_details::Details>,
+}
+/// Nested message and enum types in `ActionDetails`.
+pub mod action_details {
+    /// Summary of what occurred in the actions.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Details {
+        /// Outcome of a de-identification action.
+        #[prost(message, tag = "1")]
+        DeidentifyDetails(super::DeidentifyDataSourceDetails),
+    }
+}
+/// Summary of what was modified during a transformation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeidentifyDataSourceStats {
+    /// Total size in bytes that were transformed in some way.
+    #[prost(int64, tag = "1")]
+    pub transformed_bytes: i64,
+    /// Number of successfully applied transformations.
+    #[prost(int64, tag = "2")]
+    pub transformation_count: i64,
+    /// Number of errors encountered while trying to apply transformations.
+    #[prost(int64, tag = "3")]
+    pub transformation_error_count: i64,
+}
+/// The results of a \[Deidentify][google.privacy.dlp.v2.Action.Deidentify\] action
+/// from an inspect job.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeidentifyDataSourceDetails {
+    /// De-identification config used for the request.
+    #[prost(message, optional, tag = "1")]
+    pub requested_options:
+        ::core::option::Option<deidentify_data_source_details::RequestedDeidentifyOptions>,
+    /// Stats about the de-identification operation.
+    #[prost(message, optional, tag = "2")]
+    pub deidentify_stats: ::core::option::Option<DeidentifyDataSourceStats>,
+}
+/// Nested message and enum types in `DeidentifyDataSourceDetails`.
+pub mod deidentify_data_source_details {
+    /// De-identification options.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct RequestedDeidentifyOptions {
+        /// Snapshot of the state of the `DeidentifyTemplate` from the
+        /// \[Deidentify][google.privacy.dlp.v2.Action.Deidentify\] action at the time
+        /// this job was run.
+        #[prost(message, optional, tag = "1")]
+        pub snapshot_deidentify_template: ::core::option::Option<super::DeidentifyTemplate>,
+        /// Snapshot of the state of the structured `DeidentifyTemplate` from the
+        /// `Deidentify` action at the time this job was run.
+        #[prost(message, optional, tag = "2")]
+        pub snapshot_structured_deidentify_template:
+            ::core::option::Option<super::DeidentifyTemplate>,
+        /// Snapshot of the state of the image transformation `DeidentifyTemplate`
+        /// from the `Deidentify` action at the time this job was run.
+        #[prost(message, optional, tag = "3")]
+        pub snapshot_image_redact_template: ::core::option::Option<super::DeidentifyTemplate>,
+    }
 }
 /// InfoType description.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1861,11 +2117,15 @@ pub struct InfoTypeDescription {
     /// The category of the infoType.
     #[prost(message, repeated, tag = "10")]
     pub categories: ::prost::alloc::vec::Vec<InfoTypeCategory>,
+    /// The default sensitivity of the infoType.
+    #[prost(message, optional, tag = "11")]
+    pub sensitivity_score: ::core::option::Option<SensitivityScore>,
 }
 /// Classification of infoTypes to organize them according to geographic
 /// location, industry, and data type.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InfoTypeCategory {
+    /// Categories of infotypes.
     #[prost(oneof = "info_type_category::Category", tags = "1, 2, 3")]
     pub category: ::core::option::Option<info_type_category::Category>,
 }
@@ -1883,8 +2143,14 @@ pub mod info_type_category {
         Global = 1,
         /// The infoType is typically used in Argentina.
         Argentina = 2,
+        /// The infoType is typically used in Armenia.
+        Armenia = 51,
         /// The infoType is typically used in Australia.
         Australia = 3,
+        /// The infoType is typically used in Azerbaijan.
+        Azerbaijan = 48,
+        /// The infoType is typically used in Belarus.
+        Belarus = 50,
         /// The infoType is typically used in Belgium.
         Belgium = 4,
         /// The infoType is typically used in Brazil.
@@ -1897,6 +2163,8 @@ pub mod info_type_category {
         China = 8,
         /// The infoType is typically used in Colombia.
         Colombia = 9,
+        /// The infoType is typically used in Croatia.
+        Croatia = 42,
         /// The infoType is typically used in Denmark.
         Denmark = 10,
         /// The infoType is typically used in France.
@@ -1919,12 +2187,16 @@ pub mod info_type_category {
         Italy = 19,
         /// The infoType is typically used in Japan.
         Japan = 20,
+        /// The infoType is typically used in Kazakhstan.
+        Kazakhstan = 47,
         /// The infoType is typically used in Korea.
         Korea = 21,
         /// The infoType is typically used in Mexico.
         Mexico = 22,
         /// The infoType is typically used in the Netherlands.
         TheNetherlands = 23,
+        /// The infoType is typically used in New Zealand.
+        NewZealand = 41,
         /// The infoType is typically used in Norway.
         Norway = 24,
         /// The infoType is typically used in Paraguay.
@@ -1935,6 +2207,8 @@ pub mod info_type_category {
         Poland = 27,
         /// The infoType is typically used in Portugal.
         Portugal = 28,
+        /// The infoType is typically used in Russia.
+        Russia = 44,
         /// The infoType is typically used in Singapore.
         Singapore = 29,
         /// The infoType is typically used in South Africa.
@@ -1943,24 +2217,28 @@ pub mod info_type_category {
         Spain = 31,
         /// The infoType is typically used in Sweden.
         Sweden = 32,
+        /// The infoType is typically used in Switzerland.
+        Switzerland = 43,
         /// The infoType is typically used in Taiwan.
         Taiwan = 33,
         /// The infoType is typically used in Thailand.
         Thailand = 34,
         /// The infoType is typically used in Turkey.
         Turkey = 35,
+        /// The infoType is typically used in Ukraine.
+        Ukraine = 45,
         /// The infoType is typically used in the United Kingdom.
         UnitedKingdom = 36,
         /// The infoType is typically used in the United States.
         UnitedStates = 37,
         /// The infoType is typically used in Uruguay.
         Uruguay = 38,
+        /// The infoType is typically used in Uzbekistan.
+        Uzbekistan = 46,
         /// The infoType is typically used in Venezuela.
         Venezuela = 39,
         /// The infoType is typically used in Google internally.
         Internal = 40,
-        /// The infoType is typically used in New Zealand.
-        NewZealand = 41,
     }
     /// Enum of the current industries in the category.
     /// We might add more industries in the future.
@@ -2002,6 +2280,7 @@ pub mod info_type_category {
         /// the circumstances surrounding an entity or an event.
         ContextualInformation = 7,
     }
+    /// Categories of infotypes.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Category {
         /// The region or country that issued the ID or document represented by the
@@ -2057,7 +2336,8 @@ pub struct ListInfoTypesResponse {
     pub info_types: ::prost::alloc::vec::Vec<InfoTypeDescription>,
 }
 /// Configuration for a risk analysis job. See
-/// <https://cloud.google.com/dlp/docs/concepts-risk-analysis> to learn more.
+/// <https://cloud.google.com/sensitive-data-protection/docs/concepts-risk-analysis>
+/// to learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RiskAnalysisJobConfig {
     /// Privacy metric to compute.
@@ -2123,8 +2403,8 @@ pub struct StatisticalTable {
     /// Required. Quasi-identifier columns.
     #[prost(message, repeated, tag = "1")]
     pub quasi_ids: ::prost::alloc::vec::Vec<statistical_table::QuasiIdentifierField>,
-    /// Required. The relative frequency column must contain a floating-point number
-    /// between 0 and 1 (inclusive). Null values are assumed to be zero.
+    /// Required. The relative frequency column must contain a floating-point
+    /// number between 0 and 1 (inclusive). Null values are assumed to be zero.
     #[prost(message, optional, tag = "2")]
     pub relative_frequency: ::core::option::Option<FieldId>,
 }
@@ -2216,8 +2496,8 @@ pub mod privacy_metric {
     /// extrapolating from the distribution of values in the input dataset.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct KMapEstimationConfig {
-        /// Required. Fields considered to be quasi-identifiers. No two columns can have the
-        /// same tag.
+        /// Required. Fields considered to be quasi-identifiers. No two columns can
+        /// have the same tag.
         #[prost(message, repeated, tag = "1")]
         pub quasi_ids: ::prost::alloc::vec::Vec<k_map_estimation_config::TaggedField>,
         /// ISO 3166-1 alpha-2 region code to use in the statistical modeling.
@@ -2285,8 +2565,8 @@ pub mod privacy_metric {
             /// Required. Quasi-identifier columns.
             #[prost(message, repeated, tag = "1")]
             pub quasi_ids: ::prost::alloc::vec::Vec<auxiliary_table::QuasiIdField>,
-            /// Required. The relative frequency column must contain a floating-point number
-            /// between 0 and 1 (inclusive). Null values are assumed to be zero.
+            /// Required. The relative frequency column must contain a floating-point
+            /// number between 0 and 1 (inclusive). Null values are assumed to be zero.
             #[prost(message, optional, tag = "2")]
             pub relative_frequency: ::core::option::Option<super::super::FieldId>,
         }
@@ -2311,8 +2591,8 @@ pub mod privacy_metric {
     /// knowing the attack dataset, so we use a statistical model instead.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct DeltaPresenceEstimationConfig {
-        /// Required. Fields considered to be quasi-identifiers. No two fields can have the
-        /// same tag.
+        /// Required. Fields considered to be quasi-identifiers. No two fields can
+        /// have the same tag.
         #[prost(message, repeated, tag = "1")]
         pub quasi_ids: ::prost::alloc::vec::Vec<super::QuasiId>,
         /// ISO 3166-1 alpha-2 region code to use in the statistical modeling.
@@ -2770,11 +3050,13 @@ pub struct DeidentifyConfig {
     /// mode is `TransformationErrorHandling.ThrowError`.
     #[prost(message, optional, tag = "3")]
     pub transformation_error_handling: ::core::option::Option<TransformationErrorHandling>,
+    /// Type of transformation
     #[prost(oneof = "deidentify_config::Transformation", tags = "1, 2, 4")]
     pub transformation: ::core::option::Option<deidentify_config::Transformation>,
 }
 /// Nested message and enum types in `DeidentifyConfig`.
 pub mod deidentify_config {
+    /// Type of transformation
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Transformation {
         /// Treat the dataset as free-form text and apply the same free text
@@ -2794,6 +3076,7 @@ pub mod deidentify_config {
 /// A type of transformation that is applied over images.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ImageTransformations {
+    /// List of transforms to make.
     #[prost(message, repeated, tag = "2")]
     pub transforms: ::prost::alloc::vec::Vec<image_transformations::ImageTransformation>,
 }
@@ -2806,6 +3089,7 @@ pub mod image_transformations {
         /// specified, the default is black.
         #[prost(message, optional, tag = "3")]
         pub redaction_color: ::core::option::Option<super::Color>,
+        /// Part of the image to transform.
         #[prost(oneof = "image_transformation::Target", tags = "4, 5, 6")]
         pub target: ::core::option::Option<image_transformation::Target>,
     }
@@ -2814,8 +3098,8 @@ pub mod image_transformations {
         /// Apply transformation to the selected info_types.
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct SelectedInfoTypes {
-            /// Required. InfoTypes to apply the transformation to. Required. Provided InfoType
-            /// must be unique within the ImageTransformations message.
+            /// Required. InfoTypes to apply the transformation to. Required. Provided
+            /// InfoType must be unique within the ImageTransformations message.
             #[prost(message, repeated, tag = "5")]
             pub info_types: ::prost::alloc::vec::Vec<super::super::InfoType>,
         }
@@ -2825,6 +3109,7 @@ pub mod image_transformations {
         /// Apply to all text.
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct AllText {}
+        /// Part of the image to transform.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Target {
             /// Apply transformation to the selected info_types.
@@ -2881,6 +3166,7 @@ pub mod transformation_error_handling {
 /// A rule for transforming a value.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PrimitiveTransformation {
+    /// Type of transformation.
     #[prost(
         oneof = "primitive_transformation::Transformation",
         tags = "1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13"
@@ -2889,6 +3175,7 @@ pub struct PrimitiveTransformation {
 }
 /// Nested message and enum types in `PrimitiveTransformation`.
 pub mod primitive_transformation {
+    /// Type of transformation.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Transformation {
         /// Replace with a specified value.
@@ -2965,7 +3252,8 @@ pub mod time_part_config {
 /// Outputs a base64 encoded representation of the hashed output
 /// (for example, L7k0BHmF1ha5U3NfGykjro4xWi1MPVQPjhMAZbSV9mM=).
 /// Currently, only string and integer values can be hashed.
-/// See <https://cloud.google.com/dlp/docs/pseudonymization> to learn more.
+/// See <https://cloud.google.com/sensitive-data-protection/docs/pseudonymization>
+/// to learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CryptoHashConfig {
     /// The key used by the hash function.
@@ -3047,16 +3335,18 @@ pub struct ReplaceValueConfig {
 /// Replace each input value with a value randomly selected from the dictionary.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReplaceDictionaryConfig {
+    /// Type of dictionary.
     #[prost(oneof = "replace_dictionary_config::Type", tags = "1")]
     pub r#type: ::core::option::Option<replace_dictionary_config::Type>,
 }
 /// Nested message and enum types in `ReplaceDictionaryConfig`.
 pub mod replace_dictionary_config {
+    /// Type of dictionary.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Type {
         /// A list of words to select from for random replacement. The
-        /// \[limits\](<https://cloud.google.com/dlp/limits>) page contains details about
-        /// the size limits of dictionaries.
+        /// \[limits\](<https://cloud.google.com/sensitive-data-protection/limits>) page
+        /// contains details about the size limits of dictionaries.
         #[prost(message, tag = "1")]
         WordList(super::custom_info_type::dictionary::WordList),
     }
@@ -3073,6 +3363,7 @@ pub struct RedactConfig {}
 /// alone and skipped.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CharsToIgnore {
+    /// Type of characters to skip.
     #[prost(oneof = "chars_to_ignore::Characters", tags = "1, 2")]
     pub characters: ::core::option::Option<chars_to_ignore::Characters>,
 }
@@ -3095,6 +3386,7 @@ pub mod chars_to_ignore {
         /// Whitespace character, one of [ \t\n\x0B\f\r]
         Whitespace = 5,
     }
+    /// Type of characters to skip.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Characters {
         /// Characters to not transform when masking.
@@ -3168,21 +3460,23 @@ pub struct CharacterMaskConfig {
 /// being transformed, we will first attempt converting the type of the data to
 /// be transformed to match the type of the bound before comparing.
 ///
-/// See <https://cloud.google.com/dlp/docs/concepts-bucketing> to learn more.
+/// See
+/// <https://cloud.google.com/sensitive-data-protection/docs/concepts-bucketing> to
+/// learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FixedSizeBucketingConfig {
-    /// Required. Lower bound value of buckets. All values less than `lower_bound` are
-    /// grouped together into a single bucket; for example if `lower_bound` = 10,
-    /// then all values less than 10 are replaced with the value "-10".
+    /// Required. Lower bound value of buckets. All values less than `lower_bound`
+    /// are grouped together into a single bucket; for example if `lower_bound` =
+    /// 10, then all values less than 10 are replaced with the value "-10".
     #[prost(message, optional, tag = "1")]
     pub lower_bound: ::core::option::Option<Value>,
-    /// Required. Upper bound value of buckets. All values greater than upper_bound are
-    /// grouped together into a single bucket; for example if `upper_bound` = 89,
-    /// then all values greater than 89 are replaced with the value "89+".
+    /// Required. Upper bound value of buckets. All values greater than upper_bound
+    /// are grouped together into a single bucket; for example if `upper_bound` =
+    /// 89, then all values greater than 89 are replaced with the value "89+".
     #[prost(message, optional, tag = "2")]
     pub upper_bound: ::core::option::Option<Value>,
-    /// Required. Size of each bucket (except for minimum and maximum buckets). So if
-    /// `lower_bound` = 10, `upper_bound` = 89, and `bucket_size` = 10, then the
+    /// Required. Size of each bucket (except for minimum and maximum buckets). So
+    /// if `lower_bound` = 10, `upper_bound` = 89, and `bucket_size` = 10, then the
     /// following buckets would be used: -10, 10-20, 20-30, 30-40, 40-50, 50-60,
     /// 60-70, 70-80, 80-89, 89+. Precision up to 2 decimals works.
     #[prost(double, tag = "3")]
@@ -3190,13 +3484,16 @@ pub struct FixedSizeBucketingConfig {
 }
 /// Generalization function that buckets values based on ranges. The ranges and
 /// replacement values are dynamically provided by the user for custom behavior,
-/// such as 1-30 -> LOW 31-65 -> MEDIUM 66-100 -> HIGH
-/// This can be used on
-/// data of type: number, long, string, timestamp.
+/// such as 1-30 -> LOW, 31-65 -> MEDIUM, 66-100 -> HIGH.
+///
+/// This can be used on data of type: number, long, string, timestamp.
+///
 /// If the bound `Value` type differs from the type of data being transformed, we
 /// will first attempt converting the type of the data to be transformed to match
 /// the type of the bound before comparing.
-/// See <https://cloud.google.com/dlp/docs/concepts-bucketing> to learn more.
+/// See
+/// <https://cloud.google.com/sensitive-data-protection/docs/concepts-bucketing> to
+/// learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BucketingConfig {
     /// Set of buckets. Ranges must be non-overlapping.
@@ -3227,8 +3524,9 @@ pub mod bucketing_config {
 /// encoded as ASCII. For a given crypto key and context, the same identifier
 /// will be replaced with the same surrogate. Identifiers must be at least two
 /// characters long. In the case that the identifier is the empty string, it will
-/// be skipped. See <https://cloud.google.com/dlp/docs/pseudonymization> to learn
-/// more.
+/// be skipped. See
+/// <https://cloud.google.com/sensitive-data-protection/docs/pseudonymization> to
+/// learn more.
 ///
 /// Note: We recommend using  CryptoDeterministicConfig for all use cases which
 /// do not require preserving the input alphabet space and size, plus warrant
@@ -3272,7 +3570,7 @@ pub struct CryptoReplaceFfxFpeConfig {
     ///
     /// This annotation identifies the surrogate when inspecting content using the
     /// custom infoType
-    /// \[`SurrogateType`\](<https://cloud.google.com/dlp/docs/reference/rest/v2/InspectConfig#surrogatetype>).
+    /// \[`SurrogateType`\](<https://cloud.google.com/sensitive-data-protection/docs/reference/rest/v2/InspectConfig#surrogatetype>).
     /// This facilitates reversal of the surrogate when it occurs in free text.
     ///
     /// In order for inspection to work properly, the name of this infoType must
@@ -3389,7 +3687,7 @@ pub struct UnwrappedCryptoKey {
 /// dlp.kms.encrypt
 ///
 /// For more information, see [Creating a wrapped key]
-/// (<https://cloud.google.com/dlp/docs/create-wrapped-key>).
+/// (<https://cloud.google.com/sensitive-data-protection/docs/create-wrapped-key>).
 ///
 /// Note: When you use Cloud KMS for cryptographic operations,
 /// [charges apply](<https://cloud.google.com/kms/pricing>).
@@ -3403,18 +3701,20 @@ pub struct KmsWrappedCryptoKey {
     pub crypto_key_name: ::prost::alloc::string::String,
 }
 /// Shifts dates by random number of days, with option to be consistent for the
-/// same context. See <https://cloud.google.com/dlp/docs/concepts-date-shifting>
+/// same context. See
+/// <https://cloud.google.com/sensitive-data-protection/docs/concepts-date-shifting>
 /// to learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DateShiftConfig {
-    /// Required. Range of shift in days. Actual shift will be selected at random within this
-    /// range (inclusive ends). Negative means shift to earlier in time. Must not
-    /// be more than 365250 days (1000 years) each direction.
+    /// Required. Range of shift in days. Actual shift will be selected at random
+    /// within this range (inclusive ends). Negative means shift to earlier in
+    /// time. Must not be more than 365250 days (1000 years) each direction.
     ///
     /// For example, 3 means shift date to at most 3 days into the future.
     #[prost(int32, tag = "1")]
     pub upper_bound_days: i32,
-    /// Required. For example, -5 means shift date to at most 5 days back in the past.
+    /// Required. For example, -5 means shift date to at most 5 days back in the
+    /// past.
     #[prost(int32, tag = "2")]
     pub lower_bound_days: i32,
     /// Points to the field that contains the context, for example, an entity id.
@@ -3746,11 +4046,13 @@ pub struct TransformationLocation {
     /// occurred, if available.
     #[prost(enumeration = "TransformationContainerType", tag = "3")]
     pub container_type: i32,
+    /// Location type.
     #[prost(oneof = "transformation_location::LocationType", tags = "1, 2")]
     pub location_type: ::core::option::Option<transformation_location::LocationType>,
 }
 /// Nested message and enum types in `TransformationLocation`.
 pub mod transformation_location {
+    /// Location type.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum LocationType {
         /// For infotype transformations, link to the corresponding findings ID so
@@ -3765,6 +4067,7 @@ pub mod transformation_location {
         RecordTransformation(super::RecordTransformation),
     }
 }
+/// The field in a record to transform.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RecordTransformation {
     /// For record transformations, provide a field.
@@ -3777,6 +4080,7 @@ pub struct RecordTransformation {
     #[prost(string, tag = "3")]
     pub container_version: ::prost::alloc::string::String,
 }
+/// The outcome of a transformation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransformationResultStatus {
     /// Transformation result status type, this will be either SUCCESS, or it will
@@ -3812,11 +4116,13 @@ pub mod transformation_details_storage_config {
 /// Schedule for inspect job triggers.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Schedule {
+    /// Type of schedule.
     #[prost(oneof = "schedule::Option", tags = "1")]
     pub option: ::core::option::Option<schedule::Option>,
 }
 /// Nested message and enum types in `Schedule`.
 pub mod schedule {
+    /// Type of schedule.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Option {
         /// With this option a job is started on a regular periodic basis. For
@@ -3837,8 +4143,9 @@ pub mod schedule {
 pub struct Manual {}
 /// The inspectTemplate contains a configuration (set of types of sensitive data
 /// to be detected) to be used anywhere you otherwise would normally specify
-/// InspectConfig. See <https://cloud.google.com/dlp/docs/concepts-templates>
-/// to learn more.
+/// InspectConfig. See
+/// <https://cloud.google.com/sensitive-data-protection/docs/concepts-templates> to
+/// learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InspectTemplate {
     /// Output only. The template name.
@@ -3865,7 +4172,9 @@ pub struct InspectTemplate {
     pub inspect_config: ::core::option::Option<InspectConfig>,
 }
 /// DeidentifyTemplates contains instructions on how to de-identify content.
-/// See <https://cloud.google.com/dlp/docs/concepts-templates> to learn more.
+/// See
+/// <https://cloud.google.com/sensitive-data-protection/docs/concepts-templates> to
+/// learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeidentifyTemplate {
     /// Output only. The template name.
@@ -3898,12 +4207,32 @@ pub struct Error {
     /// Detailed error codes and messages.
     #[prost(message, optional, tag = "1")]
     pub details: ::core::option::Option<super::super::super::rpc::Status>,
-    /// The times the error occurred.
+    /// The times the error occurred. List includes the oldest timestamp and the
+    /// last 9 timestamps.
     #[prost(message, repeated, tag = "2")]
     pub timestamps: ::prost::alloc::vec::Vec<::prost_types::Timestamp>,
+    /// Additional information about the error.
+    #[prost(enumeration = "error::ErrorExtraInfo", tag = "4")]
+    pub extra_info: i32,
 }
-/// Contains a configuration to make dlp api calls on a repeating basis.
-/// See <https://cloud.google.com/dlp/docs/concepts-job-triggers> to learn more.
+/// Nested message and enum types in `Error`.
+pub mod error {
+    /// Additional information about the error.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ErrorExtraInfo {
+        /// Unused.
+        ErrorInfoUnspecified = 0,
+        /// Image scan is not available in the region.
+        ImageScanUnavailableInRegion = 1,
+        /// File store cluster is not supported for profile generation.
+        FileStoreClusterUnsupported = 2,
+    }
+}
+/// Contains a configuration to make API calls on a repeating basis.
+/// See
+/// <https://cloud.google.com/sensitive-data-protection/docs/concepts-job-triggers>
+/// to learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobTrigger {
     /// Unique resource name for the triggeredJob, assigned by the service when the
@@ -3922,8 +4251,8 @@ pub struct JobTrigger {
     /// a single Schedule trigger and must have at least one object.
     #[prost(message, repeated, tag = "5")]
     pub triggers: ::prost::alloc::vec::Vec<job_trigger::Trigger>,
-    /// Output only. A stream of errors encountered when the trigger was activated. Repeated
-    /// errors may result in the JobTrigger automatically being paused.
+    /// Output only. A stream of errors encountered when the trigger was activated.
+    /// Repeated errors may result in the JobTrigger automatically being paused.
     /// Will return the last 100 errors. Whenever the JobTrigger is modified
     /// this list will be cleared.
     #[prost(message, repeated, tag = "6")]
@@ -3949,11 +4278,13 @@ pub mod job_trigger {
     /// What event needs to occur for a new job to be started.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Trigger {
+        /// What event needs to occur for a new job to be started.
         #[prost(oneof = "trigger::Trigger", tags = "1, 2")]
         pub trigger: ::core::option::Option<trigger::Trigger>,
     }
     /// Nested message and enum types in `Trigger`.
     pub mod trigger {
+        /// What event needs to occur for a new job to be started.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Trigger {
             /// Create a job on a repeating basis based on the elapse of time.
@@ -3989,9 +4320,11 @@ pub mod job_trigger {
     }
 }
 /// A task to execute on the completion of a job.
-/// See <https://cloud.google.com/dlp/docs/concepts-actions> to learn more.
+/// See <https://cloud.google.com/sensitive-data-protection/docs/concepts-actions>
+/// to learn more.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Action {
+    /// Extra events to execute after the job has finished.
     #[prost(oneof = "action::Action", tags = "1, 2, 3, 5, 7, 8, 9")]
     pub action: ::core::option::Option<action::Action>,
 }
@@ -4010,7 +4343,7 @@ pub mod action {
     /// Publish a message into a given Pub/Sub topic when DlpJob has completed. The
     /// message contains a single field, `DlpJobName`, which is equal to the
     /// finished job's
-    /// \[`DlpJob.name`\](<https://cloud.google.com/dlp/docs/reference/rest/v2/projects.dlpJobs#DlpJob>).
+    /// \[`DlpJob.name`\](<https://cloud.google.com/sensitive-data-protection/docs/reference/rest/v2/projects.dlpJobs#DlpJob>).
     /// Compatible with: Inspect, Risk
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct PublishToPubSub {
@@ -4021,16 +4354,14 @@ pub mod action {
         #[prost(string, tag = "1")]
         pub topic: ::prost::alloc::string::String,
     }
-    /// Publish the result summary of a DlpJob to the Cloud Security
-    /// Command Center (CSCC Alpha).
-    /// This action is only available for projects which are parts of
-    /// an organization and whitelisted for the alpha Cloud Security Command
-    /// Center.
-    /// The action will publish the count of finding instances and their info
-    /// types. The summary of findings will be persisted in CSCC and are governed
-    /// by CSCC service-specific policy, see
-    /// <https://cloud.google.com/terms/service-terms> Only a single instance of this
-    /// action can be specified. Compatible with: Inspect
+    /// Publish the result summary of a DlpJob to [Security Command
+    /// Center](<https://cloud.google.com/security-command-center>). This action is
+    /// available for only projects that belong to an organization. This action
+    /// publishes the count of finding instances and their infoTypes. The summary
+    /// of findings are persisted in Security Command Center and are governed by
+    /// [service-specific policies for Security Command
+    /// Center](<https://cloud.google.com/terms/service-terms>). Only a single
+    /// instance of this action can be specified. Compatible with: Inspect
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct PublishSummaryToCscc {}
     /// Publish findings of a DlpJob to Data Catalog. In Data Catalog, tag
@@ -4084,25 +4415,28 @@ pub mod action {
         pub transformation_details_storage_config:
             ::core::option::Option<super::TransformationDetailsStorageConfig>,
         /// List of user-specified file type groups to transform. If specified, only
-        /// the files with these filetypes will be transformed. If empty, all
+        /// the files with these file types will be transformed. If empty, all
         /// supported files will be transformed. Supported types may be automatically
         /// added over time. If a file type is set in this field that isn't supported
         /// by the Deidentify action then the job will fail and will not be
-        /// successfully created/started. Currently the only filetypes supported are:
-        /// IMAGES, TEXT_FILES, CSV, TSV.
+        /// successfully created/started. Currently the only file types supported
+        /// are: IMAGES, TEXT_FILES, CSV, TSV.
         #[prost(enumeration = "super::FileType", repeated, tag = "8")]
         pub file_types_to_transform: ::prost::alloc::vec::Vec<i32>,
+        /// Where to store the output.
         #[prost(oneof = "deidentify::Output", tags = "9")]
         pub output: ::core::option::Option<deidentify::Output>,
     }
     /// Nested message and enum types in `Deidentify`.
     pub mod deidentify {
+        /// Where to store the output.
         #[derive(Clone, PartialEq, ::prost::Oneof)]
         pub enum Output {
-            /// Required. User settable Cloud Storage bucket and folders to store de-identified
-            /// files. This field must be set for cloud storage deidentification. The
-            /// output Cloud Storage bucket must be different from the input bucket.
-            /// De-identified files will overwrite files in the output path.
+            /// Required. User settable Cloud Storage bucket and folders to store
+            /// de-identified files. This field must be set for Cloud Storage
+            /// deidentification. The output Cloud Storage bucket must be different
+            /// from the input bucket. De-identified files will overwrite files in the
+            /// output path.
             ///
             /// Form of: gs://bucket/folder/ or gs://bucket
             #[prost(string, tag = "9")]
@@ -4120,6 +4454,7 @@ pub mod action {
     /// as 'Custom' under the Stackdriver label 'info_type'.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct PublishToStackdriver {}
+    /// Extra events to execute after the job has finished.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Action {
         /// Save resulting findings in a provided location.
@@ -4183,15 +4518,15 @@ pub struct CreateInspectTemplateRequest {
     ///
     /// The format of this value varies depending on the scope of the request
     /// (project or organization) and whether you have [specified a processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
-    /// + Organizations scope, location specified:<br/>
+    /// + Organizations scope, location specified:
     ///   `organizations/`<var>ORG_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Organizations scope, no location specified (defaults to global):<br/>
+    /// + Organizations scope, no location specified (defaults to global):
     ///   `organizations/`<var>ORG_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -4217,8 +4552,8 @@ pub struct CreateInspectTemplateRequest {
 /// Request message for UpdateInspectTemplate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateInspectTemplateRequest {
-    /// Required. Resource name of organization and inspectTemplate to be updated, for
-    /// example `organizations/433245324/inspectTemplates/432452342` or
+    /// Required. Resource name of organization and inspectTemplate to be updated,
+    /// for example `organizations/433245324/inspectTemplates/432452342` or
     /// projects/project-id/inspectTemplates/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -4232,8 +4567,8 @@ pub struct UpdateInspectTemplateRequest {
 /// Request message for GetInspectTemplate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetInspectTemplateRequest {
-    /// Required. Resource name of the organization and inspectTemplate to be read, for
-    /// example `organizations/433245324/inspectTemplates/432452342` or
+    /// Required. Resource name of the organization and inspectTemplate to be read,
+    /// for example `organizations/433245324/inspectTemplates/432452342` or
     /// projects/project-id/inspectTemplates/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -4245,15 +4580,15 @@ pub struct ListInspectTemplatesRequest {
     ///
     /// The format of this value varies depending on the scope of the request
     /// (project or organization) and whether you have [specified a processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
-    /// + Organizations scope, location specified:<br/>
+    /// + Organizations scope, location specified:
     ///   `organizations/`<var>ORG_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Organizations scope, no location specified (defaults to global):<br/>
+    /// + Organizations scope, no location specified (defaults to global):
     ///   `organizations/`<var>ORG_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -4263,17 +4598,17 @@ pub struct ListInspectTemplatesRequest {
     ///     parent=projects/example-project/locations/europe-west3
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Page token to continue retrieval. Comes from previous call
+    /// Page token to continue retrieval. Comes from the previous call
     /// to `ListInspectTemplates`.
     #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
-    /// Size of the page, can be limited by the server. If zero server returns
-    /// a page of max size 100.
+    /// Size of the page. This value can be limited by the server. If zero server
+    /// returns a page of max size 100.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
-    /// Comma separated list of fields to order by,
-    /// followed by `asc` or `desc` postfix. This list is case-insensitive,
-    /// default sorting order is ascending, redundant space characters are
+    /// Comma-separated list of fields to order by,
+    /// followed by `asc` or `desc` postfix. This list is case insensitive. The
+    /// default sorting order is ascending. Redundant space characters are
     /// insignificant.
     ///
     /// Example: `name asc,update_time, create_time desc`
@@ -4296,17 +4631,17 @@ pub struct ListInspectTemplatesResponse {
     /// List of inspectTemplates, up to page_size in ListInspectTemplatesRequest.
     #[prost(message, repeated, tag = "1")]
     pub inspect_templates: ::prost::alloc::vec::Vec<InspectTemplate>,
-    /// If the next page is available then the next page token to be used
-    /// in following ListInspectTemplates request.
+    /// If the next page is available then the next page token to be used in the
+    /// following ListInspectTemplates request.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for DeleteInspectTemplate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteInspectTemplateRequest {
-    /// Required. Resource name of the organization and inspectTemplate to be deleted, for
-    /// example `organizations/433245324/inspectTemplates/432452342` or
-    /// projects/project-id/inspectTemplates/432452342.
+    /// Required. Resource name of the organization and inspectTemplate to be
+    /// deleted, for example `organizations/433245324/inspectTemplates/432452342`
+    /// or projects/project-id/inspectTemplates/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -4317,11 +4652,11 @@ pub struct CreateJobTriggerRequest {
     ///
     /// The format of this value varies depending on whether you have [specified a
     /// processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -4374,6 +4709,115 @@ pub struct GetJobTriggerRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
+/// Request message for CreateDiscoveryConfig.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateDiscoveryConfigRequest {
+    /// Required. Parent resource name.
+    ///
+    /// The format of this value varies depending on the scope of the request
+    /// (project or organization):
+    ///
+    /// + Projects scope:
+    ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
+    /// + Organizations scope:
+    ///   `organizations/`<var>ORG_ID</var>`/locations/`<var>LOCATION_ID</var>
+    ///
+    /// The following example `parent` string specifies a parent project with the
+    /// identifier `example-project`, and specifies the `europe-west3` location
+    /// for processing data:
+    ///
+    ///     parent=projects/example-project/locations/europe-west3
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The DiscoveryConfig to create.
+    #[prost(message, optional, tag = "2")]
+    pub discovery_config: ::core::option::Option<DiscoveryConfig>,
+    /// The config ID can contain uppercase and lowercase letters,
+    /// numbers, and hyphens; that is, it must match the regular
+    /// expression: `\[a-zA-Z\d-_\]+`. The maximum length is 100
+    /// characters. Can be empty to allow the system to generate one.
+    #[prost(string, tag = "3")]
+    pub config_id: ::prost::alloc::string::String,
+}
+/// Request message for UpdateDiscoveryConfig.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateDiscoveryConfigRequest {
+    /// Required. Resource name of the project and the configuration, for example
+    /// `projects/dlp-test-project/discoveryConfigs/53234423`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. New DiscoveryConfig value.
+    #[prost(message, optional, tag = "2")]
+    pub discovery_config: ::core::option::Option<DiscoveryConfig>,
+    /// Mask to control which fields get updated.
+    #[prost(message, optional, tag = "3")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request message for GetDiscoveryConfig.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetDiscoveryConfigRequest {
+    /// Required. Resource name of the project and the configuration, for example
+    /// `projects/dlp-test-project/discoveryConfigs/53234423`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for ListDiscoveryConfigs.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDiscoveryConfigsRequest {
+    /// Required. Parent resource name.
+    ///
+    /// The format of this value is as follows:
+    /// `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
+    ///
+    /// The following example `parent` string specifies a parent project with the
+    /// identifier `example-project`, and specifies the `europe-west3` location
+    /// for processing data:
+    ///
+    ///     parent=projects/example-project/locations/europe-west3
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Page token to continue retrieval. Comes from the previous call
+    /// to ListDiscoveryConfigs. `order_by` field must not
+    /// change for subsequent calls.
+    #[prost(string, tag = "2")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Size of the page. This value can be limited by a server.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+    /// Comma-separated list of config fields to order by,
+    /// followed by `asc` or `desc` postfix. This list is case insensitive. The
+    /// default sorting order is ascending. Redundant space characters are
+    /// insignificant.
+    ///
+    /// Example: `name asc,update_time, create_time desc`
+    ///
+    /// Supported fields are:
+    ///
+    /// - `last_run_time`: corresponds to the last time the DiscoveryConfig ran.
+    /// - `name`: corresponds to the DiscoveryConfig's name.
+    /// - `status`: corresponds to DiscoveryConfig's status.
+    #[prost(string, tag = "4")]
+    pub order_by: ::prost::alloc::string::String,
+}
+/// Response message for ListDiscoveryConfigs.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListDiscoveryConfigsResponse {
+    /// List of configs, up to page_size in ListDiscoveryConfigsRequest.
+    #[prost(message, repeated, tag = "1")]
+    pub discovery_configs: ::prost::alloc::vec::Vec<DiscoveryConfig>,
+    /// If the next page is available then this value is the next page token to be
+    /// used in the following ListDiscoveryConfigs request.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for DeleteDiscoveryConfig.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteDiscoveryConfigRequest {
+    /// Required. Resource name of the project and the config, for example
+    /// `projects/dlp-test-project/discoveryConfigs/53234423`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
 /// Request message for CreateDlpJobRequest. Used to initiate long running
 /// jobs such as calculating risk metrics or inspecting Google Cloud
 /// Storage.
@@ -4383,11 +4827,11 @@ pub struct CreateDlpJobRequest {
     ///
     /// The format of this value varies depending on whether you have [specified a
     /// processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -4431,11 +4875,11 @@ pub struct ListJobTriggersRequest {
     ///
     /// The format of this value varies depending on whether you have [specified a
     /// processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -4445,17 +4889,17 @@ pub struct ListJobTriggersRequest {
     ///     parent=projects/example-project/locations/europe-west3
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Page token to continue retrieval. Comes from previous call
+    /// Page token to continue retrieval. Comes from the previous call
     /// to ListJobTriggers. `order_by` field must not
     /// change for subsequent calls.
     #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
-    /// Size of the page, can be limited by a server.
+    /// Size of the page. This value can be limited by a server.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
-    /// Comma separated list of triggeredJob fields to order by,
-    /// followed by `asc` or `desc` postfix. This list is case-insensitive,
-    /// default sorting order is ascending, redundant space characters are
+    /// Comma-separated list of triggeredJob fields to order by,
+    /// followed by `asc` or `desc` postfix. This list is case insensitive. The
+    /// default sorting order is ascending. Redundant space characters are
     /// insignificant.
     ///
     /// Example: `name asc,update_time, create_time desc`
@@ -4509,8 +4953,8 @@ pub struct ListJobTriggersResponse {
     /// List of triggeredJobs, up to page_size in ListJobTriggersRequest.
     #[prost(message, repeated, tag = "1")]
     pub job_triggers: ::prost::alloc::vec::Vec<JobTrigger>,
-    /// If the next page is available then the next page token to be used
-    /// in following ListJobTriggers request.
+    /// If the next page is available then this value is the next page token to be
+    /// used in the following ListJobTriggers request.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
@@ -4543,6 +4987,7 @@ pub struct InspectJobConfig {
 /// A task to execute when a data profile has been generated.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DataProfileAction {
+    /// Type of action to execute when a profile is generated.
     #[prost(oneof = "data_profile_action::Action", tags = "1, 2")]
     pub action: ::core::option::Option<data_profile_action::Action>,
 }
@@ -4553,8 +4998,14 @@ pub mod data_profile_action {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct Export {
         /// Store all table and column profiles in an existing table or a new table
-        /// in an existing dataset. Each re-generation will result in a new row in
-        /// BigQuery.
+        /// in an existing dataset. Each re-generation will result in new rows in
+        /// BigQuery. Data is inserted using [streaming
+        /// insert](<https://cloud.google.com/blog/products/bigquery/life-of-a-bigquery-streaming-insert>)
+        /// and so data may be in the buffer for a period of time after the profile
+        /// has finished. The Pub/Sub notification is sent before the streaming
+        /// buffer is guaranteed to be written, so data may not be instantly
+        /// visible to queries by the time your topic receives the Pub/Sub
+        /// notification.
         #[prost(message, optional, tag = "1")]
         pub profile_table: ::core::option::Option<super::BigQueryTable>,
     }
@@ -4593,8 +5044,10 @@ pub mod data_profile_action {
             Unspecified = 0,
             /// The full table data profile.
             TableProfile = 1,
-            /// The resource name of the table.
+            /// The name of the profiled resource.
             ResourceName = 2,
+            /// The full file store data profile.
+            FileStoreProfile = 3,
         }
     }
     /// Types of event that can trigger an action.
@@ -4605,19 +5058,16 @@ pub mod data_profile_action {
         Unspecified = 0,
         /// New profile (not a re-profile).
         NewProfile = 1,
-        /// Changed one of the following profile metrics:
-        /// * Table data risk score
-        /// * Table sensitivity score
-        /// * Table resource visibility
-        /// * Table encryption type
-        /// * Table predicted infoTypes
-        /// * Table other infoTypes
+        /// One of the following profile metrics changed: Data risk score,
+        /// Sensitivity score, Resource visibility, Encryption type, Predicted
+        /// infoTypes, Other infoTypes
         ChangedProfile = 2,
         /// Table data risk score or sensitivity score increased.
         ScoreIncreased = 3,
         /// A user (non-internal) error occurred.
         ErrorChanged = 4,
     }
+    /// Type of action to execute when a profile is generated.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Action {
         /// Export data profiles into a provided location.
@@ -4634,7 +5084,7 @@ pub mod data_profile_action {
 ///
 /// The generated data profiles are retained according to the
 /// [data retention policy]
-/// (<https://cloud.google.com/dlp/docs/data-profiles#retention>).
+/// (<https://cloud.google.com/sensitive-data-protection/docs/data-profiles#retention>).
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DataProfileJobConfig {
     /// The data to scan.
@@ -4660,13 +5110,50 @@ pub struct DataProfileJobConfig {
     /// scanned.
     ///
     /// For more information, see
-    /// <https://cloud.google.com/dlp/docs/data-profiles#data_residency.>
+    /// <https://cloud.google.com/sensitive-data-protection/docs/data-profiles#data-residency.>
     #[prost(string, repeated, tag = "7")]
     pub inspect_templates: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Actions to execute at the completion of the job.
     #[prost(message, repeated, tag = "6")]
     pub data_profile_actions: ::prost::alloc::vec::Vec<DataProfileAction>,
 }
+/// A pattern to match against one or more tables, datasets, or projects that
+/// contain BigQuery tables. At least one pattern must be specified.
+/// Regular expressions use RE2
+/// \[syntax\](<https://github.com/google/re2/wiki/Syntax>); a guide can be found
+/// under the google/re2 repository on GitHub.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigQueryRegex {
+    /// For organizations, if unset, will match all projects. Has no effect
+    /// for data profile configurations created within a project.
+    #[prost(string, tag = "1")]
+    pub project_id_regex: ::prost::alloc::string::String,
+    /// If unset, this property matches all datasets.
+    #[prost(string, tag = "2")]
+    pub dataset_id_regex: ::prost::alloc::string::String,
+    /// If unset, this property matches all tables.
+    #[prost(string, tag = "3")]
+    pub table_id_regex: ::prost::alloc::string::String,
+}
+/// A collection of regular expressions to determine what tables to match
+/// against.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigQueryRegexes {
+    /// A single BigQuery regular expression pattern to match against one or more
+    /// tables, datasets, or projects that contain BigQuery tables.
+    #[prost(message, repeated, tag = "1")]
+    pub patterns: ::prost::alloc::vec::Vec<BigQueryRegex>,
+}
+/// The types of BigQuery tables supported by Cloud DLP.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigQueryTableTypes {
+    /// A set of BigQuery table types.
+    #[prost(enumeration = "BigQueryTableType", repeated, tag = "1")]
+    pub types: ::prost::alloc::vec::Vec<i32>,
+}
+/// Do not profile the tables.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Disabled {}
 /// The data that will be profiled.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DataProfileLocation {
@@ -4682,11 +5169,872 @@ pub mod data_profile_location {
         /// The ID of an organization to scan.
         #[prost(int64, tag = "1")]
         OrganizationId(i64),
-        /// The ID of the Folder within an organization to scan.
+        /// The ID of the folder within an organization to scan.
         #[prost(int64, tag = "2")]
         FolderId(i64),
     }
 }
+/// Configuration for discovery to scan resources for profile generation.
+/// Only one discovery configuration may exist per organization, folder,
+/// or project.
+///
+/// The generated data profiles are retained according to the
+/// [data retention policy]
+/// (<https://cloud.google.com/sensitive-data-protection/docs/data-profiles#retention>).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryConfig {
+    /// Unique resource name for the DiscoveryConfig, assigned by the service when
+    /// the DiscoveryConfig is created, for example
+    /// `projects/dlp-test-project/locations/global/discoveryConfigs/53234423`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Display name (max 100 chars)
+    #[prost(string, tag = "11")]
+    pub display_name: ::prost::alloc::string::String,
+    /// Only set when the parent is an org.
+    #[prost(message, optional, tag = "2")]
+    pub org_config: ::core::option::Option<discovery_config::OrgConfig>,
+    /// Detection logic for profile generation.
+    ///
+    /// Not all template features are used by Discovery. FindingLimits,
+    /// include_quote and exclude_info_types have no impact on
+    /// Discovery.
+    ///
+    /// Multiple templates may be provided if there is data in multiple regions.
+    /// At most one template must be specified per-region (including "global").
+    /// Each region is scanned using the applicable template. If no region-specific
+    /// template is specified, but a "global" template is specified, it will be
+    /// copied to that region and used instead. If no global or region-specific
+    /// template is provided for a region with data, that region's data will not be
+    /// scanned.
+    ///
+    /// For more information, see
+    /// <https://cloud.google.com/sensitive-data-protection/docs/data-profiles#data-residency.>
+    #[prost(string, repeated, tag = "3")]
+    pub inspect_templates: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// Actions to execute at the completion of scanning.
+    #[prost(message, repeated, tag = "4")]
+    pub actions: ::prost::alloc::vec::Vec<DataProfileAction>,
+    /// Target to match against for determining what to scan and how frequently.
+    #[prost(message, repeated, tag = "5")]
+    pub targets: ::prost::alloc::vec::Vec<DiscoveryTarget>,
+    /// Output only. A stream of errors encountered when the config was activated.
+    /// Repeated errors may result in the config automatically being paused. Output
+    /// only field. Will return the last 100 errors. Whenever the config is
+    /// modified this list will be cleared.
+    #[prost(message, repeated, tag = "6")]
+    pub errors: ::prost::alloc::vec::Vec<Error>,
+    /// Output only. The creation timestamp of a DiscoveryConfig.
+    #[prost(message, optional, tag = "7")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The last update timestamp of a DiscoveryConfig.
+    #[prost(message, optional, tag = "8")]
+    pub update_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Output only. The timestamp of the last time this config was executed.
+    #[prost(message, optional, tag = "9")]
+    pub last_run_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Required. A status for this configuration.
+    #[prost(enumeration = "discovery_config::Status", tag = "10")]
+    pub status: i32,
+}
+/// Nested message and enum types in `DiscoveryConfig`.
+pub mod discovery_config {
+    /// Project and scan location information. Only set when the parent is an org.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct OrgConfig {
+        /// The data to scan: folder, org, or project
+        #[prost(message, optional, tag = "1")]
+        pub location: ::core::option::Option<super::DiscoveryStartingLocation>,
+        /// The project that will run the scan. The DLP service
+        /// account that exists within this project must have access to all resources
+        /// that are profiled, and the Cloud DLP API must be enabled.
+        #[prost(string, tag = "2")]
+        pub project_id: ::prost::alloc::string::String,
+    }
+    /// Whether the discovery config is currently active. New options may be added
+    /// at a later time.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Status {
+        /// Unused
+        Unspecified = 0,
+        /// The discovery config is currently active.
+        Running = 1,
+        /// The discovery config is paused temporarily.
+        Paused = 2,
+    }
+}
+/// Target used to match against for Discovery.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryTarget {
+    /// A target to match against for Discovery.
+    #[prost(oneof = "discovery_target::Target", tags = "1, 2, 3, 4")]
+    pub target: ::core::option::Option<discovery_target::Target>,
+}
+/// Nested message and enum types in `DiscoveryTarget`.
+pub mod discovery_target {
+    /// A target to match against for Discovery.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Target {
+        /// BigQuery target for Discovery. The first target to match a table will be
+        /// the one applied.
+        #[prost(message, tag = "1")]
+        BigQueryTarget(super::BigQueryDiscoveryTarget),
+        /// Cloud SQL target for Discovery. The first target to match a table will be
+        /// the one applied.
+        #[prost(message, tag = "2")]
+        CloudSqlTarget(super::CloudSqlDiscoveryTarget),
+        /// Discovery target that looks for credentials and secrets stored in cloud
+        /// resource metadata and reports them as vulnerabilities to Security Command
+        /// Center. Only one target of this type is allowed.
+        #[prost(message, tag = "3")]
+        SecretsTarget(super::SecretsDiscoveryTarget),
+        /// Cloud Storage target for Discovery. The first target to match a table
+        /// will be the one applied.
+        #[prost(message, tag = "4")]
+        CloudStorageTarget(super::CloudStorageDiscoveryTarget),
+    }
+}
+/// Target used to match against for discovery with BigQuery tables
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigQueryDiscoveryTarget {
+    /// Required. The tables the discovery cadence applies to. The first target
+    /// with a matching filter will be the one to apply to a table.
+    #[prost(message, optional, tag = "1")]
+    pub filter: ::core::option::Option<DiscoveryBigQueryFilter>,
+    /// In addition to matching the filter, these conditions must be true
+    /// before a profile is generated.
+    #[prost(message, optional, tag = "2")]
+    pub conditions: ::core::option::Option<DiscoveryBigQueryConditions>,
+    /// The generation rule includes the logic on how frequently
+    /// to update the data profiles. If not specified, discovery will re-run and
+    /// update no more than once a month if new columns appear in the table.
+    #[prost(oneof = "big_query_discovery_target::Frequency", tags = "3, 4")]
+    pub frequency: ::core::option::Option<big_query_discovery_target::Frequency>,
+}
+/// Nested message and enum types in `BigQueryDiscoveryTarget`.
+pub mod big_query_discovery_target {
+    /// The generation rule includes the logic on how frequently
+    /// to update the data profiles. If not specified, discovery will re-run and
+    /// update no more than once a month if new columns appear in the table.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Frequency {
+        /// How often and when to update profiles. New tables that match both the
+        /// filter and conditions are scanned as quickly as possible depending on
+        /// system capacity.
+        #[prost(message, tag = "3")]
+        Cadence(super::DiscoveryGenerationCadence),
+        /// Tables that match this filter will not have profiles created.
+        #[prost(message, tag = "4")]
+        Disabled(super::Disabled),
+    }
+}
+/// Determines what tables will have profiles generated within an organization
+/// or project. Includes the ability to filter by regular expression patterns
+/// on project ID, dataset ID, and table ID.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryBigQueryFilter {
+    /// Whether the filter applies to a specific set of tables or all other tables
+    /// within the location being profiled. The first filter to match will be
+    /// applied, regardless of the condition. If none is set, will default to
+    /// `other_tables`.
+    #[prost(oneof = "discovery_big_query_filter::Filter", tags = "1, 2, 3")]
+    pub filter: ::core::option::Option<discovery_big_query_filter::Filter>,
+}
+/// Nested message and enum types in `DiscoveryBigQueryFilter`.
+pub mod discovery_big_query_filter {
+    /// Catch-all for all other tables not specified by other filters. Should
+    /// always be last, except for single-table configurations, which will only
+    /// have a TableReference target.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct AllOtherBigQueryTables {}
+    /// Whether the filter applies to a specific set of tables or all other tables
+    /// within the location being profiled. The first filter to match will be
+    /// applied, regardless of the condition. If none is set, will default to
+    /// `other_tables`.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Filter {
+        /// A specific set of tables for this filter to apply to. A table collection
+        /// must be specified in only one filter per config.
+        /// If a table id or dataset is empty, Cloud DLP assumes all tables in that
+        /// collection must be profiled. Must specify a project ID.
+        #[prost(message, tag = "1")]
+        Tables(super::BigQueryTableCollection),
+        /// Catch-all. This should always be the last filter in the list because
+        /// anything above it will apply first. Should only appear once in a
+        /// configuration. If none is specified, a default one will be added
+        /// automatically.
+        #[prost(message, tag = "2")]
+        OtherTables(AllOtherBigQueryTables),
+        /// The table to scan. Discovery configurations including this can only
+        /// include one DiscoveryTarget (the DiscoveryTarget with this
+        /// TableReference).
+        #[prost(message, tag = "3")]
+        TableReference(super::TableReference),
+    }
+}
+/// Specifies a collection of BigQuery tables. Used for Discovery.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BigQueryTableCollection {
+    /// Maximum of 100 entries.
+    /// The first filter containing a pattern that matches a table will be used.
+    #[prost(oneof = "big_query_table_collection::Pattern", tags = "1")]
+    pub pattern: ::core::option::Option<big_query_table_collection::Pattern>,
+}
+/// Nested message and enum types in `BigQueryTableCollection`.
+pub mod big_query_table_collection {
+    /// Maximum of 100 entries.
+    /// The first filter containing a pattern that matches a table will be used.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Pattern {
+        /// A collection of regular expressions to match a BigQuery table against.
+        #[prost(message, tag = "1")]
+        IncludeRegexes(super::BigQueryRegexes),
+    }
+}
+/// Requirements that must be true before a table is scanned in discovery for the
+/// first time. There is an AND relationship between the top-level attributes.
+/// Additionally, minimum conditions with an OR relationship that must be met
+/// before Cloud DLP scans a table can be set (like a minimum row count or a
+/// minimum table age).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryBigQueryConditions {
+    /// BigQuery table must have been created after this date. Used to avoid
+    /// backfilling.
+    #[prost(message, optional, tag = "1")]
+    pub created_after: ::core::option::Option<::prost_types::Timestamp>,
+    /// At least one of the conditions must be true for a table to be scanned.
+    #[prost(message, optional, tag = "4")]
+    pub or_conditions: ::core::option::Option<discovery_big_query_conditions::OrConditions>,
+    /// The type of BigQuery tables to scan. If nothing is set the default
+    /// behavior is to scan only tables of type TABLE and to give errors
+    /// for all unsupported tables.
+    #[prost(oneof = "discovery_big_query_conditions::IncludedTypes", tags = "2, 3")]
+    pub included_types: ::core::option::Option<discovery_big_query_conditions::IncludedTypes>,
+}
+/// Nested message and enum types in `DiscoveryBigQueryConditions`.
+pub mod discovery_big_query_conditions {
+    /// There is an OR relationship between these attributes. They are used to
+    /// determine if a table should be scanned or not in Discovery.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct OrConditions {
+        /// Minimum number of rows that should be present before Cloud DLP
+        /// profiles a table
+        #[prost(int32, tag = "1")]
+        pub min_row_count: i32,
+        /// Minimum age a table must have before Cloud DLP can profile it. Value must
+        /// be 1 hour or greater.
+        #[prost(message, optional, tag = "2")]
+        pub min_age: ::core::option::Option<::prost_types::Duration>,
+    }
+    /// The type of BigQuery tables to scan. If nothing is set the default
+    /// behavior is to scan only tables of type TABLE and to give errors
+    /// for all unsupported tables.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum IncludedTypes {
+        /// Restrict discovery to specific table types.
+        #[prost(message, tag = "2")]
+        Types(super::BigQueryTableTypes),
+        /// Restrict discovery to categories of table types.
+        #[prost(enumeration = "super::BigQueryTableTypeCollection", tag = "3")]
+        TypeCollection(i32),
+    }
+}
+/// What must take place for a profile to be updated and how
+/// frequently it should occur.
+/// New tables are scanned as quickly as possible depending on system
+/// capacity.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryGenerationCadence {
+    /// Governs when to update data profiles when a schema is modified.
+    #[prost(message, optional, tag = "1")]
+    pub schema_modified_cadence: ::core::option::Option<DiscoverySchemaModifiedCadence>,
+    /// Governs when to update data profiles when a table is modified.
+    #[prost(message, optional, tag = "2")]
+    pub table_modified_cadence: ::core::option::Option<DiscoveryTableModifiedCadence>,
+    /// Governs when to update data profiles when the inspection rules
+    /// defined by the `InspectTemplate` change.
+    /// If not set, changing the template will not cause a data profile to update.
+    #[prost(message, optional, tag = "3")]
+    pub inspect_template_modified_cadence:
+        ::core::option::Option<DiscoveryInspectTemplateModifiedCadence>,
+}
+/// The cadence at which to update data profiles when a table is modified.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryTableModifiedCadence {
+    /// The type of events to consider when deciding if the table has been
+    /// modified and should have the profile updated. Defaults to
+    /// MODIFIED_TIMESTAMP.
+    #[prost(enumeration = "BigQueryTableModification", repeated, tag = "1")]
+    pub types: ::prost::alloc::vec::Vec<i32>,
+    /// How frequently data profiles can be updated when tables are modified.
+    /// Defaults to never.
+    #[prost(enumeration = "DataProfileUpdateFrequency", tag = "2")]
+    pub frequency: i32,
+}
+/// The cadence at which to update data profiles when a schema is modified.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoverySchemaModifiedCadence {
+    /// The type of events to consider when deciding if the table's schema
+    /// has been modified and should have the profile updated. Defaults to
+    /// NEW_COLUMNS.
+    #[prost(enumeration = "BigQuerySchemaModification", repeated, tag = "1")]
+    pub types: ::prost::alloc::vec::Vec<i32>,
+    /// How frequently profiles may be updated when schemas are
+    /// modified. Defaults to monthly.
+    #[prost(enumeration = "DataProfileUpdateFrequency", tag = "2")]
+    pub frequency: i32,
+}
+/// The cadence at which to update data profiles when the inspection rules
+/// defined by the `InspectTemplate` change.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryInspectTemplateModifiedCadence {
+    /// How frequently data profiles can be updated when the template is modified.
+    /// Defaults to never.
+    #[prost(enumeration = "DataProfileUpdateFrequency", tag = "1")]
+    pub frequency: i32,
+}
+/// Target used to match against for discovery with Cloud SQL tables.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudSqlDiscoveryTarget {
+    /// Required. The tables the discovery cadence applies to. The first target
+    /// with a matching filter will be the one to apply to a table.
+    #[prost(message, optional, tag = "1")]
+    pub filter: ::core::option::Option<DiscoveryCloudSqlFilter>,
+    /// In addition to matching the filter, these conditions must be true
+    /// before a profile is generated.
+    #[prost(message, optional, tag = "2")]
+    pub conditions: ::core::option::Option<DiscoveryCloudSqlConditions>,
+    /// Type of schedule.
+    #[prost(oneof = "cloud_sql_discovery_target::Cadence", tags = "3, 4")]
+    pub cadence: ::core::option::Option<cloud_sql_discovery_target::Cadence>,
+}
+/// Nested message and enum types in `CloudSqlDiscoveryTarget`.
+pub mod cloud_sql_discovery_target {
+    /// Type of schedule.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Cadence {
+        /// How often and when to update profiles. New tables that match both the
+        /// filter and conditions are scanned as quickly as possible depending on
+        /// system capacity.
+        #[prost(message, tag = "3")]
+        GenerationCadence(super::DiscoveryCloudSqlGenerationCadence),
+        /// Disable profiling for database resources that match this filter.
+        #[prost(message, tag = "4")]
+        Disabled(super::Disabled),
+    }
+}
+/// Determines what tables will have profiles generated within an organization
+/// or project. Includes the ability to filter by regular expression patterns
+/// on project ID, location, instance, database, and database resource name.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryCloudSqlFilter {
+    /// Whether the filter applies to a specific set of database resources or all
+    /// other database resources within the location being profiled. The first
+    /// filter to match will be applied, regardless of the condition. If none is
+    /// set, will default to `others`.
+    #[prost(oneof = "discovery_cloud_sql_filter::Filter", tags = "1, 2, 3")]
+    pub filter: ::core::option::Option<discovery_cloud_sql_filter::Filter>,
+}
+/// Nested message and enum types in `DiscoveryCloudSqlFilter`.
+pub mod discovery_cloud_sql_filter {
+    /// Whether the filter applies to a specific set of database resources or all
+    /// other database resources within the location being profiled. The first
+    /// filter to match will be applied, regardless of the condition. If none is
+    /// set, will default to `others`.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Filter {
+        /// A specific set of database resources for this filter to apply to.
+        #[prost(message, tag = "1")]
+        Collection(super::DatabaseResourceCollection),
+        /// Catch-all. This should always be the last target in the list because
+        /// anything above it will apply first. Should only appear once in a
+        /// configuration. If none is specified, a default one will be added
+        /// automatically.
+        #[prost(message, tag = "2")]
+        Others(super::AllOtherDatabaseResources),
+        /// The database resource to scan. Targets including this can only include
+        /// one target (the target with this database resource reference).
+        #[prost(message, tag = "3")]
+        DatabaseResourceReference(super::DatabaseResourceReference),
+    }
+}
+/// Match database resources using regex filters. Examples of database
+/// resources are tables, views, and stored procedures.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DatabaseResourceCollection {
+    /// The first filter containing a pattern that matches a database resource will
+    /// be used.
+    #[prost(oneof = "database_resource_collection::Pattern", tags = "1")]
+    pub pattern: ::core::option::Option<database_resource_collection::Pattern>,
+}
+/// Nested message and enum types in `DatabaseResourceCollection`.
+pub mod database_resource_collection {
+    /// The first filter containing a pattern that matches a database resource will
+    /// be used.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Pattern {
+        /// A collection of regular expressions to match a database resource against.
+        #[prost(message, tag = "1")]
+        IncludeRegexes(super::DatabaseResourceRegexes),
+    }
+}
+/// A collection of regular expressions to determine what database resources to
+/// match against.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DatabaseResourceRegexes {
+    /// A group of regular expression patterns to match against one or more
+    /// database resources.
+    /// Maximum of 100 entries. The sum of all regular expression's length can't
+    /// exceed 10 KiB.
+    #[prost(message, repeated, tag = "1")]
+    pub patterns: ::prost::alloc::vec::Vec<DatabaseResourceRegex>,
+}
+/// A pattern to match against one or more database resources. At least one
+/// pattern must be specified. Regular expressions use RE2
+/// \[syntax\](<https://github.com/google/re2/wiki/Syntax>); a guide can be found
+/// under the google/re2 repository on GitHub.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DatabaseResourceRegex {
+    /// For organizations, if unset, will match all projects. Has no effect
+    /// for configurations created within a project.
+    #[prost(string, tag = "1")]
+    pub project_id_regex: ::prost::alloc::string::String,
+    /// Regex to test the instance name against. If empty, all instances match.
+    #[prost(string, tag = "2")]
+    pub instance_regex: ::prost::alloc::string::String,
+    /// Regex to test the database name against. If empty, all databases match.
+    #[prost(string, tag = "3")]
+    pub database_regex: ::prost::alloc::string::String,
+    /// Regex to test the database resource's name against. An example of a
+    /// database resource name is a table's name. Other database resource names
+    /// like view names could be included in the future. If empty, all database
+    /// resources match.
+    #[prost(string, tag = "4")]
+    pub database_resource_name_regex: ::prost::alloc::string::String,
+}
+/// Match database resources not covered by any other filter.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AllOtherDatabaseResources {}
+/// Identifies a single database resource, like a table within a database.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DatabaseResourceReference {
+    /// Required. If within a project-level config, then this must match the
+    /// config's project ID.
+    #[prost(string, tag = "1")]
+    pub project_id: ::prost::alloc::string::String,
+    /// Required. The instance where this resource is located. For example: Cloud
+    /// SQL instance ID.
+    #[prost(string, tag = "2")]
+    pub instance: ::prost::alloc::string::String,
+    /// Required. Name of a database within the instance.
+    #[prost(string, tag = "3")]
+    pub database: ::prost::alloc::string::String,
+    /// Required. Name of a database resource, for example, a table within the
+    /// database.
+    #[prost(string, tag = "4")]
+    pub database_resource: ::prost::alloc::string::String,
+}
+/// Requirements that must be true before a table is profiled for the
+/// first time.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryCloudSqlConditions {
+    /// Optional. Database engines that should be profiled.
+    /// Optional. Defaults to ALL_SUPPORTED_DATABASE_ENGINES if unspecified.
+    #[prost(
+        enumeration = "discovery_cloud_sql_conditions::DatabaseEngine",
+        repeated,
+        packed = "false",
+        tag = "1"
+    )]
+    pub database_engines: ::prost::alloc::vec::Vec<i32>,
+    /// Data profiles will only be generated for the database resource types
+    /// specified in this field.
+    /// If not specified, defaults to \[DATABASE_RESOURCE_TYPE_ALL_SUPPORTED_TYPES\].
+    #[prost(
+        enumeration = "discovery_cloud_sql_conditions::DatabaseResourceType",
+        repeated,
+        tag = "3"
+    )]
+    pub types: ::prost::alloc::vec::Vec<i32>,
+}
+/// Nested message and enum types in `DiscoveryCloudSqlConditions`.
+pub mod discovery_cloud_sql_conditions {
+    /// The database engines that should be profiled.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DatabaseEngine {
+        /// Unused.
+        Unspecified = 0,
+        /// Include all supported database engines.
+        AllSupportedDatabaseEngines = 1,
+        /// MySQL database.
+        Mysql = 2,
+        /// PostgreSQL database.
+        Postgres = 3,
+    }
+    /// Cloud SQL database resource types. New values can be added at a later time.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DatabaseResourceType {
+        /// Unused.
+        Unspecified = 0,
+        /// Includes database resource types that become supported at a later time.
+        AllSupportedTypes = 1,
+        /// Tables.
+        Table = 2,
+    }
+}
+/// How often existing tables should have their profiles refreshed.
+/// New tables are scanned as quickly as possible depending on system
+/// capacity.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryCloudSqlGenerationCadence {
+    /// When to reprofile if the schema has changed.
+    #[prost(message, optional, tag = "1")]
+    pub schema_modified_cadence:
+        ::core::option::Option<discovery_cloud_sql_generation_cadence::SchemaModifiedCadence>,
+    /// Data changes (non-schema changes) in Cloud SQL tables can't trigger
+    /// reprofiling. If you set this field, profiles are refreshed at this
+    /// frequency regardless of whether the underlying tables have changed.
+    /// Defaults to never.
+    #[prost(enumeration = "DataProfileUpdateFrequency", tag = "2")]
+    pub refresh_frequency: i32,
+}
+/// Nested message and enum types in `DiscoveryCloudSqlGenerationCadence`.
+pub mod discovery_cloud_sql_generation_cadence {
+    /// How frequently to modify the profile when the table's schema is modified.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SchemaModifiedCadence {
+        /// The types of schema modifications to consider.
+        /// Defaults to NEW_COLUMNS.
+        #[prost(
+            enumeration = "schema_modified_cadence::CloudSqlSchemaModification",
+            repeated,
+            tag = "1"
+        )]
+        pub types: ::prost::alloc::vec::Vec<i32>,
+        /// Frequency to regenerate data profiles when the schema is modified.
+        /// Defaults to monthly.
+        #[prost(enumeration = "super::DataProfileUpdateFrequency", tag = "2")]
+        pub frequency: i32,
+    }
+    /// Nested message and enum types in `SchemaModifiedCadence`.
+    pub mod schema_modified_cadence {
+        /// The type of modification that causes a profile update.
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+        )]
+        #[repr(i32)]
+        pub enum CloudSqlSchemaModification {
+            /// Unused.
+            SqlSchemaModificationUnspecified = 0,
+            /// New columns have appeared.
+            NewColumns = 1,
+            /// Columns have been removed from the table.
+            RemovedColumns = 2,
+        }
+    }
+}
+/// Discovery target for credentials and secrets in cloud resource metadata.
+///
+/// This target does not include any filtering or frequency controls. Cloud
+/// DLP will scan cloud resource metadata for secrets daily.
+///
+/// No inspect template should be included in the discovery config for a
+/// security benchmarks scan. Instead, the built-in list of secrets and
+/// credentials infoTypes will be used (see
+/// <https://cloud.google.com/sensitive-data-protection/docs/infotypes-reference#credentials_and_secrets>).
+///
+/// Credentials and secrets discovered will be reported as vulnerabilities to
+/// Security Command Center.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SecretsDiscoveryTarget {}
+/// Target used to match against for discovery with Cloud Storage buckets.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudStorageDiscoveryTarget {
+    /// Required. The buckets the generation_cadence applies to. The first target
+    /// with a matching filter will be the one to apply to a bucket.
+    #[prost(message, optional, tag = "1")]
+    pub filter: ::core::option::Option<DiscoveryCloudStorageFilter>,
+    /// Optional. In addition to matching the filter, these conditions must be true
+    /// before a profile is generated.
+    #[prost(message, optional, tag = "4")]
+    pub conditions: ::core::option::Option<DiscoveryFileStoreConditions>,
+    /// How often and when to update profiles.
+    #[prost(oneof = "cloud_storage_discovery_target::Cadence", tags = "2, 3")]
+    pub cadence: ::core::option::Option<cloud_storage_discovery_target::Cadence>,
+}
+/// Nested message and enum types in `CloudStorageDiscoveryTarget`.
+pub mod cloud_storage_discovery_target {
+    /// How often and when to update profiles.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Cadence {
+        /// Optional. How often and when to update profiles. New buckets that match
+        /// both the filter and conditions are scanned as quickly as possible
+        /// depending on system capacity.
+        #[prost(message, tag = "2")]
+        GenerationCadence(super::DiscoveryCloudStorageGenerationCadence),
+        /// Optional. Disable profiling for buckets that match this filter.
+        #[prost(message, tag = "3")]
+        Disabled(super::Disabled),
+    }
+}
+/// Determines which buckets will have profiles generated within an organization
+/// or project. Includes the ability to filter by regular expression patterns
+/// on project ID and bucket name.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryCloudStorageFilter {
+    /// Whether the filter applies to a specific set of buckets or all
+    /// other buckets within the location being profiled. The first
+    /// filter to match will be applied, regardless of the condition. If none is
+    /// set, will default to `others`.
+    #[prost(oneof = "discovery_cloud_storage_filter::Filter", tags = "1, 2, 100")]
+    pub filter: ::core::option::Option<discovery_cloud_storage_filter::Filter>,
+}
+/// Nested message and enum types in `DiscoveryCloudStorageFilter`.
+pub mod discovery_cloud_storage_filter {
+    /// Whether the filter applies to a specific set of buckets or all
+    /// other buckets within the location being profiled. The first
+    /// filter to match will be applied, regardless of the condition. If none is
+    /// set, will default to `others`.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Filter {
+        /// Optional. A specific set of buckets for this filter to apply to.
+        #[prost(message, tag = "1")]
+        Collection(super::FileStoreCollection),
+        /// Optional. The bucket to scan. Targets including this can only include one
+        /// target (the target with this bucket). This enables profiling the contents
+        /// of a single bucket, while the other options allow for easy profiling of
+        /// many bucets within a project or an organization.
+        #[prost(message, tag = "2")]
+        CloudStorageResourceReference(super::CloudStorageResourceReference),
+        /// Optional. Catch-all. This should always be the last target in the list
+        /// because anything above it will apply first. Should only appear once in a
+        /// configuration. If none is specified, a default one will be added
+        /// automatically.
+        #[prost(message, tag = "100")]
+        Others(super::AllOtherResources),
+    }
+}
+/// Match file stores (e.g. buckets) using regex filters.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileStoreCollection {
+    /// The first filter containing a pattern that matches a file store will
+    /// be used.
+    #[prost(oneof = "file_store_collection::Pattern", tags = "1")]
+    pub pattern: ::core::option::Option<file_store_collection::Pattern>,
+}
+/// Nested message and enum types in `FileStoreCollection`.
+pub mod file_store_collection {
+    /// The first filter containing a pattern that matches a file store will
+    /// be used.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Pattern {
+        /// Optional. A collection of regular expressions to match a file store
+        /// against.
+        #[prost(message, tag = "1")]
+        IncludeRegexes(super::FileStoreRegexes),
+    }
+}
+/// A collection of regular expressions to determine what file store to match
+/// against.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileStoreRegexes {
+    /// Required. The group of regular expression patterns to match against one or
+    /// more file stores. Maximum of 100 entries. The sum of all regular
+    /// expression's length can't exceed 10 KiB.
+    #[prost(message, repeated, tag = "1")]
+    pub patterns: ::prost::alloc::vec::Vec<FileStoreRegex>,
+}
+/// A pattern to match against one or more file stores.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileStoreRegex {
+    /// The type of resource regex to use.
+    #[prost(oneof = "file_store_regex::ResourceRegex", tags = "1")]
+    pub resource_regex: ::core::option::Option<file_store_regex::ResourceRegex>,
+}
+/// Nested message and enum types in `FileStoreRegex`.
+pub mod file_store_regex {
+    /// The type of resource regex to use.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ResourceRegex {
+        /// Optional. Regex for Cloud Storage.
+        #[prost(message, tag = "1")]
+        CloudStorageRegex(super::CloudStorageRegex),
+    }
+}
+/// A pattern to match against one or more file stores. At least one
+/// pattern must be specified. Regular expressions use RE2
+/// \[syntax\](<https://github.com/google/re2/wiki/Syntax>); a guide can be found
+/// under the google/re2 repository on GitHub.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudStorageRegex {
+    /// Optional. For organizations, if unset, will match all projects.
+    #[prost(string, tag = "1")]
+    pub project_id_regex: ::prost::alloc::string::String,
+    /// Optional. Regex to test the bucket name against. If empty, all buckets
+    /// match. Example: "marketing2021" or "(marketing)\d{4}" will both match the
+    /// bucket gs://marketing2021
+    #[prost(string, tag = "2")]
+    pub bucket_name_regex: ::prost::alloc::string::String,
+}
+/// Identifies a single Cloud Storage bucket.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudStorageResourceReference {
+    /// Required. The bucket to scan.
+    #[prost(string, tag = "1")]
+    pub bucket_name: ::prost::alloc::string::String,
+    /// Required. If within a project-level config, then this must match the
+    /// config's project id.
+    #[prost(string, tag = "2")]
+    pub project_id: ::prost::alloc::string::String,
+}
+/// How often existing buckets should have their profiles refreshed.
+/// New buckets are scanned as quickly as possible depending on system
+/// capacity.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryCloudStorageGenerationCadence {
+    /// Optional. Data changes in Cloud Storage can't trigger reprofiling. If you
+    /// set this field, profiles are refreshed at this frequency regardless of
+    /// whether the underlying buckets have changed. Defaults to never.
+    #[prost(enumeration = "DataProfileUpdateFrequency", tag = "1")]
+    pub refresh_frequency: i32,
+    /// Optional. Governs when to update data profiles when the inspection rules
+    /// defined by the `InspectTemplate` change.
+    /// If not set, changing the template will not cause a data profile to update.
+    #[prost(message, optional, tag = "2")]
+    pub inspect_template_modified_cadence:
+        ::core::option::Option<DiscoveryInspectTemplateModifiedCadence>,
+}
+/// Requirements that must be true before a Cloud Storage bucket or object is
+/// scanned in discovery for the first time. There is an AND relationship between
+/// the top-level attributes.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryCloudStorageConditions {
+    /// Required. Only objects with the specified attributes will be scanned. If an
+    /// object has one of the specified attributes but is inside an excluded
+    /// bucket, it will not be scanned. Defaults to \[ALL_SUPPORTED_OBJECTS\]. A
+    /// profile will be created even if no objects match the
+    /// included_object_attributes.
+    #[prost(
+        enumeration = "discovery_cloud_storage_conditions::CloudStorageObjectAttribute",
+        repeated,
+        packed = "false",
+        tag = "1"
+    )]
+    pub included_object_attributes: ::prost::alloc::vec::Vec<i32>,
+    /// Required. Only objects with the specified attributes will be scanned.
+    /// Defaults to \[ALL_SUPPORTED_BUCKETS\] if unset.
+    #[prost(
+        enumeration = "discovery_cloud_storage_conditions::CloudStorageBucketAttribute",
+        repeated,
+        packed = "false",
+        tag = "2"
+    )]
+    pub included_bucket_attributes: ::prost::alloc::vec::Vec<i32>,
+}
+/// Nested message and enum types in `DiscoveryCloudStorageConditions`.
+pub mod discovery_cloud_storage_conditions {
+    /// The attribute of an object. See
+    /// <https://cloud.google.com/storage/docs/storage-classes> for more information
+    /// on storage classes.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CloudStorageObjectAttribute {
+        /// Unused.
+        Unspecified = 0,
+        /// Scan objects regardless of the attribute.
+        AllSupportedObjects = 1,
+        /// Scan objects with the standard storage class.
+        Standard = 2,
+        /// Scan objects with the nearline storage class. This will incur retrieval
+        /// fees.
+        Nearline = 3,
+        /// Scan objects with the coldline storage class. This will incur retrieval
+        /// fees.
+        Coldline = 4,
+        /// Scan objects with the archive storage class. This will incur retrieval
+        /// fees.
+        Archive = 5,
+        /// Scan objects with the regional storage class.
+        Regional = 6,
+        /// Scan objects with the multi-regional storage class.
+        MultiRegional = 7,
+        /// Scan objects with the dual-regional storage class. This will incur
+        /// retrieval fees.
+        DurableReducedAvailability = 8,
+    }
+    /// The attribute of a bucket.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CloudStorageBucketAttribute {
+        /// Unused.
+        Unspecified = 0,
+        /// Scan buckets regardless of the attribute.
+        AllSupportedBuckets = 1,
+        /// Buckets with autoclass disabled
+        /// (<https://cloud.google.com/storage/docs/autoclass>). Only one of
+        /// AUTOCLASS_DISABLED or AUTOCLASS_ENABLED should be set.
+        AutoclassDisabled = 2,
+        /// Buckets with autoclass enabled
+        /// (<https://cloud.google.com/storage/docs/autoclass>). Only one of
+        /// AUTOCLASS_DISABLED or AUTOCLASS_ENABLED should be set. Scanning
+        /// Autoclass-enabled buckets can affect object storage classes.
+        AutoclassEnabled = 3,
+    }
+}
+/// Requirements that must be true before a file store is scanned in discovery
+/// for the first time. There is an AND relationship between the top-level
+/// attributes.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryFileStoreConditions {
+    /// Optional. File store must have been created after this date. Used to avoid
+    /// backfilling.
+    #[prost(message, optional, tag = "1")]
+    pub created_after: ::core::option::Option<::prost_types::Timestamp>,
+    /// Optional. Minimum age a file store must have. If set, the value must be 1
+    /// hour or greater.
+    #[prost(message, optional, tag = "2")]
+    pub min_age: ::core::option::Option<::prost_types::Duration>,
+    /// File store specific conditions.
+    #[prost(oneof = "discovery_file_store_conditions::Conditions", tags = "3")]
+    pub conditions: ::core::option::Option<discovery_file_store_conditions::Conditions>,
+}
+/// Nested message and enum types in `DiscoveryFileStoreConditions`.
+pub mod discovery_file_store_conditions {
+    /// File store specific conditions.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Conditions {
+        /// Optional. Cloud Storage conditions.
+        #[prost(message, tag = "3")]
+        CloudStorageConditions(super::DiscoveryCloudStorageConditions),
+    }
+}
+/// The location to begin a discovery scan. Denotes an organization ID or folder
+/// ID within an organization.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DiscoveryStartingLocation {
+    /// The location to be scanned.
+    #[prost(oneof = "discovery_starting_location::Location", tags = "1, 2")]
+    pub location: ::core::option::Option<discovery_starting_location::Location>,
+}
+/// Nested message and enum types in `DiscoveryStartingLocation`.
+pub mod discovery_starting_location {
+    /// The location to be scanned.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Location {
+        /// The ID of an organization to scan.
+        #[prost(int64, tag = "1")]
+        OrganizationId(i64),
+        /// The ID of the folder within an organization to scan.
+        #[prost(int64, tag = "2")]
+        FolderId(i64),
+    }
+}
+/// Match discovery resources not covered by any other filter.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AllOtherResources {}
 /// Combines all of the information about a DLP job.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DlpJob {
@@ -4708,6 +6056,9 @@ pub struct DlpJob {
     /// Time when the job finished.
     #[prost(message, optional, tag = "8")]
     pub end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Time when the job was last modified by the system.
+    #[prost(message, optional, tag = "15")]
+    pub last_modified: ::core::option::Option<::prost_types::Timestamp>,
     /// If created by a job trigger, the resource name of the trigger that
     /// instantiated the job.
     #[prost(string, tag = "10")]
@@ -4715,6 +6066,10 @@ pub struct DlpJob {
     /// A stream of errors encountered running the job.
     #[prost(message, repeated, tag = "11")]
     pub errors: ::prost::alloc::vec::Vec<Error>,
+    /// Events that should occur after the job has completed.
+    #[prost(message, repeated, tag = "12")]
+    pub action_details: ::prost::alloc::vec::Vec<ActionDetails>,
+    /// Job details.
     #[prost(oneof = "dlp_job::Details", tags = "4, 5")]
     pub details: ::core::option::Option<dlp_job::Details>,
 }
@@ -4743,6 +6098,7 @@ pub mod dlp_job {
         /// calls to hybridInspect may be made. ACTIVE jobs can transition to DONE.
         Active = 6,
     }
+    /// Job details.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Details {
         /// Results from analyzing risk of a data source.
@@ -4767,11 +6123,11 @@ pub struct ListDlpJobsRequest {
     ///
     /// The format of this value varies depending on whether you have [specified a
     /// processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -4820,9 +6176,9 @@ pub struct ListDlpJobsRequest {
     /// The type of job. Defaults to `DlpJobType.INSPECT`
     #[prost(enumeration = "DlpJobType", tag = "5")]
     pub r#type: i32,
-    /// Comma separated list of fields to order by,
-    /// followed by `asc` or `desc` postfix. This list is case-insensitive,
-    /// default sorting order is ascending, redundant space characters are
+    /// Comma-separated list of fields to order by,
+    /// followed by `asc` or `desc` postfix. This list is case insensitive. The
+    /// default sorting order is ascending. Redundant space characters are
     /// insignificant.
     ///
     /// Example: `name asc, end_time asc, create_time desc`
@@ -4859,7 +6215,7 @@ pub struct CancelDlpJobRequest {
 /// The request message for finishing a DLP hybrid job.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FinishDlpJobRequest {
-    /// Required. The name of the DlpJob resource to be cancelled.
+    /// Required. The name of the DlpJob resource to be finished.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -4877,15 +6233,15 @@ pub struct CreateDeidentifyTemplateRequest {
     ///
     /// The format of this value varies depending on the scope of the request
     /// (project or organization) and whether you have [specified a processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
-    /// + Organizations scope, location specified:<br/>
+    /// + Organizations scope, location specified:
     ///   `organizations/`<var>ORG_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Organizations scope, no location specified (defaults to global):<br/>
+    /// + Organizations scope, no location specified (defaults to global):
     ///   `organizations/`<var>ORG_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -4911,8 +6267,9 @@ pub struct CreateDeidentifyTemplateRequest {
 /// Request message for UpdateDeidentifyTemplate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateDeidentifyTemplateRequest {
-    /// Required. Resource name of organization and deidentify template to be updated, for
-    /// example `organizations/433245324/deidentifyTemplates/432452342` or
+    /// Required. Resource name of organization and deidentify template to be
+    /// updated, for example
+    /// `organizations/433245324/deidentifyTemplates/432452342` or
     /// projects/project-id/deidentifyTemplates/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -4926,9 +6283,9 @@ pub struct UpdateDeidentifyTemplateRequest {
 /// Request message for GetDeidentifyTemplate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetDeidentifyTemplateRequest {
-    /// Required. Resource name of the organization and deidentify template to be read, for
-    /// example `organizations/433245324/deidentifyTemplates/432452342` or
-    /// projects/project-id/deidentifyTemplates/432452342.
+    /// Required. Resource name of the organization and deidentify template to be
+    /// read, for example `organizations/433245324/deidentifyTemplates/432452342`
+    /// or projects/project-id/deidentifyTemplates/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
@@ -4939,15 +6296,15 @@ pub struct ListDeidentifyTemplatesRequest {
     ///
     /// The format of this value varies depending on the scope of the request
     /// (project or organization) and whether you have [specified a processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
-    /// + Organizations scope, location specified:<br/>
+    /// + Organizations scope, location specified:
     ///   `organizations/`<var>ORG_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Organizations scope, no location specified (defaults to global):<br/>
+    /// + Organizations scope, no location specified (defaults to global):
     ///   `organizations/`<var>ORG_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -4957,17 +6314,17 @@ pub struct ListDeidentifyTemplatesRequest {
     ///     parent=projects/example-project/locations/europe-west3
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Page token to continue retrieval. Comes from previous call
+    /// Page token to continue retrieval. Comes from the previous call
     /// to `ListDeidentifyTemplates`.
     #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
-    /// Size of the page, can be limited by the server. If zero server returns
-    /// a page of max size 100.
+    /// Size of the page. This value can be limited by the server. If zero server
+    /// returns a page of max size 100.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
-    /// Comma separated list of fields to order by,
-    /// followed by `asc` or `desc` postfix. This list is case-insensitive,
-    /// default sorting order is ascending, redundant space characters are
+    /// Comma-separated list of fields to order by,
+    /// followed by `asc` or `desc` postfix. This list is case insensitive. The
+    /// default sorting order is ascending. Redundant space characters are
     /// insignificant.
     ///
     /// Example: `name asc,update_time, create_time desc`
@@ -4991,24 +6348,25 @@ pub struct ListDeidentifyTemplatesResponse {
     /// ListDeidentifyTemplatesRequest.
     #[prost(message, repeated, tag = "1")]
     pub deidentify_templates: ::prost::alloc::vec::Vec<DeidentifyTemplate>,
-    /// If the next page is available then the next page token to be used
-    /// in following ListDeidentifyTemplates request.
+    /// If the next page is available then the next page token to be used in the
+    /// following ListDeidentifyTemplates request.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for DeleteDeidentifyTemplate.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteDeidentifyTemplateRequest {
-    /// Required. Resource name of the organization and deidentify template to be deleted,
-    /// for example `organizations/433245324/deidentifyTemplates/432452342` or
+    /// Required. Resource name of the organization and deidentify template to be
+    /// deleted, for example
+    /// `organizations/433245324/deidentifyTemplates/432452342` or
     /// projects/project-id/deidentifyTemplates/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Configuration for a custom dictionary created from a data source of any size
 /// up to the maximum size defined in the
-/// \[limits\](<https://cloud.google.com/dlp/limits>) page. The artifacts of
-/// dictionary creation are stored in the specified Cloud Storage
+/// \[limits\](<https://cloud.google.com/sensitive-data-protection/limits>) page. The
+/// artifacts of dictionary creation are stored in the specified Cloud Storage
 /// location. Consider using `CustomInfoType.Dictionary` for smaller dictionaries
 /// that satisfy the size requirements.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -5019,11 +6377,13 @@ pub struct LargeCustomDictionaryConfig {
     /// longer be used.
     #[prost(message, optional, tag = "1")]
     pub output_path: ::core::option::Option<CloudStoragePath>,
+    /// Source of the dictionary.
     #[prost(oneof = "large_custom_dictionary_config::Source", tags = "2, 3")]
     pub source: ::core::option::Option<large_custom_dictionary_config::Source>,
 }
 /// Nested message and enum types in `LargeCustomDictionaryConfig`.
 pub mod large_custom_dictionary_config {
+    /// Source of the dictionary.
     #[derive(Clone, PartialEq, ::prost::Oneof)]
     pub enum Source {
         /// Set of files containing newline-delimited lists of dictionary phrases.
@@ -5043,7 +6403,7 @@ pub struct LargeCustomDictionaryStats {
 }
 /// Configuration for stored infoTypes. All fields and subfield are provided
 /// by the user. For more information, see
-/// <https://cloud.google.com/dlp/docs/creating-custom-infotypes.>
+/// <https://cloud.google.com/sensitive-data-protection/docs/creating-custom-infotypes.>
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StoredInfoTypeConfig {
     /// Display name of the StoredInfoType (max 256 characters).
@@ -5145,15 +6505,15 @@ pub struct CreateStoredInfoTypeRequest {
     ///
     /// The format of this value varies depending on the scope of the request
     /// (project or organization) and whether you have [specified a processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
-    /// + Organizations scope, location specified:<br/>
+    /// + Organizations scope, location specified:
     ///   `organizations/`<var>ORG_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Organizations scope, no location specified (defaults to global):<br/>
+    /// + Organizations scope, no location specified (defaults to global):
     ///   `organizations/`<var>ORG_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -5179,8 +6539,8 @@ pub struct CreateStoredInfoTypeRequest {
 /// Request message for UpdateStoredInfoType.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateStoredInfoTypeRequest {
-    /// Required. Resource name of organization and storedInfoType to be updated, for
-    /// example `organizations/433245324/storedInfoTypes/432452342` or
+    /// Required. Resource name of organization and storedInfoType to be updated,
+    /// for example `organizations/433245324/storedInfoTypes/432452342` or
     /// projects/project-id/storedInfoTypes/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -5196,8 +6556,8 @@ pub struct UpdateStoredInfoTypeRequest {
 /// Request message for GetStoredInfoType.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetStoredInfoTypeRequest {
-    /// Required. Resource name of the organization and storedInfoType to be read, for
-    /// example `organizations/433245324/storedInfoTypes/432452342` or
+    /// Required. Resource name of the organization and storedInfoType to be read,
+    /// for example `organizations/433245324/storedInfoTypes/432452342` or
     /// projects/project-id/storedInfoTypes/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -5209,11 +6569,11 @@ pub struct ListStoredInfoTypesRequest {
     ///
     /// The format of this value varies depending on the scope of the request
     /// (project or organization) and whether you have [specified a processing
-    /// location](<https://cloud.google.com/dlp/docs/specifying-location>):
+    /// location](<https://cloud.google.com/sensitive-data-protection/docs/specifying-location>):
     ///
-    /// + Projects scope, location specified:<br/>
+    /// + Projects scope, location specified:
     ///   `projects/`<var>PROJECT_ID</var>`/locations/`<var>LOCATION_ID</var>
-    /// + Projects scope, no location specified (defaults to global):<br/>
+    /// + Projects scope, no location specified (defaults to global):
     ///   `projects/`<var>PROJECT_ID</var>
     ///
     /// The following example `parent` string specifies a parent project with the
@@ -5223,17 +6583,17 @@ pub struct ListStoredInfoTypesRequest {
     ///     parent=projects/example-project/locations/europe-west3
     #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
-    /// Page token to continue retrieval. Comes from previous call
+    /// Page token to continue retrieval. Comes from the previous call
     /// to `ListStoredInfoTypes`.
     #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
-    /// Size of the page, can be limited by the server. If zero server returns
-    /// a page of max size 100.
+    /// Size of the page. This value can be limited by the server. If zero server
+    /// returns a page of max size 100.
     #[prost(int32, tag = "3")]
     pub page_size: i32,
-    /// Comma separated list of fields to order by,
-    /// followed by `asc` or `desc` postfix. This list is case-insensitive,
-    /// default sorting order is ascending, redundant space characters are
+    /// Comma-separated list of fields to order by,
+    /// followed by `asc` or `desc` postfix. This list is case insensitive. The
+    /// default sorting order is ascending. Redundant space characters are
     /// insignificant.
     ///
     /// Example: `name asc, display_name, create_time desc`
@@ -5258,15 +6618,15 @@ pub struct ListStoredInfoTypesResponse {
     #[prost(message, repeated, tag = "1")]
     pub stored_info_types: ::prost::alloc::vec::Vec<StoredInfoType>,
     /// If the next page is available then the next page token to be used
-    /// in following ListStoredInfoTypes request.
+    /// in the following ListStoredInfoTypes request.
     #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for DeleteStoredInfoType.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteStoredInfoTypeRequest {
-    /// Required. Resource name of the organization and storedInfoType to be deleted, for
-    /// example `organizations/433245324/storedInfoTypes/432452342` or
+    /// Required. Resource name of the organization and storedInfoType to be
+    /// deleted, for example `organizations/433245324/storedInfoTypes/432452342` or
     /// projects/project-id/storedInfoTypes/432452342.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
@@ -5274,8 +6634,8 @@ pub struct DeleteStoredInfoTypeRequest {
 /// Request to search for potentially sensitive info in a custom location.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HybridInspectJobTriggerRequest {
-    /// Required. Resource name of the trigger to execute a hybrid inspect on, for example
-    /// `projects/dlp-test-project/jobTriggers/53234423`.
+    /// Required. Resource name of the trigger to execute a hybrid inspect on, for
+    /// example `projects/dlp-test-project/jobTriggers/53234423`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The item to inspect.
@@ -5285,8 +6645,8 @@ pub struct HybridInspectJobTriggerRequest {
 /// Request to search for potentially sensitive info in a custom location.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HybridInspectDlpJobRequest {
-    /// Required. Resource name of the job to execute a hybrid inspect on, for example
-    /// `projects/dlp-test-project/dlpJob/53234423`.
+    /// Required. Resource name of the job to execute a hybrid inspect on, for
+    /// example `projects/dlp-test-project/dlpJob/53234423`.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The item to inspect.
@@ -5342,6 +6702,7 @@ pub struct HybridFindingDetails {
     /// No more than 10 labels can be associated with a given finding.
     ///
     /// Examples:
+    ///
     /// * `"environment" : "production"`
     /// * `"pipeline" : "etl"`
     #[prost(map = "string, string", tag = "5")]
@@ -5351,6 +6712,229 @@ pub struct HybridFindingDetails {
 /// Quota exceeded errors will be thrown once quota has been met.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HybridInspectResponse {}
+/// Request to list the profiles generated for a given organization or project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListProjectDataProfilesRequest {
+    /// Required. organizations/{org_id}/locations/{loc_id}
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Page token to continue retrieval.
+    #[prost(string, tag = "2")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Size of the page. This value can be limited by the server. If zero, server
+    /// returns a page of max size 100.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+    /// Comma-separated list of fields to order by, followed by `asc` or `desc`
+    /// postfix. This list is case insensitive. The default sorting order is
+    /// ascending. Redundant space characters are insignificant. Only one order
+    /// field at a time is allowed.
+    ///
+    /// Examples:
+    /// * `project_id`
+    /// * `sensitivity_level desc`
+    ///
+    /// Supported fields are:
+    ///
+    /// - `project_id`: Google Cloud project ID
+    /// - `sensitivity_level`: How sensitive the data in a project is, at most.
+    /// - `data_risk_level`: How much risk is associated with this data.
+    /// - `profile_last_generated`: When the profile was last updated in epoch
+    /// seconds.
+    #[prost(string, tag = "4")]
+    pub order_by: ::prost::alloc::string::String,
+    /// Allows filtering.
+    ///
+    /// Supported syntax:
+    ///
+    /// * Filter expressions are made up of one or more restrictions.
+    /// * Restrictions can be combined by `AND` or `OR` logical operators. A
+    /// sequence of restrictions implicitly uses `AND`.
+    /// * A restriction has the form of `{field} {operator} {value}`.
+    /// * Supported fields/values:
+    ///     - `sensitivity_level` - HIGH|MODERATE|LOW
+    ///     - `data_risk_level` - HIGH|MODERATE|LOW
+    ///     - `status_code` - an RPC status code as defined in
+    ///     <https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto>
+    /// * The operator must be `=` or `!=`.
+    ///
+    /// Examples:
+    ///
+    /// * `project_id = 12345 AND status_code = 1`
+    /// * `project_id = 12345 AND sensitivity_level = HIGH`
+    ///
+    /// The length of this field should be no more than 500 characters.
+    #[prost(string, tag = "5")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// List of profiles generated for a given organization or project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListProjectDataProfilesResponse {
+    /// List of data profiles.
+    #[prost(message, repeated, tag = "1")]
+    pub project_data_profiles: ::prost::alloc::vec::Vec<ProjectDataProfile>,
+    /// The next page token.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request to list the profiles generated for a given organization or project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListTableDataProfilesRequest {
+    /// Required. Resource name of the organization or project, for
+    /// example `organizations/433245324/locations/europe` or
+    /// `projects/project-id/locations/asia`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Page token to continue retrieval.
+    #[prost(string, tag = "2")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Size of the page. This value can be limited by the server. If zero, server
+    /// returns a page of max size 100.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+    /// Comma-separated list of fields to order by, followed by `asc` or `desc`
+    /// postfix. This list is case insensitive. The default sorting order is
+    /// ascending. Redundant space characters are insignificant. Only one order
+    /// field at a time is allowed.
+    ///
+    /// Examples:
+    /// * `project_id asc`
+    /// * `table_id`
+    /// * `sensitivity_level desc`
+    ///
+    /// Supported fields are:
+    ///
+    /// - `project_id`: The Google Cloud project ID.
+    /// - `dataset_id`: The ID of a BigQuery dataset.
+    /// - `table_id`: The ID of a BigQuery table.
+    /// - `sensitivity_level`: How sensitive the data in a table is, at most.
+    /// - `data_risk_level`: How much risk is associated with this data.
+    /// - `profile_last_generated`: When the profile was last updated in epoch
+    /// seconds.
+    /// - `last_modified`: The last time the resource was modified.
+    /// - `resource_visibility`: Visibility restriction for this resource.
+    /// - `row_count`: Number of rows in this resource.
+    #[prost(string, tag = "4")]
+    pub order_by: ::prost::alloc::string::String,
+    /// Allows filtering.
+    ///
+    /// Supported syntax:
+    ///
+    /// * Filter expressions are made up of one or more restrictions.
+    /// * Restrictions can be combined by `AND` or `OR` logical operators. A
+    /// sequence of restrictions implicitly uses `AND`.
+    /// * A restriction has the form of `{field} {operator} {value}`.
+    /// * Supported fields/values:
+    ///     - `project_id` - The Google Cloud project ID.
+    ///     - `dataset_id` - The BigQuery dataset ID.
+    ///     - `table_id` - The ID of the BigQuery table.
+    ///     - `sensitivity_level` - HIGH|MODERATE|LOW
+    ///     - `data_risk_level` - HIGH|MODERATE|LOW
+    ///     - `resource_visibility`: PUBLIC|RESTRICTED
+    ///     - `status_code` - an RPC status code as defined in
+    ///     <https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto>
+    /// * The operator must be `=` or `!=`.
+    ///
+    /// Examples:
+    ///
+    /// * `project_id = 12345 AND status_code = 1`
+    /// * `project_id = 12345 AND sensitivity_level = HIGH`
+    /// * `project_id = 12345 AND resource_visibility = PUBLIC`
+    ///
+    /// The length of this field should be no more than 500 characters.
+    #[prost(string, tag = "5")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// List of profiles generated for a given organization or project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListTableDataProfilesResponse {
+    /// List of data profiles.
+    #[prost(message, repeated, tag = "1")]
+    pub table_data_profiles: ::prost::alloc::vec::Vec<TableDataProfile>,
+    /// The next page token.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request to list the profiles generated for a given organization or project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListColumnDataProfilesRequest {
+    /// Required. Resource name of the organization or project, for
+    /// example `organizations/433245324/locations/europe` or
+    /// `projects/project-id/locations/asia`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Page token to continue retrieval.
+    #[prost(string, tag = "2")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Size of the page. This value can be limited by the server. If zero, server
+    /// returns a page of max size 100.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+    /// Comma-separated list of fields to order by, followed by `asc` or `desc`
+    /// postfix. This list is case insensitive. The default sorting order is
+    /// ascending. Redundant space characters are insignificant. Only one order
+    /// field at a time is allowed.
+    ///
+    /// Examples:
+    ///
+    /// * `project_id asc`
+    /// * `table_id`
+    /// * `sensitivity_level desc`
+    ///
+    /// Supported fields are:
+    ///
+    /// - `project_id`: The Google Cloud project ID.
+    /// - `dataset_id`: The ID of a BigQuery dataset.
+    /// - `table_id`: The ID of a BigQuery table.
+    /// - `sensitivity_level`: How sensitive the data in a column is, at most.
+    /// - `data_risk_level`: How much risk is associated with this data.
+    /// - `profile_last_generated`: When the profile was last updated in epoch
+    /// seconds.
+    #[prost(string, tag = "4")]
+    pub order_by: ::prost::alloc::string::String,
+    /// Allows filtering.
+    ///
+    /// Supported syntax:
+    ///
+    /// * Filter expressions are made up of one or more restrictions.
+    /// * Restrictions can be combined by `AND` or `OR` logical operators. A
+    /// sequence of restrictions implicitly uses `AND`.
+    /// * A restriction has the form of `{field} {operator} {value}`.
+    /// * Supported fields/values:
+    ///     - `table_data_profile_name` - The name of the related table data
+    ///     profile.
+    ///     - `project_id` - The Google Cloud project ID. (REQUIRED)
+    ///     - `dataset_id` - The BigQuery dataset ID. (REQUIRED)
+    ///     - `table_id` - The BigQuery table ID. (REQUIRED)
+    ///     - `field_id` - The ID of the BigQuery field.
+    ///     - `info_type` - The infotype detected in the resource.
+    ///     - `sensitivity_level` - HIGH|MEDIUM|LOW
+    ///     - `data_risk_level`: How much risk is associated with this data.
+    ///     - `status_code` - an RPC status code as defined in
+    ///     <https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto>
+    /// * The operator must be `=` for project_id, dataset_id, and table_id. Other
+    ///   filters also support `!=`.
+    ///
+    /// Examples:
+    ///
+    /// * project_id = 12345 AND status_code = 1
+    /// * project_id = 12345 AND sensitivity_level = HIGH
+    /// * project_id = 12345 AND info_type = STREET_ADDRESS
+    ///
+    /// The length of this field should be no more than 500 characters.
+    #[prost(string, tag = "5")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// List of profiles generated for a given organization or project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListColumnDataProfilesResponse {
+    /// List of data profiles.
+    #[prost(message, repeated, tag = "1")]
+    pub column_data_profiles: ::prost::alloc::vec::Vec<ColumnDataProfile>,
+    /// The next page token.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
 /// Score is a summary of all elements in the data profile.
 /// A higher number means more risk.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -5371,6 +6955,8 @@ pub mod data_risk_level {
         /// additional access restrictions in place or no indication of sensitive
         /// data found.
         RiskLow = 10,
+        /// Unable to determine risk.
+        RiskUnknown = 12,
         /// Medium risk - Sensitive data may be present but additional access or fine
         /// grain access restrictions appear to be present.  Consider limiting
         /// access even further or transform data to mask.
@@ -5381,6 +6967,35 @@ pub mod data_risk_level {
         RiskHigh = 30,
     }
 }
+/// An aggregated profile for this project, based on the resources profiled
+/// within it.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProjectDataProfile {
+    /// The resource name of the profile.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Project ID that was profiled.
+    #[prost(string, tag = "2")]
+    pub project_id: ::prost::alloc::string::String,
+    /// The last time the profile was generated.
+    #[prost(message, optional, tag = "3")]
+    pub profile_last_generated: ::core::option::Option<::prost_types::Timestamp>,
+    /// The sensitivity score of this project.
+    #[prost(message, optional, tag = "4")]
+    pub sensitivity_score: ::core::option::Option<SensitivityScore>,
+    /// The data risk level of this project.
+    #[prost(message, optional, tag = "5")]
+    pub data_risk_level: ::core::option::Option<DataRiskLevel>,
+    /// Success or error status of the last attempt to profile the project.
+    #[prost(message, optional, tag = "7")]
+    pub profile_status: ::core::option::Option<ProfileStatus>,
+    /// The number of table data profiles generated for this project.
+    #[prost(int64, tag = "9")]
+    pub table_data_profile_count: i64,
+    /// The number of file store data profiles generated for this project.
+    #[prost(int64, tag = "10")]
+    pub file_store_data_profile_count: i64,
+}
 /// Snapshot of the configurations used to generate the profile.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DataProfileConfigSnapshot {
@@ -5388,9 +7003,23 @@ pub struct DataProfileConfigSnapshot {
     /// is a copy of the inspect_template specified in `DataProfileJobConfig`.
     #[prost(message, optional, tag = "2")]
     pub inspect_config: ::core::option::Option<InspectConfig>,
-    /// A copy of the configuration used to generate this profile.
+    /// A copy of the configuration used to generate this profile. This is
+    /// deprecated, and the DiscoveryConfig field is preferred moving forward.
+    /// DataProfileJobConfig will still be written here for Discovery in BigQuery
+    /// for backwards compatibility, but will not be updated with new fields, while
+    /// DiscoveryConfig will.
+    #[deprecated]
     #[prost(message, optional, tag = "3")]
     pub data_profile_job: ::core::option::Option<DataProfileJobConfig>,
+    /// A copy of the configuration used to generate this profile.
+    #[prost(message, optional, tag = "4")]
+    pub discovery_config: ::core::option::Option<DiscoveryConfig>,
+    /// Name of the inspection template used to generate this profile
+    #[prost(string, tag = "5")]
+    pub inspect_template_name: ::prost::alloc::string::String,
+    /// Timestamp when the template was modified
+    #[prost(message, optional, tag = "6")]
+    pub inspect_template_modified_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// The profile for a scanned table.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -5398,24 +7027,27 @@ pub struct TableDataProfile {
     /// The name of the profile.
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
-    /// The resource name to the project data profile for this table.
+    /// The resource type that was profiled.
+    #[prost(message, optional, tag = "36")]
+    pub data_source_type: ::core::option::Option<DataSourceType>,
+    /// The resource name of the project data profile for this table.
     #[prost(string, tag = "2")]
     pub project_data_profile: ::prost::alloc::string::String,
-    /// The GCP project ID that owns the BigQuery dataset.
+    /// The Google Cloud project ID that owns the resource.
     #[prost(string, tag = "24")]
     pub dataset_project_id: ::prost::alloc::string::String,
-    /// The BigQuery location where the dataset's data is stored.
+    /// If supported, the location where the dataset's data is stored.
     /// See <https://cloud.google.com/bigquery/docs/locations> for supported
     /// locations.
     #[prost(string, tag = "29")]
     pub dataset_location: ::prost::alloc::string::String,
-    /// The BigQuery dataset ID.
+    /// If the resource is BigQuery, the  dataset ID.
     #[prost(string, tag = "25")]
     pub dataset_id: ::prost::alloc::string::String,
-    /// The BigQuery table ID.
+    /// If the resource is BigQuery, the BigQuery table ID.
     #[prost(string, tag = "26")]
     pub table_id: ::prost::alloc::string::String,
-    /// The resource name of the table.
+    /// The resource name of the resource profiled.
     /// <https://cloud.google.com/apis/design/resource_names#full_resource_name>
     #[prost(string, tag = "3")]
     pub full_resource: ::prost::alloc::string::String,
@@ -5494,9 +7126,11 @@ pub mod table_data_profile {
         Done = 2,
     }
 }
+/// Success or errors for the profile generation.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ProfileStatus {
-    /// Profiling status code and optional message
+    /// Profiling status code and optional message. The `status.code` value is 0
+    /// (default value) for OK.
     #[prost(message, optional, tag = "1")]
     pub status: ::core::option::Option<super::super::super::rpc::Status>,
     /// Time when the profile generation status was updated
@@ -5524,6 +7158,430 @@ pub struct OtherInfoTypeSummary {
     /// this infotype.
     #[prost(int32, tag = "2")]
     pub estimated_prevalence: i32,
+    /// Whether this infoType was excluded from sensitivity and risk analysis due
+    /// to factors such as low prevalence (subject to change).
+    #[prost(bool, tag = "3")]
+    pub excluded_from_analysis: bool,
+}
+/// The profile for a scanned column within a table.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ColumnDataProfile {
+    /// The name of the profile.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Success or error status from the most recent profile generation attempt.
+    /// May be empty if the profile is still being generated.
+    #[prost(message, optional, tag = "17")]
+    pub profile_status: ::core::option::Option<ProfileStatus>,
+    /// State of a profile.
+    #[prost(enumeration = "column_data_profile::State", tag = "18")]
+    pub state: i32,
+    /// The last time the profile was generated.
+    #[prost(message, optional, tag = "3")]
+    pub profile_last_generated: ::core::option::Option<::prost_types::Timestamp>,
+    /// The resource name of the table data profile.
+    #[prost(string, tag = "4")]
+    pub table_data_profile: ::prost::alloc::string::String,
+    /// The resource name of the resource this column is within.
+    #[prost(string, tag = "5")]
+    pub table_full_resource: ::prost::alloc::string::String,
+    /// The Google Cloud project ID that owns the profiled resource.
+    #[prost(string, tag = "19")]
+    pub dataset_project_id: ::prost::alloc::string::String,
+    /// The BigQuery location where the dataset's data is stored.
+    /// See <https://cloud.google.com/bigquery/docs/locations> for supported
+    /// locations.
+    #[prost(string, tag = "20")]
+    pub dataset_location: ::prost::alloc::string::String,
+    /// The BigQuery dataset ID.
+    #[prost(string, tag = "21")]
+    pub dataset_id: ::prost::alloc::string::String,
+    /// The BigQuery table ID.
+    #[prost(string, tag = "22")]
+    pub table_id: ::prost::alloc::string::String,
+    /// The name of the column.
+    #[prost(string, tag = "6")]
+    pub column: ::prost::alloc::string::String,
+    /// The sensitivity of this column.
+    #[prost(message, optional, tag = "7")]
+    pub sensitivity_score: ::core::option::Option<SensitivityScore>,
+    /// The data risk level for this column.
+    #[prost(message, optional, tag = "8")]
+    pub data_risk_level: ::core::option::Option<DataRiskLevel>,
+    /// If it's been determined this column can be identified as a single type,
+    /// this will be set. Otherwise the column either has unidentifiable content
+    /// or mixed types.
+    #[prost(message, optional, tag = "9")]
+    pub column_info_type: ::core::option::Option<InfoTypeSummary>,
+    /// Other types found within this column. List will be unordered.
+    #[prost(message, repeated, tag = "10")]
+    pub other_matches: ::prost::alloc::vec::Vec<OtherInfoTypeSummary>,
+    /// Approximate percentage of entries being null in the column.
+    #[prost(enumeration = "NullPercentageLevel", tag = "23")]
+    pub estimated_null_percentage: i32,
+    /// Approximate uniqueness of the column.
+    #[prost(enumeration = "UniquenessScoreLevel", tag = "24")]
+    pub estimated_uniqueness_score: i32,
+    /// The likelihood that this column contains free-form text.
+    /// A value close to 1 may indicate the column is likely to contain
+    /// free-form or natural language text.
+    /// Range in 0-1.
+    #[prost(double, tag = "13")]
+    pub free_text_score: f64,
+    /// The data type of a given column.
+    #[prost(enumeration = "column_data_profile::ColumnDataType", tag = "14")]
+    pub column_type: i32,
+    /// Indicates if a policy tag has been applied to the column.
+    #[prost(enumeration = "column_data_profile::ColumnPolicyState", tag = "15")]
+    pub policy_state: i32,
+}
+/// Nested message and enum types in `ColumnDataProfile`.
+pub mod column_data_profile {
+    /// Possible states of a profile. New items may be added.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unused.
+        Unspecified = 0,
+        /// The profile is currently running. Once a profile has finished it will
+        /// transition to DONE.
+        Running = 1,
+        /// The profile is no longer generating.
+        /// If profile_status.status.code is 0, the profile succeeded, otherwise, it
+        /// failed.
+        Done = 2,
+    }
+    /// Data types of the data in a column. Types may be added over time.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ColumnDataType {
+        /// Invalid type.
+        Unspecified = 0,
+        /// Encoded as a string in decimal format.
+        TypeInt64 = 1,
+        /// Encoded as a boolean "false" or "true".
+        TypeBool = 2,
+        /// Encoded as a number, or string "NaN", "Infinity" or "-Infinity".
+        TypeFloat64 = 3,
+        /// Encoded as a string value.
+        TypeString = 4,
+        /// Encoded as a base64 string per RFC 4648, section 4.
+        TypeBytes = 5,
+        /// Encoded as an RFC 3339 timestamp with mandatory "Z" time zone string:
+        /// 1985-04-12T23:20:50.52Z
+        TypeTimestamp = 6,
+        /// Encoded as RFC 3339 full-date format string: 1985-04-12
+        TypeDate = 7,
+        /// Encoded as RFC 3339 partial-time format string: 23:20:50.52
+        TypeTime = 8,
+        /// Encoded as RFC 3339 full-date "T" partial-time: 1985-04-12T23:20:50.52
+        TypeDatetime = 9,
+        /// Encoded as WKT
+        TypeGeography = 10,
+        /// Encoded as a decimal string.
+        TypeNumeric = 11,
+        /// Container of ordered fields, each with a type and field name.
+        TypeRecord = 12,
+        /// Decimal type.
+        TypeBignumeric = 13,
+        /// Json type.
+        TypeJson = 14,
+        /// Interval type.
+        TypeInterval = 15,
+        /// `Range<Date>` type.
+        TypeRangeDate = 16,
+        /// `Range<Datetime>` type.
+        TypeRangeDatetime = 17,
+        /// `Range<Timestamp>` type.
+        TypeRangeTimestamp = 18,
+    }
+    /// The possible policy states for a column.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum ColumnPolicyState {
+        /// No policy tags.
+        Unspecified = 0,
+        /// Column has policy tag applied.
+        ColumnPolicyTagged = 1,
+    }
+}
+/// The profile for a file store.
+///
+/// * Cloud Storage: maps 1:1 with a bucket.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileStoreDataProfile {
+    /// The name of the profile.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// The resource type that was profiled.
+    #[prost(message, optional, tag = "2")]
+    pub data_source_type: ::core::option::Option<DataSourceType>,
+    /// The resource name of the project data profile for this file store.
+    #[prost(string, tag = "3")]
+    pub project_data_profile: ::prost::alloc::string::String,
+    /// The Google Cloud project ID that owns the resource.
+    #[prost(string, tag = "4")]
+    pub project_id: ::prost::alloc::string::String,
+    /// The location of the file store.
+    ///
+    /// * Cloud Storage:
+    /// <https://cloud.google.com/storage/docs/locations#available-locations>
+    #[prost(string, tag = "5")]
+    pub file_store_location: ::prost::alloc::string::String,
+    /// For resources that have multiple storage locations, these are those
+    /// regions. For Cloud Storage this is the list of regions chosen for
+    /// dual-region storage. `file_store_location` will normally be the
+    /// corresponding multi-region for the list of individual locations. The first
+    /// region is always picked as the processing and storage location for the data
+    /// profile.
+    #[prost(string, repeated, tag = "19")]
+    pub data_storage_locations: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    /// The location type of the bucket (region, dual-region, multi-region, etc).
+    /// If dual-region, expect data_storage_locations to be populated.
+    #[prost(string, tag = "20")]
+    pub location_type: ::prost::alloc::string::String,
+    /// The file store path.
+    ///
+    /// * Cloud Storage: `gs://{bucket}`
+    #[prost(string, tag = "6")]
+    pub file_store_path: ::prost::alloc::string::String,
+    /// The resource name of the resource profiled.
+    /// <https://cloud.google.com/apis/design/resource_names#full_resource_name>
+    #[prost(string, tag = "24")]
+    pub full_resource: ::prost::alloc::string::String,
+    /// The snapshot of the configurations used to generate the profile.
+    #[prost(message, optional, tag = "7")]
+    pub config_snapshot: ::core::option::Option<DataProfileConfigSnapshot>,
+    /// Success or error status from the most recent profile generation attempt.
+    /// May be empty if the profile is still being generated.
+    #[prost(message, optional, tag = "8")]
+    pub profile_status: ::core::option::Option<ProfileStatus>,
+    /// State of a profile.
+    #[prost(enumeration = "file_store_data_profile::State", tag = "9")]
+    pub state: i32,
+    /// The last time the profile was generated.
+    #[prost(message, optional, tag = "10")]
+    pub profile_last_generated: ::core::option::Option<::prost_types::Timestamp>,
+    /// How broadly a resource has been shared.
+    #[prost(enumeration = "ResourceVisibility", tag = "11")]
+    pub resource_visibility: i32,
+    /// The sensitivity score of this resource.
+    #[prost(message, optional, tag = "12")]
+    pub sensitivity_score: ::core::option::Option<SensitivityScore>,
+    /// The data risk level of this resource.
+    #[prost(message, optional, tag = "13")]
+    pub data_risk_level: ::core::option::Option<DataRiskLevel>,
+    /// The time the file store was first created.
+    #[prost(message, optional, tag = "14")]
+    pub create_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// The time the file store was last modified.
+    #[prost(message, optional, tag = "15")]
+    pub last_modified_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// FileClusterSummary per each cluster.
+    #[prost(message, repeated, tag = "16")]
+    pub file_cluster_summaries: ::prost::alloc::vec::Vec<FileClusterSummary>,
+    /// Attributes of the resource being profiled.
+    /// Currently used attributes:
+    ///
+    /// * customer_managed_encryption: boolean
+    ///     - true: the resource is encrypted with a customer-managed key.
+    ///     - false: the resource is encrypted with a provider-managed key.
+    #[prost(map = "string, message", tag = "17")]
+    pub resource_attributes: ::std::collections::HashMap<::prost::alloc::string::String, Value>,
+    /// The labels applied to the resource at the time the profile was generated.
+    #[prost(map = "string, string", tag = "18")]
+    pub resource_labels:
+        ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    /// InfoTypes detected in this file store.
+    #[prost(message, repeated, tag = "21")]
+    pub file_store_info_type_summaries: ::prost::alloc::vec::Vec<FileStoreInfoTypeSummary>,
+    /// The file store does not have any files.
+    #[prost(bool, tag = "23")]
+    pub file_store_is_empty: bool,
+}
+/// Nested message and enum types in `FileStoreDataProfile`.
+pub mod file_store_data_profile {
+    /// Possible states of a profile. New items may be added.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum State {
+        /// Unused.
+        Unspecified = 0,
+        /// The profile is currently running. Once a profile has finished it will
+        /// transition to DONE.
+        Running = 1,
+        /// The profile is no longer generating.
+        /// If profile_status.status.code is 0, the profile succeeded, otherwise, it
+        /// failed.
+        Done = 2,
+    }
+}
+/// Information regarding the discovered InfoType.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileStoreInfoTypeSummary {
+    /// The InfoType seen.
+    #[prost(message, optional, tag = "1")]
+    pub info_type: ::core::option::Option<InfoType>,
+}
+/// Information regarding the discovered file extension.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileExtensionInfo {
+    /// The file extension if set. (aka .pdf, .jpg, .txt)
+    #[prost(string, tag = "1")]
+    pub file_extension: ::prost::alloc::string::String,
+}
+/// The file cluster summary.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileClusterSummary {
+    /// The file cluster type.
+    #[prost(message, optional, tag = "1")]
+    pub file_cluster_type: ::core::option::Option<FileClusterType>,
+    /// InfoTypes detected in this cluster.
+    #[prost(message, repeated, tag = "2")]
+    pub file_store_info_type_summaries: ::prost::alloc::vec::Vec<FileStoreInfoTypeSummary>,
+    /// The sensitivity score of this cluster. The score will be SENSITIVITY_LOW
+    /// if nothing has been scanned.
+    #[prost(message, optional, tag = "3")]
+    pub sensitivity_score: ::core::option::Option<SensitivityScore>,
+    /// The data risk level of this cluster. RISK_LOW if nothing has been
+    /// scanned.
+    #[prost(message, optional, tag = "4")]
+    pub data_risk_level: ::core::option::Option<DataRiskLevel>,
+    /// A list of errors detected while scanning this cluster. The list is
+    /// truncated to 10 per cluster.
+    #[prost(message, repeated, tag = "6")]
+    pub errors: ::prost::alloc::vec::Vec<Error>,
+    /// A sample of file types scanned in this cluster. Empty if no files were
+    /// scanned.
+    #[prost(message, repeated, tag = "7")]
+    pub file_extensions_scanned: ::prost::alloc::vec::Vec<FileExtensionInfo>,
+    /// A sample of file types seen in this cluster. Empty if no files were seen.
+    #[prost(message, repeated, tag = "8")]
+    pub file_extensions_seen: ::prost::alloc::vec::Vec<FileExtensionInfo>,
+    /// True if no files exist in this cluster. If the bucket had more files than
+    /// could be listed, this will be false even if no files for this cluster
+    /// were seen and file_extensions_seen is empty.
+    #[prost(bool, tag = "9")]
+    pub no_files_exist: bool,
+}
+/// Request to get a project data profile.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetProjectDataProfileRequest {
+    /// Required. Resource name, for example
+    /// `organizations/12345/locations/us/projectDataProfiles/53234423`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request to get a file store data profile.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFileStoreDataProfileRequest {
+    /// Required. Resource name, for example
+    /// `organizations/12345/locations/us/fileStoreDataProfiles/53234423`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request to list the file store profiles generated for a given organization or
+/// project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListFileStoreDataProfilesRequest {
+    /// Required. Resource name of the organization or project, for
+    /// example `organizations/433245324/locations/europe` or
+    /// `projects/project-id/locations/asia`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Page token to continue retrieval.
+    #[prost(string, tag = "2")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. Size of the page. This value can be limited by the server. If
+    /// zero, server returns a page of max size 100.
+    #[prost(int32, tag = "3")]
+    pub page_size: i32,
+    /// Optional. Comma-separated list of fields to order by, followed by `asc` or
+    /// `desc` postfix. This list is case insensitive. The default sorting order is
+    /// ascending. Redundant space characters are insignificant. Only one order
+    /// field at a time is allowed.
+    ///
+    /// Examples:
+    ///
+    /// * `project_id asc`
+    /// * `name`
+    /// * `sensitivity_level desc`
+    ///
+    /// Supported fields are:
+    ///
+    /// - `project_id`: The Google Cloud project ID.
+    /// - `sensitivity_level`: How sensitive the data in a table is, at most.
+    /// - `data_risk_level`: How much risk is associated with this data.
+    /// - `profile_last_generated`: When the profile was last updated in epoch
+    /// seconds.
+    /// - `last_modified`: The last time the resource was modified.
+    /// - `resource_visibility`: Visibility restriction for this resource.
+    /// - `name`: The name of the profile.
+    /// - `create_time`: The time the file store was first created.
+    #[prost(string, tag = "4")]
+    pub order_by: ::prost::alloc::string::String,
+    /// Optional. Allows filtering.
+    ///
+    /// Supported syntax:
+    ///
+    /// * Filter expressions are made up of one or more restrictions.
+    /// * Restrictions can be combined by `AND` or `OR` logical operators. A
+    /// sequence of restrictions implicitly uses `AND`.
+    /// * A restriction has the form of `{field} {operator} {value}`.
+    /// * Supported fields/values:
+    ///     - `project_id` - The Google Cloud project ID.
+    ///     - `file_store_path` - The path like "gs://bucket".
+    ///     - `sensitivity_level` - HIGH|MODERATE|LOW
+    ///     - `data_risk_level` - HIGH|MODERATE|LOW
+    ///     - `resource_visibility`: PUBLIC|RESTRICTED
+    ///     - `status_code` - an RPC status code as defined in
+    ///     <https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto>
+    /// * The operator must be `=` or `!=`.
+    ///
+    /// Examples:
+    ///
+    /// * `project_id = 12345 AND status_code = 1`
+    /// * `project_id = 12345 AND sensitivity_level = HIGH`
+    /// * `project_id = 12345 AND resource_visibility = PUBLIC`
+    /// * `file_store_path = "gs://mybucket"`
+    ///
+    /// The length of this field should be no more than 500 characters.
+    #[prost(string, tag = "5")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// List of file store data profiles generated for a given organization or
+/// project.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListFileStoreDataProfilesResponse {
+    /// List of data profiles.
+    #[prost(message, repeated, tag = "1")]
+    pub file_store_data_profiles: ::prost::alloc::vec::Vec<FileStoreDataProfile>,
+    /// The next page token.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for DeleteFileStoreProfile.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteFileStoreDataProfileRequest {
+    /// Required. Resource name of the file store data profile.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request to get a table data profile.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetTableDataProfileRequest {
+    /// Required. Resource name, for example
+    /// `organizations/12345/locations/us/tableDataProfiles/53234423`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request to get a column data profile.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetColumnDataProfileRequest {
+    /// Required. Resource name, for example
+    /// `organizations/12345/locations/us/columnDataProfiles/53234423`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
 }
 /// A condition for determining whether a Pub/Sub should be triggered.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -5602,9 +7660,274 @@ pub struct DataProfilePubSubMessage {
     /// `full_resource` will be populated.
     #[prost(message, optional, tag = "1")]
     pub profile: ::core::option::Option<TableDataProfile>,
+    /// If `DetailLevel` is `FILE_STORE_PROFILE` this will be fully populated.
+    /// Otherwise, if `DetailLevel` is `RESOURCE_NAME`, then only `name` and
+    /// `file_store_path` will be populated.
+    #[prost(message, optional, tag = "3")]
+    pub file_store_profile: ::core::option::Option<FileStoreDataProfile>,
     /// The event that caused the Pub/Sub message to be sent.
     #[prost(enumeration = "data_profile_action::EventType", tag = "2")]
     pub event: i32,
+}
+/// Request message for CreateConnection.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateConnectionRequest {
+    /// Required. Parent resource name in the format:
+    /// `projects/{project}/locations/{location}`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Required. The connection resource.
+    #[prost(message, optional, tag = "2")]
+    pub connection: ::core::option::Option<Connection>,
+}
+/// Request message for GetConnection.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetConnectionRequest {
+    /// Required. Resource name in the format:
+    /// `projects/{project}/locations/{location}/connections/{connection}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Request message for ListConnections.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListConnectionsRequest {
+    /// Required. Parent name, for example:
+    /// `projects/project-id/locations/global`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Number of results per page, max 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. Page token from a previous page to return the next set of
+    /// results. If set, all other request fields must match the original request.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. Supported field/value: `state` - MISSING|AVAILABLE|ERROR
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Request message for SearchConnections.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchConnectionsRequest {
+    /// Required. Parent name, typically an organization, without location.
+    /// For example: `organizations/12345678`.
+    #[prost(string, tag = "1")]
+    pub parent: ::prost::alloc::string::String,
+    /// Optional. Number of results per page, max 1000.
+    #[prost(int32, tag = "2")]
+    pub page_size: i32,
+    /// Optional. Page token from a previous page to return the next set of
+    /// results. If set, all other request fields must match the original request.
+    #[prost(string, tag = "3")]
+    pub page_token: ::prost::alloc::string::String,
+    /// Optional. Supported field/value: - `state` - MISSING|AVAILABLE|ERROR
+    #[prost(string, tag = "4")]
+    pub filter: ::prost::alloc::string::String,
+}
+/// Response message for ListConnections.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ListConnectionsResponse {
+    /// List of connections.
+    #[prost(message, repeated, tag = "1")]
+    pub connections: ::prost::alloc::vec::Vec<Connection>,
+    /// Token to retrieve the next page of results. An empty value means there are
+    /// no more results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Response message for SearchConnections.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchConnectionsResponse {
+    /// List of connections that match the search query. Note that only a subset
+    /// of the fields will be populated, and only "name" is guaranteed to be set.
+    /// For full details of a Connection, call GetConnection with the name.
+    #[prost(message, repeated, tag = "1")]
+    pub connections: ::prost::alloc::vec::Vec<Connection>,
+    /// Token to retrieve the next page of results. An empty value means there are
+    /// no more results.
+    #[prost(string, tag = "2")]
+    pub next_page_token: ::prost::alloc::string::String,
+}
+/// Request message for UpdateConnection.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpdateConnectionRequest {
+    /// Required. Resource name in the format:
+    /// `projects/{project}/locations/{location}/connections/{connection}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The connection with new values for the relevant fields.
+    #[prost(message, optional, tag = "2")]
+    pub connection: ::core::option::Option<Connection>,
+    /// Optional. Mask to control which fields get updated.
+    #[prost(message, optional, tag = "3")]
+    pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
+}
+/// Request message for DeleteConnection.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteConnectionRequest {
+    /// Required. Resource name of the Connection to be deleted, in the format:
+    /// `projects/{project}/locations/{location}/connections/{connection}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// A data connection to allow DLP to profile data in locations that require
+/// additional configuration.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Connection {
+    /// Output only. Name of the connection:
+    /// `projects/{project}/locations/{location}/connections/{name}`.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// Required. The connection's state in its lifecycle.
+    #[prost(enumeration = "ConnectionState", tag = "2")]
+    pub state: i32,
+    /// Output only. Set if status == ERROR, to provide additional details. Will
+    /// store the last 10 errors sorted with the most recent first.
+    #[prost(message, repeated, tag = "3")]
+    pub errors: ::prost::alloc::vec::Vec<Error>,
+    /// Type of connection.
+    #[prost(oneof = "connection::Properties", tags = "4")]
+    pub properties: ::core::option::Option<connection::Properties>,
+}
+/// Nested message and enum types in `Connection`.
+pub mod connection {
+    /// Type of connection.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Properties {
+        /// Connect to a Cloud SQL instance.
+        #[prost(message, tag = "4")]
+        CloudSql(super::CloudSqlProperties),
+    }
+}
+/// A credential consisting of a username and password, where the password is
+/// stored in a Secret Manager resource.
+/// Note: Secret Manager [charges
+/// apply](<https://cloud.google.com/secret-manager/pricing>).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SecretManagerCredential {
+    /// Required. The username.
+    #[prost(string, tag = "1")]
+    pub username: ::prost::alloc::string::String,
+    /// Required. The name of the Secret Manager resource that stores the password,
+    /// in the form `projects/project-id/secrets/secret-name/versions/version`.
+    #[prost(string, tag = "2")]
+    pub password_secret_version_name: ::prost::alloc::string::String,
+}
+/// Use IAM authentication to connect. This requires the Cloud SQL IAM feature
+/// to be enabled on the instance, which is not the default for Cloud SQL.
+/// See <https://cloud.google.com/sql/docs/postgres/authentication> and
+/// <https://cloud.google.com/sql/docs/mysql/authentication.>
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudSqlIamCredential {}
+/// Cloud SQL connection properties.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CloudSqlProperties {
+    /// Optional. Immutable. The Cloud SQL instance for which the connection is
+    /// defined. Only one connection per instance is allowed. This can only be set
+    /// at creation time, and cannot be updated.
+    ///
+    /// It is an error to use a connection_name from different project or region
+    /// than the one that holds the connection.
+    /// For example, a Connection resource for Cloud SQL connection_name
+    /// `project-id:us-central1:sql-instance`
+    /// must be created under the parent
+    /// `projects/project-id/locations/us-central1`
+    #[prost(string, tag = "1")]
+    pub connection_name: ::prost::alloc::string::String,
+    /// Required. DLP will limit its connections to max_connections.
+    /// Must be 2 or greater.
+    #[prost(int32, tag = "4")]
+    pub max_connections: i32,
+    /// Required. The database engine used by the Cloud SQL instance that this
+    /// connection configures.
+    #[prost(enumeration = "cloud_sql_properties::DatabaseEngine", tag = "7")]
+    pub database_engine: i32,
+    /// How to authenticate to the instance.
+    #[prost(oneof = "cloud_sql_properties::Credential", tags = "2, 3")]
+    pub credential: ::core::option::Option<cloud_sql_properties::Credential>,
+}
+/// Nested message and enum types in `CloudSqlProperties`.
+pub mod cloud_sql_properties {
+    /// Database engine of a Cloud SQL instance.
+    /// New values may be added over time.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum DatabaseEngine {
+        /// An engine that is not currently supported by Sensitive Data Protection.
+        Unknown = 0,
+        /// Cloud SQL for MySQL instance.
+        Mysql = 1,
+        /// Cloud SQL for PostgreSQL instance.
+        Postgres = 2,
+    }
+    /// How to authenticate to the instance.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum Credential {
+        /// A username and password stored in Secret Manager.
+        #[prost(message, tag = "2")]
+        UsernamePassword(super::SecretManagerCredential),
+        /// Built-in IAM authentication (must be configured in Cloud SQL).
+        #[prost(message, tag = "3")]
+        CloudSqlIam(super::CloudSqlIamCredential),
+    }
+}
+/// Request message for DeleteTableProfile.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteTableDataProfileRequest {
+    /// Required. Resource name of the table data profile.
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+}
+/// Message used to identify the type of resource being profiled.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DataSourceType {
+    /// Output only. An identifying string to the type of resource being profiled.
+    /// Current values: google/bigquery/table, google/project
+    #[prost(string, tag = "1")]
+    pub data_source: ::prost::alloc::string::String,
+}
+/// Message used to identify file cluster type being profiled.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileClusterType {
+    /// File cluster type.
+    #[prost(oneof = "file_cluster_type::FileClusterType", tags = "1")]
+    pub file_cluster_type: ::core::option::Option<file_cluster_type::FileClusterType>,
+}
+/// Nested message and enum types in `FileClusterType`.
+pub mod file_cluster_type {
+    /// Cluster type. Each cluster corresponds to a set of file types.
+    /// Over time new types may be added.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum Cluster {
+        /// Unused.
+        Unspecified = 0,
+        /// Unsupported files.
+        Unknown = 1,
+        /// Plain text.
+        Text = 2,
+        /// Structured data like CSV, TSV etc.
+        StructuredData = 3,
+        /// Source code.
+        SourceCode = 4,
+        /// Rich document like docx, xlsx etc.
+        RichDocument = 5,
+        /// Images like jpeg, bmp.
+        Image = 6,
+        /// Archives and containers like .zip, .tar etc.
+        Archive = 7,
+        /// Multimedia like .mp4, .avi etc.
+        Multimedia = 8,
+        /// Executable files like .exe, .class, .apk etc.
+        Executable = 9,
+    }
+    /// File cluster type.
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum FileClusterType {
+        /// Cluster type.
+        #[prost(enumeration = "Cluster", tag = "1")]
+        Cluster(i32),
+    }
 }
 /// Enum of possible outcomes of transformations. SUCCESS if transformation and
 /// storing of transformation was successful, otherwise, reason for not
@@ -5612,6 +7935,7 @@ pub struct DataProfilePubSubMessage {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum TransformationResultStatusType {
+    /// Unused.
     StateTypeUnspecified = 0,
     /// This will be set when a finding could not be transformed (i.e. outside user
     /// set bucket range).
@@ -5631,9 +7955,13 @@ pub enum TransformationResultStatusType {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum TransformationContainerType {
+    /// Unused.
     TransformUnknownContainer = 0,
+    /// Body of a file.
     TransformBody = 1,
+    /// Metadata for a file.
     TransformMetadata = 2,
+    /// A table.
     TransformTable = 3,
 }
 /// An enum of rules that can be used to transform a value. Can be a
@@ -5672,6 +8000,74 @@ pub enum TransformationType {
     CryptoDeterministicConfig = 13,
     /// Redact image
     RedactImage = 14,
+}
+/// Over time new types may be added. Currently VIEW, MATERIALIZED_VIEW,
+/// and SNAPSHOT are not supported.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum BigQueryTableTypeCollection {
+    /// Unused.
+    BigQueryCollectionUnspecified = 0,
+    /// Automatically generate profiles for all tables, even if the table type is
+    /// not yet fully supported for analysis. Profiles for unsupported tables will
+    /// be generated with errors to indicate their partial support. When full
+    /// support is added, the tables will automatically be profiled during the next
+    /// scheduled run.
+    BigQueryCollectionAllTypes = 1,
+    /// Only those types fully supported will be profiled. Will expand
+    /// automatically as Cloud DLP adds support for new table types. Unsupported
+    /// table types will not have partial profiles generated.
+    BigQueryCollectionOnlySupportedTypes = 2,
+}
+/// Over time new types may be added. Currently VIEW, MATERIALIZED_VIEW,
+/// SNAPSHOT, and non-BigLake external tables are not supported.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum BigQueryTableType {
+    /// Unused.
+    Unspecified = 0,
+    /// A normal BigQuery table.
+    Table = 1,
+    /// A table that references data stored in Cloud Storage.
+    ExternalBigLake = 2,
+}
+/// How frequently data profiles can be updated. New options can be added at a
+/// later time.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum DataProfileUpdateFrequency {
+    /// Unspecified.
+    UpdateFrequencyUnspecified = 0,
+    /// After the data profile is created, it will never be updated.
+    UpdateFrequencyNever = 1,
+    /// The data profile can be updated up to once every 24 hours.
+    UpdateFrequencyDaily = 2,
+    /// The data profile can be updated up to once every 30 days. Default.
+    UpdateFrequencyMonthly = 4,
+}
+/// Attributes evaluated to determine if a table has been modified. New values
+/// may be added at a later time.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum BigQueryTableModification {
+    /// Unused.
+    TableModificationUnspecified = 0,
+    /// A table will be considered modified when the last_modified_time from
+    /// BigQuery has been updated.
+    TableModifiedTimestamp = 1,
+}
+/// Attributes evaluated to determine if a schema has been modified. New values
+/// may be added at a later time.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum BigQuerySchemaModification {
+    /// Unused
+    SchemaModificationUnspecified = 0,
+    /// Profiles should be regenerated when new columns are added to the table.
+    /// Default.
+    SchemaNewColumns = 1,
+    /// Profiles should be regenerated when columns are removed from the table.
+    SchemaRemovedColumns = 2,
 }
 /// Operators available for comparing the value of fields.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
@@ -5781,8 +8177,8 @@ pub enum StoredInfoTypeState {
     /// use the `UpdateStoredInfoType` method to create a new version.
     Invalid = 4,
 }
-/// How broadly a resource has been shared. New items may be added over time.
-/// A higher number means more restricted.
+/// How broadly the data in the resource has been shared. New items may be added
+/// over time. A higher number means more restricted.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum ResourceVisibility {
@@ -5790,6 +8186,10 @@ pub enum ResourceVisibility {
     Unspecified = 0,
     /// Visible to any user.
     Public = 10,
+    /// May contain public items.
+    /// For example, if a Cloud Storage bucket has uniform bucket level access
+    /// disabled, some objects inside it may be public, but none are known yet.
+    Inconclusive = 15,
     /// Visible only to specific users.
     Restricted = 20,
 }
@@ -5804,6 +8204,60 @@ pub enum EncryptionStatus {
     /// Customer provides the key.
     EncryptionCustomerManaged = 2,
 }
+/// Bucketized nullness percentage levels. A higher level means a higher
+/// percentage of the column is null.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum NullPercentageLevel {
+    /// Unused.
+    Unspecified = 0,
+    /// Very few null entries.
+    NullPercentageVeryLow = 1,
+    /// Some null entries.
+    NullPercentageLow = 2,
+    /// A few null entries.
+    NullPercentageMedium = 3,
+    /// A lot of null entries.
+    NullPercentageHigh = 4,
+}
+/// Bucketized uniqueness score levels. A higher uniqueness score is a strong
+/// signal that the column may contain a unique identifier like user id. A low
+/// value indicates that the column contains few unique values like booleans or
+/// other classifiers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum UniquenessScoreLevel {
+    /// Some columns do not have estimated uniqueness. Possible reasons include
+    /// having too few values.
+    Unspecified = 0,
+    /// Low uniqueness, possibly a boolean, enum or similiarly typed column.
+    UniquenessScoreLow = 1,
+    /// Medium uniqueness.
+    UniquenessScoreMedium = 2,
+    /// High uniqueness, possibly a column of free text or unique identifiers.
+    UniquenessScoreHigh = 3,
+}
+/// State of the connection.
+/// New values may be added over time.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ConnectionState {
+    /// Unused
+    Unspecified = 0,
+    /// DLP automatically created this connection during an initial scan, and it is
+    /// awaiting full configuration by a user.
+    MissingCredentials = 1,
+    /// A configured connection that has not encountered any errors.
+    Available = 2,
+    /// A configured connection that encountered errors during its last use. It
+    /// will not be used again until it is set to AVAILABLE.
+    ///
+    /// If the resolution requires external action, then the client must send a
+    /// request to set the status to AVAILABLE when the connection is ready for
+    /// use. If the resolution doesn't require external action, then any changes to
+    /// the connection properties will automatically mark it as AVAILABLE.
+    Error = 3,
+}
 #[doc = r" Generated client implementations."]
 pub mod dlp_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -5816,7 +8270,7 @@ pub mod dlp_service_client {
     #[doc = " scheduling of data scans on Google Cloud Platform based data sets."]
     #[doc = ""]
     #[doc = " To learn more about concepts and find how-to guides see"]
-    #[doc = " https://cloud.google.com/dlp/docs/."]
+    #[doc = " https://cloud.google.com/sensitive-data-protection/docs/."]
     #[derive(Debug, Clone)]
     pub struct DlpServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -5869,8 +8323,10 @@ pub mod dlp_service_client {
         #[doc = " system will automatically choose what detectors to run. By default this may"]
         #[doc = " be all types, but may change over time as detectors are updated."]
         #[doc = ""]
-        #[doc = " For how to guides, see https://cloud.google.com/dlp/docs/inspecting-images"]
-        #[doc = " and https://cloud.google.com/dlp/docs/inspecting-text,"]
+        #[doc = " For how to guides, see"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/inspecting-images"]
+        #[doc = " and"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/inspecting-text,"]
         pub async fn inspect_content(
             &mut self,
             request: impl tonic::IntoRequest<super::InspectContentRequest>,
@@ -5889,8 +8345,9 @@ pub mod dlp_service_client {
         }
         #[doc = " Redacts potentially sensitive info from an image."]
         #[doc = " This method has limits on input size, processing time, and output size."]
-        #[doc = " See https://cloud.google.com/dlp/docs/redacting-sensitive-data-images to"]
-        #[doc = " learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/redacting-sensitive-data-images"]
+        #[doc = " to learn more."]
         #[doc = ""]
         #[doc = " When no InfoTypes or CustomInfoTypes are specified in this request, the"]
         #[doc = " system will automatically choose what detectors to run. By default this may"]
@@ -5913,8 +8370,9 @@ pub mod dlp_service_client {
         }
         #[doc = " De-identifies potentially sensitive info from a ContentItem."]
         #[doc = " This method has limits on input size and output size."]
-        #[doc = " See https://cloud.google.com/dlp/docs/deidentify-sensitive-data to"]
-        #[doc = " learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/deidentify-sensitive-data"]
+        #[doc = " to learn more."]
         #[doc = ""]
         #[doc = " When no InfoTypes or CustomInfoTypes are specified in this request, the"]
         #[doc = " system will automatically choose what detectors to run. By default this may"]
@@ -5937,7 +8395,7 @@ pub mod dlp_service_client {
         }
         #[doc = " Re-identifies content that has been de-identified."]
         #[doc = " See"]
-        #[doc = " https://cloud.google.com/dlp/docs/pseudonymization#re-identification_in_free_text_code_example"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/pseudonymization#re-identification_in_free_text_code_example"]
         #[doc = " to learn more."]
         pub async fn reidentify_content(
             &mut self,
@@ -5956,8 +8414,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Returns a list of the sensitive information types that DLP API"]
-        #[doc = " supports. See https://cloud.google.com/dlp/docs/infotypes-reference to"]
-        #[doc = " learn more."]
+        #[doc = " supports. See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/infotypes-reference"]
+        #[doc = " to learn more."]
         pub async fn list_info_types(
             &mut self,
             request: impl tonic::IntoRequest<super::ListInfoTypesRequest>,
@@ -5976,7 +8435,9 @@ pub mod dlp_service_client {
         }
         #[doc = " Creates an InspectTemplate for reusing frequently used configuration"]
         #[doc = " for inspecting content, images, and storage."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates"]
+        #[doc = " to learn more."]
         pub async fn create_inspect_template(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateInspectTemplateRequest>,
@@ -5994,7 +8455,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Updates the InspectTemplate."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates"]
+        #[doc = " to learn more."]
         pub async fn update_inspect_template(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateInspectTemplateRequest>,
@@ -6012,7 +8475,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Gets an InspectTemplate."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates"]
+        #[doc = " to learn more."]
         pub async fn get_inspect_template(
             &mut self,
             request: impl tonic::IntoRequest<super::GetInspectTemplateRequest>,
@@ -6030,7 +8495,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Lists InspectTemplates."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates"]
+        #[doc = " to learn more."]
         pub async fn list_inspect_templates(
             &mut self,
             request: impl tonic::IntoRequest<super::ListInspectTemplatesRequest>,
@@ -6048,7 +8515,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Deletes an InspectTemplate."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates"]
+        #[doc = " to learn more."]
         pub async fn delete_inspect_template(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteInspectTemplateRequest>,
@@ -6067,8 +8536,9 @@ pub mod dlp_service_client {
         }
         #[doc = " Creates a DeidentifyTemplate for reusing frequently used configuration"]
         #[doc = " for de-identifying content, images, and storage."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates-deid to learn"]
-        #[doc = " more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid"]
+        #[doc = " to learn more."]
         pub async fn create_deidentify_template(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateDeidentifyTemplateRequest>,
@@ -6086,8 +8556,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Updates the DeidentifyTemplate."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates-deid to learn"]
-        #[doc = " more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid"]
+        #[doc = " to learn more."]
         pub async fn update_deidentify_template(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateDeidentifyTemplateRequest>,
@@ -6105,8 +8576,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Gets a DeidentifyTemplate."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates-deid to learn"]
-        #[doc = " more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid"]
+        #[doc = " to learn more."]
         pub async fn get_deidentify_template(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDeidentifyTemplateRequest>,
@@ -6124,8 +8596,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Lists DeidentifyTemplates."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates-deid to learn"]
-        #[doc = " more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid"]
+        #[doc = " to learn more."]
         pub async fn list_deidentify_templates(
             &mut self,
             request: impl tonic::IntoRequest<super::ListDeidentifyTemplatesRequest>,
@@ -6144,8 +8617,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Deletes a DeidentifyTemplate."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-templates-deid to learn"]
-        #[doc = " more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-templates-deid"]
+        #[doc = " to learn more."]
         pub async fn delete_deidentify_template(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteDeidentifyTemplateRequest>,
@@ -6164,7 +8638,9 @@ pub mod dlp_service_client {
         }
         #[doc = " Creates a job trigger to run DLP actions such as scanning storage for"]
         #[doc = " sensitive information on a set schedule."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers"]
+        #[doc = " to learn more."]
         pub async fn create_job_trigger(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateJobTriggerRequest>,
@@ -6182,7 +8658,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Updates a job trigger."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers"]
+        #[doc = " to learn more."]
         pub async fn update_job_trigger(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateJobTriggerRequest>,
@@ -6219,7 +8697,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Gets a job trigger."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers"]
+        #[doc = " to learn more."]
         pub async fn get_job_trigger(
             &mut self,
             request: impl tonic::IntoRequest<super::GetJobTriggerRequest>,
@@ -6237,7 +8717,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Lists job triggers."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers"]
+        #[doc = " to learn more."]
         pub async fn list_job_triggers(
             &mut self,
             request: impl tonic::IntoRequest<super::ListJobTriggersRequest>,
@@ -6255,7 +8737,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Deletes a job trigger."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-job-triggers to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-job-triggers"]
+        #[doc = " to learn more."]
         pub async fn delete_job_trigger(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteJobTriggerRequest>,
@@ -6290,9 +8774,97 @@ pub mod dlp_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        #[doc = " Creates a config for discovery to scan and profile storage."]
+        pub async fn create_discovery_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateDiscoveryConfigRequest>,
+        ) -> Result<tonic::Response<super::DiscoveryConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/CreateDiscoveryConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Updates a discovery configuration."]
+        pub async fn update_discovery_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateDiscoveryConfigRequest>,
+        ) -> Result<tonic::Response<super::DiscoveryConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/UpdateDiscoveryConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a discovery configuration."]
+        pub async fn get_discovery_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetDiscoveryConfigRequest>,
+        ) -> Result<tonic::Response<super::DiscoveryConfig>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/GetDiscoveryConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists discovery configurations."]
+        pub async fn list_discovery_configs(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListDiscoveryConfigsRequest>,
+        ) -> Result<tonic::Response<super::ListDiscoveryConfigsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/ListDiscoveryConfigs",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Deletes a discovery configuration."]
+        pub async fn delete_discovery_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteDiscoveryConfigRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/DeleteDiscoveryConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         #[doc = " Creates a new job to inspect storage or calculate risk metrics."]
-        #[doc = " See https://cloud.google.com/dlp/docs/inspecting-storage and"]
-        #[doc = " https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage"]
+        #[doc = " and"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis"]
+        #[doc = " to learn more."]
         #[doc = ""]
         #[doc = " When no InfoTypes or CustomInfoTypes are specified in inspect jobs, the"]
         #[doc = " system will automatically choose what detectors to run. By default this may"]
@@ -6314,8 +8886,11 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Lists DlpJobs that match the specified filter in the request."]
-        #[doc = " See https://cloud.google.com/dlp/docs/inspecting-storage and"]
-        #[doc = " https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage"]
+        #[doc = " and"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis"]
+        #[doc = " to learn more."]
         pub async fn list_dlp_jobs(
             &mut self,
             request: impl tonic::IntoRequest<super::ListDlpJobsRequest>,
@@ -6333,8 +8908,11 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Gets the latest state of a long-running DlpJob."]
-        #[doc = " See https://cloud.google.com/dlp/docs/inspecting-storage and"]
-        #[doc = " https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage"]
+        #[doc = " and"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis"]
+        #[doc = " to learn more."]
         pub async fn get_dlp_job(
             &mut self,
             request: impl tonic::IntoRequest<super::GetDlpJobRequest>,
@@ -6353,8 +8931,11 @@ pub mod dlp_service_client {
         #[doc = " Deletes a long-running DlpJob. This method indicates that the client is"]
         #[doc = " no longer interested in the DlpJob result. The job will be canceled if"]
         #[doc = " possible."]
-        #[doc = " See https://cloud.google.com/dlp/docs/inspecting-storage and"]
-        #[doc = " https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage"]
+        #[doc = " and"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis"]
+        #[doc = " to learn more."]
         pub async fn delete_dlp_job(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteDlpJobRequest>,
@@ -6374,8 +8955,11 @@ pub mod dlp_service_client {
         #[doc = " Starts asynchronous cancellation on a long-running DlpJob. The server"]
         #[doc = " makes a best effort to cancel the DlpJob, but success is not"]
         #[doc = " guaranteed."]
-        #[doc = " See https://cloud.google.com/dlp/docs/inspecting-storage and"]
-        #[doc = " https://cloud.google.com/dlp/docs/compute-risk-analysis to learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/inspecting-storage"]
+        #[doc = " and"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/compute-risk-analysis"]
+        #[doc = " to learn more."]
         pub async fn cancel_dlp_job(
             &mut self,
             request: impl tonic::IntoRequest<super::CancelDlpJobRequest>,
@@ -6393,8 +8977,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Creates a pre-built stored infoType to be used for inspection."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-stored-infotypes to"]
-        #[doc = " learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes"]
+        #[doc = " to learn more."]
         pub async fn create_stored_info_type(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateStoredInfoTypeRequest>,
@@ -6413,8 +8998,9 @@ pub mod dlp_service_client {
         }
         #[doc = " Updates the stored infoType by creating a new version. The existing version"]
         #[doc = " will continue to be used until the new version is ready."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-stored-infotypes to"]
-        #[doc = " learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes"]
+        #[doc = " to learn more."]
         pub async fn update_stored_info_type(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdateStoredInfoTypeRequest>,
@@ -6432,8 +9018,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Gets a stored infoType."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-stored-infotypes to"]
-        #[doc = " learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes"]
+        #[doc = " to learn more."]
         pub async fn get_stored_info_type(
             &mut self,
             request: impl tonic::IntoRequest<super::GetStoredInfoTypeRequest>,
@@ -6451,8 +9038,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Lists stored infoTypes."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-stored-infotypes to"]
-        #[doc = " learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes"]
+        #[doc = " to learn more."]
         pub async fn list_stored_info_types(
             &mut self,
             request: impl tonic::IntoRequest<super::ListStoredInfoTypesRequest>,
@@ -6470,8 +9058,9 @@ pub mod dlp_service_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " Deletes a stored infoType."]
-        #[doc = " See https://cloud.google.com/dlp/docs/creating-stored-infotypes to"]
-        #[doc = " learn more."]
+        #[doc = " See"]
+        #[doc = " https://cloud.google.com/sensitive-data-protection/docs/creating-stored-infotypes"]
+        #[doc = " to learn more."]
         pub async fn delete_stored_info_type(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteStoredInfoTypeRequest>,
@@ -6485,6 +9074,180 @@ pub mod dlp_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.privacy.dlp.v2.DlpService/DeleteStoredInfoType",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists project data profiles for an organization."]
+        pub async fn list_project_data_profiles(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListProjectDataProfilesRequest>,
+        ) -> Result<tonic::Response<super::ListProjectDataProfilesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/ListProjectDataProfiles",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists table data profiles for an organization."]
+        pub async fn list_table_data_profiles(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListTableDataProfilesRequest>,
+        ) -> Result<tonic::Response<super::ListTableDataProfilesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/ListTableDataProfiles",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists column data profiles for an organization."]
+        pub async fn list_column_data_profiles(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListColumnDataProfilesRequest>,
+        ) -> Result<tonic::Response<super::ListColumnDataProfilesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/ListColumnDataProfiles",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a project data profile."]
+        pub async fn get_project_data_profile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetProjectDataProfileRequest>,
+        ) -> Result<tonic::Response<super::ProjectDataProfile>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/GetProjectDataProfile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists file store data profiles for an organization."]
+        pub async fn list_file_store_data_profiles(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListFileStoreDataProfilesRequest>,
+        ) -> Result<tonic::Response<super::ListFileStoreDataProfilesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/ListFileStoreDataProfiles",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a file store data profile."]
+        pub async fn get_file_store_data_profile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetFileStoreDataProfileRequest>,
+        ) -> Result<tonic::Response<super::FileStoreDataProfile>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/GetFileStoreDataProfile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Delete a FileStoreDataProfile. Will not prevent the profile from being"]
+        #[doc = " regenerated if the resource is still included in a discovery configuration."]
+        pub async fn delete_file_store_data_profile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteFileStoreDataProfileRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/DeleteFileStoreDataProfile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a table data profile."]
+        pub async fn get_table_data_profile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetTableDataProfileRequest>,
+        ) -> Result<tonic::Response<super::TableDataProfile>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/GetTableDataProfile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Gets a column data profile."]
+        pub async fn get_column_data_profile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetColumnDataProfileRequest>,
+        ) -> Result<tonic::Response<super::ColumnDataProfile>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/GetColumnDataProfile",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Delete a TableDataProfile. Will not prevent the profile from being"]
+        #[doc = " regenerated if the table is still included in a discovery configuration."]
+        pub async fn delete_table_data_profile(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteTableDataProfileRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/DeleteTableDataProfile",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
@@ -6522,6 +9285,108 @@ pub mod dlp_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/google.privacy.dlp.v2.DlpService/FinishDlpJob",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Create a Connection to an external data source."]
+        pub async fn create_connection(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateConnectionRequest>,
+        ) -> Result<tonic::Response<super::Connection>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/CreateConnection",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Get a Connection by name."]
+        pub async fn get_connection(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetConnectionRequest>,
+        ) -> Result<tonic::Response<super::Connection>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/GetConnection",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Lists Connections in a parent."]
+        pub async fn list_connections(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListConnectionsRequest>,
+        ) -> Result<tonic::Response<super::ListConnectionsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/ListConnections",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Searches for Connections in a parent."]
+        pub async fn search_connections(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SearchConnectionsRequest>,
+        ) -> Result<tonic::Response<super::SearchConnectionsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/SearchConnections",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Delete a Connection."]
+        pub async fn delete_connection(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteConnectionRequest>,
+        ) -> Result<tonic::Response<()>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/DeleteConnection",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        #[doc = " Update a Connection."]
+        pub async fn update_connection(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpdateConnectionRequest>,
+        ) -> Result<tonic::Response<super::Connection>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/google.privacy.dlp.v2.DlpService/UpdateConnection",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

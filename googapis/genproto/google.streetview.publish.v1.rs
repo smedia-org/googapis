@@ -27,9 +27,9 @@ pub struct PhotoId {
 /// Level information containing level number and its corresponding name.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Level {
-    /// Optional. Floor number, used for ordering. 0 indicates the ground level, 1 indicates
-    /// the first level above ground level, -1 indicates the first level under
-    /// ground level. Non-integer values are OK.
+    /// Optional. Floor number, used for ordering. 0 indicates the ground level, 1
+    /// indicates the first level above ground level, -1 indicates the first level
+    /// under ground level. Non-integer values are OK.
     #[prost(double, tag = "1")]
     pub number: f64,
     /// Required. A name assigned to this Level, restricted to 3 characters.
@@ -147,13 +147,13 @@ pub struct Connection {
 /// Photo is used to store 360 photos along with photo metadata.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Photo {
-    /// Required. Output only. Required when updating a photo. Output only when creating a photo.
-    /// Identifier for the photo, which is unique among all photos in
-    /// Google.
+    /// Required. Output only. Required when updating a photo. Output only when
+    /// creating a photo. Identifier for the photo, which is unique among all
+    /// photos in Google.
     #[prost(message, optional, tag = "1")]
     pub photo_id: ::core::option::Option<PhotoId>,
-    /// Input only. Required when creating a photo. Input only. The resource URL where the
-    /// photo bytes are uploaded to.
+    /// Input only. Required when creating a photo. Input only. The resource URL
+    /// where the photo bytes are uploaded to.
     #[prost(message, optional, tag = "2")]
     pub upload_reference: ::core::option::Option<UploadRef>,
     /// Output only. The download URL for the photo bytes. This field is set only
@@ -172,8 +172,8 @@ pub struct Photo {
     /// Optional. Pose of the photo.
     #[prost(message, optional, tag = "4")]
     pub pose: ::core::option::Option<Pose>,
-    /// Optional. Connections to other photos. A connection represents the link from this
-    /// photo to another photo.
+    /// Optional. Connections to other photos. A connection represents the link
+    /// from this photo to another photo.
     #[prost(message, repeated, tag = "5")]
     pub connections: ::prost::alloc::vec::Vec<Connection>,
     /// Optional. Absolute time when the photo was captured.
@@ -193,7 +193,8 @@ pub struct Photo {
     /// Output only. Status of rights transfer on this photo.
     #[prost(enumeration = "photo::TransferStatus", tag = "12")]
     pub transfer_status: i32,
-    /// Output only. Status in Google Maps, whether this photo was published or rejected.
+    /// Output only. Status in Google Maps, whether this photo was published or
+    /// rejected.
     #[prost(enumeration = "photo::MapsPublishStatus", tag = "13")]
     pub maps_publish_status: i32,
 }
@@ -258,14 +259,13 @@ pub struct PhotoSequence {
     /// Output only. The time this photo sequence was created in uSV Store service.
     #[prost(message, optional, tag = "18")]
     pub upload_time: ::core::option::Option<::prost_types::Timestamp>,
-    /// Input only. Raw GPS measurements with increasing timestamps from the device that
-    /// aren't time synced with each photo.
-    /// These raw measurements will be used to infer the pose of each frame.
-    /// Required in input when InputType is VIDEO and raw GPS measurements are not
-    /// in Camera Motion Metadata Track (CAMM).
-    /// User can indicate which takes precedence using gps_source if raw GPS
-    /// measurements are provided in both raw_gps_timeline and
-    /// Camera Motion Metadata Track (CAMM).
+    /// Input only. Raw GPS measurements with increasing timestamps from the device
+    /// that aren't time synced with each photo. These raw measurements will be
+    /// used to infer the pose of each frame. Required in input when InputType is
+    /// VIDEO and raw GPS measurements are not in Camera Motion Metadata Track
+    /// (CAMM). User can indicate which takes precedence using gps_source if raw
+    /// GPS measurements are provided in both raw_gps_timeline and Camera Motion
+    /// Metadata Track (CAMM).
     #[prost(message, repeated, tag = "7")]
     pub raw_gps_timeline: ::prost::alloc::vec::Vec<Pose>,
     /// Input only. If both raw_gps_timeline and
@@ -282,28 +282,29 @@ pub struct PhotoSequence {
     /// Output only. The processing state of this sequence.
     #[prost(enumeration = "ProcessingState", tag = "12")]
     pub processing_state: i32,
-    /// Output only. If this sequence has processing_state = FAILED, this will contain the
-    /// reason why it failed. If the processing_state is any other value, this
-    /// field will be unset.
+    /// Output only. If this sequence has processing_state = FAILED, this will
+    /// contain the reason why it failed. If the processing_state is any other
+    /// value, this field will be unset.
     #[prost(enumeration = "ProcessingFailureReason", tag = "13")]
     pub failure_reason: i32,
-    /// Output only. If this sequence has `failure_reason` set, this may contain additional
-    /// details about the failure.
+    /// Output only. If this sequence has `failure_reason` set, this may contain
+    /// additional details about the failure.
     #[prost(message, optional, tag = "23")]
     pub failure_details: ::core::option::Option<ProcessingFailureDetails>,
     /// Output only. The computed distance of the photo sequence in meters.
     #[prost(double, tag = "16")]
     pub distance_meters: f64,
-    /// Output only. A rectangular box that encapsulates every image in this photo sequence.
+    /// Output only. A rectangular box that encapsulates every image in this photo
+    /// sequence.
     #[prost(message, optional, tag = "20")]
     pub sequence_bounds: ::core::option::Option<LatLngBounds>,
-    /// Output only. The total number of views that all the published images in this
-    /// PhotoSequence have received.
+    /// Output only. The total number of views that all the published images in
+    /// this PhotoSequence have received.
     #[prost(int64, tag = "21")]
     pub view_count: i64,
-    /// Output only. The filename of the upload. Does not include the directory path. Only
-    /// available if the sequence was uploaded on a platform that provides the
-    /// filename.
+    /// Output only. The filename of the upload. Does not include the directory
+    /// path. Only available if the sequence was uploaded on a platform that
+    /// provides the filename.
     #[prost(string, tag = "22")]
     pub filename: ::prost::alloc::string::String,
 }
@@ -337,7 +338,7 @@ pub struct LatLngBounds {
 pub struct ProcessingFailureDetails {
     /// Only one set of details will be set, and must match the corresponding enum
     /// in ProcessingFailureReason.
-    #[prost(oneof = "processing_failure_details::Details", tags = "1, 2, 3, 4")]
+    #[prost(oneof = "processing_failure_details::Details", tags = "1, 2, 3, 4, 5")]
     pub details: ::core::option::Option<processing_failure_details::Details>,
 }
 /// Nested message and enum types in `ProcessingFailureDetails`.
@@ -358,6 +359,9 @@ pub mod processing_failure_details {
         /// See NotOutdoorsFailureDetails.
         #[prost(message, tag = "4")]
         NotOutdoorsDetails(super::NotOutdoorsFailureDetails),
+        /// See NoOverlapGpsFailureDetails.
+        #[prost(message, tag = "5")]
+        NoOverlapGpsDetails(super::NoOverlapGpsFailureDetails),
     }
 }
 /// Details related to ProcessingFailureReason#INSUFFICIENT_GPS.
@@ -399,6 +403,22 @@ pub struct NotOutdoorsFailureDetails {
     /// found.
     #[prost(message, optional, tag = "1")]
     pub start_time: ::core::option::Option<::prost_types::Duration>,
+}
+/// Details related to PhotoSequenceProcessingFailureReason#NO_OVERLAP_GPS.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct NoOverlapGpsFailureDetails {
+    /// Time of first recorded GPS point.
+    #[prost(message, optional, tag = "1")]
+    pub gps_start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Time of last recorded GPS point.
+    #[prost(message, optional, tag = "2")]
+    pub gps_end_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// Start time of video.
+    #[prost(message, optional, tag = "3")]
+    pub video_start_time: ::core::option::Option<::prost_types::Timestamp>,
+    /// End time of video.
+    #[prost(message, optional, tag = "4")]
+    pub video_end_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// The processing state of the sequence. The states move as follows:
 ///
@@ -484,6 +504,12 @@ pub enum ProcessingFailureReason {
     NotOutdoors = 18,
     /// Not enough video frames.
     InsufficientVideoFrames = 19,
+    /// Not enough moving data.
+    InsufficientMovement = 20,
+    /// Mast is down.
+    MastDown = 27,
+    /// Camera is covered.
+    CameraCovered = 28,
 }
 /// Request to create a \[Photo][google.streetview.publish.v1.Photo\].
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -506,8 +532,8 @@ pub struct GetPhotoRequest {
     /// Required. ID of the \[Photo][google.streetview.publish.v1.Photo\].
     #[prost(string, tag = "1")]
     pub photo_id: ::prost::alloc::string::String,
-    /// Required. Specifies if a download URL for the photo bytes should be returned in the
-    /// \[Photo][google.streetview.publish.v1.Photo\] response.
+    /// Required. Specifies if a download URL for the photo bytes should be
+    /// returned in the \[Photo][google.streetview.publish.v1.Photo\] response.
     #[prost(enumeration = "PhotoView", tag = "2")]
     pub view: i32,
     /// The BCP-47 language code, such as "en-US" or "sr-Latn". For more
@@ -533,8 +559,8 @@ pub struct BatchGetPhotosRequest {
     /// `photoIds=<id1>&photoIds=<id2>&...`.
     #[prost(string, repeated, tag = "1")]
     pub photo_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Required. Specifies if a download URL for the photo bytes should be returned in the
-    /// Photo response.
+    /// Required. Specifies if a download URL for the photo bytes should be
+    /// returned in the Photo response.
     #[prost(enumeration = "PhotoView", tag = "2")]
     pub view: i32,
     /// Optional. The BCP-47 language code, such as "en-US" or "sr-Latn". For more
@@ -589,8 +615,8 @@ pub struct PhotoResponse {
 /// parameter supported at the moment.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListPhotosRequest {
-    /// Required. Specifies if a download URL for the photos bytes should be returned in the
-    /// Photos response.
+    /// Required. Specifies if a download URL for the photos bytes should be
+    /// returned in the Photos response.
     #[prost(enumeration = "PhotoView", tag = "1")]
     pub view: i32,
     /// Optional. The maximum number of photos to return.
@@ -607,11 +633,12 @@ pub struct ListPhotosRequest {
     /// request, if any.
     #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
-    /// Optional. The filter expression. For example: `placeId=ChIJj61dQgK6j4AR4GeTYWZsKWw`.
+    /// Optional. The filter expression. For example:
+    /// `placeId=ChIJj61dQgK6j4AR4GeTYWZsKWw`.
     ///
     /// The filters supported are: `placeId`, `min_latitude`, `max_latitude`,
-    /// `min_longitude`, and `max_longitude`. See <https://google.aip.dev/160> for
-    /// more information.
+    /// `min_longitude`, `max_longitude`. See <https://google.aip.dev/160> for more
+    /// information.
     #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
     /// Optional. The BCP-47 language code, such as "en-US" or "sr-Latn". For more
@@ -654,7 +681,7 @@ pub struct UpdatePhotoRequest {
     /// The following fields are valid:
     ///
     /// * `pose.heading`
-    /// * `pose.latLngPair`
+    /// * `pose.lat_lng_pair`
     /// * `pose.pitch`
     /// * `pose.roll`
     /// * `pose.level`
@@ -727,7 +754,8 @@ pub mod create_photo_sequence_request {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
     #[repr(i32)]
     pub enum InputType {
-        /// Not specified. Server will return \[google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT\].
+        /// Not specified. Server will return
+        /// \[google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT\].
         Unspecified = 0,
         /// 360 Video.
         Video = 1,
@@ -813,11 +841,12 @@ pub struct ListPhotoSequencesRequest {
     /// Optional. The filter expression. For example: `imagery_type=SPHERICAL`.
     ///
     /// The filters supported are: `imagery_type`, `processing_state`,
-    /// `min_latitude`, `max_latitude`, `min_longitude`, `max_longitude`, and
-    /// `filename_query`. See <https://google.aip.dev/160> for more information.
-    /// Filename queries should sent as a Phrase in order to support multple words
-    /// and special characters by adding escaped quotes. Ex:
-    /// filename_query="example of a phrase.mp4"
+    /// `min_latitude`, `max_latitude`, `min_longitude`, `max_longitude`,
+    /// `filename_query`, `min_capture_time_seconds`, `max_capture_time_seconds.
+    /// See <https://google.aip.dev/160> for more information. Filename queries
+    /// should sent as a Phrase in order to support multiple words and special
+    /// characters by adding escaped quotes. Ex: filename_query="example of a
+    /// phrase.mp4"
     #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
 }
@@ -960,11 +989,12 @@ pub mod street_view_publish_service_client {
         #[doc = ""]
         #[doc = " This method returns the following error codes:"]
         #[doc = ""]
-        #[doc = " * [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT] if the request is malformed or if"]
-        #[doc = " the uploaded photo is not a 360 photo."]
-        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the upload reference does not exist."]
-        #[doc = " * [google.rpc.Code.RESOURCE_EXHAUSTED][google.rpc.Code.RESOURCE_EXHAUSTED] if the account has reached the"]
-        #[doc = " storage limit."]
+        #[doc = " * [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT] if"]
+        #[doc = " the request is malformed or if the uploaded photo is not a 360 photo."]
+        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the upload"]
+        #[doc = " reference does not exist."]
+        #[doc = " * [google.rpc.Code.RESOURCE_EXHAUSTED][google.rpc.Code.RESOURCE_EXHAUSTED]"]
+        #[doc = " if the account has reached the storage limit."]
         pub async fn create_photo(
             &mut self,
             request: impl tonic::IntoRequest<super::CreatePhotoRequest>,
@@ -986,12 +1016,14 @@ pub mod street_view_publish_service_client {
         #[doc = ""]
         #[doc = " This method returns the following error codes:"]
         #[doc = ""]
-        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if the requesting user did not"]
-        #[doc = " create the requested [Photo][google.streetview.publish.v1.Photo]."]
+        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if"]
+        #[doc = " the requesting user did not create the requested"]
+        #[doc = " [Photo][google.streetview.publish.v1.Photo]."]
         #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the requested"]
         #[doc = " [Photo][google.streetview.publish.v1.Photo] does not exist."]
-        #[doc = " * [google.rpc.Code.UNAVAILABLE][google.rpc.Code.UNAVAILABLE] if the requested"]
-        #[doc = " [Photo][google.streetview.publish.v1.Photo] is still being indexed."]
+        #[doc = " * [google.rpc.Code.UNAVAILABLE][google.rpc.Code.UNAVAILABLE] if the"]
+        #[doc = " requested [Photo][google.streetview.publish.v1.Photo] is still being"]
+        #[doc = " indexed."]
         pub async fn get_photo(
             &mut self,
             request: impl tonic::IntoRequest<super::GetPhotoRequest>,
@@ -1072,12 +1104,15 @@ pub mod street_view_publish_service_client {
         #[doc = ""]
         #[doc = " This method returns the following error codes:"]
         #[doc = ""]
-        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if the requesting user did not"]
-        #[doc = " create the requested photo."]
-        #[doc = " * [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT] if the request is malformed."]
-        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the requested photo does not exist."]
-        #[doc = " * [google.rpc.Code.UNAVAILABLE][google.rpc.Code.UNAVAILABLE] if the requested"]
-        #[doc = " [Photo][google.streetview.publish.v1.Photo] is still being indexed."]
+        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if"]
+        #[doc = " the requesting user did not create the requested photo."]
+        #[doc = " * [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT] if"]
+        #[doc = " the request is malformed."]
+        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the requested"]
+        #[doc = " photo does not exist."]
+        #[doc = " * [google.rpc.Code.UNAVAILABLE][google.rpc.Code.UNAVAILABLE] if the"]
+        #[doc = " requested [Photo][google.streetview.publish.v1.Photo] is still being"]
+        #[doc = " indexed."]
         pub async fn update_photo(
             &mut self,
             request: impl tonic::IntoRequest<super::UpdatePhotoRequest>,
@@ -1147,9 +1182,10 @@ pub mod street_view_publish_service_client {
         #[doc = ""]
         #[doc = " This method returns the following error codes:"]
         #[doc = ""]
-        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if the requesting user did not"]
-        #[doc = " create the requested photo."]
-        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the photo ID does not exist."]
+        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if"]
+        #[doc = " the requesting user did not create the requested photo."]
+        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the photo ID"]
+        #[doc = " does not exist."]
         pub async fn delete_photo(
             &mut self,
             request: impl tonic::IntoRequest<super::DeletePhotoRequest>,
@@ -1238,8 +1274,10 @@ pub mod street_view_publish_service_client {
         #[doc = ""]
         #[doc = " This method returns the following error codes:"]
         #[doc = ""]
-        #[doc = " * [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT] if the request is malformed."]
-        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the upload reference does not exist."]
+        #[doc = " * [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT] if"]
+        #[doc = " the request is malformed."]
+        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the upload"]
+        #[doc = " reference does not exist."]
         pub async fn create_photo_sequence(
             &mut self,
             request: impl tonic::IntoRequest<super::CreatePhotoSequenceRequest>,
@@ -1276,8 +1314,8 @@ pub mod street_view_publish_service_client {
         #[doc = ""]
         #[doc = " This method returns the following error codes:"]
         #[doc = ""]
-        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if the requesting user did not"]
-        #[doc = " create the requested"]
+        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if"]
+        #[doc = " the requesting user did not create the requested"]
         #[doc = " [PhotoSequence][google.streetview.publish.v1.PhotoSequence]."]
         #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the requested"]
         #[doc = " [PhotoSequence][google.streetview.publish.v1.PhotoSequence] does not exist."]
@@ -1323,9 +1361,10 @@ pub mod street_view_publish_service_client {
         #[doc = ""]
         #[doc = " This method returns the following error codes:"]
         #[doc = ""]
-        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if the requesting user did not"]
-        #[doc = " create the requested photo sequence."]
-        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the photo sequence ID does not exist."]
+        #[doc = " * [google.rpc.Code.PERMISSION_DENIED][google.rpc.Code.PERMISSION_DENIED] if"]
+        #[doc = " the requesting user did not create the requested photo sequence."]
+        #[doc = " * [google.rpc.Code.NOT_FOUND][google.rpc.Code.NOT_FOUND] if the photo"]
+        #[doc = " sequence ID does not exist."]
         #[doc = " * [google.rpc.Code.FAILED_PRECONDITION][google.rpc.Code.FAILED_PRECONDITION] if the photo sequence ID is not"]
         #[doc = " yet finished processing."]
         pub async fn delete_photo_sequence(

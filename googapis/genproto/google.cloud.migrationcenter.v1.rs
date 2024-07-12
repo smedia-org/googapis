@@ -1594,6 +1594,7 @@ pub struct AssetFrame {
     pub attributes:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
     /// Asset performance data samples.
+    /// Samples that are from more than 40 days ago or after tomorrow are ignored.
     #[prost(message, repeated, tag = "13")]
     pub performance_samples: ::prost::alloc::vec::Vec<PerformanceSample>,
     /// Optional. Trace token is optionally provided to assist with debugging and
@@ -1737,6 +1738,8 @@ pub mod machine_architecture_details {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BiosDetails {
     /// BIOS name.
+    /// This fields is deprecated. Please use the `id` field instead.
+    #[deprecated]
     #[prost(string, tag = "1")]
     pub bios_name: ::prost::alloc::string::String,
     /// BIOS ID.
@@ -2486,6 +2489,7 @@ pub struct DiskUsageSample {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PerformanceSample {
     /// Time the sample was collected.
+    /// If omitted, the frame report time will be used.
     #[prost(message, optional, tag = "1")]
     pub sample_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Memory usage sample.
@@ -2592,7 +2596,7 @@ pub struct InsightList {
 /// An insight about an asset.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Insight {
-    #[prost(oneof = "insight::Insight", tags = "1")]
+    #[prost(oneof = "insight::Insight", tags = "1, 2")]
     pub insight: ::core::option::Option<insight::Insight>,
 }
 /// Nested message and enum types in `Insight`.
@@ -2602,7 +2606,28 @@ pub mod insight {
         /// Output only. An insight about potential migrations for an asset.
         #[prost(message, tag = "1")]
         MigrationInsight(super::MigrationInsight),
+        /// Output only. A generic insight about an asset
+        #[prost(message, tag = "2")]
+        GenericInsight(super::GenericInsight),
     }
+}
+/// A generic insight about an asset.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GenericInsight {
+    /// Output only. Represents a globally unique message id for
+    /// this insight, can be used for localization purposes, in case message_code
+    /// is not yet known by the client use default_message instead.
+    #[prost(int64, tag = "1")]
+    pub message_id: i64,
+    /// Output only. In case message_code is not yet known by the client
+    /// default_message will be the message to be used instead.
+    #[prost(string, tag = "2")]
+    pub default_message: ::prost::alloc::string::String,
+    /// Output only. Additional information about the insight, each entry can be a
+    /// logical entry and must make sense if it is displayed with line breaks
+    /// between each entry. Text can contain md style links.
+    #[prost(string, repeated, tag = "3")]
+    pub additional_information: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// An insight about potential migrations for an asset.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2632,6 +2657,38 @@ pub struct ComputeEngineMigrationTarget {
     #[prost(message, optional, tag = "1")]
     pub shape: ::core::option::Option<ComputeEngineShapeDescriptor>,
 }
+/// Compute Engine target shape descriptor.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ComputeEngineShapeDescriptor {
+    /// Memory in mebibytes.
+    #[prost(int32, tag = "1")]
+    pub memory_mb: i32,
+    /// Number of physical cores.
+    #[prost(int32, tag = "2")]
+    pub physical_core_count: i32,
+    /// Number of logical cores.
+    #[prost(int32, tag = "3")]
+    pub logical_core_count: i32,
+    /// Compute Engine machine series.
+    #[prost(string, tag = "4")]
+    pub series: ::prost::alloc::string::String,
+    /// Compute Engine machine type.
+    #[prost(string, tag = "5")]
+    pub machine_type: ::prost::alloc::string::String,
+    /// Compute Engine storage. Never empty.
+    #[prost(message, repeated, tag = "6")]
+    pub storage: ::prost::alloc::vec::Vec<ComputeStorageDescriptor>,
+}
+/// Compute Engine storage option descriptor.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ComputeStorageDescriptor {
+    /// Disk type backing the storage.
+    #[prost(enumeration = "PersistentDiskType", tag = "1")]
+    pub r#type: i32,
+    /// Disk size in GiB.
+    #[prost(int32, tag = "2")]
+    pub size_gb: i32,
+}
 /// Describes the fit level of an asset for migration to a specific target.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FitDescriptor {
@@ -2654,25 +2711,6 @@ pub mod fit_descriptor {
         /// Fit with effort.
         RequiresEffort = 3,
     }
-}
-/// Compute Engine target shape descriptor.
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ComputeEngineShapeDescriptor {
-    /// Memory in mebibytes.
-    #[prost(int32, tag = "1")]
-    pub memory_mb: i32,
-    /// Number of physical cores.
-    #[prost(int32, tag = "2")]
-    pub physical_core_count: i32,
-    /// Number of logical cores.
-    #[prost(int32, tag = "3")]
-    pub logical_core_count: i32,
-    /// Compute Engine machine series.
-    #[prost(string, tag = "4")]
-    pub series: ::prost::alloc::string::String,
-    /// Compute Engine machine type.
-    #[prost(string, tag = "5")]
-    pub machine_type: ::prost::alloc::string::String,
 }
 /// Message describing an aggregation. The message includes the aggregation type,
 /// parameters, and the field on which to perform the aggregation.
@@ -2832,7 +2870,7 @@ pub struct ExecutionReport {
     /// Validation errors encountered during the execution of the import job.
     #[prost(message, optional, tag = "2")]
     pub execution_errors: ::core::option::Option<ValidationReport>,
-    /// Total number of rows in the import job.
+    /// Output only. Total number of rows in the import job.
     #[prost(int32, tag = "3")]
     pub total_rows_count: i32,
 }
@@ -2914,6 +2952,11 @@ pub struct FrameViolationEntry {
 /// virtual machine assets.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VirtualMachinePreferences {
+    /// Target product for assets using this preference set.
+    /// Specify either target product or business goal, but
+    /// not both.
+    #[prost(enumeration = "ComputeMigrationTargetProduct", tag = "2")]
+    pub target_product: i32,
     /// Region preferences for assets using this preference set.
     /// If you are unsure which value to set, the migration service API region is
     /// often a good value to start with.
@@ -2936,6 +2979,13 @@ pub struct VirtualMachinePreferences {
     /// Engine target.
     #[prost(message, optional, tag = "6")]
     pub compute_engine_preferences: ::core::option::Option<ComputeEnginePreferences>,
+    /// Preferences concerning insights and recommendations for
+    /// Google Cloud VMware Engine.
+    #[prost(message, optional, tag = "7")]
+    pub vmware_engine_preferences: ::core::option::Option<VmwareEnginePreferences>,
+    /// Preferences concerning Sole Tenant nodes and virtual machines.
+    #[prost(message, optional, tag = "8")]
+    pub sole_tenancy_preferences: ::core::option::Option<SoleTenancyPreferences>,
 }
 /// The user preferences relating to Compute Engine target platform.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2967,6 +3017,115 @@ pub struct MachineSeries {
     /// for more details on the available series.
     #[prost(string, tag = "1")]
     pub code: ::prost::alloc::string::String,
+}
+/// The user preferences relating to Google Cloud VMware Engine target platform.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct VmwareEnginePreferences {
+    /// CPU overcommit ratio.
+    /// Acceptable values are between 1.0 and 8.0, with 0.1 increment.
+    #[prost(double, tag = "1")]
+    pub cpu_overcommit_ratio: f64,
+    /// Memory overcommit ratio.
+    /// Acceptable values are 1.0, 1.25, 1.5, 1.75 and 2.0.
+    #[prost(double, tag = "2")]
+    pub memory_overcommit_ratio: f64,
+    /// The Deduplication and Compression ratio is based on the logical (Used
+    /// Before) space required to store data before applying deduplication and
+    /// compression, in relation to the physical (Used After) space required after
+    /// applying deduplication and compression. Specifically, the ratio is the Used
+    /// Before space divided by the Used After space. For example, if the Used
+    /// Before space is 3 GB, but the physical Used After space is 1 GB, the
+    /// deduplication and compression ratio is 3x. Acceptable values are
+    /// between 1.0 and 4.0.
+    #[prost(double, tag = "3")]
+    pub storage_deduplication_compression_ratio: f64,
+    /// Commitment plan to consider when calculating costs for virtual machine
+    /// insights and recommendations.
+    /// If you are unsure which value to set, a 3 year commitment plan is often a
+    /// good value to start with.
+    #[prost(enumeration = "vmware_engine_preferences::CommitmentPlan", tag = "4")]
+    pub commitment_plan: i32,
+}
+/// Nested message and enum types in `VmwareEnginePreferences`.
+pub mod vmware_engine_preferences {
+    /// Type of committed use discount.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CommitmentPlan {
+        /// Unspecified commitment plan.
+        Unspecified = 0,
+        /// No commitment plan (on-demand usage).
+        OnDemand = 1,
+        /// 1 year commitment (monthly payments).
+        Commitment1YearMonthlyPayments = 2,
+        /// 3 year commitment (monthly payments).
+        Commitment3YearMonthlyPayments = 3,
+        /// 1 year commitment (upfront payment).
+        Commitment1YearUpfrontPayment = 4,
+        /// 3 years commitment (upfront payment).
+        Commitment3YearUpfrontPayment = 5,
+    }
+}
+/// Preferences concerning Sole Tenancy nodes and VMs.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SoleTenancyPreferences {
+    /// CPU overcommit ratio.
+    /// Acceptable values are between 1.0 and 2.0 inclusive.
+    #[prost(double, tag = "1")]
+    pub cpu_overcommit_ratio: f64,
+    /// Sole Tenancy nodes maintenance policy.
+    #[prost(
+        enumeration = "sole_tenancy_preferences::HostMaintenancePolicy",
+        tag = "2"
+    )]
+    pub host_maintenance_policy: i32,
+    /// Commitment plan to consider when calculating costs for virtual machine
+    /// insights and recommendations.
+    /// If you are unsure which value to set, a 3 year commitment plan is often a
+    /// good value to start with.
+    #[prost(enumeration = "sole_tenancy_preferences::CommitmentPlan", tag = "3")]
+    pub commitment_plan: i32,
+    /// A list of sole tenant node types.
+    /// An empty list means that all possible node types will be considered.
+    #[prost(message, repeated, tag = "4")]
+    pub node_types: ::prost::alloc::vec::Vec<SoleTenantNodeType>,
+}
+/// Nested message and enum types in `SoleTenancyPreferences`.
+pub mod sole_tenancy_preferences {
+    /// Sole Tenancy nodes maintenance policy.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum HostMaintenancePolicy {
+        /// Unspecified host maintenance policy.
+        Unspecified = 0,
+        /// Default host maintenance policy.
+        Default = 1,
+        /// Restart in place host maintenance policy.
+        RestartInPlace = 2,
+        /// Migrate within node group host maintenance policy.
+        MigrateWithinNodeGroup = 3,
+    }
+    /// Type of committed use discount.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    pub enum CommitmentPlan {
+        /// Unspecified commitment plan.
+        Unspecified = 0,
+        /// No commitment plan (on-demand usage).
+        OnDemand = 1,
+        /// 1 year commitment.
+        Commitment1Year = 2,
+        /// 3 years commitment.
+        Commitment3Year = 3,
+    }
+}
+/// A Sole Tenant node type.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SoleTenantNodeType {
+    /// Name of the Sole Tenant node. Consult
+    /// <https://cloud.google.com/compute/docs/nodes/sole-tenant-nodes>
+    #[prost(string, tag = "1")]
+    pub node_name: ::prost::alloc::string::String,
 }
 /// The user preferences relating to target regions.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -3127,6 +3286,67 @@ pub mod report_summary {
         #[prost(enumeration = "super::PersistentDiskType", repeated, tag = "4")]
         pub allocated_disk_types: ::prost::alloc::vec::Vec<i32>,
     }
+    /// A set of findings that applies to assets destined for VMWare Engine.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct VmwareEngineFinding {
+        /// Set of regions in which the assets were allocated
+        #[prost(string, repeated, tag = "1")]
+        pub allocated_regions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Count of assets which are allocated
+        #[prost(int64, tag = "2")]
+        pub allocated_asset_count: i64,
+        /// Set of per-nodetype allocation records
+        #[prost(message, repeated, tag = "3")]
+        pub node_allocations: ::prost::alloc::vec::Vec<VmwareNodeAllocation>,
+    }
+    /// Represents assets allocated to a specific VMWare Node type.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct VmwareNodeAllocation {
+        /// VMWare node type, e.g. "ve1-standard-72"
+        #[prost(message, optional, tag = "1")]
+        pub vmware_node: ::core::option::Option<VmwareNode>,
+        /// Count of this node type to be provisioned
+        #[prost(int64, tag = "2")]
+        pub node_count: i64,
+        /// Count of assets allocated to these nodes
+        #[prost(int64, tag = "3")]
+        pub allocated_asset_count: i64,
+    }
+    /// A VMWare Engine Node
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct VmwareNode {
+        /// Code to identify VMware Engine node series, e.g. "ve1-standard-72". Based
+        /// on the displayName of
+        /// cloud.google.com/vmware-engine/docs/reference/rest/v1/projects.locations.nodeTypes
+        #[prost(string, tag = "1")]
+        pub code: ::prost::alloc::string::String,
+    }
+    /// A set of findings that applies to assets destined for Sole-Tenant nodes.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SoleTenantFinding {
+        /// Set of regions in which the assets are allocated
+        #[prost(string, repeated, tag = "1")]
+        pub allocated_regions: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+        /// Count of assets which are allocated
+        #[prost(int64, tag = "2")]
+        pub allocated_asset_count: i64,
+        /// Set of per-nodetype allocation records
+        #[prost(message, repeated, tag = "3")]
+        pub node_allocations: ::prost::alloc::vec::Vec<SoleTenantNodeAllocation>,
+    }
+    /// Represents the assets allocated to a specific Sole-Tenant node type.
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct SoleTenantNodeAllocation {
+        /// Sole Tenant node type, e.g. "m3-node-128-3904"
+        #[prost(message, optional, tag = "1")]
+        pub node: ::core::option::Option<super::SoleTenantNodeType>,
+        /// Count of this node type to be provisioned
+        #[prost(int64, tag = "2")]
+        pub node_count: i64,
+        /// Count of assets allocated to these nodes
+        #[prost(int64, tag = "3")]
+        pub allocated_asset_count: i64,
+    }
     /// Summary Findings for a specific Group/PreferenceSet combination.
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct GroupPreferenceSetFinding {
@@ -3162,6 +3382,12 @@ pub mod report_summary {
         /// A set of findings that applies to Compute Engine machines in the input.
         #[prost(message, optional, tag = "10")]
         pub compute_engine_finding: ::core::option::Option<ComputeEngineFinding>,
+        /// A set of findings that applies to VMWare machines in the input.
+        #[prost(message, optional, tag = "11")]
+        pub vmware_engine_finding: ::core::option::Option<VmwareEngineFinding>,
+        /// A set of findings that applies to Sole-Tenant machines in the input.
+        #[prost(message, optional, tag = "12")]
+        pub sole_tenant_finding: ::core::option::Option<SoleTenantFinding>,
     }
     /// Summary Findings for a specific Group.
     #[derive(Clone, PartialEq, ::prost::Message)]
@@ -3175,8 +3401,8 @@ pub mod report_summary {
         /// Summary statistics for all the assets in this group.
         #[prost(message, optional, tag = "3")]
         pub asset_aggregate_stats: ::core::option::Option<AssetAggregateStats>,
-        /// Count of the number of assets in this group which are also included
-        /// in another group within the same report.
+        /// This field is deprecated, do not rely on it having a value.
+        #[deprecated]
         #[prost(int64, tag = "4")]
         pub overlapping_asset_count: i64,
         /// Findings for each of the PreferenceSets for this group.
@@ -3317,6 +3543,19 @@ pub enum CommitmentPlan {
     OneYear = 2,
     /// 3 years commitment.
     ThreeYears = 3,
+}
+/// The preference for a specific Google Cloud product platform.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ComputeMigrationTargetProduct {
+    /// Unspecified (default value).
+    Unspecified = 0,
+    /// Prefer to migrate to Google Cloud Compute Engine.
+    ComputeEngine = 1,
+    /// Prefer to migrate to Google Cloud VMware Engine.
+    VmwareEngine = 2,
+    /// Prefer to migrate to Google Cloud Sole Tenant Nodes.
+    SoleTenancy = 3,
 }
 /// Specifies the types of views that provide complete or partial details
 /// of a Report.

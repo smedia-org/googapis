@@ -2,7 +2,7 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContinuousValidationEvent {
     /// Type of CV event.
-    #[prost(oneof = "continuous_validation_event::EventType", tags = "1, 2")]
+    #[prost(oneof = "continuous_validation_event::EventType", tags = "1, 4")]
     pub event_type: ::core::option::Option<continuous_validation_event::EventType>,
 }
 /// Nested message and enum types in `ContinuousValidationEvent`.
@@ -16,6 +16,9 @@ pub mod continuous_validation_event {
         /// The name of the Pod.
         #[prost(string, tag = "1")]
         pub pod: ::prost::alloc::string::String,
+        /// The name of the policy.
+        #[prost(string, tag = "8")]
+        pub policy_name: ::prost::alloc::string::String,
         /// Deploy time of the Pod from k8s.
         #[prost(message, optional, tag = "2")]
         pub deploy_time: ::core::option::Option<::prost_types::Timestamp>,
@@ -40,15 +43,106 @@ pub mod continuous_validation_event {
             /// The name of the image.
             #[prost(string, tag = "1")]
             pub image: ::prost::alloc::string::String,
+            /// The name of the container.
+            #[prost(string, tag = "5")]
+            pub container_name: ::prost::alloc::string::String,
+            /// The container type that this image belongs to.
+            #[prost(enumeration = "image_details::ContainerType", tag = "6")]
+            pub container_type: i32,
             /// The result of the audit for this image.
             #[prost(enumeration = "image_details::AuditResult", tag = "2")]
             pub result: i32,
             /// Description of the above result.
             #[prost(string, tag = "3")]
             pub description: ::prost::alloc::string::String,
+            /// List of check results.
+            #[prost(message, repeated, tag = "4")]
+            pub check_results: ::prost::alloc::vec::Vec<image_details::CheckResult>,
         }
         /// Nested message and enum types in `ImageDetails`.
         pub mod image_details {
+            #[derive(Clone, PartialEq, ::prost::Message)]
+            pub struct CheckResult {
+                /// The index of the check set.
+                #[prost(string, tag = "1")]
+                pub check_set_index: ::prost::alloc::string::String,
+                /// The name of the check set.
+                #[prost(string, tag = "2")]
+                pub check_set_name: ::prost::alloc::string::String,
+                /// The scope of the check set.
+                #[prost(message, optional, tag = "3")]
+                pub check_set_scope: ::core::option::Option<check_result::CheckSetScope>,
+                /// The index of the check.
+                #[prost(string, tag = "4")]
+                pub check_index: ::prost::alloc::string::String,
+                /// The name of the check.
+                #[prost(string, tag = "5")]
+                pub check_name: ::prost::alloc::string::String,
+                /// The type of the check.
+                #[prost(string, tag = "6")]
+                pub check_type: ::prost::alloc::string::String,
+                /// The verdict of this check.
+                #[prost(enumeration = "check_result::CheckVerdict", tag = "7")]
+                pub verdict: i32,
+                /// User-friendly explanation of this check result.
+                #[prost(string, tag = "8")]
+                pub explanation: ::prost::alloc::string::String,
+            }
+            /// Nested message and enum types in `CheckResult`.
+            pub mod check_result {
+                /// A scope specifier for check sets.
+                #[derive(Clone, PartialEq, ::prost::Message)]
+                pub struct CheckSetScope {
+                    #[prost(oneof = "check_set_scope::Scope", tags = "1, 2")]
+                    pub scope: ::core::option::Option<check_set_scope::Scope>,
+                }
+                /// Nested message and enum types in `CheckSetScope`.
+                pub mod check_set_scope {
+                    #[derive(Clone, PartialEq, ::prost::Oneof)]
+                    pub enum Scope {
+                        /// Matches a single Kubernetes service account, e.g.
+                        /// 'my-namespace:my-service-account'.
+                        /// `kubernetes_service_account` scope is always more specific than
+                        /// `kubernetes_namespace` scope for the same namespace.
+                        #[prost(string, tag = "1")]
+                        KubernetesServiceAccount(::prost::alloc::string::String),
+                        /// Matches all Kubernetes service accounts in the provided
+                        /// namespace, unless a more specific `kubernetes_service_account`
+                        /// scope already matched.
+                        #[prost(string, tag = "2")]
+                        KubernetesNamespace(::prost::alloc::string::String),
+                    }
+                }
+                /// Result of evaluating one check.
+                #[derive(
+                    Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+                )]
+                #[repr(i32)]
+                pub enum CheckVerdict {
+                    /// We should always have a verdict. This is an error.
+                    Unspecified = 0,
+                    /// The check was successfully evaluated and the image did not satisfy
+                    /// the check.
+                    NonConformant = 1,
+                }
+            }
+            /// The container type.
+            #[derive(
+                Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
+            )]
+            #[repr(i32)]
+            pub enum ContainerType {
+                /// The container type should always be specified. This is an error.
+                Unspecified = 0,
+                /// A regular deployment.
+                Container = 1,
+                /// Init container defined as specified at
+                /// <https://kubernetes.io/docs/concepts/workloads/pods/init-containers/>
+                InitContainer = 2,
+                /// Ephemeral container defined as specified at
+                /// <https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/>
+                EphemeralContainer = 3,
+            }
             /// Result of the audit.
             #[derive(
                 Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
@@ -75,10 +169,11 @@ pub mod continuous_validation_event {
             ViolatesPolicy = 1,
         }
     }
-    /// An event describing that the project policy is unsupported by CV.
+    /// An event describing a user-actionable configuration issue that prevents CV
+    /// from auditing.
     #[derive(Clone, PartialEq, ::prost::Message)]
-    pub struct UnsupportedPolicyEvent {
-        /// A description of the unsupported policy.
+    pub struct ConfigErrorEvent {
+        /// A description of the issue.
         #[prost(string, tag = "1")]
         pub description: ::prost::alloc::string::String,
     }
@@ -88,9 +183,9 @@ pub mod continuous_validation_event {
         /// Pod event.
         #[prost(message, tag = "1")]
         PodEvent(ContinuousValidationPodEvent),
-        /// Unsupported policy event.
-        #[prost(message, tag = "2")]
-        UnsupportedPolicyEvent(UnsupportedPolicyEvent),
+        /// Config error event.
+        #[prost(message, tag = "4")]
+        ConfigErrorEvent(ConfigErrorEvent),
     }
 }
 /// A \[policy][google.cloud.binaryauthorization.v1beta1.Policy\] for Binary Authorization.
